@@ -27,7 +27,7 @@
 
 - Mỗi nhân vật (Mabu, Zinbu) và mỗi con quái (mọi loại gà, kể cả gà con và gà tướng) đều khởi đầu 100 máu (`HP_NV`, `HP_GA`). Máu tính riêng từng đối tượng, không còn máu chung của đội.
 - Mạnh / yếu chỉ thể hiện ở 2 thứ: sát thương gây ra và tỉ lệ giảm sát thương khi nhận (`GIAM_NV`, `GIAM_GA`). Máu tối đa ai cũng như nhau. Sát thương thực nhận = sát thương gốc × (1 − tỉ lệ giảm), làm tròn.
-- Mabu và Zinbu giảm 50% sát thương nhận (gà con đánh 30 thì nhận 15). Gà thường giảm 0%, gà tướng giảm 90%.
+- Mabu và Zinbu giảm 50% sát thương nhận (gà con đánh 30 thì nhận 15). Gà thường giảm 0%, gà tướng giảm 80%.
 - Sát thương nhân vật gây ra (`SAT_THUONG`), mỗi đòn trúng một con:
   - Đấm: Mabu 50 · Zinbu 50
   - Đá: Mabu 70 · Zinbu 100

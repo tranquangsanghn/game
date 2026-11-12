@@ -63,7 +63,7 @@ const THOI_GIAN_HOANG_HON = 90;
 const HP_NV = 100;
 const HP_GA = 100;
 const GIAM_NV = 0.5;
-const GIAM_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, chick: 0, boss: 0.9 };
+const GIAM_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, chick: 0, boss: 0.8 };
 // Sát thương nhân vật gây ra: [Mabu, Zinbu] theo nhóm đòn 0 Đấm · 1 Đá · 2 Chiêu đặc biệt; mây (riêng Mabu)
 const SAT_THUONG = [[50, 50], [70, 100], [100, 150]];
 const SAT_MAY = 250;
