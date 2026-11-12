@@ -51,19 +51,20 @@ const THOI_GIAN_HOANG_HON = 90;
 const MANG_TOI_DA = 5;
 const TOC_DO_DI = 460;
 const TOC_DO_BAY = 900;
-const BAY_KHI_XA = 700;
+const BAY_KHI_XA = 600;
+const BAY_TOI_DA = 1200;
 const TOC_DO_DAN = 2400;
 const BANG_DAN = 12;
 const THOI_GIAN_NAP = 1.4;
 const TON_CHIEU = 3;
 // Tầm đánh (đơn vị bản đồ). Đấm/Đá chọn ngẫu nhiên đòn gần hoặc đòn xa, đòn xa đánh được xa hơn.
-// Chiêu đặc biệt đánh xa gấp 3 lần đòn xa nhất (đá xa).
+// 
 const BAN_KINH_NO = 120;
 const TAM_DAM_GAN = 200;
-const TAM_DAM_XA = 340;
-const TAM_DA_GAN = 240;
-const TAM_DA_XA = 400;
-const TAM_CHIEU = TAM_DA_XA * 3;
+const TAM_DAM_XA = 400;
+const TAM_DA_GAN = 250;
+const TAM_DA_XA = 500;
+const TAM_CHIEU = 1200;
 const TAM_DON: Record<string, number> = {
   punch_combo: TAM_DAM_GAN,
   punch_long: TAM_DAM_XA, punch_long_2: TAM_DAM_XA, punch_dash: TAM_DAM_XA, punch_charge: TAM_DAM_XA,
@@ -765,8 +766,13 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     const n = this.nguoi[p];
     if (n.nv.khoa || n.bay) return;
     const w = this.manHinhRaThe(p, x, y);
-    const dich = { x: kepMap(w.x), y: kepMap(w.y) };
-    const d = Math.hypot(dich.x - n.x, dich.y - n.y);
+    let dich = { x: kepMap(w.x), y: kepMap(w.y) };
+    let d = Math.hypot(dich.x - n.x, dich.y - n.y);
+    if (d > BAY_TOI_DA) {
+      // Chỉ xa hơn tầm bay tối đa thì bay tới mép tầm theo hướng chuột
+      dich = { x: n.x + ((dich.x - n.x) / d) * BAY_TOI_DA, y: n.y + ((dich.y - n.y) / d) * BAY_TOI_DA };
+      d = BAY_TOI_DA;
+    }
     if (d <= BAY_KHI_XA) {
       n.dich = dich;
       return;
