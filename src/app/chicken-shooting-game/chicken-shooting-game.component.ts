@@ -212,6 +212,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   xep: VatXep[] = [];
   gaBayView: Ga[] = [];
   tuong: Ga | null = null;
+  nhamView: { x: number; y: number; mau: string }[] = [];
   // Chỉ những vật trong khung nhìn mới được vẽ (xem CLAUDE.md)
   vetView: Vet[] = [];
   danView: Dan[] = [];
@@ -417,10 +418,9 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
         n.nhin = { x: hv.hx / hl, y: hv.hy / hl };
         n.dich = null;
       }
-      if (p === 1 || hv.danh) {
-        const m = this.diemNham(p);
-        n.nham = m.co ? { x: m.x, y: m.y } : null;
-      }
+      // Tâm tự ngắm cập nhật mỗi khung hình; không hiện cho nhân vật đang dùng chuột (ngắm bằng chuột), đã ngã hoặc đang là mây
+      const m = this.diemNham(p);
+      n.nham = m.co && p !== this.chuot && !n.het && !n.nv.laMay ? { x: m.x, y: m.y } : null;
 
       if (n.nv.khoa) {
         n.dich = null;
@@ -645,6 +645,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       return trong(vt.x, vt.y, 200);
     });
     this.longView = this.long.filter((l) => trong(l.x, l.y, 100));
+    this.nhamView = this.nguoi.flatMap((n) => (n.nham && trong(n.nham.x, n.nham.y, 100) ? [{ x: n.nham.x, y: n.nham.y, mau: n.mau }] : []));
     this.chuView = this.chu.filter((c) => trong(c.x, c.y, 300));
     // Chỉ gà tướng có thanh máu trên đầu; chỉ lấy khi nằm trong khung nhìn
     const t = this.ga.find((g) => g.loai === 'boss' && !g.chet);

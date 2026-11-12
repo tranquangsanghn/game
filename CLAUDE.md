@@ -60,3 +60,7 @@
 - Tốc độ đánh của Mabu và Zinbu là thời gian hồi `hoiChieu` giữa 2 đòn trong `ban()`, theo nhóm: Đấm 0,4s (đang đi 0,6s) · Đá 0,64s · Chiêu đặc biệt 1,6s. Không đổi khi chỉnh animation.
 - Animation mỗi đòn tự co giãn (`tocDon` trong `NhanVat`) để chạy xong trong 90% của `THOI_GIAN_DON` = 0,5s (~0,45s), bất kể đòn có bao nhiêu khung hình. Quãng lao tới của đòn có chuyển động (`tien`) không đổi dù tua nhanh hay chậm.
 - Tốc độ đánh của gà nằm ở `HOI_DANH_GA`.
+
+# Nguyên tắc tâm tự ngắm
+
+- Tâm tự ngắm (`nham`, vẽ qua `nhamView` đã lọc theo khung nhìn) tính lại mỗi khung hình cho cả 2 nhân vật. Chỉ hiện khi có gà trong tầm và nhân vật đó không dùng chuột (`chuot`), chưa ngã, không là mây. Hết điều kiện là tâm biến mất ngay, không giữ hình cũ.

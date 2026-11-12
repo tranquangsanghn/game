@@ -124,12 +124,14 @@
         <text [attr.x]="c.x" [attr.y]="c.y" text-anchor="middle" class="chu-bay" [attr.fill]="c.mau" [attr.opacity]="1 - c.t">
           {{ c.text }}</text>
         }
-        @if (man === 'play' && nguoi[1].nham; as m) {
-        <g [attr.transform]="'translate(' + m.x + ',' + m.y + ')'" fill="none" [attr.stroke]="nguoi[1].mau" stroke-width="7"
+        @if (man === 'play') {
+        @for (m of nhamView; track $index) {
+        <g [attr.transform]="'translate(' + m.x + ',' + m.y + ')'" fill="none" [attr.stroke]="m.mau" stroke-width="7"
           pointer-events="none">
-          <circle r="7" [attr.fill]="nguoi[1].mau" stroke="none" />
+          <circle r="7" [attr.fill]="m.mau" stroke="none" />
           <path d="M-62,0 h24 M38,0 h24 M0,-62 v24 M0,38 v24" />
         </g>
+        }
         }
       </g>
     </g>
