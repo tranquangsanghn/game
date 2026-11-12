@@ -64,6 +64,12 @@
           </g>
         </g>
         }
+        @if (tuong; as t) {
+        <g [attr.transform]="thanhTuong(t)" pointer-events="none">
+          <rect x="-34" y="-6" width="68" height="12" rx="6" fill="#0d1b12" fill-opacity="0.75" />
+          <rect x="-31" y="-3" [attr.width]="62 * t.hp / HP_TUONG" height="6" rx="3" fill="#ff4d4d" />
+        </g>
+        }
         @for (d of danView; track d.id) {
         @if (d.to) {
         @let vt = danHienTai(d);
@@ -120,14 +126,6 @@
       <path d="M-28,0 h14 M14,0 h14 M0,-28 v14 M0,14 v14" />
     </g>
 
-    @if (tuong; as t) {
-    <g [attr.transform]="'translate(' + GIUA + ',24)'" pointer-events="none">
-      <rect x="-230" width="460" height="42" rx="12" fill="#1d2b3a" fill-opacity="0.92" />
-      <text x="0" y="17" text-anchor="middle" class="hud-ten">🐔 GÀ TƯỚNG</text>
-      <rect x="-210" y="24" width="420" height="10" rx="5" fill="#ffffff30" />
-      <rect x="-210" y="24" [attr.width]="420 * t.hp / HP_TUONG" height="10" rx="5" fill="#ff4d4d" />
-    </g>
-    }
 
     <text [attr.x]="W - 8" [attr.y]="H - 20" text-anchor="end" class="hud-fps" pointer-events="none">{{ fps }} FPS</text>
 

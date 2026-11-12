@@ -18,3 +18,7 @@
 - Không vật nào được ra khỏi bản đồ: nhân vật, gà, gà bay, gà tướng, quái sau này… đều bị kẹp lại, sprite phải nằm trọn trong map.
 - Kẹp bằng hàm `giuTrongMap(vật, lề)` với lề theo loại vật (`LE_NV`, `LE_GA`, `LE_BAY`, `LE_TUONG`); lề trên lớn hơn lề dưới vì sprite vẽ phía trên toạ độ chân. Vật di chuyển tự động thì bật lại khi chạm mép.
 - Thêm loại vật mới thì khai báo lề riêng và gọi `giuTrongMap` ngay từ đầu, kể cả điểm đích di chuyển / bay tới.
+
+# Nguyên tắc thanh máu
+
+- Chỉ gà tướng (boss) có thanh máu, vẽ trên đầu trong không gian thế giới (trong nhóm camera) cùng kiểu thanh máu của nhân vật. Quái thường không hiện máu. Không dùng thanh máu cố định trên đỉnh màn hình.

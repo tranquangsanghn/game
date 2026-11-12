@@ -614,7 +614,9 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     });
     this.longView = this.long.filter((l) => trong(l.x, l.y, 100));
     this.chuView = this.chu.filter((c) => trong(c.x, c.y, 300));
-    this.tuong = this.ga.find((g) => g.loai === 'boss' && !g.chet) ?? null;
+    // Chỉ gà tướng có thanh máu trên đầu; chỉ lấy khi nằm trong khung nhìn
+    const t = this.ga.find((g) => g.loai === 'boss' && !g.chet);
+    this.tuong = t && trong(t.x, t.y, 450) ? t : null;
   }
 
   // Dây buộc: 2 nhân vật không xa nhau quá mức camera chứa nổi. Người vừa di chuyển nhiều hơn là người bị chặn lại.
@@ -1051,6 +1053,11 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   thanhTrenDau(p: number): string {
     const n = this.nguoi[p];
     return `translate(${n.x.toFixed(1)},${(n.y - (n.nv.cao - n.nv.nhun) * S_NV - (p === 0 ? 195 : 150)).toFixed(1)})`;
+  }
+
+  // Thanh máu trên đầu gà tướng (to hơn của nhân vật vì gà tướng cao gấp nhiều lần)
+  thanhTuong(g: Ga): string {
+    return `translate(${g.x.toFixed(1)},${(g.y - 310).toFixed(1)}) scale(3)`;
   }
 
   get mauTiLe(): number {
