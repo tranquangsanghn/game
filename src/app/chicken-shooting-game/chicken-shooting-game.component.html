@@ -90,7 +90,7 @@
         @if (man === 'play' && nguoi[1].nham; as m) {
         <g [attr.transform]="'translate(' + m.x + ',' + m.y + ')'" fill="none" [attr.stroke]="nguoi[1].mau" stroke-width="7"
           pointer-events="none">
-          <ellipse [attr.rx]="44 + 10 * dichNhay()" [attr.ry]="44 + 10 * dichNhay()" />
+          <circle r="7" [attr.fill]="nguoi[1].mau" stroke="none" />
           <path d="M-62,0 h24 M38,0 h24 M0,-62 v24 M0,38 v24" />
         </g>
         }
@@ -121,7 +121,6 @@
     }
     <!-- Tâm ngắm của nhân vật đang được chuột điều khiển (Tab để đổi) -->
     <g [attr.transform]="'translate(' + nguoi[chuot].tamX + ',' + nguoi[chuot].tamY + ')'" [attr.stroke]="nguoi[chuot].mau" stroke-width="3" fill="none">
-      <circle r="18" />
       <circle r="3" [attr.fill]="nguoi[chuot].mau" />
       <path d="M-28,0 h14 M14,0 h14 M0,-28 v14 M0,14 v14" />
     </g>
