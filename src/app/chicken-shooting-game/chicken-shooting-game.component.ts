@@ -573,6 +573,10 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     this.camX += (tx - this.camX) * kv;
     this.camY += (ty - this.camY) * kv;
     this.camZ += (tz - this.camZ) * kz;
+    // Camera không ra khỏi bản đồ: chạm mép map thì mép đó nằm đúng mép màn hình, không lộ vùng đen
+    const zc = this.camZ;
+    this.camX = kep(this.camX, W / 2 / zc, MAP - W / 2 / zc);
+    this.camY = kep(this.camY, TAM_VIEW_Y / zc, MAP - (H - TAM_VIEW_Y) / zc);
 
     const z = this.camZ;
     const trong = (x: number, y: number, le: number) =>
