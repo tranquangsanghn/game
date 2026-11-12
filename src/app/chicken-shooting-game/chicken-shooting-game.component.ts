@@ -109,7 +109,8 @@ const TEN_DON: Record<string, string> = {
 
 const ngauNhien = (a: number, b: number) => a + Math.random() * (b - a);
 const kep = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
-const kepMap = (v: number) => kep(v, 60, MAP - 60);
+// Sát mép bản đồ là dừng hẳn; ngoài mép là vùng đen
+const kepMap = (v: number) => kep(v, 0, MAP);
 
 function tronMau(a: number[], b: number[], k: number) {
   const c = a.map((v, i) => Math.round(v + (b[i] - v) * k));
@@ -473,8 +474,8 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       g.x += g.vx * dt;
       g.y += g.vy * dt;
       if (!bay) {
-        if (g.x < 60 || g.x > MAP - 60) g.vx = -g.vx;
-        if (g.y < 60 || g.y > MAP - 60) g.vy = -g.vy;
+        if (g.x < 0 || g.x > MAP) g.vx = -g.vx;
+        if (g.y < 0 || g.y > MAP) g.vy = -g.vy;
         g.x = kepMap(g.x);
         g.y = kepMap(g.y);
       }

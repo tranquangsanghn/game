@@ -10,12 +10,12 @@
       </filter>
     </defs>
 
-    <rect x="0" y="0" [attr.width]="W" [attr.height]="H" fill="#9aa59a" />
+    <rect x="0" y="0" [attr.width]="W" [attr.height]="H" fill="#000" />
 
     <!-- Một camera chung bám trung điểm 2 nhân vật, zoom ra khi họ xa nhau -->
     <g>
       <g [attr.transform]="viewTransform()">
-        <rect x="0" y="0" [attr.width]="MAP" [attr.height]="MAP" fill="#c9d8bf" stroke="#7d8b74" stroke-width="10" />
+        <rect x="0" y="0" [attr.width]="MAP" [attr.height]="MAP" fill="#c9d8bf" />
 
         @for (v of vetView; track v.id) {
         @if (v.loai === 'no') {
