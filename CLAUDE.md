@@ -21,7 +21,21 @@
 
 # Nguyên tắc thanh máu
 
-- Chỉ gà tướng (boss) có thanh máu, vẽ trên đầu trong không gian thế giới (trong nhóm camera) cùng kiểu thanh máu của nhân vật. Quái thường không hiện máu. Không dùng thanh máu cố định trên đỉnh màn hình.
+- Chỉ nhân vật và gà tướng (boss) có thanh máu, vẽ trên đầu trong không gian thế giới (trong nhóm camera), cùng kiểu. Quái thường có máu nhưng không hiện thanh. Không dùng thanh máu cố định trên đỉnh màn hình.
+
+# Nguyên tắc máu & sát thương
+
+- Mỗi nhân vật (Mabu, Zinbu) và mỗi con quái (mọi loại gà, kể cả gà con và gà tướng) đều khởi đầu 100 máu (`HP_NV`, `HP_GA`). Máu tính riêng từng đối tượng, không còn máu chung của đội.
+- Mạnh / yếu chỉ thể hiện ở 2 thứ: sát thương gây ra và tỉ lệ giảm sát thương khi nhận (`GIAM_NV`, `GIAM_GA`). Máu tối đa ai cũng như nhau. Sát thương thực nhận = sát thương gốc × (1 − tỉ lệ giảm), làm tròn.
+- Mabu và Zinbu giảm 50% sát thương nhận (gà con đánh 30 thì nhận 15). Gà thường giảm 0%, gà tướng giảm 90%.
+- Sát thương nhân vật gây ra (`SAT_THUONG`), mỗi đòn trúng một con:
+  - Đấm: Mabu 50 · Zinbu 50
+  - Đá: Mabu 70 · Zinbu 100
+  - Chiêu đặc biệt (bắn chưởng): Mabu 100 · Zinbu 150
+  - Biến mây (riêng Mabu): 250 (`SAT_MAY`); với gà tướng cứ mỗi `MAY_NHIP` giây trừ một lần
+- Sát thương quái gây ra khi chạm nhân vật (`SAT_GA`): gà trắng 20 · gà đỏ 30 · gà đen 30 · gà con 30 · gà tướng 60. Mỗi con đánh lại sau `GA_HOI_DANH` giây.
+- Nhân vật dạng mây không nhận sát thương. Nhân vật hết máu thì ngã và không điều khiển được; cả hai cùng hết máu thì thua (`ketThuc()`).
+- Quái chỉ chết khi máu về 0 (chết thì mới tính điểm, gà con bị trừ điểm). Đòn trúng mà chưa chết thì gà nháy sáng. Hạ gà tướng không còn thưởng mạng; thay vào đó hồi `HOI_MAU_TUONG` máu cho mỗi nhân vật còn sống.
 
 # Nguyên tắc mana
 
@@ -31,6 +45,6 @@
 # Nguyên tắc chiêu Biến mây
 
 - Riêng Mabu (nhóm đòn 3, `NHOM_MAY`), Jinbu/Zinbu không có. Bấm để biến thành mây to gấp 2 trong `MAY_THOI_GIAN` = 7s, sau đó chờ `MAY_HOI` = 40s mới dùng lại.
-- Dạng mây: không có thanh máu, quả cầu mana, vòng sáng hay hàng biểu tượng nhóm đòn, không ra đòn khác, không bay (chỉ trôi, nhanh hơn). Mọi con gà chạm vùng mây (`mayQuet`) đều dính đòn; gà tướng bị trừ 1 máu mỗi `MAY_NHIP` giây.
+- Dạng mây: không có thanh máu, quả cầu mana, vòng sáng hay hàng biểu tượng nhóm đòn, không ra đòn khác, không bay (chỉ trôi, nhanh hơn). Mọi con gà chạm vùng mây (`mayQuet`) đều dính đòn `SAT_MAY` (250); gà tướng chỉ dính một lần mỗi `MAY_NHIP` giây. Đang là mây thì không nhận sát thương.
 - Mana chiêu này màu tím (`MAU_MANA[3]`): lúc mây chạy là thời gian còn lại, lúc chờ là tiến độ hồi. Biểu tượng là hình đám mây, đứng cuối cùng bên phải trong hàng biểu tượng.
 - Mây to hơn nên dùng lề bản đồ riêng `LE_MAY` (nội suy theo `heSoTo` lúc biến hình), render lọc với lề rộng hơn.
