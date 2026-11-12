@@ -34,6 +34,11 @@
         </g>
         }
         }
+        <!-- Mũi tên chỉ hướng về gà tướng, mờ, cứ 5s hiện một lần -->
+        @for (m of huongView; track $index) {
+        <path [attr.transform]="'translate(' + m.x + ',' + m.y + ') rotate(' + m.goc + ')'" d="M-24,-20 L8,0 L-24,20" fill="none"
+          stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" [attr.stroke-opacity]="m.a" pointer-events="none" />
+        }
         <!-- Trứng gà tướng đẻ (chỉ thấy trong tầm nhìn), rung mạnh dần trước khi nở -->
         @for (e of trungView; track e.id) {
         <g [attr.transform]="'translate(' + e.x + ',' + e.y + ')'" pointer-events="none">
@@ -116,21 +121,6 @@
 
     <!-- Hai bảng chiêu thức khoét vào map ở góc dưới (nền đen): Mabu trái, Zinbu phải. Bấm vào nút để chọn chiêu.
          Chiêu đang dùng sáng, chiêu khác mờ, hết mana thì mờ hẳn và không chọn được. Ở giữa là animation nhân vật như trên map -->
-    <!-- Mini map giữa đáy màn hình: vị trí 2 nhân vật, khung camera, chấm đỏ = gà tướng -->
-    @if (man === 'play' || man === 'pause') {
-    <g [attr.transform]="'translate(' + (GIUA - MINI / 2) + ',' + (H - MINI - 16) + ')'" pointer-events="none">
-      <rect [attr.width]="MINI" [attr.height]="MINI" rx="6" fill="#1d2b3a" fill-opacity="0.6" stroke="#fff" stroke-opacity="0.7" stroke-width="2" />
-      @let kc = khungCamMini();
-      <rect [attr.x]="kc.x" [attr.y]="kc.y" [attr.width]="kc.w" [attr.height]="kc.h" fill="none" stroke="#fff" stroke-opacity="0.8" stroke-width="1.5" />
-      @for (n of nguoi; track $index) {
-      <circle [attr.cx]="miniToa(n.x)" [attr.cy]="miniToa(n.y)" r="4.5" [attr.fill]="n.mau" stroke="#fff" stroke-width="1.5" />
-      }
-      @if (tuongViTri; as tv) {
-      <circle [attr.cx]="miniToa(tv.x)" [attr.cy]="miniToa(tv.y)" r="5.5" fill="#ff2b2b" stroke="#fff" stroke-width="1.5" />
-      }
-    </g>
-    }
-
     @for (p of [0, 1]; track p) {
     @let ng = nguoi[p];
     @let tb = tamBang(p);

@@ -157,8 +157,15 @@ const DAN_TRUNG: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'ro
 const TRUNG_NO = 2;
 const TRUNG_CHO = 30;
 const GA_TOI_DA = 20;
-// Mini map ở giữa đáy màn hình (kích thước pixel)
-const MINI = 120;
+// Mũi tên chỉ hướng tới gà tướng (kiểu đường chim bay của Google Maps): cứ HUONG_CHU_KY giây hiện một lần, kéo dài HUONG_HIEN giây (mờ dần vào / ra),
+// từ mỗi nhân vật hướng về gà tướng, các mũi tên ">" cách nhau HUONG_CACH, nằm trong khoảng HUONG_BAT_DAU..HUONG_TOI_DA tính từ nhân vật.
+// Gà tướng đã gần (trong HUONG_GAN) thì không cần chỉ nữa.
+const HUONG_CHU_KY = 5;
+const HUONG_HIEN = 2.5;
+const HUONG_CACH = 130;
+const HUONG_BAT_DAU = 180;
+const HUONG_TOI_DA = 1100;
+const HUONG_GAN = 600;
 const DIEM_DANH_TUONG = 15;
 
 const TEN_DON: Record<string, string> = {
@@ -233,9 +240,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   ga: Ga[] = [];
   trungDe: TrungGa[] = [];
   trungView: TrungGa[] = [];
-  // Vị trí gà tướng còn sống (chấm đỏ trên mini map), null nếu chưa có
-  tuongViTri: { x: number; y: number } | null = null;
-  readonly MINI = MINI;
+  huongView: { x: number; y: number; goc: number; a: number; mau: string }[] = [];
   dan: Dan[] = [];
   vet: Vet[] = [];
   chu: Chu[] = [];
@@ -620,17 +625,29 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     return e.t > 1 ? Math.sin(e.t * 40) * 12 : 0;
   }
 
-  // Khung camera hiện tại trên mini map (pixel trong ô MINI)
-  khungCamMini() {
-    const z = this.camZ;
-    const k = MINI / MAP;
-    const w = (W / z) * k;
-    const h = (H / z) * k;
-    return { x: (this.camX - W / 2 / z) * k, y: (this.camY - TAM_VIEW_Y / z) * k, w, h };
-  }
-
-  miniToa(v: number): number {
-    return (v / MAP) * MINI;
+  // Các mũi tên ">" chỉ từ mỗi nhân vật về phía gà tướng; chỉ lấy mũi tên nằm trong khung nhìn
+  private huongToiTuong(trong: (x: number, y: number, le: number) => boolean) {
+    const kq: { x: number; y: number; goc: number; a: number; mau: string }[] = [];
+    const tw = this.ga.find((g) => g.loai === 'boss' && !g.chet);
+    const pha = this.tGame % HUONG_CHU_KY;
+    if (!tw || this.man !== 'play' || pha > HUONG_HIEN) return kq;
+    const a = Math.sin((Math.PI * pha) / HUONG_HIEN) * 0.5;
+    for (const n of this.nguoi) {
+      if (n.het) continue;
+      const dx = tw.x - n.x;
+      const dy = tw.y - n.y;
+      const d = Math.hypot(dx, dy);
+      if (d < HUONG_GAN) continue;
+      const ux = dx / d;
+      const uy = dy / d;
+      const cuoi = Math.min(d - HUONG_GAN * 0.4, HUONG_TOI_DA);
+      for (let k = HUONG_BAT_DAU; k <= cuoi; k += HUONG_CACH) {
+        const x = n.x + ux * k;
+        const y = n.y + uy * k;
+        if (trong(x, y, 60)) kq.push({ x, y, goc: (Math.atan2(uy, ux) * 180) / Math.PI, a, mau: n.mau });
+      }
+    }
+    return kq;
   }
 
   // Camera chung: bám trung điểm 2 nhân vật, zoom ra khi họ xa nhau; rồi lọc vật trong khung nhìn
@@ -655,8 +672,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     const trong = (x: number, y: number, le: number) =>
       Math.abs(x - this.camX) < W / 2 / z + le && y - this.camY > -TAM_VIEW_Y / z - le && y - this.camY < (H - TAM_VIEW_Y) / z + le;
     this.trungView = this.trungDe.filter((e) => this.thay(e.x, e.y) && trong(e.x, e.y, 100));
-    const tw = this.ga.find((g) => g.loai === 'boss' && !g.chet);
-    this.tuongViTri = tw ? { x: tw.x, y: tw.y } : null;
+    this.huongView = this.huongToiTuong(trong);
     this.nhinNguon = [
       ...this.nguoi.filter((n) => !n.het).map((n) => ({ x: n.x, y: n.y })),
       ...this.dan.map((d) => { const vt = this.danHienTai(d); return { x: vt.x, y: vt.y }; }),

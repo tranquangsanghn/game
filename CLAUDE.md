@@ -90,9 +90,9 @@
 - Tốc độ di chuyển thật của mọi gà = tốc độ gốc × `HE_SO_TOC_GA` = 0,25 (áp ở chỗ cộng vị trí trong `capNhatGa()`); đổi tốc độ gà thì chỉnh hệ số này.
 - Tốc độ thật khi lao vào (đã nhân `HE_SO_TOC_GA`): gà trắng 40 (`TOC_DO_LAO.hen` = 160) · gà đỏ 60 (240) · gà đen ~30 (tốc độ bay lúc sinh 110–130, không đổi theo màn).
 
-# Nguyên tắc sinh gà & mini map
+# Nguyên tắc sinh gà & mũi tên chỉ gà tướng
 
 - Gà con không tự sinh theo thời gian nữa: chỉ do gà mẹ (gà tướng) đẻ. Gà tướng xuất hiện ngay từ đầu ván ở chỗ ngẫu nhiên trên map (cách cả hai nhân vật ≥ 2000); bị hạ thì sau `CHO_TUONG` giây xuất hiện lại.
 - Gà tướng đẻ `TRUNG_SO` = 5 trứng mỗi lượt quanh mình (`deTrung()`), cách nhau `TRUNG_CHO` = 30s (lượt đầu ngay khi xuất hiện). Trứng nở sau `TRUNG_NO` = 2s (`capNhatTrungGa()`) thành 2 gà trắng, 2 gà đỏ, 1 gà đen (`DAN_TRUNG`). Tổng số gà còn sống (kể cả gà tướng) + trứng đang ấp ≥ `GA_TOI_DA` = 20 thì không đẻ. Gà không bị xoá khi ở xa nhân vật.
 - Trứng cũng bị sương mù: chỉ vẽ trong tầm nhìn (`trungView`).
-- Mini map (kiểu PS) ở giữa đáy màn hình, kích thước `MINI` = 120 (map vuông nên mini map vuông, cùng tỉ lệ): hiện 2 nhân vật, khung camera, và chấm đỏ là gà tướng (luôn hiện, không bị sương mù). Không bấm được, không chắn chuột.
+- Không có mini map. Thay vào đó là mũi tên chỉ hướng (kiểu đường chim bay của Google Maps, `huongToiTuong()` → `huongView`): cứ `HUONG_CHU_KY` = 5s hiện một lần (mờ dần vào / ra trong `HUONG_HIEN` = 2,5s), từ mỗi nhân vật còn sống về phía gà tướng, các mũi tên ">" mờ cách nhau `HUONG_CACH`. Gà tướng đã gần (trong `HUONG_GAN`) hoặc đã chết thì không hiện. Lọc theo khung nhìn như mọi vật khác.
