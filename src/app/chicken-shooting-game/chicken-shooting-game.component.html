@@ -242,16 +242,16 @@
     </svg:g>
   </ng-template>
 
-  <button type="button" class="nut-dong" (click)="dongGame()" title="Đóng (Esc)">✕</button>
+  <button type="button" class="nut-dong" (click)="dongGame()" title="Đóng">✕</button>
   @if (man === 'play') {
-  <button type="button" class="nut-dung" (click)="tamDung()" title="Tạm dừng (P)">❚❚</button>
+  <button type="button" class="nut-dung" (click)="tamDung()" title="Tạm dừng">❚❚</button>
   }
 
   @if (man === 'start') {
   <div class="man-phu">
     <div class="hop">
-      <h1>🐔 Chạy Vườn Săn Gà</h1>
-      <p class="mo-ta">Mabu và Zinbu băng qua khu vườn, mỗi người một nửa màn hình. Bắn chưởng hạ càng nhiều gà càng tốt, chơi đến khi hết mạng!</p>
+      <h1>🐉 Dragon Ball: Mabu &amp; Zinbu</h1>
+      <p class="mo-ta">Mabu và Zinbu đại chiến trên chiến trường Dragon Ball, mỗi người một nửa màn hình. Tung chưởng hạ càng nhiều địch càng tốt, chơi đến khi hết mạng! Chỉ cần chuột: chuột trái, chuột phải và con lăn.</p>
       <div class="hai-cot">
         @for (i of [0, 1]; track i) {
         <div class="the" [class.teo]="i === 0" [class.ty]="i === 1">
@@ -261,16 +261,10 @@
           </svg>
           @if (i === 0) {
           <h3>Mabu · nửa trái</h3>
-          <p>Chuột ở <b>nửa trái</b>: <b>chuột phải</b> chỉ chỗ để chạy tới (xa thì bay), <b>chuột trái</b> ra đòn,
-            <b>lăn chuột</b> đổi nhóm đòn.</p>
-          <p class="phu">Bàn phím: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> chạy, <kbd>Space</kbd> đánh con gà gần nhất,
-            <kbd>Q</kbd> đổi nhóm đòn, <kbd>R</kbd> tụ khí</p>
+          <p>Chuột ở <b>nửa trái</b>: <b>chuột phải</b> chỉ chỗ để chạy tới (xa thì bay), <b>chuột trái</b> ra đòn, <b>con lăn</b> đổi nhóm đòn.</p>
           } @else {
           <h3>Zinbu · nửa phải</h3>
-          <p>Chuột ở <b>nửa phải</b>: <b>chuột phải</b> chỉ chỗ để chạy tới (xa thì bay), <b>chuột trái</b> ra đòn,
-            <b>lăn chuột</b> đổi nhóm đòn.</p>
-          <p class="phu">Bàn phím: <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> chạy, <kbd>Enter</kbd> đánh con gà gần nhất,
-            <kbd>Shift phải</kbd> đổi nhóm đòn, <kbd>Ctrl phải</kbd> tụ khí</p>
+          <p>Chuột ở <b>nửa phải</b>: <b>chuột phải</b> chỉ chỗ để chạy tới (xa thì bay), <b>chuột trái</b> ra đòn, <b>con lăn</b> đổi nhóm đòn.</p>
           }
         </div>
         }
@@ -283,7 +277,7 @@
         Thanh khí {{ BANG_DAN }} ô, hết khí tự tụ khí. Nhóm đòn: <b>Đấm</b> 1 chưởng · <b>Đá</b> 2 chưởng tản ·
         <b>Chiêu đặc biệt</b> quả cầu nổ diện rộng (tốn 3 ô, nổ trúng cả gà con), đổi chiêu mỗi 5 giây.<br />
         Gà bay thả trứng trúng người thì nhân vật bị hạ gục và mất 1 ❤ (cả đội có 5 mạng), chạy hoặc bay đi để né. Bắn trúng liên tiếp để nhân điểm x2, x3.<br />
-        Vật phẩm (bắn hoặc chạy tới nhặt): 🌽 bắn chùm · 🍞 thêm mạng · ⏱ gà chậm. <kbd>P</kbd> tạm dừng, <kbd>Esc</kbd> đóng.</p>
+        Vật phẩm (bắn hoặc chạy tới nhặt): 🌽 bắn chùm · 🍞 thêm mạng · ⏱ gà chậm. Bấm nút ❚❚ để tạm dừng, nút ✕ để đóng.</p>
       <button type="button" class="nut-chinh" (click)="batDau()">Bắt đầu</button>
       @if (kyLuc > 0) {
       <p class="phu">Kỷ lục đội: <b>{{ kyLuc }}</b></p>
@@ -304,7 +298,7 @@
   @if (man === 'over') {
   <div class="man-phu">
     <div class="hop">
-      <h1>Hết mạng rồi! 🥚</h1>
+      <h1>Hết mạng rồi! 💥</h1>
       <div class="hai-cot">
         @for (n of nguoi; track $index) {
         <div class="the" [class.teo]="$index === 0" [class.ty]="$index === 1" [class.thang]="nguoiThang === $index">
@@ -316,9 +310,9 @@
       </div>
       <p class="ket-luan">
         @if (nguoiThang === -1) {
-        Hòa nhau! Cả hai cùng là vua săn gà 🤝
+        Hòa nhau! Cả hai cùng là chiến binh mạnh nhất 🤝
         } @else {
-        👑 {{ nguoi[nguoiThang].ten }} là <b>Vua săn gà</b>!
+        👑 {{ nguoi[nguoiThang].ten }} là <b>Chiến binh Dragon Ball</b>!
         }
       </p>
       <p>Điểm đội: <b>{{ tongDiem }}</b> · Kỷ lục: <b>{{ kyLuc }}</b>

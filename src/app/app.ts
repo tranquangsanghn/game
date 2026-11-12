@@ -12,7 +12,7 @@ const TIN_DONG_GAME = 'chicken-shooting-game:dong';
       <app-chicken-shooting-game (dong)="dong()" />
     } @else {
       <div class="cho">
-        <button type="button" (click)="dangMo.set(true)">Chơi game bắn gà</button>
+        <button type="button" (click)="dangMo.set(true)">Chơi Dragon Ball</button>
       </div>
     }
   `,

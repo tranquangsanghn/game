@@ -68,16 +68,6 @@ const TEN_DON: Record<string, string> = {
   antenna_wide: 'Quất râu quét', roll: 'Cuộn tròn', energy_ball: 'Cầu năng lượng',
 };
 
-const PHIM_GAME = new Set([
-  'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyR',
-  'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'NumpadEnter', 'ControlRight',
-  'KeyP', 'Escape', 'KeyQ', 'ShiftRight',
-]);
-const BO_PHIM = [
-  { len: 'KeyW', xuong: 'KeyS', trai: 'KeyA', phai: 'KeyD', ban: ['Space'], nap: 'KeyR', doi: 'KeyQ' },
-  { len: 'ArrowUp', xuong: 'ArrowDown', trai: 'ArrowLeft', phai: 'ArrowRight', ban: ['Enter', 'NumpadEnter'], nap: 'ControlRight', doi: 'ShiftRight' },
-];
-
 const ngauNhien = (a: number, b: number) => a + Math.random() * (b - a);
 const kep = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const kepMap = (v: number) => kep(v, 60, MAP - 60);
@@ -140,7 +130,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   private lanCuoi = 0;
   private henGa = [0.5, 0.8];
   private henVatPham = 8;
-  private phimGiu = new Set<string>();
   private goLangNghe: (() => void)[] = [];
 
   constructor() {
@@ -159,9 +148,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
         el.addEventListener(ten, fn, capture);
         this.goLangNghe.push(() => el.removeEventListener(ten, fn, capture));
       };
-      nghe(window, 'keydown', (e: KeyboardEvent) => this.nhanPhim(e), true);
-      nghe(window, 'keyup', (e: KeyboardEvent) => this.phimGiu.delete(e.code), true);
-      nghe(window, 'blur', () => this.phimGiu.clear());
       nghe(svg, 'pointermove', (e: PointerEvent) => this.diChuot(e));
       nghe(svg, 'pointerdown', (e: PointerEvent) => this.bamChuot(e));
       nghe(svg, 'contextmenu', (e: Event) => e.preventDefault());
@@ -291,15 +277,13 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private dieuKhien(dt: number): void {
-    BO_PHIM.forEach((k, p) => {
-      const n = this.nguoi[p];
+    this.nguoi.forEach((n, p) => {
       n.hoiChieu = Math.max(0, n.hoiChieu - dt);
       if (n.napDen && n.napDen <= this.tGame) {
         n.napDen = 0;
         n.dan = BANG_DAN;
       }
       n.nv.tuKhi(this.dangNap(p));
-      if (k.ban.some((c) => this.phimGiu.has(c))) this.banTuDong(p);
 
       if (n.nv.khoa) {
         n.dich = null;
@@ -313,11 +297,9 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
         return;
       }
 
-      let dx = (this.phimGiu.has(k.phai) ? 1 : 0) - (this.phimGiu.has(k.trai) ? 1 : 0);
-      let dy = (this.phimGiu.has(k.xuong) ? 1 : 0) - (this.phimGiu.has(k.len) ? 1 : 0);
-      if (dx || dy) {
-        n.dich = null;
-      } else if (n.dich) {
+      let dx = 0;
+      let dy = 0;
+      if (n.dich) {
         dx = n.dich.x - n.x;
         dy = n.dich.y - n.y;
         if (Math.hypot(dx, dy) < 6) {
@@ -609,24 +591,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     n.napDen = this.tGame + THOI_GIAN_NAP;
   }
 
-  // Bàn phím: tự nhắm con gà gần nhất, không có thì bắn thẳng hướng đang quay
-  private banTuDong(p: number): void {
-    const n = this.nguoi[p];
-    let dich: { x: number; y: number } | null = null;
-    let gan = 560 / ZOOM;
-    for (const g of this.ga) {
-      if (g.chet || g.loai === 'chick') continue;
-      const tam = this.tamGa(g);
-      const d = Math.hypot(tam.x - n.x, tam.y - n.y);
-      if (d < gan) {
-        gan = d;
-        dich = tam;
-      }
-    }
-    if (!dich) dich = { x: n.x + (n.nv.lat ? -320 : 320), y: n.y - 60 };
-    this.ban(p, dich.x, dich.y);
-  }
-
   // Nhóm Đấm: 1 viên · Đá: 2 viên tản · Chiêu đặc biệt: 1 quả cầu nổ diện rộng, tốn 3 khí
   private ban(p: number, x: number, y: number): void {
     const n = this.nguoi[p];
@@ -723,7 +687,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   private ketThuc(): void {
     this.man = 'over';
-    this.phimGiu.clear();
     this.nguoi.forEach((n) => {
       n.dich = null;
       n.dangDi = false;
@@ -739,32 +702,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   }
 
   // ─── Input ───
-
-  private nhanPhim(e: KeyboardEvent): void {
-    if (!PHIM_GAME.has(e.code)) return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.code === 'Escape') {
-      this.zone.run(() => this.dongGame());
-      return;
-    }
-    if (e.repeat) return;
-    if (e.code === 'KeyP') {
-      this.tamDung();
-      return;
-    }
-    if ((e.code === 'Enter' || e.code === 'Space') && (this.man === 'start' || this.man === 'over')) {
-      this.batDau();
-      return;
-    }
-    this.phimGiu.add(e.code);
-    if (this.man !== 'play') return;
-    BO_PHIM.forEach((k, p) => {
-      if (e.code === k.nap) this.napDan(p);
-      if (e.code === k.doi) this.doiNhom(p, 1);
-      if (k.ban.includes(e.code)) this.banTuDong(p);
-    });
-  }
 
   private lanChuot(e: WheelEvent): void {
     e.preventDefault();
