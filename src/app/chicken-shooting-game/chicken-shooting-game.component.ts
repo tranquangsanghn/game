@@ -159,6 +159,9 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   xep: VatXep[] = [];
   gaBayView: Ga[] = [];
   tuong: Ga | null = null;
+  fps = 0;
+  private fpsDem = 0;
+  private fpsMoc = 0;
   camX = MAP / 2;
   camY = MAP / 2;
   camZ = ZOOM;
@@ -298,6 +301,13 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   private vongLap = (now: number) => {
     const dt = Math.min(0.05, (now - this.lanCuoi) / 1000);
+    // Đếm FPS thật (số khung hình vẽ ra mỗi giây), cập nhật mỗi 0.5 giây
+    this.fpsDem++;
+    if (now - this.fpsMoc >= 500) {
+      this.fps = Math.round((this.fpsDem * 1000) / (now - this.fpsMoc));
+      this.fpsDem = 0;
+      this.fpsMoc = now;
+    }
     this.lanCuoi = now;
     if (this.man !== 'pause') {
       this.t += dt;

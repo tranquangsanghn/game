@@ -215,3 +215,11 @@ kbd {
   stroke: #fff;
   stroke-width: 6px;
 }
+
+.hud-fps {
+  font: 600 22px/1 system-ui, sans-serif;
+  fill: #ffffff;
+  stroke: #1d2b3a;
+  stroke-width: 4px;
+  paint-order: stroke;
+}
