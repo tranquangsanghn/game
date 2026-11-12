@@ -15,7 +15,7 @@
 
 # Nguyên tắc bố cục & chọn chiêu
 
-- Map chiếm cả màn hình. Hai bảng chiêu thức khoét vào map ở 2 góc dưới (hình bán nguyệt nền đen bán kính `R_BANG`, tâm nằm trên mép dưới màn hình): Mabu trái, Zinbu phải. Không thu nhỏ map vì bảng.
+- Map chiếm cả màn hình. Hai bảng chiêu thức khoét vào map ở 2 góc dưới (hình quạt (1/4 hình tròn) nền đen bán kính `R_BANG`, tâm nằm đúng ở góc dưới màn hình): Mabu trái, Zinbu phải. Không thu nhỏ map vì bảng.
 - Giữa mỗi bảng là animation hiện tại của nhân vật (cùng `khung` / `lat` với trên map), không phải ảnh tĩnh. Chiêu thức xếp vòng cung phía trên (`nutBang()`, `tamBang()`), không có chữ.
 - Chiêu đang dùng sáng + phát sáng, chiêu khác mờ, hết mana / đang khoá / Mây đang chạy hoặc hồi (`hetMana()`) thì mờ hẳn và không chọn được.
 - Đổi chiêu bằng bấm chuột trái vào nút (`chonNut()` → `NhanVat.datNhom`), bất kể chuột đang điều khiển ai. Không còn con lăn. Chuột trên bảng (`tronBang()` → `trenBang`) thì không ra đòn, không di chuyển, tâm ngắm ẩn.

@@ -43,7 +43,7 @@ const H = 900;
 const GIUA = W / 2;
 const MAP = 6400;
 // Hai bảng chiêu thức khoét vào map ở hai góc dưới (hình bán nguyệt nền đen, tâm nằm trên mép dưới): Mabu bên trái, Zinbu bên phải. Map vẫn chiếm cả màn hình.
-const R_BANG = 190;
+const R_BANG = 225;
 const TAM_VIEW_Y = 520;
 // Camera chung đặt ở trung điểm 2 nhân vật. ZOOM là mức gần nhất, hai người càng xa thì càng thu nhỏ tới ZOOM_MIN.
 const ZOOM = 0.55;
@@ -93,7 +93,7 @@ const MAU_MANA = ['#3aa0ff', '#ff9a3c', '#ff2b2b', '#a855f7'];
 // Mana của chiêu này màu tím: khi mây đang chạy là thời gian còn lại, khi chờ là tiến độ hồi.
 const NHOM_MAY = 3;
 // Bảng chiêu thức: bán kính cung và bán kính mỗi nút
-const R_CUNG = 96;
+const R_CUNG = 185;
 const R_NUT = 30;
 const MAY_THOI_GIAN = 7;
 const MAY_HOI = 40;
@@ -890,23 +890,28 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   // Vị trí các nút chiêu thức xếp hình vòng cung phía trên biểu tượng nhân vật (Mabu bảng trái, Zinbu bảng phải)
   tamBang(p: number) {
-    return { x: p === 0 ? 190 : W - 190, y: H - 60 };
+    return { x: p === 0 ? 75 : W - 75, y: H - 65 };
+  }
+
+  // Tâm hình tròn của bảng nằm đúng ở góc dưới màn hình (Mabu góc trái, Zinbu góc phải): x của góc
+  gocBang(p: number): number {
+    return p === 0 ? 0 : W;
   }
 
   nutBang(p: number): { k: number; x: number; y: number }[] {
-    const c = this.tamBang(p);
     const ds = this.dsBieuTuong(p);
+    const dau = p === 0 ? 1 : -1;
     return ds.map((k, i) => {
-      const a = (-165 + (i * 150) / Math.max(1, ds.length - 1)) * (Math.PI / 180);
-      return { k, x: c.x + Math.cos(a) * R_CUNG, y: c.y + Math.sin(a) * R_CUNG };
+      // Xếp vòng cung quanh góc: Đấm ở đầu cung sát đáy (phía trong), các chiêu sau lên dần về phía cạnh màn hình
+      const a = (12 + (i * 58) / Math.max(1, ds.length - 1)) * (Math.PI / 180);
+      return { k, x: this.gocBang(p) + dau * Math.cos(a) * R_CUNG, y: H - Math.sin(a) * R_CUNG };
     });
   }
 
   // Chuột có nằm trong vùng khoét của một bảng chiêu thức không
   private tronBang(x: number, y: number): boolean {
     return [0, 1].some((p) => {
-      const c = this.tamBang(p);
-      return Math.hypot(x - c.x, y - H) <= R_BANG;
+      return Math.hypot(x - this.gocBang(p), y - H) <= R_BANG;
     });
   }
 
