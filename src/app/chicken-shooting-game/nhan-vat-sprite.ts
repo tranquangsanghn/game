@@ -31,8 +31,8 @@ const TICK = 60;
 const TRONG_LUC = 0.32;
 const NAM_GIU = 1.6;
 const VONG_CHIEU = 5;
-// Tốc độ đánh của Mabu / Zinbu: 1 đòn mỗi THOI_GIAN_DON giây. Animation đòn tự co giãn để chạy xong trong 90% khoảng đó.
-export const THOI_GIAN_DON = 0.5;
+// Animation mỗi đòn của Mabu / Zinbu tự co giãn để chạy xong trong 90% của THOI_GIAN_DON (0,5s). Chỉ ảnh hưởng animation, không đổi tốc độ đánh.
+const THOI_GIAN_DON = 0.5;
 const ANIM_DON = THOI_GIAN_DON * 0.9;
 const DO_CAO_BAY = 48;
 

@@ -57,6 +57,6 @@
 
 # Nguyên tắc tốc độ đánh
 
-- Mabu và Zinbu đánh 1 đòn mỗi `THOI_GIAN_DON` = 0,5s, mọi nhóm đòn (Đấm, Đá, Chiêu đặc biệt) như nhau. Thời gian hồi `hoiChieu` đặt đúng bằng hằng số này.
-- Animation đòn tự co giãn theo (`tocDon` trong `NhanVat`) để chạy xong trong 90% `THOI_GIAN_DON`, đòn sau nối ngay đòn trước. Quãng lao tới của đòn có chuyển động (`tien`) không đổi dù tua nhanh hay chậm.
-- Muốn đổi tốc độ đánh chỉ sửa `THOI_GIAN_DON`. Tốc độ đánh của gà nằm ở `HOI_DANH_GA`.
+- Tốc độ đánh của Mabu và Zinbu là thời gian hồi `hoiChieu` giữa 2 đòn trong `ban()`, theo nhóm: Đấm 0,4s (đang đi 0,6s) · Đá 0,64s · Chiêu đặc biệt 1,6s. Không đổi khi chỉnh animation.
+- Animation mỗi đòn tự co giãn (`tocDon` trong `NhanVat`) để chạy xong trong 90% của `THOI_GIAN_DON` = 0,5s (~0,45s), bất kể đòn có bao nhiêu khung hình. Quãng lao tới của đòn có chuyển động (`tien`) không đổi dù tua nhanh hay chậm.
+- Tốc độ đánh của gà nằm ở `HOI_DANH_GA`.

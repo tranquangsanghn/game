@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
 import { KhungSprite, SpriteComponent } from './sprite.component';
-import { NhanVat, THOI_GIAN_DON } from './nhan-vat-sprite';
+import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, GA_VANG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -837,8 +837,8 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     }
     if (n.may.dang) return;
     if (nhom > 0 && (n.khoaMana[nhom] > 0 || n.mana[nhom] < 1)) return;
-    // Mọi nhóm đòn đều đánh 1 đòn mỗi THOI_GIAN_DON giây
-    n.hoiChieu = THOI_GIAN_DON;
+    // Thời gian hồi giữa 2 đòn theo nhóm (không phụ thuộc độ dài animation)
+    n.hoiChieu = (chieu ? 0.8 : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
     if (nhom > 0) {
       n.mana[nhom]--;
       if (n.mana[nhom] < 1) {
