@@ -207,3 +207,11 @@ kbd {
   height: 128px;
   margin: -6px -4px 0 8px;
 }
+
+.canh-bao {
+  font: 800 30px/1 system-ui, sans-serif;
+  fill: #ff4d4d;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 6px;
+}

@@ -8,17 +8,13 @@
           <feMergeNode in="SourceGraphic" />
         </feMerge>
       </filter>
-      <clipPath id="cg-nua0"><rect x="0" y="0" [attr.width]="GIUA" [attr.height]="H" /></clipPath>
-      <clipPath id="cg-nua1"><rect [attr.x]="GIUA" y="0" [attr.width]="GIUA" [attr.height]="H" /></clipPath>
-
     </defs>
 
     <rect x="0" y="0" [attr.width]="W" [attr.height]="H" fill="#9aa59a" />
 
-    <!-- Mỗi nửa màn hình là 1 camera bám theo nhân vật của nửa đó -->
-    @for (p of [0, 1]; track p) {
-    <g [attr.clip-path]="'url(#cg-nua' + p + ')'">
-      <g [attr.transform]="viewTransform(p)">
+    <!-- Một camera chung bám trung điểm 2 nhân vật, zoom ra khi họ xa nhau -->
+    <g>
+      <g [attr.transform]="viewTransform()">
         <rect x="0" y="0" [attr.width]="MAP" [attr.height]="MAP" fill="#c9d8bf" stroke="#7d8b74" stroke-width="10" />
 
         @for (v of vet; track v.id) {
@@ -35,12 +31,13 @@
           [attr.opacity]="1 - v.t / 0.45" />
         }
         }
-        @let nv = nguoi[p];
+        @for (nv of nguoi; track $index) {
         @if (nv.dich) {
         <g [attr.transform]="'translate(' + nv.dich.x + ',' + nv.dich.y + ')'" fill="none" [attr.stroke]="nv.mau" stroke-width="4">
           <ellipse [attr.rx]="10 + 22 * dichNhay()" [attr.ry]="5 + 11 * dichNhay()" [attr.opacity]="1 - dichNhay() * 0.6" />
           <ellipse rx="6" ry="3" [attr.fill]="nv.mau" />
         </g>
+        }
         }
         @for (e of trung; track e.id) {
         <ellipse [attr.transform]="bongTrungTransform(e)" [attr.rx]="10 + 26 * bongTrung(e)" [attr.ry]="4 + 8 * bongTrung(e)"
@@ -69,21 +66,28 @@
         }
 
         <!-- Gà dưới đất + nhân vật, xếp theo y -->
-        @for (o of xep[p]; track $index) {
+        @for (o of xep; track $index) {
         @switch (o.loai) {
         @case ('ga') {
         <ng-container *ngTemplateOutlet="veGa; context: { $implicit: o.ga }" />
         }
         @case ('nv') {
         @let ng = nguoi[o.p];
+        <ellipse [attr.cx]="ng.x" [attr.cy]="ng.y" rx="70" ry="24" [attr.fill]="ng.mau" fill-opacity="0.25" [attr.stroke]="ng.mau"
+          stroke-width="6" />
         <g [attr.transform]="nvTransform(o.p)">
           <g cgSprite [sp]="ng.nv.sp" [khung]="ng.nv.khung" [lat]="ng.nv.lat"></g>
+        </g>
+        <g [attr.transform]="'translate(' + ng.x + ',' + (ng.y - 260) + ')'">
+          <path d="M-22,-18 L22,-18 L0,10 Z" [attr.fill]="ng.mau" stroke="#fff" stroke-width="5" stroke-linejoin="round" />
+          <text y="-30" text-anchor="middle" class="chu-bay" font-size="44" [attr.fill]="ng.mau" stroke="#fff" stroke-width="6" paint-order="stroke">
+            {{ o.p === 0 ? '1P' : '2P' }}</text>
         </g>
         }
         }
         }
 
-        @for (g of gaBayView[p]; track g.id) {
+        @for (g of gaBayView; track g.id) {
         <ng-container *ngTemplateOutlet="veGa; context: { $implicit: g }" />
         }
         @for (e of trung; track e.id) {
@@ -106,29 +110,51 @@
         <text [attr.x]="c.x" [attr.y]="c.y" text-anchor="middle" class="chu-bay" [attr.fill]="c.mau" [attr.opacity]="1 - c.t">
           {{ c.text }}</text>
         }
+        @if (man === 'play' && nguoi[1].nham; as m) {
+        <g [attr.transform]="'translate(' + m.x + ',' + m.y + ')'" fill="none" [attr.stroke]="nguoi[1].mau" stroke-width="7"
+          pointer-events="none">
+          <ellipse [attr.rx]="44 + 10 * dichNhay()" [attr.ry]="44 + 10 * dichNhay()" />
+          <path d="M-62,0 h24 M38,0 h24 M0,-62 v24 M0,38 v24" />
+        </g>
+        }
       </g>
     </g>
-    }
 
     <rect x="0" y="0" [attr.width]="W" [attr.height]="H" [attr.fill]="mauHoangHon" [attr.opacity]="doHoangHon * 0.6"
       pointer-events="none" />
-    <line [attr.x1]="GIUA" y1="0" [attr.x2]="GIUA" [attr.y2]="H" stroke="#1d2b3a" stroke-width="6" />
 
     @if (man === 'play' || man === 'pause') {
-    @for (n of nguoi; track $index) {
-    <g [attr.transform]="'translate(' + n.tamX + ',' + n.tamY + ')'" [attr.stroke]="n.mau" stroke-width="3" fill="none">
-      <circle r="18" />
-      <circle r="3" [attr.fill]="n.mau" />
-      <path d="M-28,0 h14 M14,0 h14 M0,-28 v14 M0,14 v14" />
+    @let nTet = tetDo;
+    @if (nTet > 0.7) {
+    @let v0 = viTriManHinh(0);
+    @let v1 = viTriManHinh(1);
+    <line [attr.x1]="v0.x" [attr.y1]="v0.y" [attr.x2]="v1.x" [attr.y2]="v1.y" stroke="#ff4d4d" stroke-width="5" stroke-dasharray="14 10"
+      [attr.opacity]="kepTet(nTet)" pointer-events="none" />
+    }
+    @if (nTet > 0.9) {
+    <text [attr.x]="GIUA" [attr.y]="H - 40" text-anchor="middle" class="canh-bao">⚠ Đừng bỏ xa đồng đội!</text>
+    }
+    @for (p of [0, 1]; track p) {
+    @let mt = muiTen(p);
+    @if (mt) {
+    <g [attr.transform]="'translate(' + mt.x + ',' + mt.y + ') rotate(' + mt.goc + ')'" pointer-events="none">
+      <path d="M-22,-18 L26,0 L-22,18 L-12,0 Z" [attr.fill]="nguoi[p].mau" stroke="#fff" stroke-width="4" stroke-linejoin="round" />
     </g>
     }
+    }
+    <!-- Tâm ngắm của P1 (chuột) -->
+    <g [attr.transform]="'translate(' + nguoi[0].tamX + ',' + nguoi[0].tamY + ')'" [attr.stroke]="nguoi[0].mau" stroke-width="3" fill="none">
+      <circle r="18" />
+      <circle r="3" [attr.fill]="nguoi[0].mau" />
+      <path d="M-28,0 h14 M14,0 h14 M0,-28 v14 M0,14 v14" />
+    </g>
 
     <!-- HUD -->
     @for (n of nguoi; track $index) {
     <g [attr.transform]="'translate(' + ($index === 0 ? 20 : W - 300) + ',18)'">
       <rect width="280" height="92" rx="14" fill="#1d2b3a" fill-opacity="0.92" />
       <rect width="10" height="92" rx="5" [attr.fill]="n.mau" />
-      <text x="24" y="28" class="hud-ten">{{ n.ten }} · {{ $index === 0 ? 'nửa trái' : 'nửa phải' }}</text>
+      <text x="24" y="28" class="hud-ten">{{ $index === 0 ? '1P' : '2P' }} {{ n.ten }} · {{ $index === 0 ? 'chuột' : 'phím / tay cầm' }}</text>
       <text x="266" y="84" text-anchor="end" class="hud-phu">{{ tenNhom($index) }}</text>
       <text x="24" y="60" class="hud-diem">{{ n.diem }}</text>
       <text x="266" y="58" text-anchor="end" class="hud-phu">
@@ -140,25 +166,6 @@
       <rect [attr.x]="24 + i * 11" y="72" width="7" height="12" rx="2" [attr.fill]="i < n.dan ? '#ff8fc8' : '#ffffff30'" />
       }
       }
-    </g>
-    }
-    <!-- Radar: vùng quanh nhân vật của nửa đó, viền vườn, khung nhìn, gà và 2 nhân vật -->
-    @for (p of [0, 1]; track p) {
-    <g [attr.transform]="'translate(' + (p === 0 ? 20 : W - MINI - 20) + ',' + (H - MINI - 20) + ')'" pointer-events="none">
-      <rect [attr.width]="MINI" [attr.height]="MINI" rx="8" fill="#1d2b3a" fill-opacity="0.55" stroke="#1d2b3a" stroke-width="2" />
-      <svg [attr.width]="MINI" [attr.height]="MINI" [attr.viewBox]="viewBoxRadar(p)">
-        <rect x="0" y="0" [attr.width]="MAP" [attr.height]="MAP" fill="#c9d8bf" fill-opacity="0.35" stroke="#fff" stroke-width="30" />
-        @for (g of ga; track g.id) {
-        @if (!g.chet && g.loai !== 'chick') {
-        <circle [attr.cx]="g.x" [attr.cy]="g.y" [attr.r]="g.loai === 'golden' ? 70 : 45" [attr.fill]="MAU_LONG[g.loai]" />
-        }
-        }
-        @for (n of nguoi; track $index) {
-        <circle [attr.cx]="n.x" [attr.cy]="n.y" r="75" [attr.fill]="n.mau" stroke="#fff" stroke-width="25" />
-        }
-        @let k = khungMini(p);
-        <rect [attr.x]="k.x" [attr.y]="k.y" [attr.width]="k.w" [attr.height]="k.h" fill="none" [attr.stroke]="nguoi[p].mau" stroke-width="22" />
-      </svg>
     </g>
     }
     <g [attr.transform]="'translate(' + GIUA + ',18)'">
@@ -259,11 +266,12 @@
             <g cgSprite [sp]="nvm.sp" [khung]="nvm.khung" [lat]="false"></g>
           </svg>
           @if (i === 0) {
-          <h3>Mabu · nửa trái</h3>
+          <h3>1P Mabu · chuột</h3>
           <p><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Con lăn</b>: đổi nhóm đòn</p>
           } @else {
-          <h3>Zinbu · nửa phải</h3>
-          <p><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Con lăn</b>: đổi nhóm đòn</p>
+          <h3>2P Zinbu · bàn phím / tay cầm</h3>
+          <p><b>WASD / mũi tên</b>: di chuyển<br /><b>J / Z</b>: ra đòn (tự ngắm gà gần nhất)<br /><b>K / X</b>: đổi nhóm đòn · <b>Space / L</b>: bay nhanh<br />
+            Tay cầm: cần trái, <b>A</b> đánh, <b>LB/RB</b> đổi đòn, <b>B</b> bay</p>
           }
         </div>
         }
