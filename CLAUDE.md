@@ -27,3 +27,10 @@
 
 - Mana tính riêng từng nhóm đòn (`MANA_TOI_DA`, `KHOA_MANA`, `HOI_MANA`): Đấm vô hạn · Đá 10 · Chiêu đặc biệt 5. Hết sạch thì khoá 30s rồi hồi mỗi 6s được 1 lần đánh.
 - Chỉ có một quả cầu mana trên đầu nhân vật, đổi màu theo nhóm đang dùng (`MAU_MANA`): Đấm xanh, Đá cam, Chiêu đặc biệt đỏ. Thứ tự biểu tượng dưới chân: Đấm → Chiêu đặc biệt → Đá.
+
+# Nguyên tắc chiêu Biến mây
+
+- Riêng Mabu (nhóm đòn 3, `NHOM_MAY`), Jinbu/Zinbu không có. Bấm để biến thành mây to gấp 2 trong `MAY_THOI_GIAN` = 10s, sau đó chờ `MAY_HOI` = 40s mới dùng lại.
+- Dạng mây: không có thanh máu, không có quả cầu mana, không ra đòn khác, không bay (chỉ trôi, nhanh hơn). Mọi con gà chạm vùng mây (`mayQuet`) đều dính đòn; gà tướng bị trừ 1 máu mỗi `MAY_NHIP` giây.
+- Mana chiêu này màu tím (`MAU_MANA[3]`): lúc mây chạy là thời gian còn lại, lúc chờ là tiến độ hồi. Biểu tượng là hình đám mây, đứng cuối cùng bên phải trong hàng biểu tượng.
+- Mây to hơn nên dùng lề bản đồ riêng `LE_MAY` (nội suy theo `heSoTo` lúc biến hình), render lọc với lề rộng hơn.

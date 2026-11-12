@@ -13,7 +13,7 @@ hai người không đi xa nhau quá mức camera chứa nổi (màn hình hiệ
 **1P Mabu — chuột**
 - **Chuột phải**: chỉ chỗ để chạy tới (xa thì bay)
 - **Chuột trái**: ra đòn
-- **Con lăn**: đổi nhóm đòn (Đấm / Đá / Chiêu đặc biệt)
+- **Con lăn**: đổi nhóm đòn (Đấm / Đá / Chiêu đặc biệt / Biến mây)
 - **Tab**: chuyển chuột sang điều khiển nhân vật kia (tạm thời khi chỉ có 1 chuột)
 
 **2P Zinbu — bàn phím hoặc tay cầm**
@@ -22,6 +22,8 @@ hai người không đi xa nhau quá mức camera chứa nổi (màn hình hiệ
 - **K / X**: đổi nhóm đòn · **Space / L**: bay nhanh theo hướng đang đi
 - Tay cầm (tay cầm thứ nhất): cần trái / D-pad di chuyển, **A** đánh, **LB/RB** đổi đòn, **B** bay.
   Tay cầm thứ hai (nếu có) điều khiển 1P theo cùng cách.
+
+**Biến mây (chỉ Mabu)**: chọn biểu tượng đám mây (cuối hàng, mana tím) rồi bấm đánh. Mabu biến thành đám mây to gấp 2 trong 10 giây, không còn thanh máu / mana, mọi con gà mây quét qua đều trúng đòn. Sau đó phải chờ 40 giây mới dùng lại.
 
 ## Gà
 

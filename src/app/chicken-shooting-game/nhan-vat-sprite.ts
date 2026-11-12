@@ -6,7 +6,7 @@ export interface HoatAnh {
   ban?: { o: number; dx: number; dy: number };
 }
 export interface BuocChet { anim: string; ticks?: number; vx?: number; vy?: number; bay?: boolean; giu?: boolean }
-export interface NhomDon { ten: string; vong: boolean; don: string[] }
+export interface NhomDon { ten: string; vong: boolean; don: string[]; may?: boolean }
 
 export interface NhanVatSprite {
   ten: string; atlas: string; atlasW: number; atlasH: number; w: number; h: number; cot: number;
@@ -24,7 +24,7 @@ export interface KhungHuong { dung: number[]; di: number[] }
 
 export type Huong = 'ngang' | 'len' | 'xuong';
 
-type TrangThai = 'thuong' | 'khieuKhich' | 'tanCong' | 'tuKhi' | 'bay' | 'tiepDat' | 'chet' | 'dayLai';
+type TrangThai = 'thuong' | 'khieuKhich' | 'tanCong' | 'tuKhi' | 'bay' | 'tiepDat' | 'chet' | 'dayLai' | 'may';
 
 // Đơn vị trong file logic: px sprite / tick, 60 tick mỗi giây
 const TICK = 60;
@@ -59,6 +59,7 @@ export class NhanVat {
   private chetCuoi?: BuocChet[];
   private chet = { buoc: [] as BuocChet[], k: 0, t: 0, vy: 0 };
   private tNhom = 0;
+  private tMay = 0;
 
   constructor(readonly sp: NhanVatSprite) {}
 
@@ -81,6 +82,19 @@ export class NhanVat {
 
   get khoa(): boolean {
     return this.trangThai === 'chet' || this.trangThai === 'dayLai';
+  }
+
+  /** Đang ở dạng mây (kể cả lúc đang biến vào / biến ra) */
+  get laMay(): boolean {
+    return this.trangThai === 'may';
+  }
+
+  /** Hệ số phóng to của sprite: 1 bình thường, 2 khi thành mây (tăng dần lúc biến hình) */
+  get heSoTo(): number {
+    if (this.trangThai !== 'may') return 1;
+    if (this.anim === 'may_vao') return 1 + (this.i + 1) / 3;
+    if (this.anim === 'may_ra') return 2 - (this.i + 1) / 3;
+    return 2;
   }
 
   get dangBay(): boolean {
@@ -114,8 +128,9 @@ export class NhanVat {
 
   /** Nhóm thường: random không trùng đòn vừa ra. Chiêu đặc biệt: đòn đang tới lượt trong vòng 5 giây */
   raDon(t: number): void {
-    if (this.khoa) return;
+    if (this.khoa || this.laMay) return;
     const nhom = this.sp.nhomDon[this.nhom];
+    if (nhom.may) return;
     const don = nhom.vong ? this.donVong(t) : chonKhac(nhom.don, this.donCuoi);
     this.donCuoi = don;
     const dangDanh = this.trangThai === 'tanCong' && !this.xong;
@@ -135,10 +150,25 @@ export class NhanVat {
 
   /** k: tiến độ bay 0 → 1 theo chuỗi jump_up → fly → fall */
   bay(k: number): void {
-    if (this.khoa) return;
+    if (this.khoa || this.laMay) return;
     this.trangThai = 'bay';
     this.cao = DO_CAO_BAY * Math.sin(Math.PI * Math.min(1, k));
     this.choi(k < 0.15 ? 'jump_up' : k < 0.82 ? 'fly' : 'fall', false);
+  }
+
+  /** Biến thành đám mây (chỉ nhân vật có anim 'may') */
+  vaoMay(): void {
+    if (this.khoa || !this.sp.anim['may']) return;
+    this.cao = 0;
+    this.donCho = null;
+    this.tMay = 0;
+    this.trangThai = 'may';
+    this.choi('may_vao');
+  }
+
+  /** Biến lại thành người */
+  raMay(): void {
+    if (this.trangThai === 'may' && this.anim !== 'may_ra') this.choi('may_ra');
   }
 
   tiepDat(): void {
@@ -182,6 +212,17 @@ export class NhanVat {
       case 'tuKhi':
         if (dangDi) this.choi('run', false);
         else if (this.anim !== 'taunt_flex' || this.xong) this.choi('taunt_flex');
+        return 0;
+      case 'may':
+        this.tMay += dt;
+        if (this.anim === 'may_vao' && this.xong) this.choi('may');
+        else if (this.anim === 'may_ra' && this.xong) {
+          this.cao = 0;
+          this.veThuong();
+          return 0;
+        }
+        // Mây lơ lửng nhấp nhô, càng to càng bồng bềnh
+        this.cao = (this.heSoTo - 1) * (10 + 4 * Math.sin(this.tMay * 4));
         return 0;
       case 'bay':
         return 0;

@@ -38,12 +38,18 @@ export const MABU: NhanVatSprite = {
     antenna_whip: { f: [150, 151, 152], ms: 83, lap: false },
     roll: { f: [77, 78, 79, 80, 77, 78, 79, 80], ms: 67, lap: false, tien: { tu: 0, den: 7, v: 3.0 } },
     energy_ball: { f: [170, 171, 172, 172, 171, 170], ms: 100, lap: false, ban: { o: 2, dx: 60, dy: -38 } },
+    // Biến thành đám mây (khung 2 → 1 → 0 là 3 hình mây trong atlas), rồi biến lại
+    may_vao: { f: [2, 1, 0], ms: 110, lap: false },
+    may: { f: [0], ms: 100, lap: true },
+    may_ra: { f: [0, 1, 2], ms: 110, lap: false },
   },
   khieuKhich: ['taunt_flex', 'taunt_wave', 'taunt_stretch', 'taunt_antenna', 'taunt_puff'],
   nhomDon: [
     { ten: 'Đấm', vong: false, don: ['punch_combo', 'punch_long', 'punch_long_2', 'punch_dash', 'punch_charge'] },
     { ten: 'Đá', vong: false, don: ['kick_arc', 'antenna_whip'] },
     { ten: 'Chiêu đặc biệt', vong: true, don: ['roll', 'energy_ball'] },
+    // Riêng Mabu: không ra đòn, bấm để biến thành mây (xem chicken-shooting-game.component.ts)
+    { ten: 'Biến mây', vong: false, don: [], may: true },
   ],
   kieuChet: [
     [{ anim: 'hit' }, { anim: 'knockdown' }, { anim: 'lie', giu: true }],

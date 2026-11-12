@@ -17,7 +17,7 @@ interface Ga {
   id: number; loai: LoaiGa; x: number; y: number; h: number; h0: number;
   vx: number; vy: number; phase: number; doiHuong: number; me: number;
   chet: boolean; tChet: number;
-  lat: boolean; hp: number; nhay: number;
+  lat: boolean; hp: number; nhay: number; chamMay?: number;
 }
 interface Dan { id: number; p: number; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; }
 interface Chu { id: number; x: number; y: number; text: string; mau: string; t: number; }
@@ -30,6 +30,7 @@ interface NguoiChoi {
   x: number; y: number; dich: { x: number; y: number } | null; dangDi: boolean;
   mana: number[]; khoaMana: number[]; hoiMana: number[]; nv: NhanVat; bay: ChuyenBay | null;
   nhin: { x: number; y: number }; nham: { x: number; y: number } | null;
+  may: { dang: boolean; con: number; hoi: number };
 }
 interface DauVao { hx: number; hy: number; danh: boolean; }
 type VatXep =
@@ -69,7 +70,21 @@ const MANA_TOI_DA = [0, 10, 5];
 const KHOA_MANA = 30;
 const HOI_MANA = 6;
 // Màu quả cầu mana theo nhóm đòn đang dùng: Đấm xanh · Đá cam · Chiêu đặc biệt đỏ
-const MAU_MANA = ['#3aa0ff', '#ff9a3c', '#ff2b2b'];
+const MAU_MANA = ['#3aa0ff', '#ff9a3c', '#ff2b2b', '#a855f7'];
+// Chiêu Biến mây (riêng Mabu, nhóm đòn 3): mây to gấp 2, quét trúng mọi con gà nó đi qua. Hiệu lực MAY_THOI_GIAN giây, sau đó chờ MAY_HOI giây mới dùng lại.
+// Mana của chiêu này màu tím: khi mây đang chạy là thời gian còn lại, khi chờ là tiến độ hồi.
+const NHOM_MAY = 3;
+const MAY_THOI_GIAN = 10;
+const MAY_HOI = 40;
+const MAY_TOC_DO = 1.35;
+// Vùng mây quét trúng trên mặt đất (bán kính ngang / dọc, đơn vị bản đồ), cộng thêm khi trúng gà tướng to
+const MAY_RX = 330;
+const MAY_RY = 150;
+// Thân mây nằm cao hơn toạ độ chân nên tâm vùng quét nâng lên chừng này
+const MAY_NANG = 90;
+const MAY_NHAN_TUONG = { x: 150, y: 70 };
+// Gà tướng nhiều máu: mây chỉ trừ 1 máu mỗi MAY_NHIP giây
+const MAY_NHIP = 0.5;
 // Tầm đánh (đơn vị bản đồ). Đấm/Đá chọn ngẫu nhiên đòn gần hoặc đòn xa, đòn xa đánh được xa hơn.
 // 
 const BAN_KINH_NO = 120;
@@ -123,6 +138,13 @@ const LE_NV: Le = { x: 80, tren: 230, duoi: 75 };
 const LE_GA: Le = { x: 50, tren: 90, duoi: 10 };
 const LE_BAY: Le = { x: 70, tren: 150, duoi: 60 };
 const LE_TUONG: Le = { x: 220, tren: 330, duoi: 20 };
+// Mabu dạng mây to gấp 2 nên lề rộng hơn; k = hệ số phóng to (1 → 2) để lề đổi mượt lúc biến hình
+const LE_MAY: Le = { x: 380, tren: 200, duoi: 45 };
+const leNhanVat = (k: number): Le => ({
+  x: LE_NV.x + (LE_MAY.x - LE_NV.x) * (k - 1),
+  tren: LE_NV.tren + (LE_MAY.tren - LE_NV.tren) * (k - 1),
+  duoi: LE_NV.duoi + (LE_MAY.duoi - LE_NV.duoi) * (k - 1),
+});
 const leCuaGa = (g: { loai: LoaiGa }): Le => (g.loai === 'boss' ? LE_TUONG : g.loai === 'flyer' ? LE_BAY : LE_GA);
 // Kẹp vật vào trong bản đồ; trả về cờ chạm mép theo từng trục để vật tự bật lại
 function giuTrongMap(o: { x: number; y: number }, le: Le) {
@@ -361,7 +383,8 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     this.docDauVao();
     this.dieuKhien(dt);
     this.rangBuoc(truoc);
-    this.nguoi.forEach((n) => giuTrongMap(n, LE_NV));
+    this.nguoi.forEach((n) => giuTrongMap(n, leNhanVat(n.nv.heSoTo)));
+    this.nguoi.forEach((n, p) => this.mayQuet(n, p));
     this.capNhatGa(dtE);
     this.capNhatDan(dt);
     this.capNhatHieuUng(dt, dtE);
@@ -371,6 +394,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     this.nguoi.forEach((n, p) => {
       n.hoiChieu = Math.max(0, n.hoiChieu - dt);
       this.hoiMana(n, dt);
+      this.capNhatMay(n, dt);
 
       const hv = this.vao[p];
       const hl = Math.hypot(hv.hx, hv.hy);
@@ -413,7 +437,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       const d = Math.hypot(dx, dy);
       n.dangDi = d > 0;
       if (n.dangDi) {
-        const buoc = Math.min(TOC_DO_DI * dt, n.dich ? d : Infinity);
+        const buoc = Math.min(TOC_DO_DI * (n.may.dang ? MAY_TOC_DO : 1) * dt, n.dich ? d : Infinity);
         n.x = kepMap(n.x + (dx / d) * buoc);
         n.y = kepMap(n.y + (dy / d) * buoc);
         // Đi chủ yếu theo chiều dọc thì quay lên / xuống, còn lại quay trái / phải
@@ -597,7 +621,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       if (g.loai === 'flyer' || !trong(g.x, g.y, g.loai === 'boss' ? 450 : 80)) continue;
       xep.push({ loai: 'ga', y: g.y, ga: g });
     }
-    this.nguoi.forEach((n, i) => { if (trong(n.x, n.y, 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
+    this.nguoi.forEach((n, i) => { if (trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
     xep.sort((a, b) => a.y - b.y);
     this.xep = xep;
     this.gaBayView = this.ga.filter((g) => g.loai === 'flyer' && trong(g.x, g.y, 400));
@@ -748,12 +772,56 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  // Biến mây: đếm giờ hiệu lực, hết thì biến lại và bắt đầu chờ hồi
+  private capNhatMay(n: NguoiChoi, dt: number): void {
+    const m = n.may;
+    if (m.dang) {
+      m.con -= dt;
+      if (m.con <= 0) {
+        m.dang = false;
+        m.con = 0;
+        m.hoi = MAY_HOI;
+        n.nv.raMay();
+      }
+    } else if (m.hoi > 0) m.hoi = Math.max(0, m.hoi - dt);
+  }
+
+  private vaoMay(n: NguoiChoi): void {
+    if (n.may.dang || n.may.hoi > 0 || n.bay || n.nv.khoa || n.nv.laMay) return;
+    n.may.dang = true;
+    n.may.con = MAY_THOI_GIAN;
+    n.nv.vaoMay();
+  }
+
+  // Mây quét qua: mọi con gà (kể cả gà con, gà bay) chạm vùng mây đều dính đòn
+  private mayQuet(n: NguoiChoi, p: number): void {
+    if (!n.may.dang) return;
+    for (const g of this.ga) {
+      if (g.chet) continue;
+      const boss = g.loai === 'boss';
+      const rx = MAY_RX + (boss ? MAY_NHAN_TUONG.x : 0);
+      const ry = MAY_RY + (boss ? MAY_NHAN_TUONG.y : 0);
+      if (((g.x - n.x) / rx) ** 2 + ((g.y - (n.y - MAY_NANG)) / ry) ** 2 >= 1) continue;
+      if (boss) {
+        if ((g.chamMay ?? 0) > this.t) continue;
+        g.chamMay = this.t + MAY_NHIP;
+      }
+      this.vet.push({ id: this.id++, x: g.x, y: this.tamGa(g).y, t: 0, loai: 'no' });
+      this.trungGa(g, p);
+    }
+  }
+
   // Nhóm Đấm: 1 viên, không tốn mana · Đá: 2 viên tản · Chiêu đặc biệt: 1 quả cầu nổ diện rộng. Đá và chiêu tốn 1 mana mỗi lần.
   private ban(p: number, x: number, y: number): void {
     const n = this.nguoi[p];
     if (n.hoiChieu > 0 || n.nv.khoa) return;
     const chieu = n.nv.nhom === 2;
     const nhom = n.nv.nhom;
+    if (nhom === NHOM_MAY) {
+      this.vaoMay(n);
+      return;
+    }
+    if (n.may.dang) return;
     if (nhom > 0 && (n.khoaMana[nhom] > 0 || n.mana[nhom] < 1)) return;
     // Animation đòn chạy chậm 1/2 nên thời gian hồi cũng gấp đôi
     n.hoiChieu = (chieu ? 0.8 : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
@@ -931,18 +999,20 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     const n = this.nguoi[p];
     if (n.nv.khoa || n.bay) return;
     const o = this.nguoi[1 - p];
+    const le = leNhanVat(n.nv.heSoTo);
     let dich = {
       x: kep(x, o.x - MAX_DX, o.x + MAX_DX),
       y: kep(y, o.y - MAX_DY, o.y + MAX_DY),
     };
-    giuTrongMap(dich, LE_NV);
+    giuTrongMap(dich, le);
     let d = Math.hypot(dich.x - n.x, dich.y - n.y);
     if (d > BAY_TOI_DA) {
       // Chỉ xa hơn tầm bay tối đa thì bay tới mép tầm theo hướng chuột
       dich = { x: n.x + ((dich.x - n.x) / d) * BAY_TOI_DA, y: n.y + ((dich.y - n.y) / d) * BAY_TOI_DA };
       d = BAY_TOI_DA;
     }
-    if (d <= BAY_KHI_XA) {
+    // Dạng mây không bay, chỉ trôi tới nơi
+    if (d <= BAY_KHI_XA || n.may.dang) {
       n.dich = dich;
       return;
     }
@@ -1080,6 +1150,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   nangLuong(p: number): number {
     const n = this.nguoi[p];
     const g = n.nv.nhom;
+    if (g === NHOM_MAY) return n.may.dang ? n.may.con / MAY_THOI_GIAN : 1 - n.may.hoi / MAY_HOI;
     return g === 0 ? 1 : n.mana[g] / MANA_TOI_DA[g];
   }
 
@@ -1090,7 +1161,19 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   nvTransform(p: number): string {
     const n = this.nguoi[p];
-    return `translate(${n.x.toFixed(1)},${(n.y - (n.nv.cao - n.nv.nhun) * S_NV).toFixed(1)}) scale(${S_NV})`;
+    return `translate(${n.x.toFixed(1)},${(n.y - (n.nv.cao - n.nv.nhun) * S_NV).toFixed(1)}) scale(${S_NV * n.nv.heSoTo})`;
+  }
+
+  // Nhóm đòn hiện biểu tượng dưới chân, theo thứ tự: Đấm → Chiêu đặc biệt → Đá → (Mabu) Mây
+  dsBieuTuong(p: number): number[] {
+    return this.nguoi[p].nv.sp.nhomDon.some((d) => d.may) ? [0, 2, 1, NHOM_MAY] : [0, 2, 1];
+  }
+
+  // Vòng sáng tím dưới đám mây, đúng bằng vùng mây quét trúng
+  vongMay(p: number) {
+    const n = this.nguoi[p];
+    const k = n.nv.heSoTo - 1;
+    return { x: n.x, y: n.y - MAY_NANG * k, rx: MAY_RX * k, ry: MAY_RY * k };
   }
 
   private viTriTay(p: number) {
@@ -1157,7 +1240,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       diem: 0, combo: 0, tamX: GIUA, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
       x: MAP / 2 + (p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
       mana: MANA_TOI_DA.map((m) => m), khoaMana: [0, 0, 0], hoiMana: [0, 0, 0], nv: this.taoNhanVat(p), bay: null,
-      nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null,
+      nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, may: { dang: false, con: 0, hoi: 0 },
     }));
   }
 
