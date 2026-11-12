@@ -68,7 +68,7 @@ const GIAM_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, chick: 0
 const SAT_THUONG = [[50, 50], [70, 100], [100, 150]];
 const SAT_MAY = 250;
 // Quái chạm nhân vật thì đánh: sát thương gốc, bán kính chạm (chân với chân), thời gian chờ giữa 2 lần đánh (tốc độ đánh)
-const SAT_GA: Record<string, number> = { hen: 16, rooster: 24, flyer: 30, chick: 20, boss: 80 };
+const SAT_GA: Record<string, number> = { hen: 32, rooster: 48, flyer: 60, chick: 20, boss: 80 };
 const CHAM_GA: Record<string, number> = { hen: 70, rooster: 70, flyer: 70, chick: 50, boss: 220 };
 const HOI_DANH_GA: Record<string, number> = { hen: 1.2, rooster: 0.8, flyer: 1.5, chick: 1.0, boss: 2.5 };
 // Hạ được gà tướng thì mỗi nhân vật còn sống hồi chừng này máu
