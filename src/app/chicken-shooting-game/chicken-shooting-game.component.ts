@@ -227,7 +227,8 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
         this.khungRef.nativeElement.focus({ preventScroll: true });
         this.bamChuot(e);
       });
-      nghe(svg, 'contextmenu', (e: Event) => e.preventDefault());
+      // Chặn menu chuột phải của trình duyệt trên toàn trang: chuột phải chỉ dùng để di chuyển
+      nghe(window, 'contextmenu', (e: Event) => e.preventDefault(), true);
       nghe(svg, 'wheel', (e: WheelEvent) => this.lanChuot(e));
       nghe(window, 'keydown', (e: KeyboardEvent) => this.phimXuong(e), true);
       nghe(window, 'keyup', (e: KeyboardEvent) => this.phim.delete(e.key.toLowerCase()));

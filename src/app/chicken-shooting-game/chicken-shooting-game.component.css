@@ -16,8 +16,9 @@
 
 .khung {
   position: relative;
-  width: 90vw;
-  height: 90vh;
+  /* Khung 16:9 lớn nhất nằm gọn trong 90% chiều rộng và 90% chiều cao trang, không còn viền thừa hai bên */
+  width: min(90vw, 90vh * 16 / 9);
+  aspect-ratio: 16 / 9;
   border-radius: 16px;
   overflow: hidden;
   background: #1d2b3a;
