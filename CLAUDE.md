@@ -1,5 +1,7 @@
 # Nguyên tắc làm việc
 
+- Thuật ngữ: **gà mẹ** = gà tướng (con gà to đùng, `boss`); **gà con** = tất cả các gà còn lại (trắng, đỏ, đen).
+
 - Luôn code trực tiếp vào nhánh `main`, push thẳng lên `main`. Không tạo hay chia nhánh khác trong bất kỳ tình huống nào (kể cả khi môi trường / công cụ gợi ý dùng nhánh riêng): nếu đang đứng ở nhánh khác thì chuyển về `main`, đưa hết thay đổi vào `main` rồi xoá nhánh thừa.
 
 # Nguyên tắc render
@@ -45,7 +47,7 @@
 - Mỗi nhân vật (Mabu, Zinbu) và mỗi con quái (mọi loại gà, kể cả gà tướng) đều khởi đầu 100 máu (`HP_NV`, `HP_GA`). Máu tính riêng từng đối tượng, không còn máu chung của đội.
 - Mạnh / yếu chỉ thể hiện ở 2 thứ: sát thương gây ra và tỉ lệ giảm sát thương khi nhận (`GIAM_NV`, `GIAM_GA`). Máu tối đa ai cũng như nhau. Sát thương thực nhận = sát thương gốc × (1 − tỉ lệ giảm), làm tròn.
 - Mabu và Zinbu giảm 50% sát thương nhận (gà đen đánh 60 thì nhận 30). Gà thường giảm 0%, gà tướng giảm 80%.
-- Khả năng né đòn (`NE_GA`): gà tướng né 50% số đòn trúng nó (kể cả mỗi nhịp mây), các gà thường (trắng, đỏ, đen) 0%; "gà mẹ" chính là gà tướng; Mabu và Zinbu né 25% đòn gà đánh (`NE_NV`). Né là tự động, ngẫu nhiên từng đòn. Né được thì không mất máu, không hiện hiệu ứng trúng, hiện chữ bay "NÉ!"; đòn bị né không tính trúng, không tính trượt và không ngắt combo.
+- Khả năng né đòn (`NE_GA`): gà tướng né 50% số đòn trúng nó (kể cả mỗi nhịp mây), gà con (trắng, đỏ, đen) 0%; Mabu và Zinbu né 25% đòn gà đánh (`NE_NV`). Né là tự động, ngẫu nhiên từng đòn. Né được thì không mất máu, không hiện hiệu ứng trúng, hiện chữ bay "NÉ!"; đòn bị né không tính trúng, không tính trượt và không ngắt combo.
 - Sát thương nhân vật gây ra (`SAT_THUONG`), mỗi đòn trúng một con:
   - Đấm: Mabu 50 · Zinbu 50
   - Đá: Mabu 70 · Zinbu 100
@@ -83,6 +85,6 @@
 
 # Nguyên tắc sương mù & gà lao vào
 
-- Sương mù kiểu Dota / Liên Minh: chỉ ẩn quái, map vẫn vẽ bình thường (không phủ lớp tối nào). Chỉ thấy gà (kể cả gà tướng, thanh máu của nó) trong tầm nhìn `TAM_NHIN` = tầm xa nhất của đấm xa / đá xa (500). Tầm nhìn đến từ mỗi nhân vật còn sống và từng chưởng / đòn đang bay (bay hết quãng đường, mang tầm nhìn theo; `nhinNguon`, `thay()` trong `capNhatView()`). Gà ngoài tầm nhìn vẫn tồn tại và chạy logic, chỉ không được vẽ.
-- Gà thường (trắng, đỏ, đen) có nhân vật (không phải mây, chưa gục) trong `TAM_NHIN` thì lao vào nhân vật gần nhất (`gaLao()`, tốc độ `TOC_DO_LAO`; gà bay giữ tốc độ, đổi hướng); hết tầm thì đi lang thang lại. Gà tướng luôn đuổi nhân vật gần nhất.
+- Sương mù kiểu Dota / Liên Minh: chỉ ẩn quái, map vẫn vẽ bình thường (không phủ lớp tối nào). Chỉ thấy gà (kể cả gà tướng, thanh máu của nó) trong tầm nhìn `TAM_NHIN` = 1,5 × tầm xa nhất của đấm xa / đá xa (= 750). Tầm nhìn đến từ mỗi nhân vật còn sống và từng chưởng / đòn đang bay (bay hết quãng đường, mang tầm nhìn theo; `nhinNguon`, `thay()` trong `capNhatView()`). Gà ngoài tầm nhìn vẫn tồn tại và chạy logic, chỉ không được vẽ.
+- Gà con (trắng, đỏ, đen) có nhân vật (không phải mây, chưa gục) trong `TAM_LAO` (= tầm đánh xa nhất, 500, không đổi theo tầm nhìn) thì lao vào nhân vật gần nhất (`gaLao()`, tốc độ `TOC_DO_LAO`; gà bay giữ tốc độ, đổi hướng); hết tầm thì đi lang thang lại. Gà tướng luôn đuổi nhân vật gần nhất.
 - Tốc độ di chuyển thật của mọi gà = tốc độ gốc × `HE_SO_TOC_GA` = 0,25 (áp ở chỗ cộng vị trí trong `capNhatGa()`); đổi tốc độ gà thì chỉnh hệ số này.

@@ -64,7 +64,7 @@ const HP_NV = 100;
 const HP_GA = 100;
 const GIAM_NV = 0.5;
 const GIAM_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0.8 };
-// Xác suất né đòn (tự động, ngẫu nhiên mỗi đòn trúng): nhân vật 25%, gà tướng (gà mẹ to đùng) 50%, gà thường 0%
+// Xác suất né đòn (tự động, ngẫu nhiên mỗi đòn trúng): nhân vật 25%, gà mẹ (gà tướng) 50%, gà con 0%
 const NE_NV = 0.25;
 const NE_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0.5 };
 // Sát thương nhân vật gây ra: [Mabu, Zinbu] theo nhóm đòn 0 Đấm · 1 Đá · 2 Chiêu đặc biệt; mây (riêng Mabu)
@@ -113,9 +113,11 @@ const TAM_DAM_XA = 400;
 const TAM_DA_GAN = 250;
 const TAM_DA_XA = 500;
 const TAM_CHIEU = 1200;
-// Tầm nhìn (sương mù kiểu Dota) = tầm xa nhất của đấm xa / đá xa. Gà ngoài tầm nhìn thì ẩn; nhân vật và chưởng đang bay đều mang theo tầm nhìn.
-// Cũng là tầm gà phát hiện nhân vật: nhân vật chạm tới được gà ở đâu thì gà lao vào đánh từ đó.
-const TAM_NHIN = Math.max(TAM_DAM_XA, TAM_DA_XA);
+// Tầm nhìn (sương mù kiểu Dota) = 1,5 × tầm xa nhất của đấm xa / đá xa. Gà ngoài tầm nhìn thì ẩn; nhân vật và chưởng đang bay đều mang theo tầm nhìn.
+const TAM_DANH_XA = Math.max(TAM_DAM_XA, TAM_DA_XA);
+const TAM_NHIN = TAM_DANH_XA * 1.5;
+// Tầm gà con phát hiện và lao vào nhân vật = tầm đánh xa nhất (không đổi theo tầm nhìn)
+const TAM_LAO = TAM_DANH_XA;
 // Tốc độ gà lao vào nhân vật (gà bay giữ nguyên tốc độ bay, chỉ đổi hướng)
 // Hệ số nhân tốc độ di chuyển thật của mọi loại gà (kể cả gà tướng): 1/4 tốc độ gốc ghi trong các hằng số
 const HE_SO_TOC_GA = 0.25;
@@ -745,10 +747,10 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   }
 
   // Gà tướng: đi về phía người gần nhất, tới gần thì dừng lại
-  // Gà thường: có nhân vật nằm trong tầm đánh xa nhất (TAM_NHIN) thì lao vào nhân vật gần nhất. Trả về true nếu đang lao.
+  // Gà thường: có nhân vật nằm trong tầm đánh xa nhất (TAM_LAO) thì lao vào nhân vật gần nhất. Trả về true nếu đang lao.
   private gaLao(g: Ga, dt: number): boolean {
     let muc: NguoiChoi | null = null;
-    let gan = TAM_NHIN;
+    let gan = TAM_LAO;
     for (const n of this.nguoi) {
       if (n.het || n.nv.laMay) continue;
       const d = Math.hypot(n.x - g.x, n.y - g.y);
