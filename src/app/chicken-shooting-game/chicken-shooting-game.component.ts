@@ -158,11 +158,14 @@ const TRUNG_NO = 2;
 const TRUNG_CHO = 30;
 const GA_TOI_DA = 20;
 // Mũi tên chỉ hướng tới gà tướng (kiểu đường chim bay của Google Maps): cứ HUONG_CHU_KY giây hiện một lần, kéo dài HUONG_HIEN giây (mờ dần vào / ra),
-// từ mỗi nhân vật hướng về gà tướng, các mũi tên ">" cách nhau HUONG_CACH, nằm trong khoảng HUONG_BAT_DAU..HUONG_TOI_DA tính từ nhân vật.
+// chỉ từ nhân vật gần gà tướng hơn, hướng về gà tướng, từng cụm 3 mũi tên ">" cách nhau HUONG_CACH, nằm trong khoảng HUONG_BAT_DAU..HUONG_TOI_DA tính từ nhân vật.
 // Gà tướng đã gần (trong HUONG_GAN) thì không cần chỉ nữa.
 const HUONG_CHU_KY = 5;
 const HUONG_HIEN = 2.5;
-const HUONG_CACH = 130;
+const HUONG_CACH = 340;
+// Mỗi cụm gồm HUONG_CUM mũi tên liền nhau, cách nhau HUONG_LIEN
+const HUONG_CUM = 3;
+const HUONG_LIEN = 26;
 const HUONG_BAT_DAU = 180;
 const HUONG_TOI_DA = 1100;
 const HUONG_GAN = 600;
@@ -632,8 +635,9 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     const pha = this.tGame % HUONG_CHU_KY;
     if (!tw || this.man !== 'play' || pha > HUONG_HIEN) return kq;
     const a = Math.sin((Math.PI * pha) / HUONG_HIEN) * 0.5;
-    for (const n of this.nguoi) {
-      if (n.het) continue;
+    // Chỉ nhân vật còn sống và gần gà tướng hơn mới có mũi tên
+    const gan = this.nguoi.filter((n) => !n.het).sort((a, b) => Math.hypot(a.x - tw.x, a.y - tw.y) - Math.hypot(b.x - tw.x, b.y - tw.y))[0];
+    for (const n of gan ? [gan] : []) {
       const dx = tw.x - n.x;
       const dy = tw.y - n.y;
       const d = Math.hypot(dx, dy);
@@ -641,10 +645,13 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       const ux = dx / d;
       const uy = dy / d;
       const cuoi = Math.min(d - HUONG_GAN * 0.4, HUONG_TOI_DA);
-      for (let k = HUONG_BAT_DAU; k <= cuoi; k += HUONG_CACH) {
+      for (let k0 = HUONG_BAT_DAU; k0 <= cuoi; k0 += HUONG_CACH) {
+        for (let i = 0; i < HUONG_CUM; i++) {
+        const k = k0 + i * HUONG_LIEN;
         const x = n.x + ux * k;
         const y = n.y + uy * k;
         if (trong(x, y, 60)) kq.push({ x, y, goc: (Math.atan2(uy, ux) * 180) / Math.PI, a, mau: n.mau });
+        }
       }
     }
     return kq;

@@ -34,10 +34,10 @@
         </g>
         }
         }
-        <!-- Mũi tên chỉ hướng về gà tướng, mờ, cứ 5s hiện một lần -->
+        <!-- Mũi tên chỉ hướng về gà tướng, mờ, cứ 5s hiện một lần, từng cụm 3 mũi tên -->
         @for (m of huongView; track $index) {
-        <path [attr.transform]="'translate(' + m.x + ',' + m.y + ') rotate(' + m.goc + ')'" d="M-24,-20 L8,0 L-24,20" fill="none"
-          stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" [attr.stroke-opacity]="m.a" pointer-events="none" />
+        <path [attr.transform]="'translate(' + m.x + ',' + m.y + ') rotate(' + m.goc + ')'" d="M-12,-11 L4,0 L-12,11" fill="none"
+          stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" [attr.stroke-opacity]="m.a" pointer-events="none" />
         }
         <!-- Trứng gà tướng đẻ (chỉ thấy trong tầm nhìn), rung mạnh dần trước khi nở -->
         @for (e of trungView; track e.id) {
