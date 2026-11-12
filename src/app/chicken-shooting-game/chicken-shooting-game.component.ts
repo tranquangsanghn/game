@@ -64,9 +64,9 @@ const HP_NV = 100;
 const HP_GA = 100;
 const GIAM_NV = 0.5;
 const GIAM_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0.8 };
-// Xác suất né đòn (tự động, ngẫu nhiên mỗi đòn trúng): nhân vật 25%, gà mẹ (gà trắng) 25%, gà tướng 50%
+// Xác suất né đòn (tự động, ngẫu nhiên mỗi đòn trúng): nhân vật 25%, gà tướng (gà mẹ to đùng) 50%, gà thường 0%
 const NE_NV = 0.25;
-const NE_GA: Record<string, number> = { hen: 0.25, rooster: 0, flyer: 0, boss: 0.5 };
+const NE_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0.5 };
 // Sát thương nhân vật gây ra: [Mabu, Zinbu] theo nhóm đòn 0 Đấm · 1 Đá · 2 Chiêu đặc biệt; mây (riêng Mabu)
 const SAT_THUONG = [[50, 50], [70, 100], [100, 150]];
 const SAT_MAY = 250;

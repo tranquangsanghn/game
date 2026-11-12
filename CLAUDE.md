@@ -45,7 +45,7 @@
 - Mỗi nhân vật (Mabu, Zinbu) và mỗi con quái (mọi loại gà, kể cả gà tướng) đều khởi đầu 100 máu (`HP_NV`, `HP_GA`). Máu tính riêng từng đối tượng, không còn máu chung của đội.
 - Mạnh / yếu chỉ thể hiện ở 2 thứ: sát thương gây ra và tỉ lệ giảm sát thương khi nhận (`GIAM_NV`, `GIAM_GA`). Máu tối đa ai cũng như nhau. Sát thương thực nhận = sát thương gốc × (1 − tỉ lệ giảm), làm tròn.
 - Mabu và Zinbu giảm 50% sát thương nhận (gà đen đánh 60 thì nhận 30). Gà thường giảm 0%, gà tướng giảm 80%.
-- Khả năng né đòn (`NE_GA`): gà tướng né 50% số đòn trúng nó (kể cả mỗi nhịp mây), gà mẹ (gà trắng) 25%, gà đỏ / đen 0%; Mabu và Zinbu né 25% đòn gà đánh (`NE_NV`). Né là tự động, ngẫu nhiên từng đòn. Né được thì không mất máu, không hiện hiệu ứng trúng, hiện chữ bay "NÉ!"; đòn bị né không tính trúng, không tính trượt và không ngắt combo.
+- Khả năng né đòn (`NE_GA`): gà tướng né 50% số đòn trúng nó (kể cả mỗi nhịp mây), các gà thường (trắng, đỏ, đen) 0%; "gà mẹ" chính là gà tướng; Mabu và Zinbu né 25% đòn gà đánh (`NE_NV`). Né là tự động, ngẫu nhiên từng đòn. Né được thì không mất máu, không hiện hiệu ứng trúng, hiện chữ bay "NÉ!"; đòn bị né không tính trúng, không tính trượt và không ngắt combo.
 - Sát thương nhân vật gây ra (`SAT_THUONG`), mỗi đòn trúng một con:
   - Đấm: Mabu 50 · Zinbu 50
   - Đá: Mabu 70 · Zinbu 100
