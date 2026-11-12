@@ -112,6 +112,11 @@ const TAM_DAM_XA = 400;
 const TAM_DA_GAN = 250;
 const TAM_DA_XA = 500;
 const TAM_CHIEU = 1200;
+// Tầm nhìn (sương mù kiểu Dota) = tầm xa nhất của đấm xa / đá xa. Gà ngoài tầm nhìn thì ẩn; nhân vật và chưởng đang bay đều mang theo tầm nhìn.
+// Cũng là tầm gà phát hiện nhân vật: nhân vật chạm tới được gà ở đâu thì gà lao vào đánh từ đó.
+const TAM_NHIN = Math.max(TAM_DAM_XA, TAM_DA_XA);
+// Tốc độ gà lao vào nhân vật (gà bay giữ nguyên tốc độ bay, chỉ đổi hướng)
+const TOC_DO_LAO: Record<string, number> = { hen: 230, rooster: 340 };
 const TAM_DON: Record<string, number> = {
   punch_combo: TAM_DAM_GAN,
   punch_long: TAM_DAM_XA, punch_long_2: TAM_DAM_XA, punch_dash: TAM_DAM_XA, punch_charge: TAM_DAM_XA,
@@ -215,6 +220,10 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   gaBayView: Ga[] = [];
   tuong: Ga | null = null;
   nhamView: { x: number; y: number; mau: string }[] = [];
+  // Sương mù: các vòng nhìn thấy (nhân vật + chưởng đang bay) nằm trong khung nhìn
+  nhinView: { x: number; y: number; r: number }[] = [];
+  private nhinNguon: { x: number; y: number }[] = [];
+  readonly TAM_NHIN = TAM_NHIN;
   // Chỉ những vật trong khung nhìn mới được vẽ (xem CLAUDE.md)
   vetView: Vet[] = [];
   danView: Dan[] = [];
@@ -486,7 +495,9 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       const bay = g.loai === 'flyer';
       g.nhay = Math.max(0, g.nhay - dt);
       if (g.loai === 'boss') this.dieuTuong(g, dt);
-      else if (!bay) {
+      else if (this.gaLao(g, dt)) {
+        // đang lao vào nhân vật trong tầm
+      } else if (!bay) {
         g.doiHuong -= dt;
         if (g.doiHuong <= 0) {
           g.doiHuong = ngauNhien(1.5, 3.5);
@@ -604,15 +615,20 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     const z = this.camZ;
     const trong = (x: number, y: number, le: number) =>
       Math.abs(x - this.camX) < W / 2 / z + le && y - this.camY > -TAM_VIEW_Y / z - le && y - this.camY < (H - TAM_VIEW_Y) / z + le;
+    this.nhinNguon = [
+      ...this.nguoi.filter((n) => !n.het).map((n) => ({ x: n.x, y: n.y })),
+      ...this.dan.map((d) => { const vt = this.danHienTai(d); return { x: vt.x, y: vt.y }; }),
+    ];
+    this.nhinView = this.nhinNguon.filter((o) => trong(o.x, o.y, TAM_NHIN)).map((o) => ({ ...o, r: TAM_NHIN }));
     const xep: VatXep[] = [];
     for (const g of this.ga) {
-      if (g.loai === 'flyer' || !trong(g.x, g.y, g.loai === 'boss' ? 450 : 80)) continue;
+      if (g.loai === 'flyer' || !this.thay(g.x, g.y) || !trong(g.x, g.y, g.loai === 'boss' ? 450 : 80)) continue;
       xep.push({ loai: 'ga', y: g.y, ga: g });
     }
     this.nguoi.forEach((n, i) => { if (trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
     xep.sort((a, b) => a.y - b.y);
     this.xep = xep;
-    this.gaBayView = this.ga.filter((g) => g.loai === 'flyer' && trong(g.x, g.y, 400));
+    this.gaBayView = this.ga.filter((g) => g.loai === 'flyer' && this.thay(g.x, g.y) && trong(g.x, g.y, 400));
     this.vetView = this.vet.filter((v) => trong(v.x, v.y, 200));
     this.danView = this.dan.filter((d) => {
       const vt = this.danHienTai(d);
@@ -623,7 +639,12 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     this.chuView = this.chu.filter((c) => trong(c.x, c.y, 300));
     // Chỉ gà tướng có thanh máu trên đầu; chỉ lấy khi nằm trong khung nhìn
     const t = this.ga.find((g) => g.loai === 'boss' && !g.chet);
-    this.tuong = t && trong(t.x, t.y, 450) ? t : null;
+    this.tuong = t && this.thay(t.x, t.y) && trong(t.x, t.y, 450) ? t : null;
+  }
+
+  // Điểm có nằm trong tầm nhìn của nhân vật hoặc chưởng nào không
+  private thay(x: number, y: number): boolean {
+    return this.nhinNguon.some((o) => Math.hypot(o.x - x, o.y - y) < TAM_NHIN);
   }
 
   // Dây buộc: 2 nhân vật không xa nhau quá mức camera chứa nổi. Người vừa di chuyển nhiều hơn là người bị chặn lại.
@@ -725,6 +746,26 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   }
 
   // Gà tướng: đi về phía người gần nhất, tới gần thì dừng lại
+  // Gà thường: có nhân vật nằm trong tầm đánh xa nhất (TAM_NHIN) thì lao vào nhân vật gần nhất. Trả về true nếu đang lao.
+  private gaLao(g: Ga, dt: number): boolean {
+    let muc: NguoiChoi | null = null;
+    let gan = TAM_NHIN;
+    for (const n of this.nguoi) {
+      if (n.het || n.nv.laMay) continue;
+      const d = Math.hypot(n.x - g.x, n.y - g.y);
+      if (d < gan) { gan = d; muc = n; }
+    }
+    if (!muc) return false;
+    const dx = muc.x - g.x;
+    const dy = muc.y - g.y;
+    const d = Math.hypot(dx, dy) || 1;
+    const v = g.loai === 'flyer' ? Math.hypot(g.vx, g.vy) || 150 : d > 40 ? TOC_DO_LAO[g.loai] : 0;
+    g.vx = (dx / d) * v;
+    g.vy = (dy / d) * v;
+    g.doiHuong = 0;
+    return true;
+  }
+
   private dieuTuong(g: Ga, dt: number): void {
     let gan = this.nguoi[0];
     for (const n of this.nguoi) {

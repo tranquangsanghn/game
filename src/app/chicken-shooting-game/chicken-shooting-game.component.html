@@ -8,6 +8,11 @@
           <feMergeNode in="SourceGraphic" />
         </feMerge>
       </filter>
+      <radialGradient id="cg-tam-nhin">
+        <stop offset="0" stop-color="#000" />
+        <stop offset="0.72" stop-color="#000" />
+        <stop offset="1" stop-color="#fff" />
+      </radialGradient>
     </defs>
 
     <rect x="0" y="0" [attr.width]="W" [attr.height]="H" fill="#000" />
@@ -34,6 +39,14 @@
         </g>
         }
         }
+        <!-- Sương mù: phủ cả map, khoét lỗ mờ viền quanh nhân vật và chưởng đang bay -->
+        <mask id="cg-mo" maskUnits="userSpaceOnUse" x="0" y="0" [attr.width]="MAP" [attr.height]="MAP">
+          <rect x="0" y="0" [attr.width]="MAP" [attr.height]="MAP" fill="#fff" />
+          @for (o of nhinView; track $index) {
+          <circle [attr.cx]="o.x" [attr.cy]="o.y" [attr.r]="o.r" fill="url(#cg-tam-nhin)" style="mix-blend-mode: darken" />
+          }
+        </mask>
+        <rect x="0" y="0" [attr.width]="MAP" [attr.height]="MAP" fill="#0a1424" fill-opacity="0.62" mask="url(#cg-mo)" pointer-events="none" />
         <!-- Gà dưới đất + nhân vật, xếp theo y -->
         @for (o of xep; track $index) {
         @switch (o.loai) {
