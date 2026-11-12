@@ -42,15 +42,14 @@ const W = 1600;
 const H = 900;
 const GIUA = W / 2;
 const MAP = 6400;
-// Hai bảng chiêu thức hai bên (nền đen, không có map): Mabu bên trái, Zinbu bên phải. Map chỉ hiện ở giữa.
-const BANG = 270;
-const VW = W - 2 * BANG;
+// Hai bảng chiêu thức khoét vào map ở hai góc dưới (hình tròn nền đen): Mabu bên trái, Zinbu bên phải. Map vẫn chiếm cả màn hình.
+const R_BANG = 235;
 const TAM_VIEW_Y = 520;
 // Camera chung đặt ở trung điểm 2 nhân vật. ZOOM là mức gần nhất, hai người càng xa thì càng thu nhỏ tới ZOOM_MIN.
 const ZOOM = 0.55;
 const ZOOM_MIN = 0.36;
 // Phần màn hình (pixel) dành cho khoảng cách giữa 2 nhân vật: chiều ngang, chiều dọc
-const VUNG_X = 880;
+const VUNG_X = 1000;
 const VUNG_Y = 660;
 // Khoảng cách tối đa giữa 2 nhân vật (đơn vị bản đồ), vượt quá thì bị chặn lại như dây buộc
 const MAX_DX = VUNG_X / ZOOM_MIN;
@@ -94,7 +93,7 @@ const MAU_MANA = ['#3aa0ff', '#ff9a3c', '#ff2b2b', '#a855f7'];
 // Mana của chiêu này màu tím: khi mây đang chạy là thời gian còn lại, khi chờ là tiến độ hồi.
 const NHOM_MAY = 3;
 // Bảng chiêu thức: bán kính cung và bán kính mỗi nút
-const R_CUNG = 98;
+const R_CUNG = 112;
 const R_NUT = 30;
 const MAY_THOI_GIAN = 7;
 const MAY_HOI = 40;
@@ -200,11 +199,8 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   private laTrinhDuyet = isPlatformBrowser(inject(PLATFORM_ID));
 
   readonly W = W;
-  readonly BANG = BANG;
-  readonly VW = VW;
+  readonly R_BANG = R_BANG;
   readonly R_NUT = R_NUT;
-  readonly MAU_MANA = MAU_MANA;
-  readonly CHU_VI_VONG = 2 * Math.PI * (R_NUT + 6);
   readonly H = H;
   readonly GIUA = GIUA;
   readonly MAP = MAP;
@@ -637,12 +633,12 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     this.camZ += (tz - this.camZ) * kz;
     // Camera không ra khỏi bản đồ: chạm mép map thì mép đó nằm đúng mép màn hình, không lộ vùng đen
     const zc = this.camZ;
-    this.camX = kep(this.camX, VW / 2 / zc, MAP - VW / 2 / zc);
+    this.camX = kep(this.camX, W / 2 / zc, MAP - W / 2 / zc);
     this.camY = kep(this.camY, TAM_VIEW_Y / zc, MAP - (H - TAM_VIEW_Y) / zc);
 
     const z = this.camZ;
     const trong = (x: number, y: number, le: number) =>
-      Math.abs(x - this.camX) < VW / 2 / z + le && y - this.camY > -TAM_VIEW_Y / z - le && y - this.camY < (H - TAM_VIEW_Y) / z + le;
+      Math.abs(x - this.camX) < W / 2 / z + le && y - this.camY > -TAM_VIEW_Y / z - le && y - this.camY < (H - TAM_VIEW_Y) / z + le;
     const xep: VatXep[] = [];
     for (const g of this.ga) {
       if (g.loai === 'flyer' || !trong(g.x, g.y, g.loai === 'boss' ? 450 : 80)) continue;
@@ -700,7 +696,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   // Mũi tên ở mép màn hình chỉ hướng nhân vật khi họ ra ngoài khung nhìn
   muiTen(p: number) {
     const v = this.viTriManHinh(p);
-    const x = kep(v.x, BANG + 70, W - BANG - 70);
+    const x = kep(v.x, 70, W - 70);
     const y = kep(v.y, 130, H - 70);
     if (x === v.x && y === v.y) return null;
     return { x, y, goc: (Math.atan2(v.y - y, v.x - x) * 180) / Math.PI };
@@ -894,7 +890,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   // Vị trí các nút chiêu thức xếp hình vòng cung phía trên biểu tượng nhân vật (Mabu bảng trái, Zinbu bảng phải)
   tamBang(p: number) {
-    return { x: p === 0 ? BANG / 2 : W - BANG / 2, y: H - 150 };
+    return { x: p === 0 ? 150 : W - 150, y: H - 130 };
   }
 
   nutBang(p: number): { k: number; x: number; y: number }[] {
@@ -906,10 +902,27 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  // Chuột có nằm trong vùng khoét của một bảng chiêu thức không
+  private tronBang(x: number, y: number): boolean {
+    return [0, 1].some((p) => {
+      const c = this.tamBang(p);
+      return Math.hypot(x - c.x, y - c.y) <= R_BANG;
+    });
+  }
+
+  // Chiêu hết mana (đang khoá / chưa hồi) hoặc Mây đang chạy / đang hồi: không dùng được
+  hetMana(p: number, k: number): boolean {
+    const n = this.nguoi[p];
+    if (k === 0) return false;
+    if (k === NHOM_MAY) return n.may.dang || n.may.hoi > 0;
+    return n.khoaMana[k] > 0 || n.mana[k] < 1;
+  }
+
   private chonNut(x: number, y: number): void {
     for (const p of [0, 1]) {
       const n = this.nutBang(p).find((b) => Math.hypot(b.x - x, b.y - y) <= R_NUT + 6);
       if (n) {
+        if (this.hetMana(p, n.k)) return;
         this.nguoi[p].nv.datNhom(n.k, this.t);
         return;
       }
@@ -1057,7 +1070,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   private diChuot(e: PointerEvent): void {
     const pt = this.toaDo(e);
     if (!pt) return;
-    this.trenBang = pt.x < BANG || pt.x > W - BANG;
+    this.trenBang = this.tronBang(pt.x, pt.y);
     if (this.trenBang) return;
     const p = this.chuot;
     this.nguoi[p].tamX = pt.x;
@@ -1073,7 +1086,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     const pt = this.toaDo(e);
     if (!pt) return;
     // Bấm vào bảng chiêu thức: chọn chiêu, không ra đòn / di chuyển
-    if (pt.x < BANG || pt.x > W - BANG) {
+    if (this.tronBang(pt.x, pt.y)) {
       if (e.button === 0 && e.buttons & 1) this.chonNut(pt.x, pt.y);
       return;
     }

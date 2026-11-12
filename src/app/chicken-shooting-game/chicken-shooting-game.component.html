@@ -8,13 +8,12 @@
           <feMergeNode in="SourceGraphic" />
         </feMerge>
       </filter>
-      <clipPath id="cg-map"><rect [attr.x]="BANG" y="0" [attr.width]="VW" [attr.height]="H" /></clipPath>
     </defs>
 
     <rect x="0" y="0" [attr.width]="W" [attr.height]="H" fill="#000" />
 
     <!-- Một camera chung bám trung điểm 2 nhân vật, zoom ra khi họ xa nhau -->
-    <g clip-path="url(#cg-map)">
+    <g>
       <g [attr.transform]="viewTransform()">
         <rect x="0" y="0" [attr.width]="MAP" [attr.height]="MAP" fill="#c9d8bf" />
 
@@ -103,32 +102,27 @@
       </g>
     </g>
 
-    <rect [attr.x]="BANG" y="0" [attr.width]="VW" [attr.height]="H" [attr.fill]="mauHoangHon" [attr.opacity]="doHoangHon * 0.6"
+    <rect x="0" y="0" [attr.width]="W" [attr.height]="H" [attr.fill]="mauHoangHon" [attr.opacity]="doHoangHon * 0.6"
       pointer-events="none" />
 
 
-    <!-- Hai bảng chiêu thức nền đen: Mabu trái, Zinbu phải. Bấm vào nút để chọn chiêu; chiêu đang dùng sáng, còn lại mờ -->
-    <line [attr.x1]="BANG" y1="0" [attr.x2]="BANG" [attr.y2]="H" stroke="#2a2a2a" stroke-width="2" />
-    <line [attr.x1]="W - BANG" y1="0" [attr.x2]="W - BANG" [attr.y2]="H" stroke="#2a2a2a" stroke-width="2" />
+    <!-- Hai bảng chiêu thức khoét vào map ở góc dưới (nền đen): Mabu trái, Zinbu phải. Bấm vào nút để chọn chiêu.
+         Chiêu đang dùng sáng, chiêu khác mờ, hết mana thì mờ hẳn và không chọn được. Ở giữa là animation nhân vật như trên map -->
     @for (p of [0, 1]; track p) {
     @let ng = nguoi[p];
     @let tb = tamBang(p);
     <g pointer-events="none">
+      <circle [attr.cx]="tb.x" [attr.cy]="tb.y" [attr.r]="R_BANG" fill="#000" />
       <g [attr.transform]="'translate(' + tb.x + ',' + tb.y + ')'">
-        <circle r="56" fill="#0d1b12" [attr.stroke]="ng.mau" stroke-width="4" [attr.opacity]="ng.het ? 0.4 : 1" />
-        <svg x="-52" y="-52" width="104" height="104" viewBox="-36 -66 72 76" [attr.opacity]="ng.het ? 0.4 : 1">
-          <g cgSprite [sp]="ng.nv.sp" [khung]="ng.nv.khung" [lat]="false"></g>
+        <svg x="-60" y="-60" width="120" height="120" viewBox="-36 -66 72 76" [attr.opacity]="ng.het ? 0.4 : 1">
+          <g cgSprite [sp]="ng.nv.sp" [khung]="ng.nv.khung" [lat]="ng.nv.lat"></g>
         </svg>
-        <text y="82" text-anchor="middle" class="bang-ten" [attr.fill]="ng.mau">{{ ng.ten }}</text>
-        <text y="108" text-anchor="middle" class="bang-chieu">{{ ng.nv.laMay ? 'Mây' : tenNhom(p) }}</text>
       </g>
       @for (b of nutBang(p); track b.k) {
       @let dung = ng.nv.nhom === b.k;
-      @let tl = manaNhom(p, b.k);
-      <g [attr.transform]="'translate(' + b.x + ',' + b.y + ')'" [attr.opacity]="dung ? 1 : 0.35" [attr.filter]="dung ? 'url(#cg-sang)' : null">
+      @let het = hetMana(p, b.k);
+      <g [attr.transform]="'translate(' + b.x + ',' + b.y + ')'" [attr.opacity]="het ? 0.12 : dung ? 1 : 0.4" [attr.filter]="dung && !het ? 'url(#cg-sang)' : null">
         <circle [attr.r]="R_NUT" fill="#0d1b12" [attr.stroke]="dung ? ng.mau : '#555'" stroke-width="4" />
-        <circle [attr.r]="R_NUT + 6" fill="none" [attr.stroke]="MAU_MANA[b.k]" stroke-width="4" stroke-linecap="round"
-          [attr.stroke-dasharray]="(tl * CHU_VI_VONG).toFixed(1) + ' 999'" transform="rotate(-90)" />
         <g transform="scale(1.35)">
           <ng-container *ngTemplateOutlet="bieuTuong; context: { $implicit: b.k, sp: ng.nv.sp }" />
         </g>
