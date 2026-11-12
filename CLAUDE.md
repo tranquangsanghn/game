@@ -20,6 +20,11 @@
 - Chiêu đang dùng sáng + phát sáng, chiêu khác mờ, hết mana / đang khoá / Mây đang chạy hoặc hồi (`hetMana()`) thì mờ hẳn và không chọn được.
 - Đổi chiêu bằng bấm chuột trái vào nút (`chonNut()` → `NhanVat.datNhom`), bất kể chuột đang điều khiển ai. Không còn con lăn. Chuột trên bảng (`tronBang()` → `trenBang`) thì không ra đòn, không di chuyển, tâm ngắm ẩn.
 
+# Nguyên tắc giữ nguyên bố cục khi đổi map / màn
+
+- Bố cục hiện tại là chuẩn, cố định: 2 bảng chiêu thức hình quạt ở 2 góc dưới (kích thước, vị trí, vòng cung nút, chân dung animation nhân vật), cách chọn chiêu bằng click, thanh máu / mana, camera, tâm ngắm, mọi nguyên tắc ghi trong file này.
+- Sang map khác, màn khác thì chỉ thay phần map (nền, kích thước `MAP`, vật cản, quái của màn đó). Không đổi bố cục giao diện, vị trí các thành phần, hay các nguyên tắc ở trên; chỉ đổi khi người dùng yêu cầu rõ ràng.
+
 # Nguyên tắc biên bản đồ
 
 - Không vật nào được ra khỏi bản đồ: nhân vật, gà, gà bay, gà tướng, quái sau này… đều bị kẹp lại, sprite phải nằm trọn trong map.
