@@ -1103,6 +1103,22 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     return `translate(${(o.x + rx).toFixed(1)},${o.y.toFixed(1)}) scale(${this.camZ.toFixed(4)})`;
   }
 
+  // Thanh máu (máu chung của đội) và quả cầu năng lượng (đạn) nhỏ trên đầu nhân vật
+  thanhTrenDau(p: number): string {
+    const n = this.nguoi[p];
+    return `translate(${n.x.toFixed(1)},${(n.y - (n.nv.cao - n.nv.nhun) * S_NV - 150).toFixed(1)})`;
+  }
+
+  get mauTiLe(): number {
+    return Math.max(0, this.mang) / MANG_TOI_DA;
+  }
+
+  // 0..1: số đạn còn lại, hoặc tiến độ tụ khí khi đang nạp
+  nangLuong(p: number): number {
+    const n = this.nguoi[p];
+    return this.dangNap(p) ? kep(1 - (n.napDen - this.tGame) / THOI_GIAN_NAP, 0, 1) : n.dan / BANG_DAN;
+  }
+
   nvTransform(p: number): string {
     const n = this.nguoi[p];
     return `translate(${n.x.toFixed(1)},${(n.y - (n.nv.cao - n.nv.nhun) * S_NV).toFixed(1)}) scale(${S_NV})`;
