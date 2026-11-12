@@ -64,8 +64,9 @@ const HP_NV = 100;
 const HP_GA = 100;
 const GIAM_NV = 0.5;
 const GIAM_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0.8 };
-// Xác suất né đòn: chỉ gà tướng né được
-const NE_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0.5 };
+// Xác suất né đòn (tự động, ngẫu nhiên mỗi đòn trúng): nhân vật 25%, gà mẹ (gà trắng) 25%, gà tướng 50%
+const NE_NV = 0.25;
+const NE_GA: Record<string, number> = { hen: 0.25, rooster: 0, flyer: 0, boss: 0.5 };
 // Sát thương nhân vật gây ra: [Mabu, Zinbu] theo nhóm đòn 0 Đấm · 1 Đá · 2 Chiêu đặc biệt; mây (riêng Mabu)
 const SAT_THUONG = [[50, 50], [70, 100], [100, 150]];
 const SAT_MAY = 250;
@@ -1028,6 +1029,10 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private nhanSatThuong(n: NguoiChoi, sat: number): void {
+    if (Math.random() < NE_NV) {
+      this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: 'NÉ!', mau: '#9be7ff', t: 0 });
+      return;
+    }
     const nhan = Math.round(sat * (1 - GIAM_NV));
     n.hp = Math.max(0, n.hp - nhan);
     this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `-${nhan}`, mau: '#ff4d4d', t: 0 });
