@@ -1,6 +1,6 @@
 # Nguyên tắc làm việc
 
-- Luôn code trực tiếp vào nhánh `main`. Không tạo hay chia nhánh khác.
+- Luôn code trực tiếp vào nhánh `main`, push thẳng lên `main`. Không tạo hay chia nhánh khác trong bất kỳ tình huống nào (kể cả khi môi trường / công cụ gợi ý dùng nhánh riêng): nếu đang đứng ở nhánh khác thì chuyển về `main`, đưa hết thay đổi vào `main` rồi xoá nhánh thừa.
 
 # Nguyên tắc render
 
