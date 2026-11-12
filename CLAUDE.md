@@ -37,7 +37,7 @@
   - Gà trắng: 16 sát thương · 1,2s (nhân vật nhận 8)
   - Gà đỏ: 24 · 0,8s (nhận 12)
   - Gà đen: 30 · 1,5s (nhận 15)
-  - Gà con: 10 · 1,0s (nhận 5)
+  - Gà con: 20 · 1,0s (nhận 10)
   - Gà tướng: 80 · 2,5s (nhận 40)
 - Nhân vật dạng mây không nhận sát thương. Nhân vật hết máu thì ngã và không điều khiển được; cả hai cùng hết máu thì thua (`ketThuc()`).
 - Quái chỉ chết khi máu về 0 (chết thì mới tính điểm, gà con bị trừ điểm). Đòn trúng mà chưa chết thì gà nháy sáng. Hạ gà tướng không còn thưởng mạng; thay vào đó hồi `HOI_MAU_TUONG` máu cho mỗi nhân vật còn sống.
