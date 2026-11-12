@@ -10,7 +10,7 @@ import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, GA_VANG, KHUNG_BAY, KHUNG_CHAY, KHUN
 
 type ManChoi = 'start' | 'play' | 'pause' | 'over';
 // hen = gà trắng (đi bộ) · rooster = gà đỏ (đi nhanh, nhảy) · flyer = gà đen (bay, thả trứng)
-// chick = gà con (đừng bắn) · boss = gà tướng (to gấp 10 lần, đủ 3 màu, nhiều máu)
+// chick = gà con (đừng bắn) · boss = gà tướng (to gấp 5 lần, đủ 3 màu, nhiều máu)
 type LoaiGa = 'hen' | 'rooster' | 'flyer' | 'chick' | 'boss';
 type LoaiVatPham = 'corn' | 'bread' | 'clock';
 
@@ -89,8 +89,8 @@ const PHIM_BAY = [' ', 'l'];
 const KHOA_KY_LUC = 'chicken-shooting-game.ky-luc';
 
 const DIEM: Record<LoaiGa, number> = { hen: 10, rooster: 20, flyer: 30, chick: -50, boss: 500 };
-// Cỡ gà so với gà thường (gà tướng gấp 10 lần)
-const TL_GA: Record<LoaiGa, number> = { hen: 1, rooster: 1.1, flyer: 1, chick: 0.45, boss: 10 };
+// Cỡ gà so với gà thường (gà tướng gấp 5 lần)
+const TL_GA: Record<LoaiGa, number> = { hen: 1, rooster: 1.1, flyer: 1, chick: 0.45, boss: 5 };
 // Bán kính trúng đòn của gà cỡ 1; nhân với TL_GA
 const BAN_KINH_GA = 44;
 // Từ chân tới tâm thân gà (đơn vị sprite, trước khi nhân TL_GA)
@@ -633,7 +633,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       Math.abs(x - this.camX) < W / 2 / z + le && y - this.camY > -TAM_VIEW_Y / z - le && y - this.camY < (H - TAM_VIEW_Y) / z + le;
     const xep: VatXep[] = [];
     for (const g of this.ga) {
-      if (g.loai === 'flyer' || !trong(g.x, g.y, g.loai === 'boss' ? 900 : 80)) continue;
+      if (g.loai === 'flyer' || !trong(g.x, g.y, g.loai === 'boss' ? 450 : 80)) continue;
       xep.push({ loai: 'ga', y: g.y, ga: g });
     }
     this.nguoi.forEach((n, i) => { if (trong(n.x, n.y, 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
@@ -745,7 +745,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     this.rung = Math.max(this.rung, 0.4);
   }
 
-  // Gà tướng: đi về phía người gần nhất, tới gần thì dừng lại và ném trứng
+  // Gà tướng: đi về phía người gần nhất, tới gần thì dừng lại
   private dieuTuong(g: Ga, dt: number): void {
     let gan = this.nguoi[0];
     for (const n of this.nguoi) {
@@ -754,24 +754,10 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     const dx = gan.x - g.x;
     const dy = gan.y - g.y;
     const d = Math.hypot(dx, dy) || 1;
-    const v = d > 520 ? TOC_DO_TUONG * (1 + this.chang * 0.25) : 0;
+    const v = d > 260 ? TOC_DO_TUONG * (1 + this.chang * 0.25) : 0;
     g.vx = (dx / d) * v;
     g.vy = (dy / d) * v;
     g.lat = dx < 0;
-    g.henTrung -= dt;
-    if (g.henTrung <= 0 && d < 1500) {
-      g.henTrung = [3.2, 2.6, 2][this.chang] * ngauNhien(0.8, 1.2);
-      const mom = (CHAN_GA * 1.6 * TL_GA.boss * S_GA) * EP_GA;
-      const muiX = g.x + (g.lat ? -1 : 1) * 36 * TL_GA.boss * S_GA;
-      // Ném vào người gần nhất, thêm 1 quả lệch sang người còn lại khi đã ở giai đoạn sau
-      const dich = [gan, ...(this.chang > 0 ? [this.nguoi.find((n) => n !== gan)!] : [])];
-      for (const n of dich) {
-        this.trung.push({
-          id: this.id++, x0: muiX, y0: g.y, h0: mom,
-          xd: n.x + ngauNhien(-40, 40), yd: n.y + ngauNhien(-25, 25), t: 0, T: 1.8,
-        });
-      }
-    }
   }
 
   private sinhVatPham(): void {
@@ -884,7 +870,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     const rai = (soLuong: number) => {
       for (let i = 0; i < soLuong; i++) {
         this.long.push({
-          id: this.id++, x: tam.x + ngauNhien(-120, 120), y: tam.y + ngauNhien(-120, 80),
+          id: this.id++, x: tam.x + ngauNhien(-60, 60), y: tam.y + ngauNhien(-60, 40),
           vx: ngauNhien(-320, 320), vy: ngauNhien(-340, 60), xoay: ngauNhien(0, 360), vxoay: ngauNhien(-400, 400),
           t: 0, mau: MAU_LONG_TUONG[i % 3],
         });
@@ -892,14 +878,14 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     };
     if (g.hp > 0) {
       rai(5);
-      this.congDiem(p, DIEM_DANH_TUONG * hs, tam.x + ngauNhien(-80, 80), tam.y - 160, `+${DIEM_DANH_TUONG * hs}`);
+      this.congDiem(p, DIEM_DANH_TUONG * hs, tam.x + ngauNhien(-40, 40), tam.y - 80, `+${DIEM_DANH_TUONG * hs}`);
       return;
     }
     g.chet = true;
     g.h0 = 0;
     rai(40);
     this.rung = Math.max(this.rung, 0.6);
-    this.congDiem(p, DIEM.boss * hs, tam.x, tam.y - 220, `+${DIEM.boss * hs} HẠ GÀ TƯỚNG!`);
+    this.congDiem(p, DIEM.boss * hs, tam.x, tam.y - 110, `+${DIEM.boss * hs} HẠ GÀ TƯỚNG!`);
     // Thưởng thêm mạng cho cả đội khi hạ được gà tướng
     if (this.mang < MANG_TOI_DA) this.mang++;
   }
@@ -1096,7 +1082,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       if (g.chet || g.loai === 'chick') continue;
       const t = this.tamGa(g);
       // Gà tướng rất to: tính khoảng cách tới mép thân chứ không phải tới tâm
-      const d = Math.hypot(t.x - n.x, t.y - n.y) - (g.loai === 'boss' ? 250 : 0);
+      const d = Math.hypot(t.x - n.x, t.y - n.y) - (g.loai === 'boss' ? 125 : 0);
       if (d < dm) {
         dm = d;
         tot = g;
