@@ -14,6 +14,7 @@ hai người không đi xa nhau quá mức camera chứa nổi (màn hình hiệ
 - **Chuột phải**: chỉ chỗ để chạy tới (xa thì bay)
 - **Chuột trái**: ra đòn
 - **Con lăn**: đổi nhóm đòn (Đấm / Đá / Chiêu đặc biệt)
+- **Tab**: chuyển chuột sang điều khiển nhân vật kia (tạm thời khi chỉ có 1 chuột)
 
 **2P Zinbu — bàn phím hoặc tay cầm**
 - **WASD / mũi tên**: di chuyển

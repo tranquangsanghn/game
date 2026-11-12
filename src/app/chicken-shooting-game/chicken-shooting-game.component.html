@@ -135,10 +135,10 @@
     </g>
     }
     }
-    <!-- Tâm ngắm của P1 (chuột) -->
-    <g [attr.transform]="'translate(' + nguoi[0].tamX + ',' + nguoi[0].tamY + ')'" [attr.stroke]="nguoi[0].mau" stroke-width="3" fill="none">
+    <!-- Tâm ngắm của nhân vật đang được chuột điều khiển (Tab để đổi) -->
+    <g [attr.transform]="'translate(' + nguoi[chuot].tamX + ',' + nguoi[chuot].tamY + ')'" [attr.stroke]="nguoi[chuot].mau" stroke-width="3" fill="none">
       <circle r="18" />
-      <circle r="3" [attr.fill]="nguoi[0].mau" />
+      <circle r="3" [attr.fill]="nguoi[chuot].mau" />
       <path d="M-28,0 h14 M14,0 h14 M0,-28 v14 M0,14 v14" />
     </g>
 
@@ -147,7 +147,7 @@
     <g [attr.transform]="'translate(' + ($index === 0 ? 20 : W - 300) + ',18)'">
       <rect width="280" height="92" rx="14" fill="#1d2b3a" fill-opacity="0.92" />
       <rect width="10" height="92" rx="5" [attr.fill]="n.mau" />
-      <text x="24" y="28" class="hud-ten">{{ $index === 0 ? '1P' : '2P' }} {{ n.ten }} · {{ $index === 0 ? 'chuột' : 'phím / tay cầm' }}</text>
+      <text x="24" y="28" class="hud-ten">{{ $index === 0 ? '1P' : '2P' }} {{ n.ten }} · {{ $index === chuot ? 'chuột' : $index === 1 ? 'phím / tay cầm' : '' }}</text>
       <text x="266" y="84" text-anchor="end" class="hud-phu">{{ tenNhom($index) }}</text>
       <text x="24" y="60" class="hud-diem">{{ n.diem }}</text>
       <text x="266" y="58" text-anchor="end" class="hud-phu">
@@ -260,7 +260,7 @@
           </svg>
           @if (i === 0) {
           <h3>1P Mabu · chuột</h3>
-          <p><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Con lăn</b>: đổi nhóm đòn</p>
+          <p><b>Tab</b>: chuyển chuột sang điều khiển nhân vật kia<br /><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Con lăn</b>: đổi nhóm đòn</p>
           } @else {
           <h3>2P Zinbu · bàn phím / tay cầm</h3>
           <p><b>WASD / mũi tên</b>: di chuyển<br /><b>J / Z</b>: ra đòn (tự ngắm gà gần nhất)<br /><b>K / X</b>: đổi nhóm đòn · <b>Space / L</b>: bay nhanh<br />

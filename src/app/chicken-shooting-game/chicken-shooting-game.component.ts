@@ -142,6 +142,8 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   camX = MAP / 2;
   camY = MAP / 2;
   camZ = ZOOM;
+  // Người chơi mà chuột đang điều khiển (Tab để đổi) — tạm thời khi chỉ có 1 chuột
+  chuot = 0;
   mang = MANG_TOI_DA;
   tGame = 0;
   t = 0;
@@ -835,13 +837,13 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     e.preventDefault();
     const pt = this.toaDo(e);
     if (!pt || this.man !== 'play' || !e.deltaY) return;
-    this.doiNhom(0, e.deltaY > 0 ? 1 : -1);
+    this.doiNhom(this.chuot, e.deltaY > 0 ? 1 : -1);
   }
 
   private diChuot(e: PointerEvent): void {
     const pt = this.toaDo(e);
     if (!pt) return;
-    const p = 0;
+    const p = this.chuot;
     this.nguoi[p].tamX = pt.x;
     this.nguoi[p].tamY = pt.y;
     if (this.man !== 'play') return;
@@ -854,7 +856,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     if (this.man !== 'play') return;
     const pt = this.toaDo(e);
     if (!pt) return;
-    const p = 0;
+    const p = this.chuot;
     if (e.button === 2 && e.buttons & 2) {
       this.datDich(p, pt.x, pt.y);
       return;
@@ -911,6 +913,11 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   private phimXuong(e: KeyboardEvent): void {
     const k = e.key.toLowerCase();
+    if (k === 'tab') {
+      e.preventDefault();
+      if (!e.repeat) this.doiChuot();
+      return;
+    }
     if (this.man !== 'play') return;
     if (PHIM_CHAN.includes(k)) e.preventDefault();
     this.phim.add(k);
@@ -941,6 +948,15 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       if (nut(1) && !cu[1]) this.bayTheoHuong(p);
       for (const j of [1, 4, 5]) cu[j] = nut(j);
     });
+  }
+
+  private doiChuot(): void {
+    const cu = this.nguoi[this.chuot];
+    this.chuot = 1 - this.chuot;
+    const moi = this.nguoi[this.chuot];
+    moi.tamX = cu.tamX;
+    moi.tamY = cu.tamY;
+    cu.dich = null;
   }
 
   private bayTheoHuong(p: number): void {
