@@ -1,0 +1,334 @@
+<div class="khung" #khung tabindex="-1" [class.dang-choi]="man === 'play'">
+  <svg #manHinh [attr.viewBox]="'0 0 ' + W + ' ' + H" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <filter id="cg-sang" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="5" result="b" />
+        <feMerge>
+          <feMergeNode in="b" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+      <clipPath id="cg-nua0"><rect x="0" y="0" [attr.width]="GIUA" [attr.height]="H" /></clipPath>
+      <clipPath id="cg-nua1"><rect [attr.x]="GIUA" y="0" [attr.width]="GIUA" [attr.height]="H" /></clipPath>
+
+    </defs>
+
+    <rect x="0" y="0" [attr.width]="W" [attr.height]="H" fill="#9aa59a" />
+
+    <!-- Mỗi nửa màn hình là 1 camera bám theo nhân vật của nửa đó -->
+    @for (p of [0, 1]; track p) {
+    <g [attr.clip-path]="'url(#cg-nua' + p + ')'">
+      <g [attr.transform]="viewTransform(p)">
+        <rect x="0" y="0" [attr.width]="MAP" [attr.height]="MAP" fill="#c9d8bf" stroke="#7d8b74" stroke-width="10" />
+
+        @for (v of vet; track v.id) {
+        @if (v.loai === 'trung') {
+        <g [attr.transform]="'translate(' + v.x + ',' + v.y + ')'" [attr.opacity]="1 - v.t / 3">
+          <path d="M-22,0 Q-17,-9 -5,-6 Q2,-14 12,-6 Q24,-7 19,2 Q10,9 -5,7 Q-19,9 -22,0 Z" fill="#fff" />
+          <circle cx="0" cy="0" r="7" fill="#f7b731" />
+        </g>
+        } @else if (v.loai === 'no') {
+        <circle [attr.cx]="v.x" [attr.cy]="v.y" [attr.r]="30 + v.t * 200" fill="#ff9fd0" [attr.fill-opacity]="0.35 * (1 - v.t / 0.45)"
+          stroke="#ffd6ec" stroke-width="8" [attr.opacity]="1 - v.t / 0.45" />
+        } @else {
+        <circle [attr.cx]="v.x" [attr.cy]="v.y" [attr.r]="8 + v.t * 50" fill="none" stroke="#fff8dc" stroke-width="4"
+          [attr.opacity]="1 - v.t / 0.45" />
+        }
+        }
+        @let nv = nguoi[p];
+        @if (nv.dich) {
+        <g [attr.transform]="'translate(' + nv.dich.x + ',' + nv.dich.y + ')'" fill="none" [attr.stroke]="nv.mau" stroke-width="4">
+          <ellipse [attr.rx]="10 + 22 * dichNhay()" [attr.ry]="5 + 11 * dichNhay()" [attr.opacity]="1 - dichNhay() * 0.6" />
+          <ellipse rx="6" ry="3" [attr.fill]="nv.mau" />
+        </g>
+        }
+        @for (e of trung; track e.id) {
+        <ellipse [attr.transform]="bongTrungTransform(e)" [attr.rx]="10 + 26 * bongTrung(e)" [attr.ry]="4 + 8 * bongTrung(e)"
+          fill="#000" [attr.opacity]="0.1 + 0.25 * bongTrung(e)" />
+        }
+        @for (v of vatPham; track v.id) {
+        <ellipse [attr.cx]="v.x" [attr.cy]="v.y" rx="22" ry="7" fill="#000" opacity="0.18" />
+        <g [attr.transform]="vatPhamTransform(v)" [attr.opacity]="v.t > 11 && (v.t * 6) % 1 < 0.5 ? 0.35 : 1">
+          <circle r="30" fill="#ffffff" opacity="0.55" stroke="#ffffff" stroke-width="2" />
+          @switch (v.loai) {
+          @case ('corn') {
+          <ellipse rx="9" ry="18" fill="#f7c600" />
+          <path d="M-6,-10 h12 M-7,-3 h14 M-7,4 h14 M-6,11 h12" stroke="#d4a300" stroke-width="1.5" />
+          <path d="M0,18 Q-16,6 -14,-12 Q-8,4 0,10 Q8,4 14,-12 Q16,6 0,18 Z" fill="#4caf50" />
+          }
+          @case ('bread') {
+          <path d="M-20,8 Q-22,-14 0,-14 Q22,-14 20,8 Z" fill="#d4943a" />
+          <path d="M-8,-8 l4,8 M2,-10 l4,8 M11,-7 l3,7" stroke="#a86b23" stroke-width="2" />
+          }
+          @case ('clock') {
+          <circle r="17" fill="#fff" stroke="#8e44ad" stroke-width="4" />
+          <path d="M0,0 L0,-11 M0,0 L8,4" stroke="#333" stroke-width="2.5" stroke-linecap="round" />
+          }
+          }
+        </g>
+        }
+
+        <!-- Gà dưới đất + nhân vật, xếp theo y -->
+        @for (o of xep[p]; track $index) {
+        @switch (o.loai) {
+        @case ('ga') {
+        <ng-container *ngTemplateOutlet="veGa; context: { $implicit: o.ga }" />
+        }
+        @case ('nv') {
+        @let ng = nguoi[o.p];
+        <ellipse [attr.cx]="ng.x" [attr.cy]="ng.y" [attr.rx]="58 * bongNv(o.p)" [attr.ry]="18 * bongNv(o.p)" fill="#000"
+          fill-opacity="0.12" [attr.stroke]="ng.mau" stroke-width="5" stroke-opacity="0.8" />
+        <g [attr.transform]="nvTransform(o.p)">
+          <g cgSprite [sp]="ng.nv.sp" [khung]="ng.nv.khung" [lat]="ng.nv.lat"></g>
+        </g>
+        }
+        }
+        }
+
+        @for (g of gaBayView[p]; track g.id) {
+        <ng-container *ngTemplateOutlet="veGa; context: { $implicit: g }" />
+        }
+        @for (e of trung; track e.id) {
+        <ellipse [attr.transform]="trungTransform(e)" rx="10" ry="13" fill="#fffaf0" stroke="#d9cbb0" stroke-width="2" />
+        }
+        @for (d of dan; track d.id) {
+        @let vt = danHienTai(d);
+        <line [attr.x1]="vt.xs" [attr.y1]="vt.ys" [attr.x2]="vt.x" [attr.y2]="vt.y" stroke="#ffc2e2" [attr.stroke-width]="d.to ? 26 : 8"
+          stroke-linecap="round" stroke-opacity="0.6" />
+        <circle [attr.cx]="vt.x" [attr.cy]="vt.y" [attr.r]="d.to ? 30 : 10" fill="#ff9fd0" [attr.stroke]="nguoi[d.p].mau"
+          stroke-width="3" [attr.filter]="d.to ? 'url(#cg-sang)' : null" />
+        }
+        @for (l of long; track l.id) {
+        <path [attr.transform]="'translate(' + l.x + ',' + l.y + ') rotate(' + l.xoay + ')'" d="M0,-9 Q6,0 0,9 Q-6,0 0,-9 Z"
+          [attr.fill]="l.mau" stroke="#00000030" stroke-width="1" [attr.opacity]="1 - l.t / 1.3" />
+        }
+        @for (c of chu; track c.id) {
+        <text [attr.x]="c.x" [attr.y]="c.y" text-anchor="middle" class="chu-bay" [attr.fill]="c.mau" [attr.opacity]="1 - c.t">
+          {{ c.text }}</text>
+        }
+      </g>
+    </g>
+    }
+
+    <rect x="0" y="0" [attr.width]="W" [attr.height]="H" [attr.fill]="mauHoangHon" [attr.opacity]="doHoangHon * 0.6"
+      pointer-events="none" />
+    <line [attr.x1]="GIUA" y1="0" [attr.x2]="GIUA" [attr.y2]="H" stroke="#1d2b3a" stroke-width="6" />
+
+    @if (man === 'play' || man === 'pause') {
+    @for (n of nguoi; track $index) {
+    <g [attr.transform]="'translate(' + n.tamX + ',' + n.tamY + ')'" [attr.stroke]="n.mau" stroke-width="3" fill="none">
+      <circle r="18" />
+      <circle r="3" [attr.fill]="n.mau" />
+      <path d="M-28,0 h14 M14,0 h14 M0,-28 v14 M0,14 v14" />
+    </g>
+    }
+
+    <!-- HUD -->
+    @for (n of nguoi; track $index) {
+    <g [attr.transform]="'translate(' + ($index === 0 ? 20 : W - 300) + ',18)'">
+      <rect width="280" height="92" rx="14" fill="#1d2b3a" fill-opacity="0.92" />
+      <rect width="10" height="92" rx="5" [attr.fill]="n.mau" />
+      <text x="24" y="28" class="hud-ten">{{ n.ten }} · {{ $index === 0 ? 'nửa trái' : 'nửa phải' }}</text>
+      <text x="266" y="84" text-anchor="end" class="hud-phu">{{ tenNhom($index) }}</text>
+      <text x="24" y="60" class="hud-diem">{{ n.diem }}</text>
+      <text x="266" y="58" text-anchor="end" class="hud-phu">
+        {{ heSo($index) > 1 ? 'x' + heSo($index) : '' }}{{ dangChum($index) ? ' · bắn chùm' : '' }}</text>
+      @if (dangNap($index)) {
+      <text x="24" y="82" class="hud-nap">Đang tụ khí…</text>
+      } @else {
+      @for (i of oDan; track i) {
+      <rect [attr.x]="24 + i * 11" y="72" width="7" height="12" rx="2" [attr.fill]="i < n.dan ? '#ff8fc8' : '#ffffff30'" />
+      }
+      }
+    </g>
+    }
+    <!-- Radar: vùng quanh nhân vật của nửa đó, viền vườn, khung nhìn, gà và 2 nhân vật -->
+    @for (p of [0, 1]; track p) {
+    <g [attr.transform]="'translate(' + (p === 0 ? 20 : W - MINI - 20) + ',' + (H - MINI - 20) + ')'" pointer-events="none">
+      <rect [attr.width]="MINI" [attr.height]="MINI" rx="8" fill="#1d2b3a" fill-opacity="0.55" stroke="#1d2b3a" stroke-width="2" />
+      <svg [attr.width]="MINI" [attr.height]="MINI" [attr.viewBox]="viewBoxRadar(p)">
+        <rect x="0" y="0" [attr.width]="MAP" [attr.height]="MAP" fill="#c9d8bf" fill-opacity="0.35" stroke="#fff" stroke-width="30" />
+        @for (g of ga; track g.id) {
+        @if (!g.chet && g.loai !== 'chick') {
+        <circle [attr.cx]="g.x" [attr.cy]="g.y" [attr.r]="g.loai === 'golden' ? 70 : 45" [attr.fill]="MAU_LONG[g.loai]" />
+        }
+        }
+        @for (n of nguoi; track $index) {
+        <circle [attr.cx]="n.x" [attr.cy]="n.y" r="75" [attr.fill]="n.mau" stroke="#fff" stroke-width="25" />
+        }
+        @let k = khungMini(p);
+        <rect [attr.x]="k.x" [attr.y]="k.y" [attr.width]="k.w" [attr.height]="k.h" fill="none" [attr.stroke]="nguoi[p].mau" stroke-width="22" />
+      </svg>
+    </g>
+    }
+    <g [attr.transform]="'translate(' + GIUA + ',18)'">
+      <rect x="-160" width="320" height="70" rx="14" fill="#1d2b3a" fill-opacity="0.92" />
+      <text x="0" y="58" text-anchor="middle" class="hud-phu">{{ tenChang }} · Đội: {{ tongDiem }}{{ dangCham ? ' · gà chậm' : '' }}</text>
+      @for (i of [0, 1, 2, 3, 4]; track i) {
+      <path [attr.transform]="'translate(' + (-44 + i * 22) + ',26) scale(1.2)'"
+        d="M0,6 C-10,-4 -12,-12 -6,-14 C-2,-15 0,-12 0,-10 C0,-12 2,-15 6,-14 C12,-12 10,-4 0,6 Z"
+        [attr.fill]="i < mang ? '#ff4d6d' : '#ffffff40'" />
+      }
+    </g>
+    }
+  </svg>
+
+  <ng-template #veGa let-g>
+    <svg:g [attr.transform]="gaTransform(g)" [attr.opacity]="g.chet ? 1 - g.tChet : 1">
+      <ellipse cx="0" cy="0" [attr.rx]="30 * bongGa(g)" [attr.ry]="9 * bongGa(g)" fill="#000" [attr.opacity]="0.2 * bongGa(g)" />
+      <g [attr.transform]="gaThan(g)" [attr.filter]="g.loai === 'golden' ? 'url(#cg-sang)' : null">
+        <g [attr.transform]="'rotate(' + moGa(g) + ' 10 20)'">
+      @switch (g.loai) {
+      @case ('chick') {
+      <g stroke="#f39c12" stroke-width="2" stroke-linecap="round">
+        <line x1="-3" y1="9" [attr.x2]="-3 + chanGa(g) / 2" y2="18" />
+        <line x1="4" y1="9" [attr.x2]="4 - chanGa(g) / 2" y2="18" />
+      </g>
+      <ellipse rx="14" ry="12" fill="#ffe14d" />
+      <ellipse cx="-3" cy="1" rx="7" ry="5" fill="#f5cc2e" />
+      <circle cx="11" cy="-10" r="8" fill="#ffe14d" />
+      <path d="M18,-11 L25,-9 L18,-7 Z" fill="#f39c12" />
+      <circle cx="13" cy="-12" r="1.6" fill="#222" />
+      }
+      }
+      @if (g.loai === 'flyer' || g.loai === 'golden') {
+      <g [attr.transform]="'rotate(' + (-canhGa(g)) + ' -2 -6)'">
+        <path d="M-2,-6 C-20,-50 8,-62 24,-42 C14,-30 6,-16 -2,-6 Z" [attr.fill]="mauCanh(g)" />
+      </g>
+      <path d="M-24,-2 L-42,-14 L-38,0 L-44,8 L-24,6 Z" [attr.fill]="mauCanh(g)" />
+      <ellipse rx="26" ry="17" [attr.fill]="mauThan(g)" />
+      <path d="M-4,12 L-8,22 M6,12 L4,22" stroke="#e67e22" stroke-width="3" stroke-linecap="round" />
+      <circle cx="22" cy="-12" r="12" [attr.fill]="mauThan(g)" />
+      <path d="M16,-22 C16,-31 21,-31 22,-24 C23,-32 29,-31 29,-22 Z" fill="#e74c3c" />
+      <path d="M33,-15 L43,-11 L33,-7 Z" fill="#f39c12" />
+      <circle cx="26" cy="-15" r="2.4" fill="#222" />
+      <g [attr.transform]="'rotate(' + canhGa(g) + ' -2 -6)'">
+        <path d="M-2,-6 C-26,-44 4,-58 22,-40 C12,-28 4,-16 -2,-6 Z" [attr.fill]="mauCanh(g)"
+          stroke="#00000022" stroke-width="2" />
+      </g>
+      @if (g.loai === 'golden') {
+      <g fill="#fff6b0">
+        <path [attr.transform]="'translate(-30,-30) rotate(' + (t * 200) + ')'" d="M0,-7 L2,-2 L7,0 L2,2 L0,7 L-2,2 L-7,0 L-2,-2 Z" />
+        <path [attr.transform]="'translate(30,18) rotate(' + (-t * 160) + ')'" d="M0,-6 L2,-2 L6,0 L2,2 L0,6 L-2,2 L-6,0 L-2,-2 Z" />
+      </g>
+      }
+      }
+      @if (g.loai === 'hen' || g.loai === 'rooster') {
+      @if (g.loai === 'rooster') {
+      <path d="M-26,0 C-62,-20 -60,-50 -44,-54 C-48,-32 -40,-16 -22,-4 Z" fill="#2c3e50" />
+      <path d="M-24,-6 C-50,-44 -36,-66 -18,-54 C-32,-38 -28,-22 -18,-14 Z" fill="#1e7a4a" />
+      } @else {
+      <path d="M-26,-4 L-44,-28 L-36,-6 L-46,-16 L-28,6 Z" fill="#f0f0f0" stroke="#00000018" stroke-width="2" />
+      }
+      <g stroke="#e67e22" stroke-width="3" stroke-linecap="round">
+        <line x1="-6" y1="18" [attr.x2]="-6 + chanGa(g)" y2="36" />
+        <line x1="8" y1="18" [attr.x2]="8 - chanGa(g)" y2="36" />
+      </g>
+      <ellipse rx="30" ry="22" [attr.fill]="mauThan(g)" stroke="#00000020" stroke-width="2" />
+      <path d="M-14,-4 C-4,-16 14,-12 16,0 C8,10 -8,10 -14,-4 Z" [attr.fill]="mauCanh(g)" />
+      <circle cx="24" cy="-20" r="13" [attr.fill]="mauDau(g)" />
+      @if (g.loai === 'rooster') {
+      <path d="M12,-30 C10,-46 18,-48 20,-36 C20,-50 30,-50 29,-35 C34,-46 42,-40 36,-28 Z" fill="#e74c3c" />
+      } @else {
+      <path d="M16,-30 C16,-40 22,-40 23,-33 C24,-41 31,-40 31,-31 Z" fill="#e74c3c" />
+      }
+      <path d="M36,-23 L47,-19 L36,-15 Z" fill="#f39c12" />
+      <path d="M34,-14 q2,9 -3,9 q-3,-5 1,-9 Z" fill="#e74c3c" />
+      <circle cx="28" cy="-23" r="2.6" fill="#222" />
+      <circle cx="29" cy="-24" r="0.9" fill="#fff" />
+      }
+        </g>
+      </g>
+    </svg:g>
+  </ng-template>
+
+  <button type="button" class="nut-dong" (click)="dongGame()" title="Đóng (Esc)">✕</button>
+  @if (man === 'play') {
+  <button type="button" class="nut-dung" (click)="tamDung()" title="Tạm dừng (P)">❚❚</button>
+  }
+
+  @if (man === 'start') {
+  <div class="man-phu">
+    <div class="hop">
+      <h1>🐔 Chạy Vườn Săn Gà</h1>
+      <p class="mo-ta">Mabu và Zinbu băng qua khu vườn, mỗi người một nửa màn hình. Bắn chưởng hạ càng nhiều gà càng tốt, chơi đến khi hết mạng!</p>
+      <div class="hai-cot">
+        @for (i of [0, 1]; track i) {
+        <div class="the" [class.teo]="i === 0" [class.ty]="i === 1">
+          @let nvm = nguoi[i].nv;
+          <svg class="chan-dung" viewBox="-36 -66 72 76" aria-hidden="true">
+            <g cgSprite [sp]="nvm.sp" [khung]="nvm.khung" [lat]="false"></g>
+          </svg>
+          @if (i === 0) {
+          <h3>Mabu · nửa trái</h3>
+          <p>Chuột ở <b>nửa trái</b>: <b>chuột phải</b> chỉ chỗ để chạy tới (xa thì bay), <b>chuột trái</b> ra đòn,
+            <b>lăn chuột</b> đổi nhóm đòn.</p>
+          <p class="phu">Bàn phím: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> chạy, <kbd>Space</kbd> đánh con gà gần nhất,
+            <kbd>Q</kbd> đổi nhóm đòn, <kbd>R</kbd> tụ khí</p>
+          } @else {
+          <h3>Zinbu · nửa phải</h3>
+          <p>Chuột ở <b>nửa phải</b>: <b>chuột phải</b> chỉ chỗ để chạy tới (xa thì bay), <b>chuột trái</b> ra đòn,
+            <b>lăn chuột</b> đổi nhóm đòn.</p>
+          <p class="phu">Bàn phím: <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> chạy, <kbd>Enter</kbd> đánh con gà gần nhất,
+            <kbd>Shift phải</kbd> đổi nhóm đòn, <kbd>Ctrl phải</kbd> tụ khí</p>
+          }
+        </div>
+        }
+      </div>
+      <table class="bang-diem">
+        <tr><td>Gà mái</td><td>+10</td><td>Gà trống</td><td>+20</td><td>Gà bay</td><td>+30</td></tr>
+        <tr><td>Gà vàng</td><td>+100</td><td>Bắn vỡ trứng</td><td>+5</td><td class="tru">Gà con</td><td class="tru">−50</td></tr>
+      </table>
+      <p class="phu">Camera luôn bám theo nhân vật. Đứng yên bắn thì chính xác và nhanh hơn, vừa chạy vừa bắn thì chưởng hơi tản.
+        Thanh khí {{ BANG_DAN }} ô, hết khí tự tụ khí. Nhóm đòn: <b>Đấm</b> 1 chưởng · <b>Đá</b> 2 chưởng tản ·
+        <b>Chiêu đặc biệt</b> quả cầu nổ diện rộng (tốn 3 ô, nổ trúng cả gà con), đổi chiêu mỗi 5 giây.<br />
+        Gà bay thả trứng trúng người thì nhân vật bị hạ gục và mất 1 ❤ (cả đội có 5 mạng), chạy hoặc bay đi để né. Bắn trúng liên tiếp để nhân điểm x2, x3.<br />
+        Vật phẩm (bắn hoặc chạy tới nhặt): 🌽 bắn chùm · 🍞 thêm mạng · ⏱ gà chậm. <kbd>P</kbd> tạm dừng, <kbd>Esc</kbd> đóng.</p>
+      <button type="button" class="nut-chinh" (click)="batDau()">Bắt đầu</button>
+      @if (kyLuc > 0) {
+      <p class="phu">Kỷ lục đội: <b>{{ kyLuc }}</b></p>
+      }
+    </div>
+  </div>
+  }
+
+  @if (man === 'pause') {
+  <div class="man-phu">
+    <div class="hop nho">
+      <h2>Tạm dừng</h2>
+      <button type="button" class="nut-chinh" (click)="tamDung()">Tiếp tục</button>
+    </div>
+  </div>
+  }
+
+  @if (man === 'over') {
+  <div class="man-phu">
+    <div class="hop">
+      <h1>Hết mạng rồi! 🥚</h1>
+      <div class="hai-cot">
+        @for (n of nguoi; track $index) {
+        <div class="the" [class.teo]="$index === 0" [class.ty]="$index === 1" [class.thang]="nguoiThang === $index">
+          <h3>{{ nguoiThang === $index ? '👑 ' : '' }}{{ n.ten }}</h3>
+          <div class="so-lon">{{ n.diem }}</div>
+          <p class="phu">Trúng {{ n.banTrung }} · Trượt {{ n.banTruot }} · Chính xác {{ doChinhXac($index) }}%</p>
+        </div>
+        }
+      </div>
+      <p class="ket-luan">
+        @if (nguoiThang === -1) {
+        Hòa nhau! Cả hai cùng là vua săn gà 🤝
+        } @else {
+        👑 {{ nguoi[nguoiThang].ten }} là <b>Vua săn gà</b>!
+        }
+      </p>
+      <p>Điểm đội: <b>{{ tongDiem }}</b> · Kỷ lục: <b>{{ kyLuc }}</b>
+        @if (kyLucMoi) {<span class="ky-luc-moi">Kỷ lục mới!</span>}
+      </p>
+      <div class="nhom-nut">
+        <button type="button" class="nut-chinh" (click)="batDau()">Chơi lại</button>
+        <button type="button" class="nut-phu" (click)="dongGame()">Đóng</button>
+      </div>
+    </div>
+  </div>
+  }
+</div>
