@@ -59,7 +59,7 @@
           <g transform="translate(48,0)">
             <circle r="13.3" fill="#0d1b12" fill-opacity="0.75" />
             <clipPath [attr.id]="'cg-orb' + $index"><rect x="-10.7" [attr.y]="10.7 - 21.4 * nangLuong($index)" width="21.4" height="21.4" /></clipPath>
-            <circle r="10.7" [attr.fill]="dangNap($index) ? '#ff8a5c' : '#ff2b2b'" [attr.clip-path]="'url(#cg-orb' + $index + ')'" />
+            <circle r="10.7" [attr.fill]="mauMana($index)" [attr.clip-path]="'url(#cg-orb' + $index + ')'" />
             <circle r="10.7" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="1.7" />
           </g>
         </g>
@@ -72,9 +72,9 @@
         }
         @for (nv of nguoi; track $index) {
         <g [attr.transform]="duoiChan($index) + ' scale(1.3)'" pointer-events="none">
-          <!-- Nhóm đòn dưới chân nhân vật: nắm đấm, cái chân, bắn chưởng. Nhóm đang dùng sáng rõ, còn lại mờ -->
-          @for (k of [0, 1, 2]; track k) {
-          <g [attr.transform]="'translate(' + (36 * k - 36) + ',0)'" [attr.opacity]="nv.nv.nhom === k ? 1 : 0.35">
+          <!-- Nhóm đòn dưới chân nhân vật: nắm đấm, bắn chưởng, cái chân. Nhóm đang dùng sáng rõ, còn lại mờ -->
+          @for (k of [0, 2, 1]; track k; let i = $index) {
+          <g [attr.transform]="'translate(' + (36 * i - 36) + ',0)'" [attr.opacity]="nv.nv.nhom === k ? 1 : 0.35">
             <circle r="16" fill="#0d1b12" fill-opacity="0.75" [attr.stroke]="nv.nv.nhom === k ? nv.mau : 'none'" stroke-width="2.5" />
             <g fill="#fff" stroke="#0d1b12" stroke-width="1.2" stroke-linejoin="round">
               @switch (k) {

@@ -28,7 +28,7 @@ interface NguoiChoi {
   ten: string; mau: string; diem: number; combo: number; tamX: number; tamY: number;
   hoiChieu: number; chumDen: number; banTrung: number; banTruot: number;
   x: number; y: number; dich: { x: number; y: number } | null; dangDi: boolean;
-  dan: number; napDen: number; nv: NhanVat; bay: ChuyenBay | null;
+  mana: number[]; khoaMana: number[]; hoiMana: number[]; nv: NhanVat; bay: ChuyenBay | null;
   nhin: { x: number; y: number }; nham: { x: number; y: number } | null;
 }
 interface DauVao { hx: number; hy: number; danh: boolean; }
@@ -63,9 +63,13 @@ const TOC_DO_BAY = 900;
 const BAY_KHI_XA = 450;
 const BAY_TOI_DA = 1200;
 const TOC_DO_DAN = 2400;
-const BANG_DAN = 15;
-const THOI_GIAN_NAP = 1.4;
-const TON_CHIEU = 3;
+// Mana theo nhóm đòn (0 Đấm · 1 Đá · 2 Chiêu đặc biệt). Đấm không bao giờ hết; 0 nghĩa là vô hạn.
+const MANA_TOI_DA = [0, 10, 5];
+// Hết sạch mana thì khoá KHOA_MANA giây rồi mới bắt đầu hồi; sau đó cứ HOI_MANA giây hồi 1 lần đánh (hồi cả khi chưa hết sạch)
+const KHOA_MANA = 30;
+const HOI_MANA = 6;
+// Màu quả cầu mana theo nhóm đòn đang dùng: Đấm xanh · Đá cam · Chiêu đặc biệt đỏ
+const MAU_MANA = ['#3aa0ff', '#ff9a3c', '#ff2b2b'];
 // Tầm đánh (đơn vị bản đồ). Đấm/Đá chọn ngẫu nhiên đòn gần hoặc đòn xa, đòn xa đánh được xa hơn.
 // 
 const BAN_KINH_NO = 120;
@@ -160,8 +164,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   readonly MAU_SANG = MAU_SANG;
   readonly HP_TUONG = HP_TUONG;
   readonly S_NV = S_NV;
-  readonly BANG_DAN = BANG_DAN;
-  readonly oDan = Array.from({ length: BANG_DAN }, (_, i) => i);
 
   man: ManChoi = 'start';
   nguoi: NguoiChoi[] = this.taoNguoiChoi();
@@ -299,10 +301,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     return this.nguoi[p].chumDen > this.tGame;
   }
 
-  dangNap(p: number): boolean {
-    return this.nguoi[p].napDen > this.tGame;
-  }
-
   heSo(p: number): number {
     return Math.min(3, 1 + Math.floor(this.nguoi[p].combo / 5));
   }
@@ -372,11 +370,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   private dieuKhien(dt: number): void {
     this.nguoi.forEach((n, p) => {
       n.hoiChieu = Math.max(0, n.hoiChieu - dt);
-      if (n.napDen && n.napDen <= this.tGame) {
-        n.napDen = 0;
-        n.dan = BANG_DAN;
-      }
-      n.nv.tuKhi(this.dangNap(p));
+      this.hoiMana(n, dt);
 
       const hv = this.vao[p];
       const hl = Math.hypot(hv.hx, hv.hy);
@@ -738,25 +732,38 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   // ─── Bắn & tính điểm ───
 
-  private napDan(p: number): void {
-    const n = this.nguoi[p];
-    if (this.dangNap(p) || n.dan === BANG_DAN) return;
-    n.napDen = this.tGame + THOI_GIAN_NAP;
+  // Hồi mana: hết sạch thì khoá rồi mới hồi; mỗi HOI_MANA giây được thêm 1 lần đánh
+  private hoiMana(n: NguoiChoi, dt: number): void {
+    for (const g of [1, 2]) {
+      if (n.khoaMana[g] > 0) {
+        n.khoaMana[g] = Math.max(0, n.khoaMana[g] - dt);
+        n.hoiMana[g] = 0;
+      } else if (n.mana[g] < MANA_TOI_DA[g]) {
+        n.hoiMana[g] += dt;
+        if (n.hoiMana[g] >= HOI_MANA) {
+          n.hoiMana[g] -= HOI_MANA;
+          n.mana[g]++;
+        }
+      }
+    }
   }
 
-  // Nhóm Đấm: 1 viên · Đá: 2 viên tản · Chiêu đặc biệt: 1 quả cầu nổ diện rộng, tốn 3 khí
+  // Nhóm Đấm: 1 viên, không tốn mana · Đá: 2 viên tản · Chiêu đặc biệt: 1 quả cầu nổ diện rộng. Đá và chiêu tốn 1 mana mỗi lần.
   private ban(p: number, x: number, y: number): void {
     const n = this.nguoi[p];
-    if (n.hoiChieu > 0 || this.dangNap(p) || n.nv.khoa) return;
+    if (n.hoiChieu > 0 || n.nv.khoa) return;
     const chieu = n.nv.nhom === 2;
-    const ton = chieu ? TON_CHIEU : 1;
-    if (n.dan < ton) {
-      this.napDan(p);
-      return;
-    }
+    const nhom = n.nv.nhom;
+    if (nhom > 0 && (n.khoaMana[nhom] > 0 || n.mana[nhom] < 1)) return;
     // Animation đòn chạy chậm 1/2 nên thời gian hồi cũng gấp đôi
     n.hoiChieu = (chieu ? 0.8 : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
-    n.dan -= ton;
+    if (nhom > 0) {
+      n.mana[nhom]--;
+      if (n.mana[nhom] < 1) {
+        n.khoaMana[nhom] = KHOA_MANA;
+        n.hoiMana[nhom] = 0;
+      }
+    }
     if (!n.dangDi) {
       n.nv.lat = x < n.x;
       n.nv.huong = 'ngang';
@@ -783,7 +790,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       const T = Math.hypot(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
       this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0 });
     });
-    if (n.dan === 0) this.napDan(p);
   }
 
   doiNhom(p: number, buoc: number): void {
@@ -1070,10 +1076,16 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     return Math.max(0, this.mang) / MANG_TOI_DA;
   }
 
-  // 0..1: số đạn còn lại, hoặc tiến độ tụ khí khi đang nạp
+  // 0..1: mana còn lại của nhóm đòn đang dùng (Đấm luôn đầy)
   nangLuong(p: number): number {
     const n = this.nguoi[p];
-    return this.dangNap(p) ? kep(1 - (n.napDen - this.tGame) / THOI_GIAN_NAP, 0, 1) : n.dan / BANG_DAN;
+    const g = n.nv.nhom;
+    return g === 0 ? 1 : n.mana[g] / MANA_TOI_DA[g];
+  }
+
+  // Quả cầu mana chỉ có một, đổi màu theo nhóm đòn đang dùng
+  mauMana(p: number): string {
+    return MAU_MANA[this.nguoi[p].nv.nhom];
   }
 
   nvTransform(p: number): string {
@@ -1144,7 +1156,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       ten: p === 0 ? MABU.ten : ZINBU.ten, mau: p === 0 ? '#e84393' : '#8e44ad',
       diem: 0, combo: 0, tamX: GIUA, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
       x: MAP / 2 + (p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
-      dan: BANG_DAN, napDen: 0, nv: this.taoNhanVat(p), bay: null,
+      mana: MANA_TOI_DA.map((m) => m), khoaMana: [0, 0, 0], hoiMana: [0, 0, 0], nv: this.taoNhanVat(p), bay: null,
       nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null,
     }));
   }

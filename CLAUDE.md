@@ -22,3 +22,8 @@
 # Nguyên tắc thanh máu
 
 - Chỉ gà tướng (boss) có thanh máu, vẽ trên đầu trong không gian thế giới (trong nhóm camera) cùng kiểu thanh máu của nhân vật. Quái thường không hiện máu. Không dùng thanh máu cố định trên đỉnh màn hình.
+
+# Nguyên tắc mana
+
+- Mana tính riêng từng nhóm đòn (`MANA_TOI_DA`, `KHOA_MANA`, `HOI_MANA`): Đấm vô hạn · Đá 10 · Chiêu đặc biệt 5. Hết sạch thì khoá 30s rồi hồi mỗi 6s được 1 lần đánh.
+- Chỉ có một quả cầu mana trên đầu nhân vật, đổi màu theo nhóm đang dùng (`MAU_MANA`): Đấm xanh, Đá cam, Chiêu đặc biệt đỏ. Thứ tự biểu tượng dưới chân: Đấm → Chiêu đặc biệt → Đá.
