@@ -43,7 +43,7 @@ const H = 900;
 const GIUA = W / 2;
 const MAP = 6400;
 // Hai bảng chiêu thức khoét vào map ở hai góc dưới (hình tròn nền đen): Mabu bên trái, Zinbu bên phải. Map vẫn chiếm cả màn hình.
-const R_BANG = 235;
+const R_BANG = 136;
 const TAM_VIEW_Y = 520;
 // Camera chung đặt ở trung điểm 2 nhân vật. ZOOM là mức gần nhất, hai người càng xa thì càng thu nhỏ tới ZOOM_MIN.
 const ZOOM = 0.55;
@@ -93,7 +93,7 @@ const MAU_MANA = ['#3aa0ff', '#ff9a3c', '#ff2b2b', '#a855f7'];
 // Mana của chiêu này màu tím: khi mây đang chạy là thời gian còn lại, khi chờ là tiến độ hồi.
 const NHOM_MAY = 3;
 // Bảng chiêu thức: bán kính cung và bán kính mỗi nút
-const R_CUNG = 112;
+const R_CUNG = 96;
 const R_NUT = 30;
 const MAY_THOI_GIAN = 7;
 const MAY_HOI = 40;
