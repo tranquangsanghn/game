@@ -825,7 +825,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   nvTransform(p: number): string {
     const n = this.nguoi[p];
-    return `translate(${n.x.toFixed(1)},${(n.y - n.nv.cao * S_NV).toFixed(1)}) scale(${S_NV})`;
+    return `translate(${n.x.toFixed(1)},${(n.y - (n.nv.cao - n.nv.nhun) * S_NV).toFixed(1)}) scale(${S_NV})`;
   }
 
   private viTriTay(p: number) {

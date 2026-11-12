@@ -71,6 +71,14 @@ export class NhanVat {
     return this.sp.anim[this.anim].f[this.i];
   }
 
+  /** Độ nhún lên xuống (px sprite, âm = lên) khi đi theo chiều dọc: mỗi bước một nhịp nhún */
+  get nhun(): number {
+    if (this.huong === 'ngang' || this.anim !== 'run') return 0;
+    const a = this.sp.anim.run;
+    const pha = (this.i + this.tg / a.ms) / a.f.length;
+    return -Math.abs(Math.sin(2 * Math.PI * pha)) * 3;
+  }
+
   get khoa(): boolean {
     return this.trangThai === 'chet' || this.trangThai === 'dayLai';
   }
