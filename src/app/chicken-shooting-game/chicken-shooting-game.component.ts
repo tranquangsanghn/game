@@ -158,7 +158,7 @@ const TRUNG_NO = 2;
 const TRUNG_CHO = 30;
 const GA_TOI_DA = 20;
 // Mini map ở giữa đáy màn hình (kích thước pixel)
-const MINI = 200;
+const MINI = 120;
 const DIEM_DANH_TUONG = 15;
 
 const TEN_DON: Record<string, string> = {

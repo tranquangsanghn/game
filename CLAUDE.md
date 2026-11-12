@@ -95,4 +95,4 @@
 - Gà con không tự sinh theo thời gian nữa: chỉ do gà mẹ (gà tướng) đẻ. Gà tướng xuất hiện ngay từ đầu ván ở chỗ ngẫu nhiên trên map (cách cả hai nhân vật ≥ 2000); bị hạ thì sau `CHO_TUONG` giây xuất hiện lại.
 - Gà tướng đẻ `TRUNG_SO` = 5 trứng mỗi lượt quanh mình (`deTrung()`), cách nhau `TRUNG_CHO` = 30s (lượt đầu ngay khi xuất hiện). Trứng nở sau `TRUNG_NO` = 2s (`capNhatTrungGa()`) thành 2 gà trắng, 2 gà đỏ, 1 gà đen (`DAN_TRUNG`). Tổng số gà còn sống (kể cả gà tướng) + trứng đang ấp ≥ `GA_TOI_DA` = 20 thì không đẻ. Gà không bị xoá khi ở xa nhân vật.
 - Trứng cũng bị sương mù: chỉ vẽ trong tầm nhìn (`trungView`).
-- Mini map (kiểu PS) ở giữa đáy màn hình, kích thước `MINI`: hiện 2 nhân vật, khung camera, và chấm đỏ là gà tướng (luôn hiện, không bị sương mù). Không bấm được, không chắn chuột.
+- Mini map (kiểu PS) ở giữa đáy màn hình, kích thước `MINI` = 120 (map vuông nên mini map vuông, cùng tỉ lệ): hiện 2 nhân vật, khung camera, và chấm đỏ là gà tướng (luôn hiện, không bị sương mù). Không bấm được, không chắn chuột.
