@@ -34,7 +34,7 @@
   - Chiêu đặc biệt (bắn chưởng): Mabu 100 · Zinbu 150
   - Biến mây (riêng Mabu): 250 (`SAT_MAY`); với gà tướng cứ mỗi `MAY_NHIP` giây trừ một lần
 - Quái gây sát thương khi chạm nhân vật; sát thương gốc (`SAT_GA`) và tốc độ đánh = số giây giữa 2 đòn (`HOI_DANH_GA`) theo loại, mỗi con có đồng hồ riêng:
-  - Gà trắng: 16 sát thương · 1,2s (nhân vật nhận 8)
+  - Gà trắng: 32 sát thương · 1,2s (nhận 16)
   - Gà đỏ: 48 · 0,8s (nhận 24)
   - Gà đen: 60 · 1,5s (nhận 30)
   - Gà con: 20 · 1,0s (nhận 10)
