@@ -76,8 +76,6 @@
         }
         @case ('nv') {
         @let ng = nguoi[o.p];
-        <ellipse [attr.cx]="ng.x" [attr.cy]="ng.y" [attr.rx]="58 * bongNv(o.p)" [attr.ry]="18 * bongNv(o.p)" fill="#000"
-          fill-opacity="0.12" [attr.stroke]="ng.mau" stroke-width="5" stroke-opacity="0.8" />
         <g [attr.transform]="nvTransform(o.p)">
           <g cgSprite [sp]="ng.nv.sp" [khung]="ng.nv.khung" [lat]="ng.nv.lat"></g>
         </g>
@@ -92,11 +90,13 @@
         <ellipse [attr.transform]="trungTransform(e)" rx="10" ry="13" fill="#fffaf0" stroke="#d9cbb0" stroke-width="2" />
         }
         @for (d of dan; track d.id) {
+        @if (d.to) {
         @let vt = danHienTai(d);
-        <line [attr.x1]="vt.xs" [attr.y1]="vt.ys" [attr.x2]="vt.x" [attr.y2]="vt.y" stroke="#ffc2e2" [attr.stroke-width]="d.to ? 26 : 8"
+        <line [attr.x1]="vt.xs" [attr.y1]="vt.ys" [attr.x2]="vt.x" [attr.y2]="vt.y" stroke="#ffc2e2" stroke-width="26"
           stroke-linecap="round" stroke-opacity="0.6" />
-        <circle [attr.cx]="vt.x" [attr.cy]="vt.y" [attr.r]="d.to ? 30 : 10" fill="#ff9fd0" [attr.stroke]="nguoi[d.p].mau"
-          stroke-width="3" [attr.filter]="d.to ? 'url(#cg-sang)' : null" />
+        <circle [attr.cx]="vt.x" [attr.cy]="vt.y" r="30" fill="#ff9fd0" [attr.stroke]="nguoi[d.p].mau"
+          stroke-width="3" filter="url(#cg-sang)" />
+        }
         }
         @for (l of long; track l.id) {
         <path [attr.transform]="'translate(' + l.x + ',' + l.y + ') rotate(' + l.xoay + ')'" d="M0,-9 Q6,0 0,9 Q-6,0 0,-9 Z"

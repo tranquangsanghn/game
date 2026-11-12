@@ -813,10 +813,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     return `translate(${n.x.toFixed(1)},${(n.y - n.nv.cao * S_NV).toFixed(1)}) scale(${S_NV})`;
   }
 
-  bongNv(p: number): number {
-    return Math.max(0.4, 1 - this.nguoi[p].nv.cao / 80);
-  }
-
   private viTriTay(p: number) {
     const n = this.nguoi[p];
     const { dx, dy } = n.nv.diemBan;
