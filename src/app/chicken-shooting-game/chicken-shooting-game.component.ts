@@ -81,7 +81,7 @@ const TAM_DON: Record<string, number> = {
 };
 const PHIM_CHAN = [' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'];
 const PHIM_DOI = ['k', 'x'];
-const PHIM_BAY = [' ', 'l'];
+const PHIM_BAY = ['l'];
 const KHOA_KY_LUC = 'chicken-shooting-game.ky-luc';
 
 const DIEM: Record<LoaiGa, number> = { hen: 10, rooster: 20, flyer: 30, golden: 100, chick: -50 };
@@ -142,7 +142,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   camX = MAP / 2;
   camY = MAP / 2;
   camZ = ZOOM;
-  // Người chơi mà chuột đang điều khiển (Tab để đổi) — tạm thời khi chỉ có 1 chuột
+  // Người chơi mà chuột đang điều khiển (Space để đổi) — tạm thời khi chỉ có 1 chuột
   chuot = 0;
   mang = MANG_TOI_DA;
   tGame = 0;
@@ -187,7 +187,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       });
       nghe(svg, 'contextmenu', (e: Event) => e.preventDefault());
       nghe(svg, 'wheel', (e: WheelEvent) => this.lanChuot(e));
-      nghe(window, 'keydown', (e: KeyboardEvent) => this.phimXuong(e), true);
+      nghe(window, 'keydown', (e: KeyboardEvent) => this.phimXuong(e));
       nghe(window, 'keyup', (e: KeyboardEvent) => this.phim.delete(e.key.toLowerCase()));
       nghe(window, 'blur', () => this.phim.clear());
 
@@ -916,14 +916,12 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   private phimXuong(e: KeyboardEvent): void {
     const k = e.key.toLowerCase();
-    if (k === 'tab') {
-      e.preventDefault();
-      e.stopPropagation();
+    if (this.man !== 'play') return;
+    if (PHIM_CHAN.includes(k)) e.preventDefault();
+    if (k === ' ') {
       if (!e.repeat) this.doiChuot();
       return;
     }
-    if (this.man !== 'play') return;
-    if (PHIM_CHAN.includes(k)) e.preventDefault();
     this.phim.add(k);
     if (e.repeat) return;
     if (PHIM_DOI.includes(k)) this.doiNhom(1, 1);
