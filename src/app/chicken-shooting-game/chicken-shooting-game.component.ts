@@ -1106,7 +1106,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   // Thanh máu (máu chung của đội) và quả cầu năng lượng (đạn) nhỏ trên đầu nhân vật
   thanhTrenDau(p: number): string {
     const n = this.nguoi[p];
-    return `translate(${n.x.toFixed(1)},${(n.y - (n.nv.cao - n.nv.nhun) * S_NV - 150).toFixed(1)})`;
+    return `translate(${n.x.toFixed(1)},${(n.y - (n.nv.cao - n.nv.nhun) * S_NV - (p === 0 ? 195 : 150)).toFixed(1)})`;
   }
 
   get mauTiLe(): number {
