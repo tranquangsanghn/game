@@ -73,6 +73,11 @@ export class NhanVat {
     return this.sp.anim['energy_ball'].ban ?? { dx: 50, dy: -38 };
   }
 
+  /** Đòn vừa ra gần nhất (dùng để tính tầm đánh) */
+  get donVuaRa(): string | undefined {
+    return this.donCuoi;
+  }
+
   donVong(t: number): string {
     const ds = this.sp.nhomDon[this.nhom].don;
     return ds[Math.floor((t - this.tNhom) / VONG_CHIEU) % ds.length];

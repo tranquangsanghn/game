@@ -56,10 +56,20 @@ const TOC_DO_DAN = 2400;
 const BANG_DAN = 12;
 const THOI_GIAN_NAP = 1.4;
 const TON_CHIEU = 3;
-// Tầm đánh của đòn cận chiến (Đấm, Đá). Chiêu đặc biệt không bị giới hạn tầm
-const TAM_DAM = 280;
-const TAM_DA = 360;
+// Tầm đánh (đơn vị bản đồ). Đấm/Đá chọn ngẫu nhiên đòn gần hoặc đòn xa, đòn xa đánh được xa hơn.
+// Chiêu đặc biệt đánh xa gấp 3 lần đòn xa nhất (đá xa).
 const BAN_KINH_NO = 120;
+const TAM_DAM_GAN = 200;
+const TAM_DAM_XA = 340;
+const TAM_DA_GAN = 240;
+const TAM_DA_XA = 400;
+const TAM_CHIEU = TAM_DA_XA * 3;
+const TAM_DON: Record<string, number> = {
+  punch_combo: TAM_DAM_GAN,
+  punch_long: TAM_DAM_XA, punch_long_2: TAM_DAM_XA, punch_dash: TAM_DAM_XA, punch_charge: TAM_DAM_XA,
+  kick_arc: TAM_DA_GAN, kick_sweep: TAM_DA_GAN,
+  kick_long: TAM_DA_XA, kick_long_2: TAM_DA_XA, antenna_whip: TAM_DA_XA,
+};
 const KHOA_KY_LUC = 'chicken-shooting-game.ky-luc';
 
 const DIEM: Record<LoaiGa, number> = { hen: 10, rooster: 20, flyer: 30, golden: 100, chick: -50 };
@@ -604,21 +614,20 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       this.napDan(p);
       return;
     }
-    if (!chieu) {
-      // Đấm/Đá chỉ trúng gần: chuột trỏ xa hơn tầm thì đòn dừng ở mép tầm đánh
-      const tam = n.nv.nhom === 1 ? TAM_DA : TAM_DAM;
-      const dx = x - n.x;
-      const dy = y - n.y;
-      const d = Math.hypot(dx, dy);
-      if (d > tam) {
-        x = n.x + (dx / d) * tam;
-        y = n.y + (dy / d) * tam;
-      }
-    }
     n.hoiChieu = chieu ? 0.8 : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2;
     n.dan -= ton;
     if (!n.dangDi) n.nv.lat = x < n.x;
     if (!n.bay) n.nv.raDon(this.t);
+
+    // Giới hạn tầm theo đòn vừa ra: chuột trỏ xa hơn tầm thì đòn dừng ở mép tầm đánh
+    const tam = chieu ? TAM_CHIEU : TAM_DON[n.nv.donVuaRa ?? ''] ?? (n.nv.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN);
+    const ddx = x - n.x;
+    const ddy = y - n.y;
+    const dd = Math.hypot(ddx, ddy);
+    if (dd > tam) {
+      x = n.x + (ddx / dd) * tam;
+      y = n.y + (ddy / dd) * tam;
+    }
 
     const tay = this.viTriTay(p);
     const tanX = n.dangDi ? ngauNhien(-18, 18) : 0;
