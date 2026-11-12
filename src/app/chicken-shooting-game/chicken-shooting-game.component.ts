@@ -116,6 +116,8 @@ const TAM_CHIEU = 1200;
 // Cũng là tầm gà phát hiện nhân vật: nhân vật chạm tới được gà ở đâu thì gà lao vào đánh từ đó.
 const TAM_NHIN = Math.max(TAM_DAM_XA, TAM_DA_XA);
 // Tốc độ gà lao vào nhân vật (gà bay giữ nguyên tốc độ bay, chỉ đổi hướng)
+// Hệ số nhân tốc độ di chuyển thật của mọi loại gà (kể cả gà tướng): 1/4 tốc độ gốc ghi trong các hằng số
+const HE_SO_TOC_GA = 0.25;
 const TOC_DO_LAO: Record<string, number> = { hen: 230, rooster: 340 };
 const TAM_DON: Record<string, number> = {
   punch_combo: TAM_DAM_GAN,
@@ -505,8 +507,8 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
         }
       }
       if (g.vx) g.lat = g.vx < 0;
-      g.x += g.vx * dt;
-      g.y += g.vy * dt;
+      g.x += g.vx * dt * HE_SO_TOC_GA;
+      g.y += g.vy * dt * HE_SO_TOC_GA;
       const cham = giuTrongMap(g, leCuaGa(g));
       if (cham.cx) g.vx = -g.vx;
       if (cham.cy) g.vy = -g.vy;
