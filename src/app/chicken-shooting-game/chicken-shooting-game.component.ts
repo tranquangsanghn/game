@@ -74,7 +74,7 @@ const MAU_MANA = ['#3aa0ff', '#ff9a3c', '#ff2b2b', '#a855f7'];
 // Chiêu Biến mây (riêng Mabu, nhóm đòn 3): mây to gấp 2, quét trúng mọi con gà nó đi qua. Hiệu lực MAY_THOI_GIAN giây, sau đó chờ MAY_HOI giây mới dùng lại.
 // Mana của chiêu này màu tím: khi mây đang chạy là thời gian còn lại, khi chờ là tiến độ hồi.
 const NHOM_MAY = 3;
-const MAY_THOI_GIAN = 10;
+const MAY_THOI_GIAN = 7;
 const MAY_HOI = 40;
 const MAY_TOC_DO = 1.35;
 // Vùng mây quét trúng trên mặt đất (bán kính ngang / dọc, đơn vị bản đồ), cộng thêm khi trúng gà tướng to
@@ -1167,13 +1167,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   // Nhóm đòn hiện biểu tượng dưới chân, theo thứ tự: Đấm → Chiêu đặc biệt → Đá → (Mabu) Mây
   dsBieuTuong(p: number): number[] {
     return this.nguoi[p].nv.sp.nhomDon.some((d) => d.may) ? [0, 2, 1, NHOM_MAY] : [0, 2, 1];
-  }
-
-  // Vòng sáng tím dưới đám mây, đúng bằng vùng mây quét trúng
-  vongMay(p: number) {
-    const n = this.nguoi[p];
-    const k = n.nv.heSoTo - 1;
-    return { x: n.x, y: n.y - MAY_NANG * k, rx: MAY_RX * k, ry: MAY_RY * k };
   }
 
   private viTriTay(p: number) {

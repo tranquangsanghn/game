@@ -23,7 +23,7 @@ hai người không đi xa nhau quá mức camera chứa nổi (màn hình hiệ
 - Tay cầm (tay cầm thứ nhất): cần trái / D-pad di chuyển, **A** đánh, **LB/RB** đổi đòn, **B** bay.
   Tay cầm thứ hai (nếu có) điều khiển 1P theo cùng cách.
 
-**Biến mây (chỉ Mabu)**: chọn biểu tượng đám mây (cuối hàng, mana tím) rồi bấm đánh. Mabu biến thành đám mây to gấp 2 trong 10 giây, không còn thanh máu / mana, mọi con gà mây quét qua đều trúng đòn. Sau đó phải chờ 40 giây mới dùng lại.
+**Biến mây (chỉ Mabu)**: chọn biểu tượng đám mây (cuối hàng, mana tím) rồi bấm đánh. Mabu biến thành đám mây to gấp 2 trong 7 giây, không còn thanh máu / mana, mọi con gà mây quét qua đều trúng đòn. Sau đó phải chờ 40 giây mới dùng lại.
 
 ## Gà
 
