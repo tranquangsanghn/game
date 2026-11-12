@@ -20,6 +20,11 @@
 - Chiêu đang dùng sáng + phát sáng, chiêu khác mờ, hết mana / đang khoá / Mây đang chạy hoặc hồi (`hetMana()`) thì mờ hẳn và không chọn được.
 - Đổi chiêu bằng bấm chuột trái vào nút (`chonNut()` → `NhanVat.datNhom`), bất kể chuột đang điều khiển ai. Không còn con lăn. Chuột trên bảng (`tronBang()` → `trenBang`) thì không ra đòn, không di chuyển, tâm ngắm ẩn.
 
+# Nguyên tắc điều khiển
+
+- Game chỉ chơi bằng chuột, không có bàn phím / tay cầm: chuột phải di chuyển (xa thì bay), chuột trái ra đòn, bấm vào bảng chiêu để đổi chiêu. Hiện chưa có 2 chuột nên chỉ có phím Tab chuyển chuột sang nhân vật kia (`doiChuot()`); sau này sẽ có 2 chuột, mỗi nhân vật một chuột.
+- Thêm điều khiển mới thì làm theo chuột; không thêm phím tắt / tay cầm. Màn hình bắt đầu và README chỉ hướng dẫn chuột + Tab.
+
 # Nguyên tắc giữ nguyên bố cục khi đổi map / màn
 
 - Bố cục hiện tại là chuẩn, cố định: 2 bảng chiêu thức hình quạt ở 2 góc dưới (kích thước, vị trí, vòng cung nút, chân dung animation nhân vật), cách chọn chiêu bằng click, thanh máu / mana, camera, tâm ngắm, mọi nguyên tắc ghi trong file này.

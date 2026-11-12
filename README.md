@@ -1,6 +1,6 @@
 # Dragon Ball
 
-Game 2 người chơi chung bàn phím, viết bằng Angular, tách ra từ dự án EORM.
+Game 2 nhân vật chơi hoàn toàn bằng chuột (sau này 2 chuột), viết bằng Angular, tách ra từ dự án EORM.
 
 - Chơi online: https://tranquangsanghn.github.io/game/
 - Mỗi lần push lên `main`, GitHub Actions tự build và deploy lên GitHub Pages.
@@ -10,20 +10,13 @@ Game 2 người chơi chung bàn phím, viết bằng Angular, tách ra từ d�
 Hai người chơi chung một khung hình. Camera bám trung điểm hai nhân vật và tự zoom ra khi họ xa nhau;
 hai người không đi xa nhau quá mức camera chứa nổi (màn hình hiện cảnh báo khi gần chạm giới hạn).
 
-**1P Mabu — chuột**
+Chỉ chơi bằng chuột; cả Mabu (bảng chiêu góc dưới trái) và Zinbu (góc dưới phải) điều khiển giống nhau:
 - **Chuột phải**: chỉ chỗ để chạy tới (xa thì bay)
 - **Chuột trái**: ra đòn
-- **Con lăn**: đổi nhóm đòn (Đấm / Đá / Chiêu đặc biệt / Biến mây)
-- **Tab**: chuyển chuột sang điều khiển nhân vật kia (tạm thời khi chỉ có 1 chuột)
+- **Bấm vào chiêu** ở bảng chiêu thức: đổi nhóm đòn (Đấm / Đá / Chiêu đặc biệt / Biến mây)
+- **Tab**: chuyển chuột sang điều khiển nhân vật kia (tạm thời vì mới có 1 chuột; sau này mỗi nhân vật một chuột)
 
-**2P Zinbu — bàn phím hoặc tay cầm**
-- **WASD / mũi tên**: di chuyển
-- **J / Z**: ra đòn (tự ngắm con gà gần nhất, không ngắm gà con)
-- **K / X**: đổi nhóm đòn · **Space / L**: bay nhanh theo hướng đang đi
-- Tay cầm (tay cầm thứ nhất): cần trái / D-pad di chuyển, **A** đánh, **LB/RB** đổi đòn, **B** bay.
-  Tay cầm thứ hai (nếu có) điều khiển 1P theo cùng cách.
-
-**Biến mây (chỉ Mabu)**: chọn biểu tượng đám mây (cuối hàng, mana tím) rồi bấm đánh. Mabu biến thành đám mây to gấp 2 trong 7 giây, không còn thanh máu / mana, mọi con gà mây quét qua đều trúng đòn. Sau đó phải chờ 40 giây mới dùng lại.
+**Biến mây (chỉ Mabu)**: bấm vào nút đám mây (mana tím) trên bảng chiêu rồi bấm đánh. Mabu biến thành đám mây to gấp 2 trong 7 giây, không còn thanh máu / mana, mọi con gà mây quét qua đều trúng đòn. Sau đó phải chờ 40 giây mới dùng lại.
 
 ## Gà
 

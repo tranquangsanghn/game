@@ -33,7 +33,6 @@ interface NguoiChoi {
   nhin: { x: number; y: number }; nham: { x: number; y: number } | null;
   may: { dang: boolean; con: number; hoi: number };
 }
-interface DauVao { hx: number; hy: number; danh: boolean; }
 type VatXep =
   | { loai: 'ga'; y: number; ga: Ga }
   | { loai: 'nv'; y: number; p: number };
@@ -54,7 +53,6 @@ const VUNG_Y = 660;
 // Khoảng cách tối đa giữa 2 nhân vật (đơn vị bản đồ), vượt quá thì bị chặn lại như dây buộc
 const MAX_DX = VUNG_X / ZOOM_MIN;
 const MAX_DY = VUNG_Y / ZOOM_MIN;
-const DAI_BAY_PHIM = 650;
 // Sprite pixel art phóng to S_NV lần, không ép dẹt để giữ nét
 const S_NV = 2.8;
 const S_GA = 0.9;
@@ -120,9 +118,6 @@ const TAM_DON: Record<string, number> = {
   kick_arc: TAM_DA_GAN, kick_sweep: TAM_DA_GAN,
   kick_long: TAM_DA_XA, kick_long_2: TAM_DA_XA, antenna_whip: TAM_DA_XA,
 };
-const PHIM_CHAN = [' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'];
-const PHIM_DOI = ['k', 'x'];
-const PHIM_BAY = [' ', 'l'];
 const KHOA_KY_LUC = 'chicken-shooting-game.ky-luc';
 
 const DIEM: Record<LoaiGa, number> = { hen: 10, rooster: 20, flyer: 30, chick: -50, boss: 500 };
@@ -250,9 +245,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   private henGa = [0.5, 0.8];
   private henTuong = CHO_TUONG_DAU;
   private goLangNghe: (() => void)[] = [];
-  private phim = new Set<string>();
-  private vao: DauVao[] = [{ hx: 0, hy: 0, danh: false }, { hx: 0, hy: 0, danh: false }];
-  private padNutCu: Record<number, boolean[]> = {};
 
   constructor() {
     this.capNhatView(0, true);
@@ -278,8 +270,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       // Chặn menu chuột phải của trình duyệt trên toàn trang: chuột phải chỉ dùng để di chuyển
       nghe(window, 'contextmenu', (e: Event) => e.preventDefault(), true);
       nghe(window, 'keydown', (e: KeyboardEvent) => this.phimXuong(e), true);
-      nghe(window, 'keyup', (e: KeyboardEvent) => this.phim.delete(e.key.toLowerCase()));
-      nghe(window, 'blur', () => this.phim.clear());
 
       this.lanCuoi = performance.now();
       this.rafId = requestAnimationFrame(this.vongLap);
@@ -307,7 +297,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     this.henTuong = CHO_TUONG_DAU;
     this.kyLucMoi = false;
     this.trenBang = false;
-    this.phim.clear();
     this.capNhatView(0, true);
     this.man = 'play';
   }
@@ -403,7 +392,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       }
     }
     const truoc = this.nguoi.map((n) => ({ x: n.x, y: n.y }));
-    this.docDauVao();
     this.dieuKhien(dt);
     this.rangBuoc(truoc);
     this.nguoi.forEach((n) => giuTrongMap(n, leNhanVat(n.nv.heSoTo)));
@@ -420,13 +408,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       this.hoiMana(n, dt);
       this.capNhatMay(n, dt);
 
-      const hv = this.vao[p];
-      const hl = Math.hypot(hv.hx, hv.hy);
-      const coHuong = hl > 0.01;
-      if (coHuong && !n.nv.khoa && !n.bay) {
-        n.nhin = { x: hv.hx / hl, y: hv.hy / hl };
-        n.dich = null;
-      }
       // Tâm tự ngắm cập nhật mỗi khung hình; không hiện cho nhân vật đang dùng chuột (ngắm bằng chuột), đã ngã hoặc đang là mây
       const m = this.diemNham(p);
       n.nham = m.co && p !== this.chuot && !n.het && !n.nv.laMay ? { x: m.x, y: m.y } : null;
@@ -445,10 +426,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
       let dx = 0;
       let dy = 0;
-      if (coHuong) {
-        dx = hv.hx;
-        dy = hv.hy;
-      } else if (n.dich) {
+      if (n.dich) {
         dx = n.dich.x - n.x;
         dy = n.dich.y - n.y;
         if (Math.hypot(dx, dy) < 6) {
@@ -471,11 +449,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
         }
       }
       this.capNhatNhanVat(n, dt);
-
-      if (hv.danh) {
-        const m = this.diemNham(p);
-        this.ban(p, m.x, m.y);
-      }
     });
   }
 
@@ -1151,46 +1124,13 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     return { x: (x - o.x) / this.camZ, y: (y - o.y) / this.camZ };
   }
 
-  // ─── Bàn phím & tay cầm: P2 dùng bàn phím (hoặc tay cầm 1), tay cầm 2 điều khiển P1 ───
+  // ─── Chỉ chơi bằng chuột. Tạm thời chỉ có 1 chuột nên Tab chuyển chuột sang nhân vật kia (sau này sẽ có 2 chuột) ───
 
   private phimXuong(e: KeyboardEvent): void {
-    const k = e.key.toLowerCase();
-    if (k === 'tab') {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!e.repeat) this.doiChuot();
-      return;
-    }
-    if (this.man !== 'play') return;
-    if (PHIM_CHAN.includes(k)) e.preventDefault();
-    this.phim.add(k);
-    if (e.repeat) return;
-    if (PHIM_DOI.includes(k)) this.doiNhom(1, 1);
-    if (PHIM_BAY.includes(k)) this.bayTheoHuong(1);
-  }
-
-  private docDauVao(): void {
-    const v: DauVao[] = [{ hx: 0, hy: 0, danh: false }, { hx: 0, hy: 0, danh: false }];
-    const co = (...ds: string[]) => ds.some((d) => this.phim.has(d));
-    v[1].hx = (co('d', 'arrowright') ? 1 : 0) - (co('a', 'arrowleft') ? 1 : 0);
-    v[1].hy = (co('s', 'arrowdown') ? 1 : 0) - (co('w', 'arrowup') ? 1 : 0);
-    v[1].danh = co('j', 'z');
-    this.vao = v;
-
-    const pads = (navigator.getGamepads?.() ?? []).filter((g): g is Gamepad => !!g).slice(0, 2);
-    pads.forEach((pad, i) => {
-      const p = i === 0 ? 1 : 0;
-      const nut = (j: number) => !!pad.buttons[j]?.pressed;
-      const truc = (j: number) => (Math.abs(pad.axes[j] ?? 0) > 0.25 ? pad.axes[j] : 0);
-      v[p].hx += truc(0) + (nut(15) ? 1 : 0) - (nut(14) ? 1 : 0);
-      v[p].hy += truc(1) + (nut(13) ? 1 : 0) - (nut(12) ? 1 : 0);
-      if (nut(0) || nut(2)) v[p].danh = true;
-      const cu = (this.padNutCu[pad.index] ??= []);
-      if (nut(5) && !cu[5]) this.doiNhom(p, 1);
-      if (nut(4) && !cu[4]) this.doiNhom(p, -1);
-      if (nut(1) && !cu[1]) this.bayTheoHuong(p);
-      for (const j of [1, 4, 5]) cu[j] = nut(j);
-    });
+    if (e.key !== 'Tab') return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (!e.repeat) this.doiChuot();
   }
 
   private doiChuot(): void {
@@ -1200,14 +1140,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     moi.tamX = cu.tamX;
     moi.tamY = cu.tamY;
     cu.dich = null;
-  }
-
-  private bayTheoHuong(p: number): void {
-    const n = this.nguoi[p];
-    const v = this.vao[p];
-    const l = Math.hypot(v.hx, v.hy);
-    const h = l > 0.01 ? { x: v.hx / l, y: v.hy / l } : n.nhin;
-    this.datDichThe(p, n.x + h.x * DAI_BAY_PHIM, n.y + h.y * DAI_BAY_PHIM);
   }
 
   // Tự ngắm vào con gà (không phải gà con) gần nhất trong tầm; không có thì đánh theo hướng đang nhìn
