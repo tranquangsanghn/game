@@ -115,7 +115,7 @@ const kepMap = (v: number) => kep(v, 0, MAP);
 // Lề giữ vật nằm trọn trong bản đồ (đơn vị bản đồ). Sprite vẽ phía trên toạ độ chân nên lề trên lớn hơn lề dưới.
 // Thêm loại vật mới thì khai báo lề ở đây và gọi giuTrongMap() cho nó.
 interface Le { x: number; tren: number; duoi: number; }
-const LE_NV: Le = { x: 80, tren: 230, duoi: 10 };
+const LE_NV: Le = { x: 80, tren: 230, duoi: 75 };
 const LE_GA: Le = { x: 50, tren: 90, duoi: 10 };
 const LE_BAY: Le = { x: 70, tren: 150, duoi: 60 };
 const LE_TUONG: Le = { x: 220, tren: 330, duoi: 20 };
@@ -1058,6 +1058,12 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   // Thanh máu trên đầu gà tướng (to hơn của nhân vật vì gà tướng cao gấp nhiều lần)
   thanhTuong(g: Ga): string {
     return `translate(${g.x.toFixed(1)},${(g.y - 310).toFixed(1)}) scale(3)`;
+  }
+
+  // Biểu tượng nhóm đòn nằm ngay dưới chân nhân vật
+  duoiChan(p: number): string {
+    const n = this.nguoi[p];
+    return `translate(${n.x.toFixed(1)},${(n.y + 38).toFixed(1)})`;
   }
 
   get mauTiLe(): number {
