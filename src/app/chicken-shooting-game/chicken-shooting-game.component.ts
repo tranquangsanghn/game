@@ -66,7 +66,7 @@ const TOC_DO_BAY = 900;
 const BAY_KHI_XA = 450;
 const BAY_TOI_DA = 1200;
 const TOC_DO_DAN = 2400;
-const BANG_DAN = 12;
+const BANG_DAN = 15;
 const THOI_GIAN_NAP = 1.4;
 const TON_CHIEU = 3;
 // Tầm đánh (đơn vị bản đồ). Đấm/Đá chọn ngẫu nhiên đòn gần hoặc đòn xa, đòn xa đánh được xa hơn.
