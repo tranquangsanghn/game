@@ -112,6 +112,24 @@ const kep = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 // Sát mép bản đồ là dừng hẳn; ngoài mép là vùng đen
 const kepMap = (v: number) => kep(v, 0, MAP);
 
+// Lề giữ vật nằm trọn trong bản đồ (đơn vị bản đồ). Sprite vẽ phía trên toạ độ chân nên lề trên lớn hơn lề dưới.
+// Thêm loại vật mới thì khai báo lề ở đây và gọi giuTrongMap() cho nó.
+interface Le { x: number; tren: number; duoi: number; }
+const LE_NV: Le = { x: 80, tren: 230, duoi: 10 };
+const LE_GA: Le = { x: 50, tren: 90, duoi: 10 };
+const LE_BAY: Le = { x: 70, tren: 150, duoi: 60 };
+const LE_TUONG: Le = { x: 220, tren: 330, duoi: 20 };
+const leCuaGa = (g: { loai: LoaiGa }): Le => (g.loai === 'boss' ? LE_TUONG : g.loai === 'flyer' ? LE_BAY : LE_GA);
+// Kẹp vật vào trong bản đồ; trả về cờ chạm mép theo từng trục để vật tự bật lại
+function giuTrongMap(o: { x: number; y: number }, le: Le) {
+  const x = kep(o.x, le.x, MAP - le.x);
+  const y = kep(o.y, le.tren, MAP - le.duoi);
+  const r = { cx: x !== o.x, cy: y !== o.y };
+  o.x = x;
+  o.y = y;
+  return r;
+}
+
 function tronMau(a: number[], b: number[], k: number) {
   const c = a.map((v, i) => Math.round(v + (b[i] - v) * k));
   return `rgb(${c[0]},${c[1]},${c[2]})`;
@@ -344,6 +362,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     this.docDauVao();
     this.dieuKhien(dt);
     this.rangBuoc(truoc);
+    this.nguoi.forEach((n) => giuTrongMap(n, LE_NV));
     this.capNhatGa(dtE);
     this.capNhatDan(dt);
     this.capNhatHieuUng(dt, dtE);
@@ -473,12 +492,9 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       if (g.vx) g.lat = g.vx < 0;
       g.x += g.vx * dt;
       g.y += g.vy * dt;
-      if (!bay) {
-        if (g.x < 0 || g.x > MAP) g.vx = -g.vx;
-        if (g.y < 0 || g.y > MAP) g.vy = -g.vy;
-        g.x = kepMap(g.x);
-        g.y = kepMap(g.y);
-      }
+      const cham = giuTrongMap(g, leCuaGa(g));
+      if (cham.cx) g.vx = -g.vx;
+      if (cham.cy) g.vy = -g.vy;
       switch (g.loai) {
         case 'rooster': g.h = Math.abs(Math.sin(g.phase * 5)) * 28; break;
         case 'flyer': g.h = g.h0 + Math.sin(g.phase * 3) * 30; break;
@@ -907,9 +923,10 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     if (n.nv.khoa || n.bay) return;
     const o = this.nguoi[1 - p];
     let dich = {
-      x: kep(kepMap(x), o.x - MAX_DX, o.x + MAX_DX),
-      y: kep(kepMap(y), o.y - MAX_DY, o.y + MAX_DY),
+      x: kep(x, o.x - MAX_DX, o.x + MAX_DX),
+      y: kep(y, o.y - MAX_DY, o.y + MAX_DY),
     };
+    giuTrongMap(dich, LE_NV);
     let d = Math.hypot(dich.x - n.x, dich.y - n.y);
     if (d > BAY_TOI_DA) {
       // Chỉ xa hơn tầm bay tối đa thì bay tới mép tầm theo hướng chuột
