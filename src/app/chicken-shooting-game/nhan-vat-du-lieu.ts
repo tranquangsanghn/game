@@ -4,7 +4,7 @@ import { NhanVatSprite } from './nhan-vat-sprite';
 export const MABU: NhanVatSprite = {
   ten: 'Mabu', atlas: 'assets/game/mabu_atlas.png', atlasW: 2240, atlasH: 1176, w: 140, h: 84, cot: 16,
   neoX: 70, neoY: 81,
-  huong: { len: [199, 200, 201, 202], xuong: [3] },
+  huong: { len: { dung: [199, 200, 201, 202], di: [191, 192, 193, 194] }, xuong: { dung: [3], di: [3] } },
   anim: {
     idle: { f: [8, 9, 10, 9], ms: 150, lap: true },
     taunt_flex: { f: [130, 131, 132, 136, 137, 138, 137, 138], ms: 117, lap: false },
@@ -58,7 +58,7 @@ export const MABU: NhanVatSprite = {
 export const ZINBU: NhanVatSprite = {
   ten: 'Zinbu', atlas: 'assets/game/buu_atlas.png', atlasW: 2352, atlasH: 1066, w: 147, h: 82, cot: 16,
   neoX: 47, neoY: 70,
-  huong: { xuong: [98, 99] },
+  huong: { xuong: { dung: [98], di: [98, 99] } },
   anim: {
     idle: { f: [0, 1, 2, 3], ms: 133, lap: true },
     taunt_flex: { f: [10, 11, 12], ms: 167, lap: false },

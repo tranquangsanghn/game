@@ -16,8 +16,11 @@ export interface NhanVatSprite {
   nhomDon: NhomDon[];
   kieuChet: BuocChet[][];
   /** Khung riêng khi đi / đứng quay lên (nhìn lưng) hoặc xuống (nhìn thẳng). Thiếu thì dùng khung nhìn nghiêng */
-  huong?: { len?: number[]; xuong?: number[] };
+  huong?: { len?: KhungHuong; xuong?: KhungHuong };
 }
+
+/** dung: khung khi đứng yên (idle) · di: khung khi đi (run) */
+export interface KhungHuong { dung: number[]; di: number[] }
 
 export type Huong = 'ngang' | 'len' | 'xuong';
 
@@ -61,7 +64,8 @@ export class NhanVat {
 
   get khung(): number {
     if (this.huong !== 'ngang' && (this.anim === 'idle' || this.anim === 'run')) {
-      const ds = this.sp.huong?.[this.huong];
+      const k = this.sp.huong?.[this.huong];
+      const ds = k && (this.anim === 'run' ? k.di : k.dung);
       if (ds?.length) return ds[this.i % ds.length];
     }
     return this.sp.anim[this.anim].f[this.i];
