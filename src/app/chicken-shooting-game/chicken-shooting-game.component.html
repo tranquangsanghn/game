@@ -73,15 +73,8 @@
         }
         @case ('nv') {
         @let ng = nguoi[o.p];
-        <ellipse [attr.cx]="ng.x" [attr.cy]="ng.y" rx="70" ry="24" [attr.fill]="ng.mau" fill-opacity="0.25" [attr.stroke]="ng.mau"
-          stroke-width="6" />
         <g [attr.transform]="nvTransform(o.p)">
           <g cgSprite [sp]="ng.nv.sp" [khung]="ng.nv.khung" [lat]="ng.nv.lat"></g>
-        </g>
-        <g [attr.transform]="'translate(' + ng.x + ',' + (ng.y - 260) + ')'">
-          <path d="M-22,-18 L22,-18 L0,10 Z" [attr.fill]="ng.mau" stroke="#fff" stroke-width="5" stroke-linejoin="round" />
-          <text y="-30" text-anchor="middle" class="chu-bay" font-size="44" [attr.fill]="ng.mau" stroke="#fff" stroke-width="6" paint-order="stroke">
-            {{ o.p === 0 ? '1P' : '2P' }}</text>
         </g>
         }
         }
