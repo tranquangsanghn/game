@@ -54,3 +54,9 @@
 - Dạng mây: không có thanh máu, quả cầu mana, vòng sáng hay hàng biểu tượng nhóm đòn, không ra đòn khác, không bay (chỉ trôi, nhanh hơn). Mọi con gà chạm vùng mây (`mayQuet`) đều dính đòn `SAT_MAY` (250); gà tướng chỉ dính một lần mỗi `MAY_NHIP` giây. Đang là mây thì không nhận sát thương.
 - Mana chiêu này màu tím (`MAU_MANA[3]`): lúc mây chạy là thời gian còn lại, lúc chờ là tiến độ hồi. Biểu tượng là hình đám mây, đứng cuối cùng bên phải trong hàng biểu tượng.
 - Mây to hơn nên dùng lề bản đồ riêng `LE_MAY` (nội suy theo `heSoTo` lúc biến hình), render lọc với lề rộng hơn.
+
+# Nguyên tắc tốc độ đánh
+
+- Mabu và Zinbu đánh 1 đòn mỗi `THOI_GIAN_DON` = 0,5s, mọi nhóm đòn (Đấm, Đá, Chiêu đặc biệt) như nhau. Thời gian hồi `hoiChieu` đặt đúng bằng hằng số này.
+- Animation đòn tự co giãn theo (`tocDon` trong `NhanVat`) để chạy xong trong 90% `THOI_GIAN_DON`, đòn sau nối ngay đòn trước. Quãng lao tới của đòn có chuyển động (`tien`) không đổi dù tua nhanh hay chậm.
+- Muốn đổi tốc độ đánh chỉ sửa `THOI_GIAN_DON`. Tốc độ đánh của gà nằm ở `HOI_DANH_GA`.

@@ -31,8 +31,9 @@ const TICK = 60;
 const TRONG_LUC = 0.32;
 const NAM_GIU = 1.6;
 const VONG_CHIEU = 5;
-// Đấm, đá, chiêu chạy chậm bằng 1/2 tốc độ gốc của animation
-const TOC_DO_DON = 0.5;
+// Tốc độ đánh của Mabu / Zinbu: 1 đòn mỗi THOI_GIAN_DON giây. Animation đòn tự co giãn để chạy xong trong 90% khoảng đó.
+export const THOI_GIAN_DON = 0.5;
+const ANIM_DON = THOI_GIAN_DON * 0.9;
 const DO_CAO_BAY = 48;
 
 const chonKhac = <T>(ds: T[], cu: T | undefined): T => {
@@ -78,6 +79,12 @@ export class NhanVat {
     const a = this.sp.anim.run;
     const pha = (this.i + this.tg / a.ms) / a.f.length;
     return -Math.abs(Math.sin(2 * Math.PI * pha)) * 3;
+  }
+
+  /** Hệ số tua animation đòn đang chạy để cả đòn kéo dài đúng ANIM_DON giây */
+  private get tocDon(): number {
+    const a = this.sp.anim[this.anim];
+    return (a.f.length * a.ms) / 1000 / ANIM_DON;
   }
 
   get khoa(): boolean {
@@ -190,7 +197,7 @@ export class NhanVat {
 
   /** Trả về quãng trượt ngang (px sprite, dương = sang phải) do đòn lao tới hoặc bị đánh văng */
   capNhat(dt: number, dangDi: boolean): number {
-    this.chayKhung(this.trangThai === 'tanCong' ? dt * TOC_DO_DON : dt);
+    this.chayKhung(this.trangThai === 'tanCong' ? dt * this.tocDon : dt);
     switch (this.trangThai) {
       case 'chet':
         return this.capNhatChet(dt);
@@ -199,7 +206,7 @@ export class NhanVat {
         return 0;
       case 'tanCong': {
         const tien = this.sp.anim[this.anim].tien;
-        const dx = tien && this.i >= tien.tu && this.i <= tien.den ? tien.v * TICK * dt * TOC_DO_DON * (this.lat ? -1 : 1) : 0;
+        const dx = tien && this.i >= tien.tu && this.i <= tien.den ? tien.v * TICK * dt * this.tocDon * (this.lat ? -1 : 1) : 0;
         if (this.xong) {
           if (this.donCho) {
             const don = this.donCho;
