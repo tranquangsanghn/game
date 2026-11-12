@@ -56,6 +56,9 @@ const TOC_DO_DAN = 2400;
 const BANG_DAN = 12;
 const THOI_GIAN_NAP = 1.4;
 const TON_CHIEU = 3;
+// Tầm đánh của đòn cận chiến (Đấm, Đá). Chiêu đặc biệt không bị giới hạn tầm
+const TAM_DAM = 280;
+const TAM_DA = 360;
 const BAN_KINH_NO = 120;
 const KHOA_KY_LUC = 'chicken-shooting-game.ky-luc';
 
@@ -600,6 +603,17 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     if (n.dan < ton) {
       this.napDan(p);
       return;
+    }
+    if (!chieu) {
+      // Đấm/Đá chỉ trúng gần: chuột trỏ xa hơn tầm thì đòn dừng ở mép tầm đánh
+      const tam = n.nv.nhom === 1 ? TAM_DA : TAM_DAM;
+      const dx = x - n.x;
+      const dy = y - n.y;
+      const d = Math.hypot(dx, dy);
+      if (d > tam) {
+        x = n.x + (dx / d) * tam;
+        y = n.y + (dy / d) * tam;
+      }
     }
     n.hoiChieu = chieu ? 0.8 : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2;
     n.dan -= ton;
