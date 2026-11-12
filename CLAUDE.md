@@ -83,6 +83,5 @@
 
 # Nguyên tắc sương mù & gà lao vào
 
-- Sương mù kiểu Dota: map luôn thấy, nhưng chỉ thấy gà (kể cả gà tướng, thanh máu của nó) trong tầm nhìn `TAM_NHIN` = tầm xa nhất của đấm xa / đá xa (500). Tầm nhìn đến từ mỗi nhân vật còn sống và từng chưởng / đòn đang bay (bay hết quãng đường, mang tầm nhìn theo; `nhinNguon`, `thay()` trong `capNhatView()`). Gà ngoài tầm nhìn vẫn tồn tại và chạy logic, chỉ không được vẽ.
-- Lớp sương là một mặt nạ (`cg-mo`) phủ map, khoét lỗ mờ viền theo `nhinView`.
+- Sương mù kiểu Dota / Liên Minh: chỉ ẩn quái, map vẫn vẽ bình thường (không phủ lớp tối nào). Chỉ thấy gà (kể cả gà tướng, thanh máu của nó) trong tầm nhìn `TAM_NHIN` = tầm xa nhất của đấm xa / đá xa (500). Tầm nhìn đến từ mỗi nhân vật còn sống và từng chưởng / đòn đang bay (bay hết quãng đường, mang tầm nhìn theo; `nhinNguon`, `thay()` trong `capNhatView()`). Gà ngoài tầm nhìn vẫn tồn tại và chạy logic, chỉ không được vẽ.
 - Gà thường (trắng, đỏ, đen) có nhân vật (không phải mây, chưa gục) trong `TAM_NHIN` thì lao vào nhân vật gần nhất (`gaLao()`, tốc độ `TOC_DO_LAO`; gà bay giữ tốc độ, đổi hướng); hết tầm thì đi lang thang lại. Gà tướng luôn đuổi nhân vật gần nhất.

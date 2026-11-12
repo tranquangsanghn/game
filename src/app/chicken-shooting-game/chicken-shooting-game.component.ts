@@ -220,10 +220,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   gaBayView: Ga[] = [];
   tuong: Ga | null = null;
   nhamView: { x: number; y: number; mau: string }[] = [];
-  // Sương mù: các vòng nhìn thấy (nhân vật + chưởng đang bay) nằm trong khung nhìn
-  nhinView: { x: number; y: number; r: number }[] = [];
   private nhinNguon: { x: number; y: number }[] = [];
-  readonly TAM_NHIN = TAM_NHIN;
   // Chỉ những vật trong khung nhìn mới được vẽ (xem CLAUDE.md)
   vetView: Vet[] = [];
   danView: Dan[] = [];
@@ -619,7 +616,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       ...this.nguoi.filter((n) => !n.het).map((n) => ({ x: n.x, y: n.y })),
       ...this.dan.map((d) => { const vt = this.danHienTai(d); return { x: vt.x, y: vt.y }; }),
     ];
-    this.nhinView = this.nhinNguon.filter((o) => trong(o.x, o.y, TAM_NHIN)).map((o) => ({ ...o, r: TAM_NHIN }));
     const xep: VatXep[] = [];
     for (const g of this.ga) {
       if (g.loai === 'flyer' || !this.thay(g.x, g.y) || !trong(g.x, g.y, g.loai === 'boss' ? 450 : 80)) continue;
