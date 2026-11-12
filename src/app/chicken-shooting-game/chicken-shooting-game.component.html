@@ -135,7 +135,7 @@
     </g>
     }
     }
-    <!-- Tâm ngắm của nhân vật đang được chuột điều khiển (Space để đổi) -->
+    <!-- Tâm ngắm của nhân vật đang được chuột điều khiển (Tab để đổi) -->
     <g [attr.transform]="'translate(' + nguoi[chuot].tamX + ',' + nguoi[chuot].tamY + ')'" [attr.stroke]="nguoi[chuot].mau" stroke-width="3" fill="none">
       <circle r="18" />
       <circle r="3" [attr.fill]="nguoi[chuot].mau" />
@@ -260,10 +260,10 @@
           </svg>
           @if (i === 0) {
           <h3>1P Mabu · chuột</h3>
-          <p><b>Space</b>: chuyển chuột sang điều khiển nhân vật kia<br /><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Con lăn</b>: đổi nhóm đòn</p>
+          <p><b>Tab</b>: chuyển chuột sang điều khiển nhân vật kia<br /><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Con lăn</b>: đổi nhóm đòn</p>
           } @else {
           <h3>2P Zinbu · bàn phím / tay cầm</h3>
-          <p><b>WASD / mũi tên</b>: di chuyển<br /><b>J / Z</b>: ra đòn (tự ngắm gà gần nhất)<br /><b>K / X</b>: đổi nhóm đòn · <b>L</b>: bay nhanh<br />
+          <p><b>WASD / mũi tên</b>: di chuyển<br /><b>J / Z</b>: ra đòn (tự ngắm gà gần nhất)<br /><b>K / X</b>: đổi nhóm đòn · <b>Space / L</b>: bay nhanh<br />
             Tay cầm: cần trái, <b>A</b> đánh, <b>LB/RB</b> đổi đòn, <b>B</b> bay</p>
           }
         </div>

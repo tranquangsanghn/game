@@ -14,12 +14,12 @@ hai người không đi xa nhau quá mức camera chứa nổi (màn hình hiệ
 - **Chuột phải**: chỉ chỗ để chạy tới (xa thì bay)
 - **Chuột trái**: ra đòn
 - **Con lăn**: đổi nhóm đòn (Đấm / Đá / Chiêu đặc biệt)
-- **Space**: chuyển chuột sang điều khiển nhân vật kia (tạm thời khi chỉ có 1 chuột)
+- **Tab**: chuyển chuột sang điều khiển nhân vật kia (tạm thời khi chỉ có 1 chuột)
 
 **2P Zinbu — bàn phím hoặc tay cầm**
 - **WASD / mũi tên**: di chuyển
 - **J / Z**: ra đòn (tự ngắm con gà gần nhất, không ngắm gà con)
-- **K / X**: đổi nhóm đòn · **L**: bay nhanh theo hướng đang đi
+- **K / X**: đổi nhóm đòn · **Space / L**: bay nhanh theo hướng đang đi
 - Tay cầm (tay cầm thứ nhất): cần trái / D-pad di chuyển, **A** đánh, **LB/RB** đổi đòn, **B** bay.
   Tay cầm thứ hai (nếu có) điều khiển 1P theo cùng cách.
 
