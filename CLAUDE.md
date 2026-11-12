@@ -42,9 +42,9 @@
 
 # Nguyên tắc máu & sát thương
 
-- Mỗi nhân vật (Mabu, Zinbu) và mỗi con quái (mọi loại gà, kể cả gà con và gà tướng) đều khởi đầu 100 máu (`HP_NV`, `HP_GA`). Máu tính riêng từng đối tượng, không còn máu chung của đội.
+- Mỗi nhân vật (Mabu, Zinbu) và mỗi con quái (mọi loại gà, kể cả gà tướng) đều khởi đầu 100 máu (`HP_NV`, `HP_GA`). Máu tính riêng từng đối tượng, không còn máu chung của đội.
 - Mạnh / yếu chỉ thể hiện ở 2 thứ: sát thương gây ra và tỉ lệ giảm sát thương khi nhận (`GIAM_NV`, `GIAM_GA`). Máu tối đa ai cũng như nhau. Sát thương thực nhận = sát thương gốc × (1 − tỉ lệ giảm), làm tròn.
-- Mabu và Zinbu giảm 50% sát thương nhận (gà con đánh 30 thì nhận 15). Gà thường giảm 0%, gà tướng giảm 80%.
+- Mabu và Zinbu giảm 50% sát thương nhận (gà đen đánh 60 thì nhận 30). Gà thường giảm 0%, gà tướng giảm 80%.
 - Khả năng né đòn (`NE_GA`): gà tướng né 50% số đòn trúng nó (kể cả mỗi nhịp mây), các gà khác 0%, nhân vật không né. Né được thì không mất máu, không hiện hiệu ứng trúng, hiện chữ bay "NÉ!"; đòn bị né không tính trúng, không tính trượt và không ngắt combo.
 - Sát thương nhân vật gây ra (`SAT_THUONG`), mỗi đòn trúng một con:
   - Đấm: Mabu 50 · Zinbu 50
@@ -55,10 +55,9 @@
   - Gà trắng: 32 sát thương · 1,2s (nhận 16)
   - Gà đỏ: 48 · 0,8s (nhận 24)
   - Gà đen: 60 · 1,5s (nhận 30)
-  - Gà con: 20 · 1,0s (nhận 10)
   - Gà tướng: 80 · 2,5s (nhận 40)
 - Nhân vật dạng mây không nhận sát thương. Nhân vật hết máu thì ngã và không điều khiển được; cả hai cùng hết máu thì thua (`ketThuc()`).
-- Quái chỉ chết khi máu về 0 (chết thì mới tính điểm, gà con bị trừ điểm). Đòn trúng mà chưa chết thì gà nháy sáng. Hạ gà tướng không còn thưởng mạng; thay vào đó hồi `HOI_MAU_TUONG` máu cho mỗi nhân vật còn sống.
+- Quái chỉ chết khi máu về 0 (chết thì mới tính điểm). Đòn trúng mà chưa chết thì gà nháy sáng. Hạ gà tướng không còn thưởng mạng; thay vào đó hồi `HOI_MAU_TUONG` máu cho mỗi nhân vật còn sống.
 
 # Nguyên tắc mana
 

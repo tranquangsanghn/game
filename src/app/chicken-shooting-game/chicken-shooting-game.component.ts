@@ -6,16 +6,16 @@ import { NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
 import { KhungSprite, SpriteComponent } from './sprite.component';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
-import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, GA_VANG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
+import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 type ManChoi = 'start' | 'play' | 'pause' | 'over';
 // hen = gà trắng (đi bộ) · rooster = gà đỏ (đi nhanh, nhảy) · flyer = gà đen (bay, thả trứng)
-// chick = gà con (đừng bắn) · boss = gà tướng (to gấp 5 lần, đủ 3 màu, nhiều máu)
-type LoaiGa = 'hen' | 'rooster' | 'flyer' | 'chick' | 'boss';
+// boss = gà tướng (to gấp 5 lần, đủ 3 màu, nhiều máu)
+type LoaiGa = 'hen' | 'rooster' | 'flyer' | 'boss';
 
 interface Ga {
   id: number; loai: LoaiGa; x: number; y: number; h: number; h0: number;
-  vx: number; vy: number; phase: number; doiHuong: number; me: number;
+  vx: number; vy: number; phase: number; doiHuong: number;
   chet: boolean; tChet: number;
   lat: boolean; hp: number; nhay: number; chamMay?: number; choDanh?: number;
 }
@@ -63,16 +63,16 @@ const THOI_GIAN_HOANG_HON = 90;
 const HP_NV = 100;
 const HP_GA = 100;
 const GIAM_NV = 0.5;
-const GIAM_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, chick: 0, boss: 0.8 };
+const GIAM_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0.8 };
 // Xác suất né đòn: chỉ gà tướng né được
-const NE_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, chick: 0, boss: 0.5 };
+const NE_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0.5 };
 // Sát thương nhân vật gây ra: [Mabu, Zinbu] theo nhóm đòn 0 Đấm · 1 Đá · 2 Chiêu đặc biệt; mây (riêng Mabu)
 const SAT_THUONG = [[50, 50], [70, 100], [100, 150]];
 const SAT_MAY = 250;
 // Quái chạm nhân vật thì đánh: sát thương gốc, bán kính chạm (chân với chân), thời gian chờ giữa 2 lần đánh (tốc độ đánh)
-const SAT_GA: Record<string, number> = { hen: 32, rooster: 48, flyer: 60, chick: 20, boss: 80 };
-const CHAM_GA: Record<string, number> = { hen: 70, rooster: 70, flyer: 70, chick: 50, boss: 220 };
-const HOI_DANH_GA: Record<string, number> = { hen: 1.2, rooster: 0.8, flyer: 1.5, chick: 1.0, boss: 2.5 };
+const SAT_GA: Record<string, number> = { hen: 32, rooster: 48, flyer: 60, boss: 80 };
+const CHAM_GA: Record<string, number> = { hen: 70, rooster: 70, flyer: 70, boss: 220 };
+const HOI_DANH_GA: Record<string, number> = { hen: 1.2, rooster: 0.8, flyer: 1.5, boss: 2.5 };
 // Hạ được gà tướng thì mỗi nhân vật còn sống hồi chừng này máu
 const HOI_MAU_TUONG = 30;
 const TOC_DO_DI = 460;
@@ -120,16 +120,16 @@ const TAM_DON: Record<string, number> = {
 };
 const KHOA_KY_LUC = 'chicken-shooting-game.ky-luc';
 
-const DIEM: Record<LoaiGa, number> = { hen: 10, rooster: 20, flyer: 30, chick: -50, boss: 500 };
+const DIEM: Record<LoaiGa, number> = { hen: 10, rooster: 20, flyer: 30, boss: 500 };
 // Cỡ gà so với gà thường (gà tướng gấp 5 lần)
-const TL_GA: Record<LoaiGa, number> = { hen: 1, rooster: 1.1, flyer: 1, chick: 0.45, boss: 5 };
+const TL_GA: Record<LoaiGa, number> = { hen: 1, rooster: 1.1, flyer: 1, boss: 5 };
 // Bán kính trúng đòn của gà cỡ 1; nhân với TL_GA
 const BAN_KINH_GA = 44;
 // Từ chân tới tâm thân gà (đơn vị sprite, trước khi nhân TL_GA)
 const CHAN_GA = 40;
-const MAU_LONG: Record<LoaiGa, string> = { hen: '#fff6d5', rooster: '#ce3024', flyer: '#40404e', chick: '#ffe246', boss: '#ce3024' };
+const MAU_LONG: Record<LoaiGa, string> = { hen: '#fff6d5', rooster: '#ce3024', flyer: '#40404e', boss: '#ce3024' };
 const MAU_LONG_TUONG = ['#fff6d5', '#ce3024', '#40404e'];
-const MAU_GA = { hen: GA_TRANG, rooster: GA_DO, flyer: GA_DEN, chick: GA_VANG, boss: GA_TUONG } satisfies Record<LoaiGa, KhungSprite>;
+const MAU_GA = { hen: GA_TRANG, rooster: GA_DO, flyer: GA_DEN, boss: GA_TUONG } satisfies Record<LoaiGa, KhungSprite>;
 const MAU_SANG = 'brightness(1.7) saturate(0.6)';
 // Gà tướng: máu, thời gian chờ giữa 2 lần xuất hiện (giây), tốc độ đi
 const CHO_TUONG_DAU = 25;
@@ -488,15 +488,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       if (g.loai === 'boss') this.dieuTuong(g, dt);
       else if (!bay) {
         g.doiHuong -= dt;
-        const me = g.loai === 'chick' ? this.ga.find((m) => m.id === g.me && !m.chet) : undefined;
-        if (me) {
-          const dx = me.x - 30 - g.x;
-          const dy = me.y + 10 - g.y;
-          const d = Math.hypot(dx, dy) || 1;
-          const v = d > 40 ? 90 : 0;
-          g.vx = (dx / d) * v;
-          g.vy = (dy / d) * v;
-        } else if (g.doiHuong <= 0) {
+        if (g.doiHuong <= 0) {
           g.doiHuong = ngauNhien(1.5, 3.5);
           const goc = ngauNhien(0, Math.PI * 2);
           const v = Math.random() < 0.25 ? 0 : g.loai === 'rooster' ? ngauNhien(70, 130) : ngauNhien(35, 75);
@@ -554,7 +546,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  // Chiêu đặc biệt: nổ trúng mọi con gà trong bán kính, kể cả gà con
+  // Chiêu đặc biệt: nổ trúng mọi con gà trong bán kính
   private no(d: Dan): void {
     const trung = this.ga.filter((g) => {
       if (g.chet) return false;
@@ -695,9 +687,9 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
     const r = Math.random() * 100;
     const loai: LoaiGa = r < 40 ? 'hen' : r < 65 ? 'rooster' : 'flyer';
-    const tao = (l: LoaiGa, x: number, y: number, vx: number, vy: number, h0: number, me = 0) => {
+    const tao = (l: LoaiGa, x: number, y: number, vx: number, vy: number, h0: number) => {
       const g: Ga = {
-        id: this.id++, loai: l, x, y, h: h0, h0, vx, vy, phase: Math.random() * 6, doiHuong: 0, me,
+        id: this.id++, loai: l, x, y, h: h0, h0, vx, vy, phase: Math.random() * 6, doiHuong: 0,
         chet: false, tChet: 0, lat: vx < 0, hp: HP_GA, nhay: 0,
       };
       this.ga.push(g);
@@ -714,11 +706,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const vt = this.diemQuanh(p, 480 / ZOOM, 680 / ZOOM);
-    const me = tao(loai, vt.x, vt.y, 0, 0, 0);
-    if (loai === 'hen' && Math.random() < 0.45) {
-      const soCon = Math.random() < 0.5 ? 1 : 2;
-      for (let i = 1; i <= soCon; i++) tao('chick', vt.x - 40 * i, vt.y + 12 * i, 0, 0, 0, me.id);
-    }
+    tao(loai, vt.x, vt.y, 0, 0, 0);
   }
 
   // Gà tướng xuất hiện ở rìa khung nhìn, từ từ tiến về phía hai người chơi
@@ -729,7 +717,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     const x = kepMap(mx + Math.cos(goc) * 1200);
     const y = kepMap(my + Math.sin(goc) * 1000);
     this.ga.push({
-      id: this.id++, loai: 'boss', x, y, h: 0, h0: 0, vx: 0, vy: 0, phase: 0, doiHuong: 0, me: 0,
+      id: this.id++, loai: 'boss', x, y, h: 0, h0: 0, vx: 0, vy: 0, phase: 0, doiHuong: 0,
       chet: false, tChet: 0, lat: x > mx, hp: HP_GA, nhay: 0,
     });
     this.chu.push({ id: this.id++, x: mx, y: my - 330, text: '🐔 GÀ TƯỚNG XUẤT HIỆN!', mau: '#ff9f1a', t: 0 });
@@ -790,7 +778,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     n.nv.vaoMay();
   }
 
-  // Mây quét qua: mọi con gà (kể cả gà con, gà bay) chạm vùng mây đều dính đòn
+  // Mây quét qua: mọi con gà (kể cả gà bay) chạm vùng mây đều dính đòn
   private mayQuet(n: NguoiChoi, p: number): void {
     if (!n.may.dang) return;
     for (const g of this.ga) {
@@ -940,13 +928,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
         id: this.id++, x: tam.x, y: tam.y, vx: ngauNhien(-220, 220), vy: ngauNhien(-260, 40),
         xoay: ngauNhien(0, 360), vxoay: ngauNhien(-400, 400), t: 0, mau: MAU_LONG[g.loai],
       });
-    }
-    if (g.loai === 'chick') {
-      n.combo = 0;
-      n.banTruot++;
-      n.diem = Math.max(0, n.diem + DIEM.chick);
-      this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 30, text: '-50 Gà con!', mau: '#e74c3c', t: 0 });
-      return;
     }
     n.combo++;
     n.banTrung++;
@@ -1142,14 +1123,14 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     cu.dich = null;
   }
 
-  // Tự ngắm vào con gà (không phải gà con) gần nhất trong tầm; không có thì đánh theo hướng đang nhìn
+  // Tự ngắm vào con gà gần nhất trong tầm; không có thì đánh theo hướng đang nhìn
   private diemNham(p: number): { x: number; y: number; co: boolean } {
     const n = this.nguoi[p];
     const tam = n.nv.nhom === 2 ? 800 : n.nv.nhom === 1 ? 480 : 380;
     let tot: Ga | null = null;
     let dm = tam;
     for (const g of this.ga) {
-      if (g.chet || g.loai === 'chick') continue;
+      if (g.chet) continue;
       const t = this.tamGa(g);
       // Gà tướng rất to: tính khoảng cách tới mép thân chứ không phải tới tâm
       const d = Math.hypot(t.x - n.x, t.y - n.y) - (g.loai === 'boss' ? 125 : 0);
@@ -1253,7 +1234,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   gaKhung(g: Ga): number {
     if (g.chet) return KHUNG_CHET;
     if (g.loai === 'flyer') return KHUNG_BAY[Math.floor(g.phase * 14) % KHUNG_BAY.length];
-    const nhip = g.loai === 'boss' ? 0.5 : g.loai === 'chick' ? 1.3 : 1;
+    const nhip = g.loai === 'boss' ? 0.5 : 1;
     if (g.vx || g.vy) return KHUNG_CHAY[Math.floor(g.phase * 10 * nhip) % KHUNG_CHAY.length];
     return KHUNG_DUNG[Math.floor(g.phase * 3 * nhip) % KHUNG_DUNG.length];
   }

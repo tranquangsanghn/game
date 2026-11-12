@@ -22,8 +22,7 @@ Chỉ chơi bằng chuột; cả Mabu (bảng chiêu góc dưới trái) và Zin
 
 Sprite gà lấy từ `tools/ga-goc.png`; chạy `python3 tools/tao-atlas-ga.py` để sinh lại các atlas trong `public/assets/game/` (cần Pillow + numpy).
 
-- **Gà trắng** (10đ): đi bộ, đôi khi dẫn theo gà con · **Gà đỏ** (20đ): đi nhanh, nhảy · **Gà đen** (30đ): bay và thả trứng
-- **Gà con** (vàng, nhỏ): bắn trúng bị trừ 50 điểm
+- **Gà trắng** (10đ): đi bộ · **Gà đỏ** (20đ): đi nhanh, nhảy · **Gà đen** (30đ): bay và thả trứng
 - **Gà tướng** (500đ): to gấp 5 lần, đủ 3 màu (đầu trắng, cánh đỏ, thân đen), 14 máu; xuất hiện sau ~25 giây rồi cứ ~55 giây một lần. Hạ được thì cả đội được cộng thêm 1 mạng
 
 Kỷ lục lưu trong `localStorage` của trình duyệt.

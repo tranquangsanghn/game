@@ -9,7 +9,6 @@ const khung = (atlas: string): KhungSprite => ({
 export const GA_TRANG = khung('assets/game/ga_trang.png');
 export const GA_DO = khung('assets/game/ga_do.png');
 export const GA_DEN = khung('assets/game/ga_den.png');
-export const GA_VANG = khung('assets/game/ga_vang.png');
 // Gà tướng: đầu trắng, cánh đỏ, thân đen
 export const GA_TUONG = khung('assets/game/ga_tuong.png');
 

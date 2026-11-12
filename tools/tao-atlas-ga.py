@@ -1,5 +1,5 @@
 """Tách sprite sheet gà gốc (tools/ga-goc.png, 4x4 khung) và tô thành các atlas:
-trắng (nguyên bản), đỏ, đen, vàng (gà con), tướng (3 màu đỏ-trắng-đen, độ phân giải cao).
+trắng (nguyên bản), đỏ, đen, tướng (3 màu đỏ-trắng-đen, độ phân giải cao).
 Chạy: python3 tools/tao-atlas-ga.py   (cần Pillow + numpy)
 In ra thông số khung để điền vào ga-du-lieu.ts."""
 import os
@@ -112,12 +112,10 @@ def vung_tuong(f, i):
 TRANG = (255, 246, 213)
 DO = (206, 48, 36)
 DEN = (64, 64, 78)
-VANG = (255, 226, 70)
 
 trang = [f for f in khung]
 do = [to_mau(f, DO) for f in khung]
 den = [to_mau(f, DEN) for f in khung]
-vang = [to_mau(f, VANG) for f in khung]
 tuong = []
 for i, f in enumerate(khung):
     k = vung_tuong(f, i)
@@ -128,7 +126,6 @@ for i, f in enumerate(khung):
 luu('ga_trang.png', trang, 2)
 luu('ga_do.png', do, 2)
 luu('ga_den.png', den, 2)
-luu('ga_vang.png', vang, 2)
 luu('ga_tuong.png', tuong, 4)
 print('o', rong, cao, 'neo x', trai, 'y (chân thấp nhất)', max(oy[i] + khung[i].shape[0] for i in range(16)))
 print('mao', trai, tren)
