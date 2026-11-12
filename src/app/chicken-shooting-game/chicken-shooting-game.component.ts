@@ -65,6 +65,8 @@ const HP_GA = 100;
 const GIAM_NV = 0.5;
 const GIAM_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, chick: 0, boss: 0.8 };
 // Sát thương nhân vật gây ra: [Mabu, Zinbu] theo nhóm đòn 0 Đấm · 1 Đá · 2 Chiêu đặc biệt; mây (riêng Mabu)
+// Xác suất né đòn: chỉ gà tướng né được
+const NE_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, chick: 0, boss: 0.5 };
 const SAT_THUONG = [[50, 50], [70, 100], [100, 150]];
 const SAT_MAY = 250;
 // Quái chạm nhân vật thì đánh: sát thương gốc, bán kính chạm (chân với chân), thời gian chờ giữa 2 lần đánh (tốc độ đánh)
@@ -882,6 +884,11 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private trungGa(g: Ga, p: number, sat: number): void {
+    if (Math.random() < NE_GA[g.loai]) {
+      const t = this.tamGa(g);
+      this.chu.push({ id: this.id++, x: t.x + ngauNhien(-40, 40), y: t.y - 80, text: 'NÉ!', mau: '#9be7ff', t: 0 });
+      return;
+    }
     const mat = Math.round(sat * (1 - GIAM_GA[g.loai]));
     g.hp -= mat;
     if (g.loai === 'boss') {
