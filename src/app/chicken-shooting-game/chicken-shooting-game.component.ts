@@ -121,7 +121,7 @@ const TAM_LAO = TAM_DANH_XA;
 // Tốc độ gà lao vào nhân vật (gà bay giữ nguyên tốc độ bay, chỉ đổi hướng)
 // Hệ số nhân tốc độ di chuyển thật của mọi loại gà (kể cả gà tướng): 1/4 tốc độ gốc ghi trong các hằng số
 const HE_SO_TOC_GA = 0.25;
-const TOC_DO_LAO: Record<string, number> = { hen: 230, rooster: 340 };
+const TOC_DO_LAO: Record<string, number> = { hen: 160, rooster: 240 };
 const TAM_DON: Record<string, number> = {
   punch_combo: TAM_DAM_GAN,
   punch_long: TAM_DAM_XA, punch_long_2: TAM_DAM_XA, punch_dash: TAM_DAM_XA, punch_charge: TAM_DAM_XA,
@@ -723,7 +723,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       const x = n.x + Math.cos(goc) * 700 / ZOOM;
       const y = n.y + Math.sin(goc) * 700 / ZOOM;
       const huong = Math.atan2(n.y - y, n.x - x) + ngauNhien(-0.35, 0.35);
-      const v = ngauNhien(150, 210) * (1 + this.chang * 0.2);
+      const v = ngauNhien(110, 130);
       tao(loai, x, y, Math.cos(huong) * v, Math.sin(huong) * v, ngauNhien(200, 300));
       return;
     }
