@@ -64,9 +64,9 @@ const HP_NV = 100;
 const HP_GA = 100;
 const GIAM_NV = 0.5;
 const GIAM_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, chick: 0, boss: 0.8 };
-// Sát thương nhân vật gây ra: [Mabu, Zinbu] theo nhóm đòn 0 Đấm · 1 Đá · 2 Chiêu đặc biệt; mây (riêng Mabu)
 // Xác suất né đòn: chỉ gà tướng né được
 const NE_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, chick: 0, boss: 0.5 };
+// Sát thương nhân vật gây ra: [Mabu, Zinbu] theo nhóm đòn 0 Đấm · 1 Đá · 2 Chiêu đặc biệt; mây (riêng Mabu)
 const SAT_THUONG = [[50, 50], [70, 100], [100, 150]];
 const SAT_MAY = 250;
 // Quái chạm nhân vật thì đánh: sát thương gốc, bán kính chạm (chân với chân), thời gian chờ giữa 2 lần đánh (tốc độ đánh)
