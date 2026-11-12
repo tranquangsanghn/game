@@ -17,13 +17,8 @@
       <g [attr.transform]="viewTransform()">
         <rect x="0" y="0" [attr.width]="MAP" [attr.height]="MAP" fill="#c9d8bf" stroke="#7d8b74" stroke-width="10" />
 
-        @for (v of vet; track v.id) {
-        @if (v.loai === 'trung') {
-        <g [attr.transform]="'translate(' + v.x + ',' + v.y + ')'" [attr.opacity]="1 - v.t / 3">
-          <path d="M-22,0 Q-17,-9 -5,-6 Q2,-14 12,-6 Q24,-7 19,2 Q10,9 -5,7 Q-19,9 -22,0 Z" fill="#fff" />
-          <circle cx="0" cy="0" r="7" fill="#f7b731" />
-        </g>
-        } @else if (v.loai === 'no') {
+        @for (v of vetView; track v.id) {
+        @if (v.loai === 'no') {
         <circle [attr.cx]="v.x" [attr.cy]="v.y" [attr.r]="30 + v.t * 200" fill="#ff9fd0" [attr.fill-opacity]="0.35 * (1 - v.t / 0.45)"
           stroke="#ffd6ec" stroke-width="8" [attr.opacity]="1 - v.t / 0.45" />
         } @else {
@@ -39,32 +34,6 @@
         </g>
         }
         }
-        @for (e of trung; track e.id) {
-        <ellipse [attr.transform]="bongTrungTransform(e)" [attr.rx]="10 + 26 * bongTrung(e)" [attr.ry]="4 + 8 * bongTrung(e)"
-          fill="#000" [attr.opacity]="0.1 + 0.25 * bongTrung(e)" />
-        }
-        @for (v of vatPham; track v.id) {
-        <ellipse [attr.cx]="v.x" [attr.cy]="v.y" rx="22" ry="7" fill="#000" opacity="0.18" />
-        <g [attr.transform]="vatPhamTransform(v)" [attr.opacity]="v.t > 11 && (v.t * 6) % 1 < 0.5 ? 0.35 : 1">
-          <circle r="30" fill="#ffffff" opacity="0.55" stroke="#ffffff" stroke-width="2" />
-          @switch (v.loai) {
-          @case ('corn') {
-          <ellipse rx="9" ry="18" fill="#f7c600" />
-          <path d="M-6,-10 h12 M-7,-3 h14 M-7,4 h14 M-6,11 h12" stroke="#d4a300" stroke-width="1.5" />
-          <path d="M0,18 Q-16,6 -14,-12 Q-8,4 0,10 Q8,4 14,-12 Q16,6 0,18 Z" fill="#4caf50" />
-          }
-          @case ('bread') {
-          <path d="M-20,8 Q-22,-14 0,-14 Q22,-14 20,8 Z" fill="#d4943a" />
-          <path d="M-8,-8 l4,8 M2,-10 l4,8 M11,-7 l3,7" stroke="#a86b23" stroke-width="2" />
-          }
-          @case ('clock') {
-          <circle r="17" fill="#fff" stroke="#8e44ad" stroke-width="4" />
-          <path d="M0,0 L0,-11 M0,0 L8,4" stroke="#333" stroke-width="2.5" stroke-linecap="round" />
-          }
-          }
-        </g>
-        }
-
         <!-- Gà dưới đất + nhân vật, xếp theo y -->
         @for (o of xep; track $index) {
         @switch (o.loai) {
@@ -95,10 +64,7 @@
           </g>
         </g>
         }
-        @for (e of trung; track e.id) {
-        <ellipse [attr.transform]="trungTransform(e)" rx="10" ry="13" fill="#fffaf0" stroke="#d9cbb0" stroke-width="2" />
-        }
-        @for (d of dan; track d.id) {
+        @for (d of danView; track d.id) {
         @if (d.to) {
         @let vt = danHienTai(d);
         <line [attr.x1]="vt.xs" [attr.y1]="vt.ys" [attr.x2]="vt.x" [attr.y2]="vt.y" stroke="#ffc2e2" stroke-width="26"
@@ -107,11 +73,11 @@
           stroke-width="3" filter="url(#cg-sang)" />
         }
         }
-        @for (l of long; track l.id) {
+        @for (l of longView; track l.id) {
         <path [attr.transform]="'translate(' + l.x + ',' + l.y + ') rotate(' + l.xoay + ')'" d="M0,-9 Q6,0 0,9 Q-6,0 0,-9 Z"
           [attr.fill]="l.mau" stroke="#00000030" stroke-width="1" [attr.opacity]="1 - l.t / 1.3" />
         }
-        @for (c of chu; track c.id) {
+        @for (c of chuView; track c.id) {
         <text [attr.x]="c.x" [attr.y]="c.y" text-anchor="middle" class="chu-bay" [attr.fill]="c.mau" [attr.opacity]="1 - c.t">
           {{ c.text }}</text>
         }
@@ -155,7 +121,7 @@
     </g>
 
     @if (tuong; as t) {
-    <g [attr.transform]="'translate(' + GIUA + ',100)'" pointer-events="none">
+    <g [attr.transform]="'translate(' + GIUA + ',24)'" pointer-events="none">
       <rect x="-230" width="460" height="42" rx="12" fill="#1d2b3a" fill-opacity="0.92" />
       <text x="0" y="17" text-anchor="middle" class="hud-ten">🐔 GÀ TƯỚNG</text>
       <rect x="-210" y="24" width="420" height="10" rx="5" fill="#ffffff30" />
@@ -163,18 +129,8 @@
     </g>
     }
 
-    <text [attr.x]="W - 24" y="108" text-anchor="end" class="hud-fps" pointer-events="none">{{ fps }} FPS</text>
+    <text [attr.x]="W - 24" y="80" text-anchor="end" class="hud-fps" pointer-events="none">{{ fps }} FPS</text>
 
-    <!-- HUD -->
-    <g [attr.transform]="'translate(' + GIUA + ',18)'">
-      <rect x="-160" width="320" height="70" rx="14" fill="#1d2b3a" fill-opacity="0.92" />
-      <text x="0" y="58" text-anchor="middle" class="hud-phu">{{ tenChang }} · Đội: {{ tongDiem }}{{ dangCham ? ' · gà chậm' : '' }}</text>
-      @for (i of [0, 1, 2, 3, 4]; track i) {
-      <path [attr.transform]="'translate(' + (-44 + i * 22) + ',26) scale(1.2)'"
-        d="M0,6 C-10,-4 -12,-12 -6,-14 C-2,-15 0,-12 0,-10 C0,-12 2,-15 6,-14 C12,-12 10,-4 0,6 Z"
-        [attr.fill]="i < mang ? '#ff4d6d' : '#ffffff40'" />
-      }
-    </g>
     }
   </svg>
 
