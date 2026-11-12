@@ -328,7 +328,12 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
         const buoc = Math.min(TOC_DO_DI * dt, n.dich ? d : Infinity);
         n.x = kepMap(n.x + (dx / d) * buoc);
         n.y = kepMap(n.y + (dy / d) * buoc);
-        if (Math.abs(dx) > d * 0.2) n.nv.lat = dx < 0;
+        // Đi chủ yếu theo chiều dọc thì quay lên / xuống, còn lại quay trái / phải
+        if (Math.abs(dy) > Math.abs(dx) * 1.2) n.nv.huong = dy < 0 ? 'len' : 'xuong';
+        else {
+          n.nv.huong = 'ngang';
+          if (Math.abs(dx) > d * 0.2) n.nv.lat = dx < 0;
+        }
       }
       this.capNhatNhanVat(n, dt);
 
@@ -618,7 +623,10 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     // Animation đòn chạy chậm 1/2 nên thời gian hồi cũng gấp đôi
     n.hoiChieu = (chieu ? 0.8 : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
     n.dan -= ton;
-    if (!n.dangDi) n.nv.lat = x < n.x;
+    if (!n.dangDi) {
+      n.nv.lat = x < n.x;
+      n.nv.huong = 'ngang';
+    }
     if (!n.bay) n.nv.raDon(this.t);
 
     // Giới hạn tầm theo đòn vừa ra: chuột trỏ xa hơn tầm thì đòn dừng ở mép tầm đánh
