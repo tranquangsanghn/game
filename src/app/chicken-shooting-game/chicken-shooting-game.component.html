@@ -112,7 +112,7 @@
     @let ng = nguoi[p];
     @let tb = tamBang(p);
     <g pointer-events="none">
-      <circle [attr.cx]="tb.x" [attr.cy]="tb.y" [attr.r]="R_BANG" fill="#000" />
+      <circle [attr.cx]="tb.x" [attr.cy]="H" [attr.r]="R_BANG" fill="#000" />
       <g [attr.transform]="'translate(' + tb.x + ',' + tb.y + ')'">
         <svg x="-60" y="-60" width="120" height="120" viewBox="-36 -66 72 76" [attr.opacity]="ng.het ? 0.4 : 1">
           <g cgSprite [sp]="ng.nv.sp" [khung]="ng.nv.khung" [lat]="ng.nv.lat"></g>

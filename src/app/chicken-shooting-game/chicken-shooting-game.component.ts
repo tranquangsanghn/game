@@ -42,8 +42,8 @@ const W = 1600;
 const H = 900;
 const GIUA = W / 2;
 const MAP = 6400;
-// Hai bảng chiêu thức khoét vào map ở hai góc dưới (hình tròn nền đen): Mabu bên trái, Zinbu bên phải. Map vẫn chiếm cả màn hình.
-const R_BANG = 136;
+// Hai bảng chiêu thức khoét vào map ở hai góc dưới (hình bán nguyệt nền đen, tâm nằm trên mép dưới): Mabu bên trái, Zinbu bên phải. Map vẫn chiếm cả màn hình.
+const R_BANG = 190;
 const TAM_VIEW_Y = 520;
 // Camera chung đặt ở trung điểm 2 nhân vật. ZOOM là mức gần nhất, hai người càng xa thì càng thu nhỏ tới ZOOM_MIN.
 const ZOOM = 0.55;
@@ -890,7 +890,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   // Vị trí các nút chiêu thức xếp hình vòng cung phía trên biểu tượng nhân vật (Mabu bảng trái, Zinbu bảng phải)
   tamBang(p: number) {
-    return { x: p === 0 ? 150 : W - 150, y: H - 130 };
+    return { x: p === 0 ? 190 : W - 190, y: H - 60 };
   }
 
   nutBang(p: number): { k: number; x: number; y: number }[] {
@@ -906,7 +906,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   private tronBang(x: number, y: number): boolean {
     return [0, 1].some((p) => {
       const c = this.tamBang(p);
-      return Math.hypot(x - c.x, y - c.y) <= R_BANG;
+      return Math.hypot(x - c.x, y - H) <= R_BANG;
     });
   }
 
