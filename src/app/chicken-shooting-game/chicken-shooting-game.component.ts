@@ -614,7 +614,8 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       this.napDan(p);
       return;
     }
-    n.hoiChieu = chieu ? 0.8 : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2;
+    // Animation đòn chạy chậm 1/2 nên thời gian hồi cũng gấp đôi
+    n.hoiChieu = (chieu ? 0.8 : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
     n.dan -= ton;
     if (!n.dangDi) n.nv.lat = x < n.x;
     if (!n.bay) n.nv.raDon(this.t);

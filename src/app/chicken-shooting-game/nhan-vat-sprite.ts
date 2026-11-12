@@ -24,6 +24,8 @@ const TICK = 60;
 const TRONG_LUC = 0.32;
 const NAM_GIU = 1.6;
 const VONG_CHIEU = 5;
+// Đấm, đá, chiêu chạy chậm bằng 1/2 tốc độ gốc của animation
+const TOC_DO_DON = 0.5;
 const DO_CAO_BAY = 48;
 
 const chonKhac = <T>(ds: T[], cu: T | undefined): T => {
@@ -137,7 +139,7 @@ export class NhanVat {
 
   /** Trả về quãng trượt ngang (px sprite, dương = sang phải) do đòn lao tới hoặc bị đánh văng */
   capNhat(dt: number, dangDi: boolean): number {
-    this.chayKhung(dt);
+    this.chayKhung(this.trangThai === 'tanCong' ? dt * TOC_DO_DON : dt);
     switch (this.trangThai) {
       case 'chet':
         return this.capNhatChet(dt);
@@ -146,7 +148,7 @@ export class NhanVat {
         return 0;
       case 'tanCong': {
         const tien = this.sp.anim[this.anim].tien;
-        const dx = tien && this.i >= tien.tu && this.i <= tien.den ? tien.v * TICK * dt * (this.lat ? -1 : 1) : 0;
+        const dx = tien && this.i >= tien.tu && this.i <= tien.den ? tien.v * TICK * dt * TOC_DO_DON * (this.lat ? -1 : 1) : 0;
         if (this.xong) {
           if (this.donCho) {
             const don = this.donCho;
