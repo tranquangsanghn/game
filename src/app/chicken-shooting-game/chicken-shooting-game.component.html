@@ -250,8 +250,7 @@
   @if (man === 'start') {
   <div class="man-phu">
     <div class="hop">
-      <h1>🐉 Dragon Ball: Mabu &amp; Zinbu</h1>
-      <p class="mo-ta">Mabu và Zinbu đại chiến trên chiến trường Dragon Ball, mỗi người một nửa màn hình. Tung chưởng hạ càng nhiều địch càng tốt, chơi đến khi hết mạng! Chỉ cần chuột: chuột trái, chuột phải và con lăn.</p>
+      <h1>🐉 Dragon Ball</h1>
       <div class="hai-cot">
         @for (i of [0, 1]; track i) {
         <div class="the" [class.teo]="i === 0" [class.ty]="i === 1">
@@ -261,27 +260,15 @@
           </svg>
           @if (i === 0) {
           <h3>Mabu · nửa trái</h3>
-          <p>Chuột ở <b>nửa trái</b>: <b>chuột phải</b> chỉ chỗ để chạy tới (xa thì bay), <b>chuột trái</b> ra đòn, <b>con lăn</b> đổi nhóm đòn.</p>
+          <p><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Con lăn</b>: đổi nhóm đòn</p>
           } @else {
           <h3>Zinbu · nửa phải</h3>
-          <p>Chuột ở <b>nửa phải</b>: <b>chuột phải</b> chỉ chỗ để chạy tới (xa thì bay), <b>chuột trái</b> ra đòn, <b>con lăn</b> đổi nhóm đòn.</p>
+          <p><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Con lăn</b>: đổi nhóm đòn</p>
           }
         </div>
         }
       </div>
-      <table class="bang-diem">
-        <tr><td>Gà mái</td><td>+10</td><td>Gà trống</td><td>+20</td><td>Gà bay</td><td>+30</td></tr>
-        <tr><td>Gà vàng</td><td>+100</td><td>Bắn vỡ trứng</td><td>+5</td><td class="tru">Gà con</td><td class="tru">−50</td></tr>
-      </table>
-      <p class="phu">Camera luôn bám theo nhân vật. Đứng yên bắn thì chính xác và nhanh hơn, vừa chạy vừa bắn thì chưởng hơi tản.
-        Thanh khí {{ BANG_DAN }} ô, hết khí tự tụ khí. Nhóm đòn: <b>Đấm</b> 1 chưởng · <b>Đá</b> 2 chưởng tản ·
-        <b>Chiêu đặc biệt</b> quả cầu nổ diện rộng (tốn 3 ô, nổ trúng cả gà con), đổi chiêu mỗi 5 giây.<br />
-        Gà bay thả trứng trúng người thì nhân vật bị hạ gục và mất 1 ❤ (cả đội có 5 mạng), chạy hoặc bay đi để né. Bắn trúng liên tiếp để nhân điểm x2, x3.<br />
-        Vật phẩm (bắn hoặc chạy tới nhặt): 🌽 bắn chùm · 🍞 thêm mạng · ⏱ gà chậm. Bấm nút ❚❚ để tạm dừng, nút ✕ để đóng.</p>
       <button type="button" class="nut-chinh" (click)="batDau()">Bắt đầu</button>
-      @if (kyLuc > 0) {
-      <p class="phu">Kỷ lục đội: <b>{{ kyLuc }}</b></p>
-      }
     </div>
   </div>
   }

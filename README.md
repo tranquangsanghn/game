@@ -1,4 +1,4 @@
-# Dragon Ball: Mabu & Zinbu
+# Dragon Ball
 
 Game 2 người chơi chung bàn phím, viết bằng Angular, tách ra từ dự án EORM.
 
