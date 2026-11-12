@@ -181,10 +181,13 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
         this.goLangNghe.push(() => el.removeEventListener(ten, fn, capture));
       };
       nghe(svg, 'pointermove', (e: PointerEvent) => this.diChuot(e));
-      nghe(svg, 'pointerdown', (e: PointerEvent) => this.bamChuot(e));
+      nghe(svg, 'pointerdown', (e: PointerEvent) => {
+        this.khungRef.nativeElement.focus({ preventScroll: true });
+        this.bamChuot(e);
+      });
       nghe(svg, 'contextmenu', (e: Event) => e.preventDefault());
       nghe(svg, 'wheel', (e: WheelEvent) => this.lanChuot(e));
-      nghe(window, 'keydown', (e: KeyboardEvent) => this.phimXuong(e));
+      nghe(window, 'keydown', (e: KeyboardEvent) => this.phimXuong(e), true);
       nghe(window, 'keyup', (e: KeyboardEvent) => this.phim.delete(e.key.toLowerCase()));
       nghe(window, 'blur', () => this.phim.clear());
 
@@ -915,6 +918,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     const k = e.key.toLowerCase();
     if (k === 'tab') {
       e.preventDefault();
+      e.stopPropagation();
       if (!e.repeat) this.doiChuot();
       return;
     }

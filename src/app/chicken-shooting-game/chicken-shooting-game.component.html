@@ -242,9 +242,9 @@
     </svg:g>
   </ng-template>
 
-  <button type="button" class="nut-dong" (click)="dongGame()" title="Đóng">✕</button>
+  <button type="button" tabindex="-1" class="nut-dong" (click)="dongGame()" title="Đóng">✕</button>
   @if (man === 'play') {
-  <button type="button" class="nut-dung" (click)="tamDung()" title="Tạm dừng">❚❚</button>
+  <button type="button" tabindex="-1" class="nut-dung" (click)="tamDung()" title="Tạm dừng">❚❚</button>
   }
 
   @if (man === 'start') {
@@ -269,7 +269,7 @@
         </div>
         }
       </div>
-      <button type="button" class="nut-chinh" (click)="batDau()">Bắt đầu</button>
+      <button type="button" tabindex="-1" class="nut-chinh" (click)="batDau()">Bắt đầu</button>
     </div>
   </div>
   }
@@ -278,7 +278,7 @@
   <div class="man-phu">
     <div class="hop nho">
       <h2>Tạm dừng</h2>
-      <button type="button" class="nut-chinh" (click)="tamDung()">Tiếp tục</button>
+      <button type="button" tabindex="-1" class="nut-chinh" (click)="tamDung()">Tiếp tục</button>
     </div>
   </div>
   }
@@ -307,8 +307,8 @@
         @if (kyLucMoi) {<span class="ky-luc-moi">Kỷ lục mới!</span>}
       </p>
       <div class="nhom-nut">
-        <button type="button" class="nut-chinh" (click)="batDau()">Chơi lại</button>
-        <button type="button" class="nut-phu" (click)="dongGame()">Đóng</button>
+        <button type="button" tabindex="-1" class="nut-chinh" (click)="batDau()">Chơi lại</button>
+        <button type="button" tabindex="-1" class="nut-phu" (click)="dongGame()">Đóng</button>
       </div>
     </div>
   </div>
