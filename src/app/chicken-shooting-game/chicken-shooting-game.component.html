@@ -1,4 +1,4 @@
-<div class="khung" #khung tabindex="-1" [class.dang-choi]="man === 'play'">
+<div class="khung" #khung tabindex="-1" [class.dang-choi]="man === 'play'" [class.tren-bang]="trenBang">
   <svg #manHinh [attr.viewBox]="'0 0 ' + W + ' ' + H" preserveAspectRatio="xMidYMid meet">
     <defs>
       <filter id="cg-sang" x="-50%" y="-50%" width="200%" height="200%">
@@ -8,12 +8,13 @@
           <feMergeNode in="SourceGraphic" />
         </feMerge>
       </filter>
+      <clipPath id="cg-map"><rect [attr.x]="BANG" y="0" [attr.width]="VW" [attr.height]="H" /></clipPath>
     </defs>
 
     <rect x="0" y="0" [attr.width]="W" [attr.height]="H" fill="#000" />
 
     <!-- Một camera chung bám trung điểm 2 nhân vật, zoom ra khi họ xa nhau -->
-    <g>
+    <g clip-path="url(#cg-map)">
       <g [attr.transform]="viewTransform()">
         <rect x="0" y="0" [attr.width]="MAP" [attr.height]="MAP" fill="#c9d8bf" />
 
@@ -73,40 +74,6 @@
           <rect x="-31" y="-3" [attr.width]="62 * t.hp / HP_GA" height="6" rx="3" fill="#ff4d4d" />
         </g>
         }
-        @for (nv of nguoi; track $index; let p = $index) {
-        <!-- Dạng mây: ẩn luôn hàng biểu tượng nhóm đòn -->
-        @if (!nv.nv.laMay) {
-        <g [attr.transform]="duoiChan(p) + ' scale(1.3)'" pointer-events="none">
-          <!-- Nhóm đòn dưới chân nhân vật: nắm đấm, bắn chưởng, cái chân. Nhóm đang dùng sáng rõ, còn lại mờ -->
-          @for (k of dsBieuTuong(p); track k; let i = $index) {
-          <g [attr.transform]="'translate(' + (36 * i - 18 * (dsBieuTuong(p).length - 1)) + ',0)'" [attr.opacity]="nv.nv.nhom === k ? 1 : 0.35">
-            <circle r="16" fill="#0d1b12" fill-opacity="0.75" [attr.stroke]="nv.nv.nhom === k ? nv.mau : 'none'" stroke-width="2.5" />
-            <g fill="#fff" stroke="#0d1b12" stroke-width="1.2" stroke-linejoin="round">
-              @switch (k) {
-              @case (0) {
-              <rect x="-8" y="-5" width="16" height="13" rx="4" />
-              <circle cx="-5.6" cy="-6" r="2.6" /><circle cx="-1.9" cy="-7" r="2.6" /><circle cx="1.9" cy="-7" r="2.6" /><circle cx="5.6" cy="-6" r="2.6" />
-              <ellipse cx="-8.5" cy="2" rx="2.8" ry="4" />
-              }
-              @case (1) {
-              <path d="M-7,-11 h8 v9 l9,4 a2,2 0 0 1 1,2.5 v3.5 h-18 z" />
-              <path d="M-7,6 h18" fill="none" />
-              }
-              @case (3) {
-              <g transform="translate(0,4) scale(0.2)"><g cgSprite [sp]="nv.nv.sp" [khung]="0" [muot]="true"></g></g>
-              }
-              @default {
-              <circle cx="5" cy="0" r="6" />
-              <path d="M-1,-6 L-12,0 L-1,6 Z" />
-              <path d="M-12,-8 h7 M-14,0 h5 M-12,8 h7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" />
-              }
-              }
-            </g>
-          </g>
-          }
-        </g>
-        }
-        }
         @for (d of danView; track d.id) {
         @if (d.to) {
         @let vt = danHienTai(d);
@@ -136,8 +103,39 @@
       </g>
     </g>
 
-    <rect x="0" y="0" [attr.width]="W" [attr.height]="H" [attr.fill]="mauHoangHon" [attr.opacity]="doHoangHon * 0.6"
+    <rect [attr.x]="BANG" y="0" [attr.width]="VW" [attr.height]="H" [attr.fill]="mauHoangHon" [attr.opacity]="doHoangHon * 0.6"
       pointer-events="none" />
+
+
+    <!-- Hai bảng chiêu thức nền đen: Mabu trái, Zinbu phải. Bấm vào nút để chọn chiêu; chiêu đang dùng sáng, còn lại mờ -->
+    <line [attr.x1]="BANG" y1="0" [attr.x2]="BANG" [attr.y2]="H" stroke="#2a2a2a" stroke-width="2" />
+    <line [attr.x1]="W - BANG" y1="0" [attr.x2]="W - BANG" [attr.y2]="H" stroke="#2a2a2a" stroke-width="2" />
+    @for (p of [0, 1]; track p) {
+    @let ng = nguoi[p];
+    @let tb = tamBang(p);
+    <g pointer-events="none">
+      <g [attr.transform]="'translate(' + tb.x + ',' + tb.y + ')'">
+        <circle r="56" fill="#0d1b12" [attr.stroke]="ng.mau" stroke-width="4" [attr.opacity]="ng.het ? 0.4 : 1" />
+        <svg x="-52" y="-52" width="104" height="104" viewBox="-36 -66 72 76" [attr.opacity]="ng.het ? 0.4 : 1">
+          <g cgSprite [sp]="ng.nv.sp" [khung]="ng.nv.khung" [lat]="false"></g>
+        </svg>
+        <text y="82" text-anchor="middle" class="bang-ten" [attr.fill]="ng.mau">{{ ng.ten }}</text>
+        <text y="108" text-anchor="middle" class="bang-chieu">{{ ng.nv.laMay ? 'Mây' : tenNhom(p) }}</text>
+      </g>
+      @for (b of nutBang(p); track b.k) {
+      @let dung = ng.nv.nhom === b.k;
+      @let tl = manaNhom(p, b.k);
+      <g [attr.transform]="'translate(' + b.x + ',' + b.y + ')'" [attr.opacity]="dung ? 1 : 0.35" [attr.filter]="dung ? 'url(#cg-sang)' : null">
+        <circle [attr.r]="R_NUT" fill="#0d1b12" [attr.stroke]="dung ? ng.mau : '#555'" stroke-width="4" />
+        <circle [attr.r]="R_NUT + 6" fill="none" [attr.stroke]="MAU_MANA[b.k]" stroke-width="4" stroke-linecap="round"
+          [attr.stroke-dasharray]="(tl * CHU_VI_VONG).toFixed(1) + ' 999'" transform="rotate(-90)" />
+        <g transform="scale(1.35)">
+          <ng-container *ngTemplateOutlet="bieuTuong; context: { $implicit: b.k, sp: ng.nv.sp }" />
+        </g>
+      </g>
+      }
+    </g>
+    }
 
     @if (man === 'play' || man === 'pause') {
     @let nTet = tetDo;
@@ -158,17 +156,43 @@
     </g>
     }
     }
-    <!-- Tâm ngắm của nhân vật đang được chuột điều khiển (Tab để đổi) -->
+    <!-- Tâm ngắm của nhân vật đang được chuột điều khiển (Tab để đổi); ẩn khi chuột nằm trên bảng chiêu thức -->
+    @if (!trenBang) {
     <g [attr.transform]="'translate(' + nguoi[chuot].tamX + ',' + nguoi[chuot].tamY + ')'" [attr.stroke]="nguoi[chuot].mau" stroke-width="3" fill="none">
       <circle r="3" [attr.fill]="nguoi[chuot].mau" />
       <path d="M-28,0 h14 M14,0 h14 M0,-28 v14 M0,14 v14" />
     </g>
+    }
 
 
-    <text [attr.x]="W - 8" [attr.y]="H - 20" text-anchor="end" class="hud-fps" pointer-events="none">{{ fps }} FPS</text>
+    <text x="14" y="34" text-anchor="start" class="hud-fps" pointer-events="none">{{ fps }} FPS</text>
 
     }
   </svg>
+
+  <ng-template #bieuTuong let-k let-sp="sp">
+    <svg:g fill="#fff" stroke="#0d1b12" stroke-width="1.2" stroke-linejoin="round">
+      @switch (k) {
+      @case (0) {
+      <svg:rect x="-8" y="-5" width="16" height="13" rx="4" />
+      <svg:circle cx="-5.6" cy="-6" r="2.6" /><svg:circle cx="-1.9" cy="-7" r="2.6" /><svg:circle cx="1.9" cy="-7" r="2.6" /><svg:circle cx="5.6" cy="-6" r="2.6" />
+      <svg:ellipse cx="-8.5" cy="2" rx="2.8" ry="4" />
+      }
+      @case (1) {
+      <svg:path d="M-7,-11 h8 v9 l9,4 a2,2 0 0 1 1,2.5 v3.5 h-18 z" />
+      <svg:path d="M-7,6 h18" fill="none" />
+      }
+      @case (3) {
+      <svg:g transform="translate(0,4) scale(0.2)"><svg:g cgSprite [sp]="sp" [khung]="0" [muot]="true"></svg:g></svg:g>
+      }
+      @default {
+      <svg:circle cx="5" cy="0" r="6" />
+      <svg:path d="M-1,-6 L-12,0 L-1,6 Z" />
+      <svg:path d="M-12,-8 h7 M-14,0 h5 M-12,8 h7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" />
+      }
+      }
+    </svg:g>
+  </ng-template>
 
   <ng-template #veGa let-g>
     <svg:g [attr.transform]="gaTransform(g)" [attr.opacity]="g.chet ? 1 - g.tChet / (g.loai === 'boss' ? 2 : 1) : 1">
@@ -199,10 +223,10 @@
           </svg>
           @if (i === 0) {
           <h3>1P Mabu · chuột</h3>
-          <p><b>Tab</b>: chuyển chuột sang điều khiển nhân vật kia<br /><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Con lăn</b>: đổi nhóm đòn</p>
+          <p><b>Tab</b>: chuyển chuột sang điều khiển nhân vật kia<br /><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Bấm vào chiêu</b> ở bảng bên trái / phải: đổi nhóm đòn</p>
           } @else {
           <h3>2P Zinbu · bàn phím / tay cầm</h3>
-          <p><b>WASD / mũi tên</b>: di chuyển<br /><b>J / Z</b>: ra đòn (tự ngắm gà gần nhất)<br /><b>K / X</b>: đổi nhóm đòn · <b>Space / L</b>: bay nhanh<br />
+          <p><b>WASD / mũi tên</b>: di chuyển<br /><b>J / Z</b>: ra đòn (tự ngắm gà gần nhất)<br /><b>K / X</b> hoặc bấm chuột vào bảng chiêu bên phải: đổi nhóm đòn · <b>Space / L</b>: bay nhanh<br />
             Tay cầm: cần trái, <b>A</b> đánh, <b>LB/RB</b> đổi đòn, <b>B</b> bay</p>
           }
         </div>

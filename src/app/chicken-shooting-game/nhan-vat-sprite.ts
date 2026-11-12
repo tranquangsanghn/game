@@ -127,6 +127,12 @@ export class NhanVat {
     return ds[Math.floor((t - this.tNhom) / VONG_CHIEU) % ds.length];
   }
 
+  datNhom(k: number, t: number): void {
+    if (k < 0 || k >= this.sp.nhomDon.length || k === this.nhom) return;
+    this.nhom = k;
+    this.tNhom = t;
+  }
+
   doiNhom(buoc: number, t: number): void {
     const n = this.sp.nhomDon.length;
     this.nhom = (this.nhom + buoc + n) % n;

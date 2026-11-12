@@ -13,6 +13,12 @@
 - Camera chung bám trung điểm 2 nhân vật nhưng luôn bị kẹp trong bản đồ (trong `capNhatView()`, tính theo mức zoom hiện tại): chạm mép bản đồ thì mép đó trùng đúng mép màn hình, không bao giờ lộ vùng đen ngoài map.
 - Mọi thứ liên quan đến vị trí camera (chuyển đổi toạ độ chuột, lọc render) dùng chung `camX` / `camY` / `camZ` sau khi đã kẹp.
 
+# Nguyên tắc bố cục & chọn chiêu
+
+- Màn hình chia 3 phần: bảng chiêu Mabu (trái), map (giữa), bảng chiêu Zinbu (phải). Hai bảng rộng `BANG` mỗi bên, nền đen, không có map; map chỉ hiện trong `VW` = `W − 2·BANG` (cắt bằng clipPath `cg-map`). Camera / lọc render / mũi tên chỉ hướng đều tính theo `VW`.
+- Chiêu thức xếp hình vòng cung phía trên biểu tượng nhân vật (`nutBang()`, `tamBang()`). Chiêu đang dùng sáng + phát sáng, chiêu khác mờ; viền quanh nút là mana / tiến độ hồi của chiêu đó (`manaNhom()`).
+- Đổi chiêu bằng bấm chuột trái vào nút (`chonNut()` → `NhanVat.datNhom`), bất kể chuột đang điều khiển ai. Không còn đổi chiêu bằng con lăn. Bấm / di chuột trên bảng thì không ra đòn, không di chuyển, tâm ngắm ẩn (`trenBang`).
+
 # Nguyên tắc biên bản đồ
 
 - Không vật nào được ra khỏi bản đồ: nhân vật, gà, gà bay, gà tướng, quái sau này… đều bị kẹp lại, sprite phải nằm trọn trong map.
