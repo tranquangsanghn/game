@@ -4,7 +4,7 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { chuanBiSaMac, daoCua, doSau, trongVuon, veDat, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { cellK, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, CELL_XICH, SP_CELL, taoCell, type Cell } from './cell';
+import { cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, CELL_XICH, SP_CELL, taoCell, type Cell } from './cell';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
@@ -595,7 +595,6 @@ function taoTrangTriSa(): TrangTri[] {
 // Thêm loại vật mới thì khai báo lề ở đây và gọi giuTrongMap() cho nó.
 interface Le { x: number; tren: number; duoi: number; }
 const LE_NV: Le = { x: 80, tren: 230, duoi: 75 };
-const LE_CELL: Le = { x: 120, tren: 300, duoi: 40 };
 const LE_GA: Le = { x: 50, tren: 90, duoi: 10 };
 const LE_BAY: Le = { x: 70, tren: 150, duoi: 60 };
 const LE_VP: Le = { x: 60, tren: 60, duoi: 20 };
@@ -1913,7 +1912,7 @@ export class Game {
       xep.push({ loai: 'ga', y: g.y, ga: g });
     }
     for (const g of this.keoGa) if (trong(g.x, g.y, 120)) xep.push({ loai: 'ga', y: g.y, ga: g });
-    this.cellView = this.cell.filter((c) => this.thay(c.x, c.y) && trong(c.x, c.y, 300));
+    this.cellView = this.cell.filter((c) => this.thay(c.x, c.y) && trong(c.x, c.y - 20 * cellK(c.cap), 60 * cellK(c.cap) + 200));
     for (const c of this.cellView) xep.push({ loai: 'cell', y: c.y, ce: c });
     // Người đang được mây / socola phủ lên thì thân được thay bằng mây / socola (cuuView)
     this.cuuView = this.cuu.filter((c) => trong(c.x, c.y, 500));
@@ -3009,8 +3008,18 @@ export class Game {
       } else {
         c.doi -= dt;
         if (c.doi <= 0 || Math.hypot(c.dx - c.x, c.dy - c.y) < 30) {
-          const g = Math.random() * Math.PI * 2, r = 100 + Math.random() * 500;
-          c.dx = c.hx + Math.cos(g) * r; c.dy = c.hy + Math.sin(g) * r;
+          // Hay tụ tập: thường đi tới đứng cạnh một Cell khác cùng đảo, không thì đi ngẫu nhiên quanh nhà
+          const k = cellK(c.cap);
+          const ban = this.cell.filter((o) => o !== c && !o.chet && Math.hypot(o.x - c.x, o.y - c.y) < CELL_TU_TAM);
+          const g = Math.random() * Math.PI * 2;
+          if (ban.length && Math.random() < CELL_TU) {
+            const o = ban[Math.floor(Math.random() * ban.length)]!;
+            const r = (22 + Math.random() * 30) * k;
+            c.dx = o.x + Math.cos(g) * r; c.dy = o.y + Math.sin(g) * r;
+          } else {
+            const r = 100 + Math.random() * 500;
+            c.dx = c.hx + Math.cos(g) * r; c.dy = c.hy + Math.sin(g) * r;
+          }
           c.doi = 3 + Math.random() * 4;
         }
         // Đang đuổi xa nhà quá thì về nhà
@@ -3027,7 +3036,7 @@ export class Game {
         c.x += (dx / dd) * b;
         c.y += (dy / dd) * b;
         if (!ke) c.lat = dx < 0;
-        giuTrongMap(c, LE_CELL, false, 'dao');
+        giuTrongMap(c, leCell(c.cap), false, 'dao');
         // Bị bờ biển chặn mà không nhích được thì chọn điểm khác
         if (!ke && Math.hypot(c.x - cu.x, c.y - cu.y) < b * 0.3) c.doi = 0;
       }

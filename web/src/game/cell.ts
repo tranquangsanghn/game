@@ -3,18 +3,15 @@
 // Sprite: web/public/assets/game/cell_atlas.png, 10 cột × 5 hàng (hàng = cấp), khung 80×64, neo ở đáy giữa chân.
 // Ảnh gốc: Cell từ Dragon Ball Z: Legendary Super Warriors (GBC); cấp 0 Cell Junior, 1 Imperfect 1, 2 Imperfect 2, 3 Perfect, 4 Perfect nhuộm đỏ + hào quang.
 import type { KhungSprite } from './sprite';
-import { diemTrenDao, SO_DAO } from './ban-do';
+import { daoCua, diemTrenDao, doSau, SO_DAO } from './ban-do';
 
 export const SP_CELL: KhungSprite = { atlas: 'assets/game/cell_atlas.png', atlasW: 800, atlasH: 320, w: 80, h: 64, cot: 10, neoX: 40, neoY: 60 };
 /** Khung trong hàng của mỗi cấp */
 export const CELL_KHUNG = { dung: [0, 1], chay: [2, 3, 4, 5], danh: [6, 7], thuong: 8, chet: 9 } as const;
 
 export const SO_CAP = 5;
-/** Số Cell mỗi đảo: ngẫu nhiên trong khoảng này */
-export const CELL_MIN = 6;
-export const CELL_MAX = 10;
-/** Cell cách nhau tối thiểu khi sinh */
-const CELL_CACH = 220;
+/** Số Cell cố định của từng đảo (chỉ số đảo 0..4; đảo 0 to nhất) */
+export const CELL_SO_DAO = [1, 3, 5, 8, 10];
 
 /** Chỉ số theo cấp 0..4 */
 export const CELL_HP = [150, 220, 320, 450, 800];
@@ -24,7 +21,8 @@ export const CELL_TOC = [70, 85, 100, 120, 150];
 /** Số giây giữa 2 đòn */
 export const CELL_HOI = [1.4, 1.3, 1.2, 1.1, 1.0];
 /** Độ to (nhân kích thước sprite) */
-export const CELL_TO = [3.4, 3.7, 4.0, 4.3, 5.2];
+// (gốc 3,4 · 3,7 · 4,0 · 4,3 · 5,2 nhân theo từng đảo: đảo 1 ×3, đảo 2-4 ×2, đảo 0 ×4)
+export const CELL_TO = [10.2, 7.4, 8.0, 8.6, 20.8];
 /** Tỉ lệ phóng thật của sprite (độ to × 0,9) */
 export const cellK = (cap: number) => CELL_TO[cap]! * 0.9;
 /** Điểm khi hạ */
@@ -55,16 +53,32 @@ export interface Cell {
 /** Cấp Cell của đảo `i`: đảo 0 (lớn nhất) cấp 4, đảo 1..4 cấp 0..3 */
 export const capCuaDao = (i: number) => (i === 0 ? SO_CAP - 1 : i - 1);
 
-/** Sinh Cell cho mọi đảo (mỗi đảo CELL_MIN..CELL_MAX con, rải trên cát, cách nhau CELL_CACH). `layId` cấp id duy nhất. */
+/** Cell hay tụ tập: khi lang thang, xác suất đi tới chỗ một Cell khác cùng đảo (thay vì đi ngẫu nhiên quanh nhà) */
+export const CELL_TU = 0.75;
+/** Chỉ tụ với Cell trong tầm này */
+export const CELL_TU_TAM = 2200;
+/** Lề giữ Cell trong bản đồ theo cấp (sprite to nên lề rộng) */
+export const leCell = (cap: number) => ({ x: 20 * cellK(cap) + 60, tren: 45 * cellK(cap), duoi: 40 });
+
+/** Sinh Cell cho mọi đảo: số con cố định `CELL_SO_DAO`, sinh thành một cụm quanh một chỗ trên cát (tụ tập), cách nhau theo độ to. `layId` cấp id duy nhất. */
 export function taoCell(layId: () => number): Cell[] {
   const kq: Cell[] = [];
   for (let i = 0; i < SO_DAO; i++) {
     const cap = capCuaDao(i);
-    const n = CELL_MIN + Math.floor(Math.random() * (CELL_MAX - CELL_MIN + 1));
+    const n = CELL_SO_DAO[i]!;
+    const k = cellK(cap);
+    const tam = diemTrenDao(i, 500 + 40 * k);
+    const bk = 100 + n * 18 * k;
     const cua: { x: number; y: number }[] = [];
-    for (let k = 0; k < n; k++) {
-      let p = diemTrenDao(i);
-      for (let t = 0; t < 30 && cua.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < CELL_CACH); t++) p = diemTrenDao(i);
+    for (let j = 0; j < n; j++) {
+      // Quanh tâm cụm, cách các con khác ít nhất ~ 30 × độ to; thử nhiều lần rồi nới dần
+      let p = tam;
+      for (let t = 0; t < 60; t++) {
+        const g = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * bk * (1 + t / 30);
+        p = { x: tam.x + Math.cos(g) * r, y: tam.y + Math.sin(g) * r };
+        if (doSau(p.x, p.y) > 250 && daoCua(p.x, p.y) === i && !cua.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < 30 * k)) break;
+        p = tam;
+      }
       cua.push(p);
       kq.push({
         id: layId(), cap, x: p.x, y: p.y, hx: p.x, hy: p.y, hp: CELL_HP[cap]!, lat: Math.random() < 0.5, phase: Math.random() * 10,
