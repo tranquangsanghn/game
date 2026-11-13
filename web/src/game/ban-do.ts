@@ -226,3 +226,15 @@ export function daoCua(x: number, y: number): number {
 export function chuanBiSaMac(): void {
   layLuoiDi();
 }
+
+/** Điểm ngẫu nhiên trên cát của đảo `i`, cách bờ ít nhất `cachBo` (thử nhiều lần; không được thì lấy tâm đảo) */
+export function diemTrenDao(i: number, cachBo = 300): { x: number; y: number } {
+  const d = DAO[i]!;
+  for (let k = 0; k < 200; k++) {
+    const g = Math.random() * Math.PI * 2;
+    const r = Math.sqrt(Math.random()) * d.r * 0.75;
+    const x = d.x + Math.cos(g) * r, y = d.y + Math.sin(g) * r;
+    if (doSau(x, y) > cachBo && daoCua(x, y) === i) return { x, y };
+  }
+  return { x: d.x, y: d.y };
+}

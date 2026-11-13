@@ -1,5 +1,6 @@
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
+import { cellK, CELL_CHET_T, SO_CAP, SP_CELL, type Cell } from './cell';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { bamDiem, doSau, doSauVuon, nhieu, TG } from './ban-do';
 
@@ -622,6 +623,7 @@ export class VeCanvas {
       else if (o.loai === 'td') this.veTrangTri(ctx, o.td, c.t, !!o.td.sa);
       else if (o.loai === 'cuu') this.veCuu(ctx, c, o.cu);
       else if (o.loai === 'cau') this.veCau(ctx, c, o.cau);
+      else if (o.loai === 'cell') this.veCell(ctx, c, o.ce);
       else if (o.loai === 'mb') this.veMayBay(ctx, c);
       else this.veNhanVat(ctx, c, o.p);
     }
@@ -995,6 +997,22 @@ export class VeCanvas {
     ctx.closePath();
     ctx.fillStyle = mau;
     ctx.fill();
+    ctx.restore();
+  }
+
+  // Cell: sprite pixel art (không làm mịn), neo ở chân, quay mặt về phía nhân vật; cấp 4 phát sáng đỏ cam; xác mờ dần
+  private veCell(ctx: CanvasRenderingContext2D, c: Game, ce: Cell): void {
+    const k = cellK(ce.cap);
+    ctx.save();
+    ctx.globalAlpha = ce.chet ? Math.max(0, 1 - ce.tChet / CELL_CHET_T) : 1;
+    ctx.translate(ce.x, ce.y);
+    ctx.scale(k, k);
+    if (ce.cap === SO_CAP - 1 && !ce.chet) {
+      ctx.shadowColor = `rgba(255,${150 + Math.round(60 * Math.sin(c.t * 6))},40,0.95)`;
+      ctx.shadowBlur = 18 * ctx.getTransform().a;
+    }
+    // Hàng của mỗi cấp trong atlas: đổi khung = cấp * số cột + khung
+    this.sprite(ctx, SP_CELL, ce.cap * SP_CELL.cot + c.cellKhung(ce), ce.lat, false);
     ctx.restore();
   }
 
