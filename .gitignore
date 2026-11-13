@@ -1,3 +1,4 @@
 node_modules/
-dist/
-.angular/
+web/dist/
+server/target/
+server/application.properties

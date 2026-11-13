@@ -1,0 +1,273 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #0f172a;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+@keyframes hienRa {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.khung {
+  position: relative;
+  /* Khung chiếm cả cửa sổ; chiều rộng khung nhìn trong canvas theo tỉ lệ cửa sổ nên map tràn sát hai bên */
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #1d2b3a;
+  outline: none;
+  user-select: none;
+  touch-action: none;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.dang-choi canvas {
+  cursor: none;
+}
+
+.dang-choi.tren-bang canvas {
+  cursor: pointer;
+}
+
+
+
+
+
+
+
+.nut-dong,
+.nut-dung {
+  position: absolute;
+  top: 12px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 3;
+  transition: background 0.15s;
+}
+
+.nut-dong { right: 12px; }
+.nut-dung { right: 56px; font-size: 12px; }
+
+.nut-dong:hover { background: #dc2626; }
+.nut-dung:hover { background: rgba(0, 0, 0, 0.7); }
+
+.man-phu {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 20, 30, 0.45);
+  z-index: 2;
+}
+
+.hop {
+  width: min(760px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 24px 32px;
+  border-radius: 18px;
+  background: #fffaf0;
+  color: #3b2a1a;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.hop.nho { width: min(320px, calc(100% - 32px)); }
+
+.hop h1 { margin: 0 0 8px; font-size: 32px; }
+.hop h2 { margin: 0 0 16px; }
+.hop h3 { margin: 0 0 8px; font-size: 18px; }
+.hop p { margin: 6px 0; }
+
+.mo-ta { font-size: 16px; }
+.phu { font-size: 13px; color: #6b5640; }
+
+.chon-che-do {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 10px 0 4px;
+}
+
+.che-do {
+  padding: 8px 20px;
+  border: 2px solid #d9cbb3;
+  border-radius: 999px;
+  background: #fff;
+  color: #3b2a1a;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.che-do:hover { border-color: #e67e22; }
+.che-do.chon { background: #e67e22; border-color: #e67e22; color: #fff; }
+
+.hai-cot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.the {
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  text-align: left;
+}
+
+.the.teo { background: #fdecea; border-color: #f5b7b1; }
+.the.ty { background: #e8f1fc; border-color: #a9cbf2; }
+.the.thang { box-shadow: 0 0 0 3px #f7c600; }
+
+.so-lon { font-size: 40px; font-weight: 800; }
+
+.bang-diem {
+  margin: 0 auto 10px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.bang-diem td { padding: 4px 10px; }
+.bang-diem td:nth-child(even) { font-weight: 700; color: #27ae60; }
+.bang-diem td.tru { color: #e74c3c; font-weight: 700; }
+
+kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 1px 5px;
+  margin: 0 1px;
+  border-radius: 4px;
+  border: 1px solid #c9b79c;
+  background: #fff;
+  font: 600 12px/1.4 monospace;
+}
+
+.ket-luan { font-size: 20px; margin: 10px 0; }
+
+.ky-luc-moi {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #f7c600;
+  color: #3b2a1a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.nhom-nut {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.nut-chinh,
+.nut-phu {
+  padding: 10px 28px;
+  border: none;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.nut-chinh { background: #e67e22; color: #fff; }
+.nut-chinh:hover { background: #d35400; }
+.nut-phu { background: #e5ddd0; color: #3b2a1a; }
+.nut-phu:hover { background: #d6cbb9; }
+
+@media (max-width: 640px) {
+  .hai-cot { grid-template-columns: 1fr; }
+  .hop { padding: 18px 16px; }
+}
+
+
+.chan-dung {
+  float: right;
+  width: 92px;
+  height: 100px;
+  margin: -6px -4px 0 8px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+.o-ten { display: flex; gap: 8px; align-items: center; justify-content: center; margin: 10px 0 2px; font-size: 14px; }
+.o-ten input { padding: 6px 12px; border: 2px solid #d9cbb3; border-radius: 999px; font-size: 15px; width: 180px; text-align: center; }
+.luu-tin { margin: 8px 0; padding: 8px 12px; border-radius: 10px; background: #eef7ee; border: 1px solid #b7dbb7; font-size: 14px; }
+.luu-tin.tam { background: #fff6e0; border-color: #f0d28a; }
+.thong-bao { min-height: 20px; margin: 6px 0 0; font-size: 14px; color: #1e7a3c; }
+.thong-bao.loi { color: #c0392b; }
+.xep-hang { margin: 8px auto 0; border-collapse: collapse; font-size: 14px; text-align: left; }
+.xep-hang td { padding: 2px 10px; }
+.nut-phu:disabled, .nut-chinh:disabled { opacity: 0.5; cursor: default; }
+
+
+
+/* Màn bắt đầu: 3 thẻ ảnh chọn số người chơi / nhân vật */
+.man-chon { flex-direction: column; background: radial-gradient(ellipse at center, rgba(20, 30, 50, 0.82), rgba(8, 12, 24, 0.95)); }
+.hang-the { display: flex; gap: clamp(16px, 4vw, 48px); justify-content: center; align-items: center; flex-wrap: wrap; }
+.the-chon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 260px;
+  height: 320px;
+  padding: 18px 12px 16px;
+  box-sizing: border-box;
+  border: 4px solid var(--mau);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.the-chon.dang-chon { transform: translateY(-6px); background: rgba(255, 255, 255, 0.14); box-shadow: 0 0 28px var(--mau); }
+.the-chon:hover { transform: translateY(-6px); background: rgba(255, 255, 255, 0.14); box-shadow: 0 0 28px var(--mau); }
+/* Chế độ tay cầm: thẻ đang chọn sáng và nổi lên, các thẻ còn lại mờ và chìm xuống */
+.co-chon .the-chon { opacity: 0.4; transform: translateY(14px) scale(0.92); background: rgba(255, 255, 255, 0.03); box-shadow: none; filter: saturate(0.5); }
+.co-chon .the-chon.dang-chon { opacity: 1; transform: translateY(-12px) scale(1.06); background: rgba(255, 255, 255, 0.16); box-shadow: 0 0 36px var(--mau); filter: none; }
+.the-anh { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 8px; padding-bottom: 14px; }
+.anh-nv { display: block; background-repeat: no-repeat; image-rendering: pixelated; }
+.the-chu { font-size: 24px; font-weight: 700; }
+
+/* Màn hướng dẫn (sau khi chọn nhân vật) */
+.man-hd { gap: 10px; padding: 12px; box-sizing: border-box; }
+.anh-hd { max-width: 100%; max-height: calc(100% - 120px); min-height: 0; object-fit: contain; }
+.hd-chuot { color: #fff; font-size: 18px; line-height: 1.6; text-align: left; }
+.hd-chuot p { margin: 4px 0; }
+.man-hd .nhom-nut { margin-top: 0; }
+
+.muc-tieu { color: #fff; font-size: 32px; font-weight: 800; text-align: center; margin: 0 24px 24px; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+
+/* Màn mục tiêu: hàng 7 viên ngọc rồng */
+.hang-ngoc { display: flex; gap: 6px; margin: 0 0 20px; justify-content: center; flex-wrap: wrap; filter: drop-shadow(0 0 10px #f59e0b); }
