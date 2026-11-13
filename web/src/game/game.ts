@@ -389,7 +389,7 @@ const CAU_TRON = 10;
 const CAU_HOI_MAU = 20;
 const CAU_VO = 1.6;
 const CAU_MOC = 20;
-const CAU_BAN_KINH = 130;
+const CAU_BAN_KINH = 160;
 // Vị trí 2 quả cầu so với tâm map (tránh chỗ nhân vật xuất hiện lúc đầu ván)
 const CAU_VI_TRI = [[-450, -420], [450, -420]];
 const SP_CAU: KhungSprite = { atlas: 'assets/game/cau_buu.png', atlasW: 1440, atlasH: 800, w: 240, h: 400, cot: 6, neoX: 120, neoY: 350 };
@@ -496,7 +496,7 @@ function taoTrangTri(): TrangTri[] {
       const loai = k < 0.35 ? 0 : k < 0.65 ? 1 : k < 0.85 ? 2 : 3;
       const lat = r() < 0.5;
       // Để trống quanh 2 quả cầu trốn (bỏ sau khi đã rút số ngẫu nhiên để phần còn lại của map không đổi)
-      if (CAU_VI_TRI.some(([dx, dy]) => Math.hypot(x - MAP / 2 - dx, y - MAP / 2 - dy) < 300)) continue;
+      if (CAU_VI_TRI.some(([dx, dy]) => Math.hypot(x - MAP / 2 - dx, y - MAP / 2 - dy) < 500)) continue;
       // Một phần cây là cây to (chọn theo toạ độ, không dùng r() để map không đổi)
       kq.push({ x, y, loai, lat, to: loai === 0 && Math.floor(x * 7 + y * 13) % 4 === 0 });
     }
@@ -2790,7 +2790,7 @@ export class Game {
         n.dangDi = false;
         n.combo = 0;
         this.am.phat('anTao');
-        this.chu.push({ id: this.id++, x: q.x, y: q.y - 300, text: '🛡 TRỐN VÀO QUẢ CẦU!', mau: '#ff9fd0', t: 0 });
+        this.chu.push({ id: this.id++, x: q.x, y: q.y - 380, text: '🛡 TRỐN VÀO QUẢ CẦU!', mau: '#ff9fd0', t: 0 });
       }
       if (q.pha === 'trong' || q.pha === 'vo') {
         const n = this.nguoi[q.p];
@@ -2813,7 +2813,7 @@ export class Game {
           q.p = -1;
           n.nv.tiepDat();
           this.vet.push({ id: this.id++, x: q.x, y: q.y - 60, t: 0, loai: 'no' });
-          this.chu.push({ id: this.id++, x: q.x, y: q.y - 300, text: `${n.ten} THOÁT RA!`, mau: '#ff9fd0', t: 0 });
+          this.chu.push({ id: this.id++, x: q.x, y: q.y - 380, text: `${n.ten} THOÁT RA!`, mau: '#ff9fd0', t: 0 });
         }
       } else if (q.pha === 'moc' && q.t >= CAU_MOC) {
         q.pha = 'san';

@@ -645,12 +645,12 @@ export class VeCanvas {
     ctx.globalAlpha = h.a;
     if (h.con !== null) {
       // Có người trốn bên trong: vầng sáng hồng dưới chân
-      duongElip(ctx, 120, 34);
+      duongElip(ctx, 150, 42);
       ctx.fillStyle = `rgba(255,120,200,${0.18 + 0.12 * Math.abs(Math.sin(c.t * 4))})`;
       ctx.fill();
     }
     ctx.rotate(rad(h.lac));
-    ctx.scale(1.1, 1.1);
+    ctx.scale(1.4, 1.4);
     this.sprite(ctx, c.SP_CAU, h.khung, false, false);
     ctx.restore();
     if (h.con === null) return;
@@ -662,9 +662,9 @@ export class VeCanvas {
     ctx.lineJoin = 'round';
     ctx.lineWidth = 9;
     ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-    ctx.strokeText(`${h.con}`, q.x, q.y - 290);
+    ctx.strokeText(`${h.con}`, q.x, q.y - 360);
     ctx.fillStyle = c.nguoi[q.p]?.mau ?? '#ff9fd0';
-    ctx.fillText(`${h.con}`, q.x, q.y - 290);
+    ctx.fillText(`${h.con}`, q.x, q.y - 360);
     ctx.restore();
   }
 
