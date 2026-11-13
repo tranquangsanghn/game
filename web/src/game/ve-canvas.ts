@@ -223,8 +223,8 @@ export class VeCanvas {
     }
 
     for (const p of [0, 1]) if (!c.nguoi[p].vang) this.veThanhBen(ctx, c, p);
-    // Đảo sa mạc không có gà: thanh đen trên để trống
-    if (c.banDoVan !== 'sa') this.veThanhTuong(ctx, c);
+    // Thế giới mở: chiêu gà mẹ chỉ hiện khi có nhân vật ở trong / gần vườn gà
+    if (c.banDoVan !== 'sa' || c.ganVuon()) this.veThanhTuong(ctx, c);
     if (c.man === 'play' || c.man === 'pause') this.veHud(ctx, c);
   }
 
