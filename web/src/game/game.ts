@@ -599,7 +599,7 @@ const hoiLaoCua = (g: Ga) => (g.kieuPhu === 0 ? LAO_HOI_CHUYEN : LAO_HOI);
 const hoiBayCua = (g: Ga) => (g.kieuPhu === 1 ? BAY_HOI_CHUYEN : BAY_HOI);
 // Kẹp vật vào trong bản đồ; trả về cờ chạm mép theo từng trục để vật tự bật lại
 // Đảo sa mạc: vườn gà (map cỏ, 0..MAP) giữa biển, vòng đảo cát quanh. vung = 'vuon' (gà, trứng, gà mẹ: luôn trong tường vườn)
-// hoặc 'dao' (nhân vật: chỉ trên cát, biển / vườn bị đẩy lên bờ gần nhất); không ghi thì theo vị trí. quaNuoc = đang bay nên được ở trên biển.
+// hoặc 'dao' (chỉ trên cát, biển bị đẩy lên bờ gần nhất); nhân vật không ghi, theo vị trí (đang trong vườn thì ở lại trong vườn). quaNuoc = đang bay nên được ở trên biển.
 function giuTrongMap(o: { x: number; y: number }, le: Le, quaNuoc = false, vung?: 'vuon' | 'dao') {
   if (banDoHt === 'sa' && (vung ? vung === 'dao' : !trongVuon(o.x, o.y))) {
     const x = kep(o.x, TG.x0 + le.x, TG.x1 - le.x);
@@ -1086,7 +1086,7 @@ export class Game {
     const truoc = this.nguoi.map((n) => ({ x: n.x, y: n.y }));
     this.dieuKhien(dt);
     this.rangBuoc(truoc);
-    this.nguoi.forEach((n) => giuTrongMap(n, leNhanVat(n.nv.heSoTo), !!n.bay, 'dao'));
+    this.nguoi.forEach((n) => giuTrongMap(n, leNhanVat(n.nv.heSoTo), !!n.bay));
     this.nguoi.forEach((n, p) => this.mayQuet(n, p));
     this.capNhatGa(dtE);
     this.gaDanhNguoi();
@@ -2848,7 +2848,7 @@ export class Game {
           const b = Math.min(d - CUU_BAM, Math.max(CUU_TOC_BAM * dt, (d - CUU_BAM) * Math.min(1, dt * 6)));
           c.x -= (dx / d) * b;
           c.y -= (dy / d) * b;
-          giuTrongMap(c, leNhanVat(n.nv.heSoTo), false, 'dao');
+          giuTrongMap(c, leNhanVat(n.nv.heSoTo), false);
         }
         n.x = c.x;
         n.y = c.y;
@@ -3300,7 +3300,7 @@ export class Game {
       x: kep(x, o.x - MAX_DX, o.x + MAX_DX),
       y: kep(y, o.y - MAX_DY, o.y + MAX_DY),
     };
-    giuTrongMap(dich, le, false, 'dao');
+    giuTrongMap(dich, le, false);
     let d = Math.hypot(dich.x - n.x, dich.y - n.y);
     if (d > BAY_TOI_DA) {
       // Chỉ xa hơn tầm bay tối đa thì bay tới mép tầm theo hướng chuột
