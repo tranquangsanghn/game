@@ -95,12 +95,13 @@ const TRANG_TRI_SA = [
 ];
 /** Ô cát gốc của gói tileset (128px): lấy đốm sẫm làm vân cát */
 const SA_CAT = SA + 'cat.png';
-/** Nền cát / biển vẽ sẵn theo mảnh MANH × MANH đơn vị bản đồ, độ phân giải 1/MANH_TL; mỗi khung chỉ dựng tối đa MANH_MOI mảnh mới */
+/** Nền cát / biển vẽ sẵn theo mảnh MANH × MANH đơn vị bản đồ, độ phân giải 1/MANH_TL; dựng dần từng hàng, mỗi khung tối đa MANH_NGAN_SACH ms */
 const MANH = 800;
-const MANH_TL = 2;
-const MANH_MOI = 4;
+const MANH_TL = 3;
+/** Thời gian tối đa mỗi khung dành cho việc dựng mảnh (ms): mảnh dựng dần từng hàng điểm ảnh qua nhiều khung, không khựng */
+const MANH_NGAN_SACH = 4;
 /** Số mảnh giữ lại tối đa (thế giới rất rộng): quá thì bỏ mảnh lâu không thấy nhất */
-const MANH_GIU = 160;
+const MANH_GIU = 120;
 // Bảng màu lấy từ tileset (kem viền trên, cam giữa, nâu bóng) + biển kiểu đảo Kame
 const C_KEM = [243, 213, 148];
 const C_CAT = [240, 195, 122];
@@ -114,6 +115,8 @@ export class VeCanvas {
   private mauCo: CanvasPattern | null = null;
   /** Đảo sa mạc: mảnh nền đã dựng (khoá "i,j"), ảnh toàn map độ phân giải thấp lót trước khi mảnh dựng xong, điểm ảnh ô cát */
   private manhSa = new Map<string, HTMLCanvasElement>(); // thứ tự chèn = thứ tự dùng gần đây (LRU)
+  /** Mảnh đang dựng dở (khoá "i,j"): canvas, dữ liệu điểm ảnh và hàng đã dựng tới đâu */
+  private viecManh = new Map<string, { cv: HTMLCanvasElement; d: ImageData; hang: number; mi: number; mj: number }>();
   private tongSa: HTMLCanvasElement | null = null;
   private vanCat: Uint8ClampedArray | null = null;
   private mauTuong: { mat: CanvasPattern; gach: CanvasPattern; vienNgang: CanvasPattern; vienDoc: CanvasPattern } | null = null;
@@ -399,20 +402,27 @@ export class VeCanvas {
     p[i] = r!; p[i + 1] = g!; p[i + 2] = b!; p[i + 3] = 255;
   }
 
-  /** Dựng một mảnh nền sa mạc (MANH đơn vị bản đồ, độ phân giải 1/MANH_TL) */
-  private taoManhSa(mi: number, mj: number): HTMLCanvasElement {
-    const n = MANH / MANH_TL;
-    const cv = document.createElement('canvas');
-    cv.width = cv.height = n;
-    const x = cv.getContext('2d')!;
-    const d = x.createImageData(n, n);
-    for (let py = 0; py < n; py++) {
+  /** Dựng dở một mảnh nền sa mạc (MANH đơn vị bản đồ, độ phân giải 1/MANH_TL) tới khi hết hạn mức thời gian; xong thì trả canvas */
+  private dungManhSa(mi: number, mj: number, han: number): HTMLCanvasElement | null {
+    const khoa = `${mi},${mj}`;
+    const n = Math.ceil(MANH / MANH_TL), o = MANH / n;
+    let v = this.viecManh.get(khoa);
+    if (!v) {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = n;
+      v = { cv, d: cv.getContext('2d')!.createImageData(n, n), hang: 0, mi, mj };
+      this.viecManh.set(khoa, v);
+    }
+    while (v.hang < n && performance.now() < han) {
+      const py = v.hang++;
       for (let px = 0; px < n; px++) {
-        this.mauSa(d.data, (py * n + px) * 4, TG.x0 + mi * MANH + (px + 0.5) * MANH_TL, TG.y0 + mj * MANH + (py + 0.5) * MANH_TL, true);
+        this.mauSa(v.d.data, (py * n + px) * 4, TG.x0 + mi * MANH + (px + 0.5) * o, TG.y0 + mj * MANH + (py + 0.5) * o, true);
       }
     }
-    x.putImageData(d, 0, 0);
-    return cv;
+    if (v.hang < n) return null;
+    v.cv.getContext('2d')!.putImageData(v.d, 0, 0);
+    this.viecManh.delete(khoa);
+    return v.cv;
   }
 
   /** Nền đảo sa mạc: ảnh lót toàn map (thô) rồi các mảnh chi tiết trong khung nhìn (dựng dần, nhớ lại) */
@@ -426,6 +436,7 @@ export class VeCanvas {
         x.drawImage(img, 0, 0, 128, 128);
         this.vanCat = x.getImageData(0, 0, 128, 128).data;
         this.manhSa.clear();
+        this.viecManh.clear();
       }
     }
     const RX = TG.x1 - TG.x0, RY = TG.y1 - TG.y0;
@@ -447,26 +458,42 @@ export class VeCanvas {
     const x0 = -cam.x / cam.k - 40, x1 = (c.W - cam.x) / cam.k + 40;
     const y0 = -cam.y / cam.k - 40, y1 = (c.H - cam.y) / cam.k + 40;
     const sx = Math.ceil(RX / MANH), sy = Math.ceil(RY / MANH);
-    let moi = 0;
-    for (let mj = Math.max(0, Math.floor((y0 - TG.y0) / MANH)); mj <= Math.min(sy - 1, Math.floor((y1 - TG.y0) / MANH)); mj++) {
-      for (let mi = Math.max(0, Math.floor((x0 - TG.x0) / MANH)); mi <= Math.min(sx - 1, Math.floor((x1 - TG.x0) / MANH)); mi++) {
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    const i0 = Math.floor((x0 - TG.x0) / MANH), i1 = Math.floor((x1 - TG.x0) / MANH);
+    const j0 = Math.floor((y0 - TG.y0) / MANH), j1 = Math.floor((y1 - TG.y0) / MANH);
+    // Mảnh cần dựng: trong khung nhìn (ưu tiên, gần tâm trước) rồi vòng một mảnh bên ngoài (dựng trước cho chỗ sắp bay tới)
+    const cho: { khoa: string; mi: number; mj: number; uu: number }[] = [];
+    const muon = new Set<string>();
+    for (let mj = Math.max(0, j0 - 1); mj <= Math.min(sy - 1, j1 + 1); mj++) {
+      for (let mi = Math.max(0, i0 - 1); mi <= Math.min(sx - 1, i1 + 1); mi++) {
         const ox = TG.x0 + mi * MANH, oy = TG.y0 + mj * MANH;
         // Mảnh nằm hẳn trong vườn gà thì bị nền cỏ che hết: không cần dựng
         if (ox >= 0 && oy >= 0 && ox + MANH <= c.MAP && oy + MANH <= c.MAP) continue;
         const khoa = `${mi},${mj}`;
+        const thay = mi >= i0 && mi <= i1 && mj >= j0 && mj <= j1;
         let m = this.manhSa.get(khoa);
         if (m) {
           this.manhSa.delete(khoa);
           this.manhSa.set(khoa, m);
-        } else if (this.vanCat && moi < MANH_MOI) {
-          m = this.taoManhSa(mi, mj);
-          this.manhSa.set(khoa, m);
-          moi++;
-          if (this.manhSa.size > MANH_GIU) this.manhSa.delete(this.manhSa.keys().next().value!);
+          // Chồng mép 1 đơn vị để không lộ đường nối giữa các mảnh
+          if (thay) ctx.drawImage(m, ox, oy, MANH + 1, MANH + 1);
+        } else if (this.vanCat) {
+          muon.add(khoa);
+          cho.push({ khoa, mi, mj, uu: (thay ? 0 : 1e9) + Math.hypot(ox + MANH / 2 - cx, oy + MANH / 2 - cy) });
         }
-        // Chồng mép 1 đơn vị để không lộ đường nối giữa các mảnh
-        if (m) ctx.drawImage(m, ox, oy, MANH + 1, MANH + 1);
       }
+    }
+    // Bỏ phần dựng dở của mảnh không còn cần (giải phóng bộ nhớ)
+    for (const k of this.viecManh.keys()) if (!muon.has(k)) this.viecManh.delete(k);
+    if (!cho.length) return;
+    cho.sort((p, q) => p.uu - q.uu);
+    const han = performance.now() + MANH_NGAN_SACH;
+    for (const w of cho) {
+      if (performance.now() >= han) break;
+      const m = this.dungManhSa(w.mi, w.mj, han);
+      if (!m) break;
+      this.manhSa.set(w.khoa, m);
+      if (this.manhSa.size > MANH_GIU) this.manhSa.delete(this.manhSa.keys().next().value!);
     }
   }
 
