@@ -1,7 +1,7 @@
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
 import type { NhanVatSprite } from './nhan-vat-sprite';
-import { bamDiem, doSau, nhieu } from './ban-do';
+import { bamDiem, doSau, doSauVuon, nhieu, TG } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
 // Toạ độ vẽ giữ nguyên như bản SVG cũ: viewBox (-SIDE, -BAR, W + 2·SIDE, H + BAR), căn giữa, giữ tỉ lệ.
@@ -96,6 +96,8 @@ const SA_CAT = SA + 'cat.png';
 const MANH = 800;
 const MANH_TL = 2;
 const MANH_MOI = 4;
+/** Số mảnh giữ lại tối đa (thế giới rất rộng): quá thì bỏ mảnh lâu không thấy nhất */
+const MANH_GIU = 160;
 // Bảng màu lấy từ tileset (kem viền trên, cam giữa, nâu bóng) + biển kiểu đảo Kame
 const C_KEM = [243, 213, 148];
 const C_CAT = [240, 195, 122];
@@ -108,7 +110,7 @@ const CO_LAP = 16; // pattern 16×16 ô ngẫu nhiên rồi lặp: một fillRec
 export class VeCanvas {
   private mauCo: CanvasPattern | null = null;
   /** Đảo sa mạc: mảnh nền đã dựng (khoá "i,j"), ảnh toàn map độ phân giải thấp lót trước khi mảnh dựng xong, điểm ảnh ô cát */
-  private manhSa = new Map<string, HTMLCanvasElement>();
+  private manhSa = new Map<string, HTMLCanvasElement>(); // thứ tự chèn = thứ tự dùng gần đây (LRU)
   private tongSa: HTMLCanvasElement | null = null;
   private vanCat: Uint8ClampedArray | null = null;
   private mauTuong: { mat: CanvasPattern; gach: CanvasPattern; vienNgang: CanvasPattern; vienDoc: CanvasPattern } | null = null;
@@ -349,12 +351,14 @@ export class VeCanvas {
 
   /** Màu một điểm của đảo sa mạc theo khoảng cách tới bờ s (dương = cát, âm = biển); ghi vào p tại i */
   private mauSa(p: Uint8ClampedArray, i: number, x: number, y: number, chiTiet: boolean): void {
-    const s = doSau(x, y);
+    const dat = doSau(x, y);
+    // Biển quanh tường vườn gà cũng nông + có bọt như quanh đảo (vườn vẽ đè lên sau)
+    const s = dat >= 0 ? dat : Math.max(dat, doSauVuon(x, y));
     let r: number, g: number, b: number;
     const tron = (a: number[], c: number[], t: number) => {
       r = a[0]! + (c[0]! - a[0]!) * t; g = a[1]! + (c[1]! - a[1]!) * t; b = a[2]! + (c[2]! - a[2]!) * t;
     };
-    if (s >= 0) {
+    if (dat >= 0) {
       // Cát: mép ướt sẫm → viền kem sáng → cát cam có cồn và vân
       if (s < 22) tron(C_UOT, C_KEM, s / 22);
       else tron(C_KEM, C_CAT, Math.min(1, (s - 22) / 70));
@@ -369,6 +373,8 @@ export class VeCanvas {
         }
         r! *= m; g! *= m; b! *= m;
       }
+    } else if (s >= 0) {
+      r = 60; g = 140; b = 60; // trong vườn gà: bị nền cỏ vẽ đè
     } else {
       // Biển: nông xanh ngọc sát bờ → sâu xanh dương; viền bọt trắng, gợn sóng quanh đảo, lấp lánh
       tron(C_NONG, C_SAU, Math.min(1, -s / 650));
@@ -398,7 +404,7 @@ export class VeCanvas {
     const d = x.createImageData(n, n);
     for (let py = 0; py < n; py++) {
       for (let px = 0; px < n; px++) {
-        this.mauSa(d.data, (py * n + px) * 4, mi * MANH + (px + 0.5) * MANH_TL, mj * MANH + (py + 0.5) * MANH_TL, true);
+        this.mauSa(d.data, (py * n + px) * 4, TG.x0 + mi * MANH + (px + 0.5) * MANH_TL, TG.y0 + mj * MANH + (py + 0.5) * MANH_TL, true);
       }
     }
     x.putImageData(d, 0, 0);
@@ -418,48 +424,53 @@ export class VeCanvas {
         this.manhSa.clear();
       }
     }
-    const M = c.MAP;
+    const RX = TG.x1 - TG.x0, RY = TG.y1 - TG.y0;
     if (!this.tongSa) {
-      const n = 200;
+      const nx = 320, ny = Math.round((320 * RY) / RX);
       const cv = document.createElement('canvas');
-      cv.width = cv.height = n;
+      cv.width = nx;
+      cv.height = ny;
       const x = cv.getContext('2d')!;
-      const d = x.createImageData(n, n);
-      for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) this.mauSa(d.data, (j * n + i) * 4, ((i + 0.5) * M) / n, ((j + 0.5) * M) / n, false);
+      const d = x.createImageData(nx, ny);
+      for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) this.mauSa(d.data, (j * nx + i) * 4, TG.x0 + ((i + 0.5) * RX) / nx, TG.y0 + ((j + 0.5) * RY) / ny, false);
       x.putImageData(d, 0, 0);
       this.tongSa = cv;
     }
     ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(this.tongSa, 0, 0, M, M);
+    ctx.drawImage(this.tongSa, TG.x0, TG.y0, RX, RY);
     // Vùng thế giới đang thấy (theo phép camera), lấn thêm một chút cho rung màn hình
     const cam = c.gocCamera();
     const x0 = -cam.x / cam.k - 40, x1 = (c.W - cam.x) / cam.k + 40;
     const y0 = -cam.y / cam.k - 40, y1 = (c.H - cam.y) / cam.k + 40;
-    const so = Math.ceil(M / MANH);
+    const sx = Math.ceil(RX / MANH), sy = Math.ceil(RY / MANH);
     let moi = 0;
-    for (let mj = Math.max(0, Math.floor(y0 / MANH)); mj <= Math.min(so - 1, Math.floor(y1 / MANH)); mj++) {
-      for (let mi = Math.max(0, Math.floor(x0 / MANH)); mi <= Math.min(so - 1, Math.floor(x1 / MANH)); mi++) {
+    for (let mj = Math.max(0, Math.floor((y0 - TG.y0) / MANH)); mj <= Math.min(sy - 1, Math.floor((y1 - TG.y0) / MANH)); mj++) {
+      for (let mi = Math.max(0, Math.floor((x0 - TG.x0) / MANH)); mi <= Math.min(sx - 1, Math.floor((x1 - TG.x0) / MANH)); mi++) {
+        const ox = TG.x0 + mi * MANH, oy = TG.y0 + mj * MANH;
+        // Mảnh nằm hẳn trong vườn gà thì bị nền cỏ che hết: không cần dựng
+        if (ox >= 0 && oy >= 0 && ox + MANH <= c.MAP && oy + MANH <= c.MAP) continue;
         const khoa = `${mi},${mj}`;
         let m = this.manhSa.get(khoa);
-        if (!m && this.vanCat && moi < MANH_MOI) {
+        if (m) {
+          this.manhSa.delete(khoa);
+          this.manhSa.set(khoa, m);
+        } else if (this.vanCat && moi < MANH_MOI) {
           m = this.taoManhSa(mi, mj);
           this.manhSa.set(khoa, m);
           moi++;
+          if (this.manhSa.size > MANH_GIU) this.manhSa.delete(this.manhSa.keys().next().value!);
         }
         // Chồng mép 1 đơn vị để không lộ đường nối giữa các mảnh
-        if (m) ctx.drawImage(m, mi * MANH, mj * MANH, MANH + 1, MANH + 1);
+        if (m) ctx.drawImage(m, ox, oy, MANH + 1, MANH + 1);
       }
     }
   }
 
   private veTheGioi(ctx: CanvasRenderingContext2D, c: Game): void {
-    if (c.banDoVan === 'sa') {
-      // Đảo sa mạc: biển bao quanh, không có tường gạch
-      this.veNenSa(ctx, c);
-    } else {
-      this.veNen(ctx, c);
-      this.veTuong(ctx, c);
-    }
+    // Đảo sa mạc: biển + vòng đảo cát, vườn gà (map cỏ có tường) nằm giữa biển
+    if (c.banDoVan === 'sa') this.veNenSa(ctx, c);
+    this.veNen(ctx, c);
+    this.veTuong(ctx, c);
 
     for (const v of c.vetView) {
       const k = v.t / (v.loai === 'chay' ? 0.7 : 0.45);
@@ -602,7 +613,7 @@ export class VeCanvas {
     // Gà dưới đất + nhân vật, xếp theo y
     for (const o of c.xep) {
       if (o.loai === 'ga') this.veGa(ctx, c, o.ga);
-      else if (o.loai === 'td') this.veTrangTri(ctx, o.td, c.t, c.banDoVan === 'sa');
+      else if (o.loai === 'td') this.veTrangTri(ctx, o.td, c.t, !!o.td.sa);
       else if (o.loai === 'cuu') this.veCuu(ctx, c, o.cu);
       else if (o.loai === 'cau') this.veCau(ctx, c, o.cau);
       else this.veNhanVat(ctx, c, o.p);

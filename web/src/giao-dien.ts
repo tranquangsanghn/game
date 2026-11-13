@@ -1,3 +1,4 @@
+import { chuanBiSaMac } from './game/ban-do';
 import { Game } from './game/game';
 import { MABU, ZINBU } from './game/nhan-vat-du-lieu';
 import { GA_TUONG, KHUNG_DUNG } from './game/ga-du-lieu';
@@ -99,6 +100,7 @@ export class GiaoDien {
     this.game.onSang = (sang) => {
       if (!this.huongDan || !this.buocMucTieu) return false;
       this.game.banDo = sang > 0 ? 'sa' : 'co';
+      if (sang > 0) setTimeout(chuanBiSaMac, 50);
       this.veManPhu();
       return true;
     };
@@ -127,7 +129,7 @@ export class GiaoDien {
         break;
       case 'muc': this.buocMucTieu = true; break;
       case 'map-co': this.game.banDo = 'co'; break;
-      case 'map-sa': this.game.banDo = 'sa'; break;
+      case 'map-sa': this.game.banDo = 'sa'; setTimeout(chuanBiSaMac, 50); break;
       case 'vao':
         if (this.huongDan) g.batDau(this.huongDan);
         this.huongDan = null;
