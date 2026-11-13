@@ -170,3 +170,7 @@
 - Nhân vật thắng (`kiemTraThang()` → `ketThuc(true)`, `nguoiThangTran` = true): gà mẹ đã dùng hết mạng (đã sinh đủ `TUONG_HOI_SINH` + 1 lần và đã chết), không còn gà con và gà mẹ phụ nào sống và không còn trứng (kể cả trứng đỏ) chưa nở, tức diệt hết gà mẹ và gà con. Màn kết thúc hiện "Chiến thắng!".
 - Quái vật thắng (`ketThuc(false)`): cả hai nhân vật cùng hết máu. Màn kết thúc hiện "Quái vật thắng!".
 - Cả hai trường hợp đều ghi điểm / kỷ lục như cũ; điểm chỉ dùng để chọn nhân vật ghi nhiều điểm nhất (MVP) ở màn kết thúc, không quyết định thắng thua.
+
+# Nguyên tắc âm thanh
+
+- Âm thanh nằm trong `web/public/assets/am-thanh/`, phát qua `AmThanh` (`web/src/game/am-thanh.ts`, `this.am` trong `Game`): `phat('dam' | 'da' | 'chuong' | 'anTao' | 'deTrung' | 'meChet' | 'nvChet')`, nhạc nền lặp (`nhacNen()`) chỉ chạy khi đang chơi (`man === 'play'`), tạm dừng / kết thúc thì dừng. Đấm / Đá / chưởng (kể cả socola) phát trong `ban()`, ăn táo / socola trong `capNhatVatPham()`, gà mẹ đẻ trứng trong `deTrung()`, gà mẹ chết (gốc hoặc phụ) và nhân vật gục. Trình duyệt chỉ cho phát sau lần bấm / nhấn phím đầu tiên (nhạc nền tự thử lại). Thêm âm mới thì thêm vào `FILE` / `AM_LUONG`.

@@ -1,5 +1,6 @@
 import type { KhungSprite } from './sprite';
 import { VeCanvas } from './ve-canvas';
+import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
@@ -558,6 +559,8 @@ export class Game {
   }
 
   /** Gắn sự kiện và chạy vòng lặp game */
+  private am = new AmThanh();
+
   khoiDong(): void {
     (document.activeElement as HTMLElement | null)?.blur();
     this.khungEl.focus();
@@ -796,6 +799,7 @@ export class Game {
       else this.nguoi.forEach((n) => this.capNhatNhanVat(n, dt));
       this.capNhatView(dt);
     }
+    this.am.nhacNen(this.man === 'play');
     if (this.ctx) this.ve.ve(this.ctx, this, this.dpr);
     // Màn chơi chỉ vẽ canvas; phần HTML (màn bắt đầu / tạm dừng / kết thúc, nút) chỉ cập nhật khi cần
     if (this.man !== 'play' || this.manDaVe !== this.man) this.onManPhu();
@@ -844,6 +848,7 @@ export class Game {
       const xanh = v.loai === 'xanh';
       const n = this.nguoi.find((m) => !m.het && !m.nv.laMay && Math.hypot(m.x - v.x, m.y - v.y) < VP_BAN_KINH);
       if (n) {
+        this.am.phat('anTao');
         if (v.loai === 'socola') {
           this.anSocola(n);
         } else if (xanh) {
@@ -1460,6 +1465,7 @@ export class Game {
 
   // Gà tướng đẻ một lượt trứng quanh mình, trừ khi tổng số gà đã đủ GA_TOI_DA
   private deTrung(boss: Ga): void {
+    this.am.phat('deTrung');
     if (this.demGaThuong() < GA_TOI_DA) {
       const dan = [...DAN_TRUNG, ...TRUNG_THEM.slice(0, boss.lan ?? 0)];
       for (const loai of dan) {
@@ -1955,6 +1961,7 @@ export class Game {
       n.nv.huong = 'ngang';
     }
     if (!n.bay) n.nv.raDon(this.t);
+    this.am.phat(chieu ? 'chuong' : nhom === 1 ? 'da' : 'dam');
 
     // Giới hạn tầm theo đòn vừa ra: chuột trỏ xa hơn tầm thì đòn dừng ở mép tầm đánh
     const tam = soc ? TAM_SOCOLA : chieu ? TAM_CHIEU : TAM_DON[n.nv.donVuaRa ?? ''] ?? (n.nv.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN);
@@ -2094,6 +2101,7 @@ export class Game {
     g.h0 = 0;
     g.socola = 0;
     rai(40);
+    this.am.phat('meChet');
     this.rung = Math.max(this.rung, 0.6);
     // Cháy nổ khi gà mẹ chết
     this.vet.push({ id: this.id++, x: g.x, y: tam.y, t: 0, loai: 'chay', co: 2.4 });
@@ -2147,6 +2155,7 @@ export class Game {
     this.rungTayCam(this.nguoi.indexOf(n), n.hp <= 0 ? 600 : 180, n.hp <= 0 ? 1 : 0.6);
     if (n.hp > 0) return;
     n.het = true;
+    this.am.phat('nvChet');
     n.dich = null;
     n.dangDi = false;
     n.bay = null;
