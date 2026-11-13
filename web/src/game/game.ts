@@ -1812,6 +1812,13 @@ export class Game {
   }
 
   // Góc rung của quả trứng sắp nở
+  /** Nhân vật còn sống nào cũng đang ngoài vườn gà (ở đảo / trên biển): hiệu ứng của vườn gà tắt, avatar trên thanh đen là Cell đỏ */
+  get trenDao(): boolean {
+    if (banDoHt !== 'sa') return false;
+    const song = this.nguoi.filter((n) => !n.vang && !n.het);
+    return song.length > 0 && song.every((n) => !trongVuon(n.x, n.y));
+  }
+
   rungTrung(e: TrungGa): number {
     // Trứng đỏ rung mạnh dần theo thời gian
     if (e.db) return Math.sin(e.t * 30) * (2 + e.t * 1.2);
@@ -1825,6 +1832,8 @@ export class Game {
     this.xTrungView = [];
     const song = this.nguoi.filter((n, p) => !n.het && !this.trongCau(p));
     if (this.man !== 'play' || !song.length) return kq;
+    // Mọi nhân vật đã rời vườn gà (đang ở đảo): không còn mũi tên / dấu X / số đếm ngược của vườn gà
+    if (this.trenDao) return kq;
     const gan = (o: { x: number; y: number }) => Math.min(...song.map((n) => Math.hypot(n.x - o.x, n.y - o.y)));
     const trung = this.trungDe.filter((e) => e.db).sort((a, b) => gan(a) - gan(b))[0];
     const tw = this.ga.find((g) => g.goc && !g.chet);
