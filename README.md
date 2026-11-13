@@ -62,6 +62,7 @@ Màn bắt đầu (chế độ tay cầm) hiện tên các tay cầm đã nối 
 - **Mana**: vào ván 200, cộng không giới hạn (bình đầy ở mốc 200), tự hồi 2/giây tới 100. Bay tốn 15/giây, **chưởng tốn 30**, **Biến mây / socola tốn 40**. **Đấm / Đá trúng hồi 5 mana** (đánh gần để gom mana, xả chưởng khi gà đông). Táo xanh +30 mana.
 - **Đá** hất lùi và làm choáng gà con 0,7s; **chưởng** xuyên qua mọi gà trên đường bay rồi nổ; combo 10+ thì chưởng hồi nhanh gấp đôi (hiện COMBO trên đầu nhân vật).
 - **Cứu đồng đội**: một người ngã mà người kia còn sống thì Mabu phủ **mây** lên Zinbu / Zinbu phủ **cục socola** lên Mabu; mây / socola bám theo người còn sống (nối bằng dây), đếm ngược 15 giây, người cứu sống sót đủ 15s thì người ngã hồi sinh (100 máu).
+- **Quả cầu trốn**: giữa map có 2 quả cầu. Mabu / Zinbu chạm vào là chui vào trốn 10 giây: gà không nhìn thấy (đi lang thang tìm), không bị đánh, hồi 20 máu/giây tới đầy bình (300) và mana được hồi đầy. Hết 10 giây quả cầu vỡ ra khói hồng và nhân vật bước ra; 20 giây sau mới có quả cầu mới ở chỗ đó.
 - **Gà mẹ**: ngoài thế phòng thủ giảm 40% sát thương (mỗi đòn tối đa 60); lúc **sơ hở** sau Lao / Bay nhận ×2 ("CƠ HỘI x2!"). Gà mẹ gốc dưới 50% máu vào **giai đoạn 2**, đẻ trứng nhanh hơn.
 - **Gà con**: gà trắng đi thành đàn và vây quanh; gà đỏ lao 1,5s rồi khựng 1s (nhận thêm 50% sát thương); gà đen bay vòng quanh, báo hiệu bằng vệt đỏ rồi nhào xuống.
 

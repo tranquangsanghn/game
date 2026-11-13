@@ -191,6 +191,12 @@
 - Mây / socola không còn vòng tròn: sau `CUU_CHO` nó bám theo người còn sống (cách `CUU_BAM` = 170, `capNhatCuu()`), nối với người đó bằng sợi dây đỏ nét đứt như dây buộc khi 2 người đi xa nhau, đếm ngược `CUU_THOI_GIAN` = 15s (số to trên đầu, kèm chữ "Bạn sống được 15s thì đồng đội sẽ sống lại") khi người cứu còn sống; hết 15s thì người ngã hồi sinh tại chỗ với `CUU_MAU` = 100 máu (`capNhatCuu()`, `NhanVat.hoiSinh()`). Người cứu ngã thì ngừng đếm; cả hai cùng ngã vẫn là thua. Gà không đụng tới mây / socola cứu người.
 - Nhân vật đã ngã (`het`) không điều khiển, không ra đòn, không bay (kể cả chế độ chuột, `ban()` / `datDichThe()`).
 
+# Nguyên tắc quả cầu trốn
+
+- 2 quả cầu (`cauTron`, `CauTron`, `taoCauTron()`) đặt cố định gần giữa map (`CAU_VI_TRI`, tránh chỗ nhân vật xuất hiện; cây / bụi không mọc trong bán kính 300 quanh cầu). Sprite `web/public/assets/game/cau_buu.png` (`SP_CAU`, 6 cột × 2 hàng: hàng 0 Mabu, hàng 1 Zinbu; khung 0 nguyên quả · 1 nứt rung · 2 nổ khói hồng · 3 bóng đen trong khói · 4 nhân vật hiện ra · 5 nhân vật giơ tay trên vỏ vỡ), nguồn ảnh tách nền ô caro bằng script, neo ở đáy quả cầu.
+- Pha (`capNhatCau()`): `san` → nhân vật (chưa gục, không phải mây, không đang bay) chạm vào trong `CAU_BAN_KINH` thì chui vào (`trong`, ngắt combo) → trốn `CAU_TRON` = 10s → `vo` (hoạt ảnh vỡ `CAU_VO` = 1,6s, khung 2–5 theo hàng của nhân vật) → nhân vật đứng ra đúng chỗ quả cầu, quả cầu `moc` `CAU_MOC` = 20s rồi lại `san` (mờ dần hiện lại giây cuối). 3 giây cuối quả cầu nứt và rung; có số giây đếm ngược trên đầu.
+- Trong cầu (`trongCau(p)`, cả pha `trong` và `vo`): nhân vật ẩn (không vẽ, không thanh máu), không điều khiển / ra đòn / bay, không nhặt đồ, không nhận sát thương (`nhanSatThuong()`), gà không thấy (`khuat(n)` = gục / mây / trong cầu, dùng ở mọi chỗ gà chọn mục tiêu) nên đi lang thang tìm; mũi tên chỉ hướng không tính người đang trốn. Hồi `CAU_HOI_MAU` = 20 máu/s tới `HP_NV` (đầy bình), mana đầy `MANA_TOI_DA` ngay, mở khoá bay. Lưu trong ván lưu (`cauTron`, thiếu thì tạo mới).
+
 # Nguyên tắc cảm giác đánh
 
 - Hit-stop (`dungKhung()`, `dungHinh`): đòn Đá, đòn trúng gà mẹ, chưởng xuyên / nổ làm game chạy chậm còn `DUNG_HE_SO` = 8% trong 0,03–0,05s; gà mẹ chết khựng 0,18s. Chỉ chậm phần logic (`capNhat`), HUD và vẽ vẫn chạy.

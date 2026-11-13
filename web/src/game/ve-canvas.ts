@@ -1,4 +1,4 @@
-import type { Game, Ga, TrangTri, Cuu } from './game';
+import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 
@@ -379,6 +379,7 @@ export class VeCanvas {
       if (o.loai === 'ga') this.veGa(ctx, c, o.ga);
       else if (o.loai === 'td') this.veTrangTri(ctx, o.td, c.t);
       else if (o.loai === 'cuu') this.veCuu(ctx, c, o.cu);
+      else if (o.loai === 'cau') this.veCau(ctx, c, o.cau);
       else this.veNhanVat(ctx, c, o.p);
     }
     for (const g of c.gaBayView) this.veGa(ctx, c, g);
@@ -635,6 +636,38 @@ export class VeCanvas {
     ctx.restore();
   }
 
+  // Quả cầu trốn: nguyên quả (sẵn sàng / có người trốn, lắc nhẹ), 3 giây cuối nứt và rung, rồi vỡ ra khói hồng và nhân vật bước ra (hoạt ảnh trong atlas)
+  private veCau(ctx: CanvasRenderingContext2D, c: Game, q: CauTron): void {
+    const h = c.cauHinh(q);
+    if (h.a <= 0) return;
+    ctx.save();
+    ctx.translate(q.x + h.rungX, q.y);
+    ctx.globalAlpha = h.a;
+    if (h.con !== null) {
+      // Có người trốn bên trong: vầng sáng hồng dưới chân
+      duongElip(ctx, 120, 34);
+      ctx.fillStyle = `rgba(255,120,200,${0.18 + 0.12 * Math.abs(Math.sin(c.t * 4))})`;
+      ctx.fill();
+    }
+    ctx.rotate(rad(h.lac));
+    ctx.scale(1.1, 1.1);
+    this.sprite(ctx, c.SP_CAU, h.khung, false, false);
+    ctx.restore();
+    if (h.con === null) return;
+    // Số giây còn trốn trên đầu quả cầu
+    ctx.save();
+    ctx.font = `800 64px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 9;
+    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+    ctx.strokeText(`${h.con}`, q.x, q.y - 290);
+    ctx.fillStyle = c.nguoi[q.p]?.mau ?? '#ff9fd0';
+    ctx.fillText(`${h.con}`, q.x, q.y - 290);
+    ctx.restore();
+  }
+
   private veGa(ctx: CanvasRenderingContext2D, c: Game, g: Ga): void {
     const h = c.gaHinh(g);
     const bong = c.bongGa(g);
@@ -695,7 +728,7 @@ export class VeCanvas {
   // Thanh máu trên đầu nhân vật; dạng mây thì không có
   private veThanhTrenDau(ctx: CanvasRenderingContext2D, c: Game, p: number): void {
     const n = c.nguoi[p];
-    if (n.vang || n.nv.laMay || c.dangCuu(p)) return;
+    if (n.vang || n.nv.laMay || c.dangCuu(p) || c.trongCau(p)) return;
     const t = c.thanhTrenDau(p);
     ctx.save();
     ctx.translate(t.x, t.y);
