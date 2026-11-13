@@ -474,7 +474,7 @@ const LOC_SOCOLA = 'sepia(1) saturate(1.6) brightness(0.5) contrast(1.1)';
 const LOC_SOCOLA_HONG = 'brightness(0.6) sepia(1) saturate(8) hue-rotate(-62deg) brightness(1.2)';
 /** Đòn ăn: Zinbu quất râu (antenna_whip), Mabu bắn chưởng (energy_ball); gà con trúng thì hoá socola, bị kéo về và nhân vật nhận AN_TI_LE máu (hiện có) của gà thành cả máu lẫn mana */
 const DON_AN: Record<string, string> = { Zinbu: 'antenna_whip', Mabu: 'energy_ball' };
-const AN_TI_LE = 0.5;
+const AN_TI_LE = 0.02;
 const KEO_TOC = 1400;
 
 const TEN_DON: Record<string, string> = {
