@@ -43,7 +43,8 @@ Màn bắt đầu cho chọn chế độ chơi (nhớ lại lần sau):
 **🎮 Tay cầm** (Gamepad API, mapping "standard" kiểu PS). Tay cầm thứ nhất điều khiển Mabu (thanh đen bên trái), tay cầm thứ hai điều khiển Zinbu (bên phải). Nối tay cầm rồi bấm một nút bất kỳ để trình duyệt nhận ra nó:
 - **Cần trái**: chạy theo hướng gạt
 - **Cần phải**: ngắm (không gạt thì tự ngắm vào con gà gần nhất)
-- **✕ hoặc R2**: ra đòn (giữ để đánh liên tục)
+- **✕, □ hoặc R2**: ra đòn (giữ để đánh liên tục) · **Chữ thập**: chạy khi không dùng cần trái
+- Tay cầm rung khi nhân vật bị đánh / gục; rút tay cầm hoặc chuyển sang cửa sổ khác thì ván tự tạm dừng; 2 tay cầm giữ cố định vai (rút / cắm lại không đổi người)
 - **○ hoặc L2**: bay một đoạn xa theo hướng cần trái
 - **L1 / R1**: đổi nhóm đòn trước / sau (Đấm / Chiêu đặc biệt / Đá / Biến mây), bỏ qua chiêu đang khoá
 - **Options**: bắt đầu / tạm dừng / tiếp tục · **✕** ở màn bắt đầu / kết thúc: chơi lại

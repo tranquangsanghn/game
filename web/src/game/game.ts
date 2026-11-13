@@ -520,6 +520,10 @@ export class Game {
   tayCamTen: string[] = [];
   tayCamNut = '';
   private nutCu = new Map<number, boolean[]>();
+  private tayCamGan: number[] = [-1, -1]; // chỉ số tay cầm đang giữ từng nhân vật (rút / cắm lại không làm đổi vai)
+  private rungLan = [0, 0];
+  private dangGan: number[] = [-1, -1];
+  private dsTayCam: Gamepad[] = [];
   tGame = 0;
   t = 0;
   rung = 0;
@@ -593,6 +597,8 @@ export class Game {
       });
       nghe(window, 'contextmenu', (e: Event) => { if (this.cheDo === 'chuot') e.preventDefault(); }, true);
       nghe(window, 'keydown', (e: KeyboardEvent) => this.phimXuong(e), true);
+      // Trình duyệt ngừng đọc tay cầm khi tab mất focus: tạm dừng ván để không bị đánh trong lúc không điều khiển được
+      nghe(window, 'blur', () => { if (this.cheDo === 'tayCam' && this.man === 'play') this.tamDung(); });
 
       this.lanCuoi = performance.now();
       this.rafId = requestAnimationFrame(this.vongLap);
@@ -2134,6 +2140,7 @@ export class Game {
     n.hp = Math.max(0, n.hp - nhan);
     this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `-${nhan}`, mau: mauChu, t: 0 });
     this.rung = Math.max(this.rung, 0.15);
+    this.rungTayCam(this.nguoi.indexOf(n), n.hp <= 0 ? 600 : 180, n.hp <= 0 ? 1 : 0.6);
     if (n.hp > 0) return;
     n.het = true;
     n.dich = null;
@@ -2270,13 +2277,15 @@ export class Game {
   }
 
   // ─── Điều khiển bằng tay cầm (Gamepad API, bố cục kiểu PS; mapping "standard") ───
-  // Cần trái: chạy · Cần phải: ngắm (không gạt thì tự ngắm) · ✕ / R2: ra đòn · ○ / L2: bay · L1 / R1: đổi chiêu
+  // Cần trái (hoặc chữ thập): chạy · Cần phải: ngắm (không gạt thì tự ngắm) · ✕ / □ / R2: ra đòn · ○ / L2: bay · L1 / R1: đổi chiêu
   // Options: bắt đầu / tạm dừng · Share (Select): khi chỉ có 1 tay cầm thì đổi sang điều khiển nhân vật kia
 
   private docTayCam(): void {
-    const ds = typeof navigator !== 'undefined' && navigator.getGamepads
-      ? Array.from(navigator.getGamepads()).filter((g): g is Gamepad => !!g && g.connected)
-      : [];
+    const ds = this.dsTayCam;
+    ds.length = 0;
+    if (typeof navigator !== 'undefined' && navigator.getGamepads) {
+      for (const g of navigator.getGamepads()) if (g && g.connected) ds.push(g);
+    }
     const ten = ds.map((g) => g.id.replace(/\s*\(.*$/, '').slice(0, 40));
     if (ten.join('|') !== this.tayCamTen.join('|')) this.tayCamTen = ten;
     const cu = (g: Gamepad) => this.nutCu.get(g.index) ?? [];
@@ -2299,8 +2308,28 @@ export class Game {
       else if (moi(g, 8) && ds.length === 1 && this.man === 'play') this.doiTayCam();
     }
 
-    // Tay cầm nào điều khiển nhân vật nào
-    const gan: (Gamepad | undefined)[] = !dungTayCam ? [undefined, undefined] : ds.length >= 2 && this.soNguoi === 2 ? [ds[0], ds[1]] : this.tayCam === 0 ? [ds[0], undefined] : [undefined, ds[0]];
+    // Tay cầm nào điều khiển nhân vật nào: giữ cố định theo chỉ số tay cầm, tay cầm 1 rút ra thì tay cầm 2 vẫn là Zinbu
+    const gan: (Gamepad | undefined)[] = [undefined, undefined];
+    if (dungTayCam) {
+      const coMat = (i: number) => ds.find((g) => g.index === i);
+      if (ds.length >= 2 && this.soNguoi === 2) {
+        for (const p of [0, 1]) {
+          if (!coMat(this.tayCamGan[p]) || this.tayCamGan[p] === this.tayCamGan[1 - p] && p === 1) this.tayCamGan[p] = -1;
+        }
+        for (const p of [0, 1]) {
+          if (this.tayCamGan[p] < 0) this.tayCamGan[p] = ds.find((g) => g.index !== this.tayCamGan[1 - p])?.index ?? -1;
+          gan[p] = coMat(this.tayCamGan[p]);
+        }
+      } else if (ds.length) {
+        const dau = coMat(this.tayCamGan[this.tayCam]) ?? ds[0];
+        this.tayCamGan = [-1, -1];
+        this.tayCamGan[this.tayCam] = dau.index;
+        gan[this.tayCam] = dau;
+      }
+      // Đang chơi mà tay cầm đã gán bị rút / mất kết nối thì tạm dừng (không để nhân vật đứng giữa trận)
+      if (this.man === 'play' && this.dangGan.some((i, p) => i >= 0 && !gan[p] && !this.nguoi[p].vang && !ds.some((g) => g.index === i))) this.tamDung();
+    }
+    this.dangGan = gan.map((g) => g?.index ?? -1);
     for (const p of [0, 1]) {
       const n = this.nguoi[p];
       const g = gan[p];
@@ -2311,7 +2340,13 @@ export class Game {
         n.ngam = null;
         continue;
       }
-      const trai = this.canGat(g, 0, 1);
+      let trai = this.canGat(g, 0, 1);
+      if (trai.m === 0) {
+        // Phím chữ thập (nút 12–15) dùng thay cần trái
+        const dx = (duoc(g, 15) ? 1 : 0) - (duoc(g, 14) ? 1 : 0);
+        const dy = (duoc(g, 13) ? 1 : 0) - (duoc(g, 12) ? 1 : 0);
+        if (dx || dy) trai = { x: dx, y: dy, m: Math.hypot(dx, dy) };
+      }
       const phai = this.canGat(g, 2, g.mapping === 'standard' || g.axes.length < 6 ? 3 : 5);
       // Hướng nhìn theo cần ngắm, không có thì theo hướng chạy
       if (phai.m > 0) n.nhin = { x: phai.x / phai.m, y: phai.y / phai.m };
@@ -2333,8 +2368,8 @@ export class Game {
       }
       if (moi(g, 4)) this.chuyenChieu(p, -1);
       if (moi(g, 5)) this.chuyenChieu(p, 1);
-      // Ra đòn: giữ ✕ / R2 thì đánh liên tục theo thời gian hồi chiêu
-      if (duoc(g, 0) || duoc(g, 7)) {
+      // Ra đòn: giữ ✕ / □ / R2 thì đánh liên tục theo thời gian hồi chiêu
+      if (duoc(g, 0) || duoc(g, 2) || duoc(g, 7)) {
         const m = this.diemNham(p);
         const a = n.ngam ? { x: n.x + n.nhin.x * TAM_CHIEU, y: n.y + n.nhin.y * TAM_CHIEU - 60 } : m;
         this.ban(p, kepMap(a.x), kepMap(a.y));
@@ -2352,6 +2387,16 @@ export class Game {
     const y = g.axes[ay] ?? 0;
     const m = Math.hypot(x, y);
     return m < VUNG_CHET_CAN ? { x: 0, y: 0, m: 0 } : { x, y, m };
+  }
+
+  /** Rung tay cầm của nhân vật p (bị đánh / gục); bỏ qua nếu tay cầm không hỗ trợ, không đè nhau */
+  private rungTayCam(p: number, ms: number, manh: number): void {
+    if (this.cheDo !== 'tayCam' || p < 0 || this.t < this.rungLan[p]) return;
+    const g = this.dangGan[p] >= 0 ? navigator.getGamepads?.()[this.dangGan[p]] : null;
+    const rungDc = (g as any)?.vibrationActuator;
+    if (!rungDc?.playEffect) return;
+    this.rungLan[p] = this.t + ms / 1000;
+    rungDc.playEffect('dual-rumble', { duration: ms, strongMagnitude: manh, weakMagnitude: manh * 0.7 }).catch(() => {});
   }
 
   private doiTayCam(): void {
