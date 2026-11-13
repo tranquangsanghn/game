@@ -214,7 +214,7 @@ const GOI_MAU = 0.4;
 // mỗi mạng được đúng 1 lần chạy trốn nhanh: tốc độ gấp TRON_TOC lần tốc độ chạy trốn thường (TOC_TRON), quãng TRON_QUANG = 2 × quãng bay của Zinbu (BAY_CAN)
 const TRON_MAU = 0.2;
 // Vua gà (gà mẹ gốc) tự hồi HOI_MAU_VUA máu / giây, tới tối đa HP_GA (đang hoá socola thì không hồi)
-const HOI_MAU_VUA = 5;
+const HOI_MAU_VUA = 2;
 const TRON_TOC = 4;
 const GOI_HOI = 30;
 const GOI_DAN: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'rooster', 'flyer'];
