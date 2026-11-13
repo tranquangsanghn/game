@@ -171,7 +171,8 @@ export class GiaoDien {
     const nv = this.game.nguoi[i].nv;
     const sp = nv.sp;
     const s = 0.9;
-    const k = nv.khung;
+    // Khung cố định (không chạy animation) để HTML màn phủ không bị dựng lại mỗi khung hình, nếu không nút bấm sẽ mất giữa lúc nhấn và nhả
+    const k = sp.anim['idle'].f[0];
     const x = (k % sp.cot) * sp.w * s;
     const y = Math.floor(k / sp.cot) * sp.h * s;
     return `<div class="chan-dung" style="width:${sp.w * s}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * s}px ${sp.atlasH * s}px;background-position:-${x}px -${y}px;height:${sp.h * s}px;margin-top:10px"></div>`;
