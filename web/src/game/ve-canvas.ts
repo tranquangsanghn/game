@@ -622,9 +622,11 @@ export class VeCanvas {
       else if (o.loai === 'td') this.veTrangTri(ctx, o.td, c.t, !!o.td.sa);
       else if (o.loai === 'cuu') this.veCuu(ctx, c, o.cu);
       else if (o.loai === 'cau') this.veCau(ctx, c, o.cau);
+      else if (o.loai === 'mb') this.veMayBay(ctx, c);
       else this.veNhanVat(ctx, c, o.p);
     }
     for (const g of c.gaBayView) this.veGa(ctx, c, g);
+    this.veMbDem(ctx, c);
 
     for (let p = 0; p < c.nguoi.length; p++) this.veThanhTrenDau(ctx, c, p);
     for (const g of c.tuongView) this.veMauTuong(ctx, c, g);
@@ -912,6 +914,57 @@ export class VeCanvas {
     ctx.restore();
   }
 
+  // Máy bay: bóng dưới đất (khi đang bay), thân (đậu / cất cánh / bay / lung lay / nổ theo khung atlas), nhãn số người đã lên trên đầu
+  private veMayBay(ctx: CanvasRenderingContext2D, c: Game): void {
+    const h = c.mbView;
+    if (!h || h.a <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = h.a;
+    if (h.bong > 0) {
+      const k = 1 - dongHe((h.nang - 105) / 400);
+      duongElip(ctx, 150 * h.to * (0.55 + 0.45 * k), 36 * h.to * (0.55 + 0.45 * k), h.x, h.y);
+      ctx.fillStyle = `rgba(0,0,0,${0.28 * h.bong * (0.5 + 0.5 * k)})`;
+      ctx.fill();
+    }
+    ctx.translate(h.x + h.rung, h.y - h.nang);
+    ctx.scale(h.to, h.to);
+    this.sprite(ctx, c.SP_MB, h.khung, h.lat, true);
+    ctx.restore();
+    if (!h.nhan) return;
+    ctx.save();
+    ctx.font = `800 44px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+    ctx.strokeText(h.nhan, h.x, h.y - h.nang - 190);
+    ctx.fillStyle = '#ffd23f';
+    ctx.fillText(h.nhan, h.x, h.y - h.nang - 190);
+    ctx.restore();
+  }
+
+  // Máy bay đã nổ: bóng mờ ở chỗ nó sẽ xuất hiện lại kèm số giây đếm ngược
+  private veMbDem(ctx: CanvasRenderingContext2D, c: Game): void {
+    const d = c.mbDemView;
+    if (!d) return;
+    ctx.save();
+    ctx.globalAlpha = 0.3 + 0.1 * Math.sin(c.t * 4);
+    ctx.translate(d.x, d.y - 105);
+    ctx.scale(1.25, 1.25);
+    this.sprite(ctx, c.SP_MB, 0, false, true);
+    ctx.restore();
+    ctx.save();
+    ctx.font = `800 56px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 9;
+    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+    ctx.strokeText(`✈ ${d.con}`, d.x, d.y - 250);
+    ctx.fillStyle = '#ffd23f';
+    ctx.fillText(`✈ ${d.con}`, d.x, d.y - 250);
+    ctx.restore();
+  }
+
   private veAvatarCau(ctx: CanvasRenderingContext2D, c: Game, q: CauTron, a: number): void {
     const R = 85;
     const mau = c.nguoi[q.cua]?.mau ?? '#ff9fd0';
@@ -1017,7 +1070,7 @@ export class VeCanvas {
   // Thanh máu trên đầu nhân vật; dạng mây thì không có
   private veThanhTrenDau(ctx: CanvasRenderingContext2D, c: Game, p: number): void {
     const n = c.nguoi[p];
-    if (n.vang || n.nv.laMay || c.dangCuu(p) || c.trongCau(p)) return;
+    if (n.vang || n.nv.laMay || c.dangCuu(p) || c.trongCau(p) || c.trongMb(p)) return;
     const t = c.thanhTrenDau(p);
     ctx.save();
     ctx.translate(t.x, t.y);

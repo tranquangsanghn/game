@@ -67,7 +67,7 @@ export interface TrungGa {
   ap?: number;
 }
 /** soc = chưởng biến socola của Zinbu · troi = chưởng tự bắn lên trời (chỉ để đẹp, không gây sát thương) */
-interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
+interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** bắn ra từ trên máy bay (không tự trúng máy bay ngay quanh chỗ bắn) */ mb?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn hồi SOCOLA_GA_TI_LE máu tối đa */
 export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; }
@@ -100,12 +100,39 @@ type VatXep =
   | { loai: 'nv'; y: number; p: number }
   | { loai: 'td'; y: number; td: TrangTri }
   | { loai: 'cuu'; y: number; cu: Cuu }
-  | { loai: 'cau'; y: number; cau: CauTron };
+  | { loai: 'cau'; y: number; cau: CauTron }
+  | { loai: 'mb'; y: number };
 
 /** Quả cầu trốn: san = sẵn sàng · trong = có nhân vật p đang trốn · vo = đang vỡ ra (hoạt ảnh) · moc = đã vỡ, chờ CAU_MOC giây mọc quả mới. t = số giây của pha hiện tại */
 /** cua = chủ quả cầu (0 Mabu · 1 Zinbu): chỉ đúng người đó chui vào được, quả cầu có avatar của người đó */
 export interface CauTron { x: number; y: number; pha: 'san' | 'trong' | 'vo' | 'moc'; p: number; t: number; cua: number; }
 const taoCauTron = (): CauTron[] => CAU_VI_TRI.map(([dx, dy], cua) => ({ x: MAP / 2 + dx, y: MAP / 2 + dy, pha: 'san', p: -1, t: 0, cua }));
+
+/**
+ * Máy bay (một chiếc, đặt trong vườn gà): dau = đậu · cat = đang cất cánh · bay = đang bay · trung = vừa trúng chưởng, lung lay · no = đã nổ, chờ MB_HOI giây hồi phục.
+ * ngoi = thứ tự lên máy bay (ngoi[0] là phi công, người lên trước). z = độ cao 0..1. goc = chỗ xuất hiện lại: ban đầu là chỗ đậu đầu tiên,
+ * nổ trên đất liền (vườn / sa mạc, kể cả lúc đang đậu) thì hạ cánh luôn ở đó và hồi phục đúng chỗ đó.
+ */
+export interface MayBay { x: number; y: number; pha: 'dau' | 'cat' | 'bay' | 'trung' | 'no'; t: number; z: number; ngoi: number[]; lat: boolean; chay: boolean; goc: { x: number; y: number }; }
+/** Hình máy bay để vẽ (đã lọc theo khung nhìn): khung atlas, độ mờ, độ to, nâng lên (px), nhãn trên đầu */
+export interface MbHinh { x: number; y: number; nang: number; khung: number; a: number; to: number; lat: boolean; rung: number; bong: number; nhan: string | null; }
+const SP_MB: KhungSprite = { atlas: 'assets/game/may_bay.png', atlasW: 1024, atlasH: 1536, w: 512, h: 512, cot: 2, neoX: 256, neoY: 256 };
+const MB_TO = 1.25;
+/** Tâm thân máy bay cao hơn điểm đậu (chân) bấy nhiêu px; thêm MB_NANG × z khi đã lên không */
+const MB_CENTRO = 105;
+const MB_NANG = 150;
+/** Bán kính lên máy bay (đi vào là lên) và bán kính trúng chưởng */
+const MB_BK = 170;
+const MB_TRUNG_BK = 150;
+const MB_CAT = 1.8;
+const MB_TOC = 850;
+const MB_LUNG = 0.4;
+const MB_HOI = 15;
+const MB_NO_HINH = 1.3;
+/** Chưởng bắn ra từ máy bay không tự trúng máy bay trong quãng này (tính từ chỗ bắn) */
+const MB_MIEN = 220;
+const MB_LE = 260;
+const taoMayBay = (x: number, y: number): MayBay => ({ x, y, pha: 'dau', t: 0, z: 0, ngoi: [], lat: false, chay: false, goc: { x, y } });
 
 /** Cứu đồng đội: nhân vật còn sống phủ mây (Mabu cứu Zinbu) hoặc socola (Zinbu cứu Mabu) lên người ngã; sống sót CUU_THOI_GIAN giây (mây / socola bám theo, nối bằng dây) thì người ngã hồi sinh */
 export interface Cuu { p: number; kieu: 'may' | 'socola'; x: number; y: number; cho: number; t: number; tach: number; }
@@ -133,6 +160,8 @@ export interface TrangThaiLuu {
   ngocNhat?: number[];
   /** Quả cầu trốn (thiếu = ván lưu cũ, tạo mới) */
   cauTron?: CauTron[];
+  /** Máy bay (thiếu = ván lưu cũ, tạo mới ở chỗ ban đầu) */
+  mayBay?: MayBay;
   /** Bản đồ của ván (thiếu = ván lưu cũ, đồng cỏ) */
   banDo?: LoaiBanDo;
   /** Cây đã đổ: [chỉ số trong trangTri, thời điểm đổ, hướng đổ] */
@@ -723,6 +752,11 @@ export class Game {
   readonly SP_CAU = SP_CAU;
   readonly SP_NGOC = SP_NGOC;
   cauView: CauTron[] = [];
+  // Máy bay trong vườn gà (mayBay) và hình / số giây hồi phục để vẽ (chỉ lấy khi nằm trong khung nhìn)
+  mayBay: MayBay = taoMayBay(MAP / 2, MAP / 2);
+  readonly SP_MB = SP_MB;
+  mbView: MbHinh | null = null;
+  mbDemView: { x: number; y: number; con: number } | null = null;
   // Giây hit-stop còn lại và biên độ rung màn hình
   private dungHinh = 0;
   private rungBien = RUNG_BIEN;
@@ -821,7 +855,7 @@ export class Game {
         }
       };
       this.ctx = this.canvasEl.getContext('2d');
-      this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas);
+      this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas);
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG, LOC_SOCOLA, LOC_SOCOLA_HONG]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO, LOC_SOCOLA, ...LOC_PHU]);
       vua();
@@ -887,6 +921,8 @@ export class Game {
     const xuong = gy < MAP / 2 ? 1 : -1;
     this.nguoi.forEach((n, p) => { n.x = gx + (this.cheNguoi === 'ca2' ? (p === 0 ? 0 : 170 * vao) : 0); n.y = gy + (this.cheNguoi === 'ca2' ? (p === 0 ? 0 : 60 * xuong) : 0); });
     this.chonNguoiDau();
+    // Máy bay đậu trong vườn gà, gần chỗ xuất phát (phía trong vườn)
+    this.mayBay = taoMayBay(kep(gx + vao * 700, TUONG + MB_LE, MAP - TUONG - MB_LE), kep(gy + xuong * 380, TUONG + MB_LE, MAP - TUONG - MB_LE));
     this.ga = [];
     this.keoGa = [];
     this.dan = [];
@@ -936,7 +972,7 @@ export class Game {
       phienBan: PHIEN_BAN_LUU, banDo: this.banDo,
       tGame: this.tGame, t: this.t, chamDen: this.chamDen, id: this.id,
       henTuong: this.henTuong, soLanTuong: this.soLanTuong, lanTuong: this.lanTuong,
-      ga: this.ga, trungDe: this.trungDe, vatPham: this.vatPham, ngocNhat: this.ngocNhat, cuu: this.cuu, cauTron: this.cauTron,
+      ga: this.ga, trungDe: this.trungDe, vatPham: this.vatPham, ngocNhat: this.ngocNhat, cuu: this.cuu, cauTron: this.cauTron, mayBay: this.mayBay,
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       nguoi: this.nguoi.map((n) => {
         const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
@@ -956,6 +992,7 @@ export class Game {
     this.henTuong = d.henTuong; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
     this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham; this.ngocNhat = d.ngocNhat ?? []; this.ngocBay = []; this.cuu = d.cuu ?? [];
     this.cauTron = d.cauTron?.length ? d.cauTron.map((q, i) => ({ ...q, cua: q.cua ?? i })) : taoCauTron();
+    if (d.mayBay) this.mayBay = { ...taoMayBay(d.mayBay.x, d.mayBay.y), ...d.mayBay };
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
     this.nguoi = d.nguoi.map((o, p) => {
@@ -1081,7 +1118,8 @@ export class Game {
     const truoc = this.nguoi.map((n) => ({ x: n.x, y: n.y }));
     this.dieuKhien(dt);
     this.rangBuoc(truoc);
-    this.nguoi.forEach((n) => giuTrongMap(n, leNhanVat(n.nv.heSoTo), !!n.bay));
+    this.nguoi.forEach((n, p) => { if (!this.trongMb(p)) giuTrongMap(n, leNhanVat(n.nv.heSoTo), !!n.bay); });
+    this.capNhatMb(dt);
     this.nguoi.forEach((n, p) => this.mayQuet(n, p));
     this.capNhatGa(dtE);
     this.gaDanhNguoi();
@@ -1263,6 +1301,12 @@ export class Game {
 
       if (n.nv.khoa || this.trongCau(p)) {
         n.dich = null;
+        n.dangDi = false;
+        this.capNhatNhanVat(n, dt);
+        return;
+      }
+      // Đang ngồi trên máy bay: máy bay mang đi (phi công đặt điểm đến qua n.dich, xem capNhatMb)
+      if (this.trongMb(p)) {
         n.dangDi = false;
         this.capNhatNhanVat(n, dt);
         return;
@@ -1458,6 +1502,7 @@ export class Game {
       const t0 = d.t;
       d.t += dt;
       if (!d.troi) this.danDoCay(d, t0);
+      if (d.to && !d.troi) this.danTrungMb(d, t0);
       if (d.to && !d.soc && !d.troi && d.t < d.T) this.chuongXuyen(d);
       if (d.t < d.T) conLai.push(d);
       else if (d.troi) this.noTroi(d);
@@ -1813,7 +1858,13 @@ export class Game {
     for (const c of this.cuuView) xep.push({ loai: 'cuu', y: c.y, cu: c });
     this.cauView = this.cauTron.filter((q) => (q.pha !== 'moc' || q.t > CAU_MOC - 1) && trong(q.x, q.y, 400));
     for (const q of this.cauView) xep.push({ loai: 'cau', y: q.y, cau: q });
-    this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
+    // Máy bay: đang bay thì luôn nằm trên mọi vật
+    const mb = this.mbHinh();
+    this.mbView = mb && trong(mb.x, mb.y - mb.nang, 700) ? mb : null;
+    if (this.mbView) xep.push({ loai: 'mb', y: this.mayBay.y + this.mayBay.z * 20000 });
+    const dem = this.mbDem();
+    this.mbDemView = dem && trong(dem.x, dem.y, 300) ? dem : null;
+    this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && !this.trongMb(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
     for (const t of this.trangTri) if (!t.mat && trong(t.x, t.y, t.to ? 700 : 400)) xep.push({ loai: 'td', y: t.y, td: t });
     xep.sort((a, b) => a.y - b.y);
     this.xep = xep;
@@ -2544,6 +2595,9 @@ export class Game {
   private ban(p: number, x: number, y: number): void {
     const n = this.nguoi[p];
     if (n.hoiChieu > 0 || n.nv.khoa || n.het || this.trongCau(p)) return;
+    // Trên máy bay chỉ bắn được chưởng (Chiêu đặc biệt)
+    const tren = this.trongMb(p);
+    if (tren && n.nv.nhom !== 2) return;
     const nhom = n.nv.nhom;
     // Nhóm 3: Mabu biến mây, Zinbu biến socola
     const nhomMay = !!n.nv.sp.nhomDon[nhom]?.may;
@@ -2593,7 +2647,7 @@ export class Game {
       const x1 = x + tanX + dx;
       const y1 = y + tanY + Math.abs(dx) * 0.3;
       const T = Math.hypot(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
-      this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0, sat: soc ? SAT_SOCOLA : SAT_THUONG[nhom][p], soc: soc && i === 0, nhom, an });
+      this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0, sat: soc ? SAT_SOCOLA : SAT_THUONG[nhom][p], soc: soc && i === 0, nhom, an, mb: tren || undefined });
     });
   }
 
@@ -2802,7 +2856,7 @@ export class Game {
 
   // khongNe: đòn phản / đốt cháy không né được; mauChu: màu chữ bay
   private nhanSatThuong(n: NguoiChoi, sat: number, khongNe = false, mauChu = '#ff4d4d'): void {
-    if (this.trongCau(this.nguoi.indexOf(n))) return;
+    if (this.trongCau(this.nguoi.indexOf(n)) || this.trongMb(this.nguoi.indexOf(n))) return;
     if (!khongNe && Math.random() < NE_NV) {
       this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: 'NÉ!', mau: '#9be7ff', t: 0 });
       return;
@@ -2886,6 +2940,204 @@ export class Game {
   }
 
   /** Nhân vật p đang được mây / socola phủ lên (đã hiện ra): thân và thanh máu của người ngã được thay bằng mây / socola */
+  // ─── Máy bay ───
+
+  /** Nhân vật p đang ngồi trên máy bay (ẩn, gà không thấy, không bị đánh; chỉ bắn được chưởng) */
+  trongMb(p: number): boolean {
+    return p >= 0 && this.mayBay.ngoi.includes(p);
+  }
+
+  /** Tâm thân máy bay (toạ độ thế giới, chỗ để tính trúng chưởng) */
+  private tamMb(): { x: number; y: number } {
+    const m = this.mayBay;
+    return { x: m.x, y: m.y - MB_CENTRO - MB_NANG * m.z };
+  }
+
+  // Đậu: nhân vật đi vào là lên (người lên trước là phi công); đủ người chơi thì cất cánh. Bay: phi công lái bằng điều khiển di chuyển bình thường.
+  // Máy bay chỉ nổ khi trúng chưởng (danTrungMb); nổ thì mọi người rơi xuống đúng chỗ đó: trên đất liền (vườn / đảo) thì đứng dậy, rơi xuống biển thì chết.
+  private capNhatMb(dt: number): void {
+    const m = this.mayBay;
+    m.t += dt;
+    const co = this.nguoi.filter((n) => !n.vang).length;
+    if (m.pha === 'dau') {
+      this.nguoi.forEach((n, p) => {
+        if (n.vang || m.ngoi.includes(p) || n.het || n.nv.laMay || n.bay || n.nv.khoa || this.trongCau(p) || this.dangCuu(p)) return;
+        if (Math.hypot(n.x - m.x, (n.y - m.y) / EP_GA) >= MB_BK) return;
+        m.ngoi.push(p);
+        n.dich = null;
+        n.dangDi = false;
+        n.combo = 0;
+        this.am.phat('anTao');
+        this.chu.push({ id: this.id++, x: m.x, y: m.y - 330, text: m.ngoi.length === 1 ? `✈ ${n.ten} LÀ PHI CÔNG!` : `✈ ${n.ten} LÊN MÁY BAY!`, mau: n.mau, t: 0 });
+      });
+      if (m.ngoi.length >= co && m.ngoi.length > 0) {
+        m.pha = 'cat';
+        m.t = 0;
+        this.am.phat('chuong');
+        this.rungMan(0.4, 5);
+        this.chu.push({ id: this.id++, x: m.x, y: m.y - 330, text: '✈ CẤT CÁNH!', mau: '#ffd23f', t: 0 });
+      }
+    }
+    if (m.pha === 'cat') {
+      const k = Math.min(1, m.t / MB_CAT);
+      m.z = k * k * (3 - 2 * k);
+      if (m.t >= MB_CAT) { m.pha = 'bay'; m.t = 0; m.z = 1; }
+    } else if (m.pha === 'bay') {
+      const pl = this.nguoi[m.ngoi[0]];
+      m.chay = false;
+      if (pl?.dich) {
+        const dx = pl.dich.x - m.x;
+        const dy = pl.dich.y - m.y;
+        const d = Math.hypot(dx, dy);
+        if (d < 10) pl.dich = null;
+        else {
+          const b = Math.min(MB_TOC * dt, d);
+          m.x += (dx / d) * b;
+          m.y += (dy / d) * b;
+          m.chay = true;
+          if (Math.abs(dx) > d * 0.2) m.lat = dx < 0;
+        }
+      }
+      // Máy bay bay được khắp thế giới (qua biển, qua tường vườn), chỉ không ra khỏi bản đồ
+      m.x = kep(m.x, TG.x0 + MB_LE, TG.x1 - MB_LE);
+      m.y = kep(m.y, TG.y0 + MB_LE, TG.y1 - MB_LE);
+    } else if (m.pha === 'trung') {
+      if (m.t >= MB_LUNG) this.noMb();
+    } else if (m.pha === 'no' && m.t >= MB_HOI) {
+      m.pha = 'dau';
+      m.t = 0;
+      m.z = 0;
+      m.x = m.goc.x;
+      m.y = m.goc.y;
+      m.ngoi = [];
+      m.chay = false;
+      this.vet.push({ id: this.id++, x: m.x, y: m.y - MB_CENTRO, t: 0, loai: 'no' });
+      this.chu.push({ id: this.id++, x: m.x, y: m.y - 330, text: '✈ MÁY BAY ĐÃ HỒI PHỤC!', mau: '#ffd23f', t: 0 });
+    }
+    // Người ngồi trên máy bay đi theo máy bay (chưởng bắn ra từ thân máy bay)
+    for (const p of m.ngoi) {
+      const n = this.nguoi[p];
+      n.x = m.x;
+      n.y = m.y - MB_NANG * m.z;
+      n.dangDi = false;
+      n.nv.lat = m.lat;
+      if (p !== m.ngoi[0] || m.pha !== 'bay') n.dich = null;
+    }
+  }
+
+  // Chưởng (Chiêu đặc biệt / socola, không tính chưởng tự bắn lên trời) bay qua thân máy bay thì máy bay trúng; chưởng bắn từ chính máy bay chỉ tính sau khi bay khỏi chỗ bắn
+  private danTrungMb(d: Dan, t0: number): void {
+    const m = this.mayBay;
+    if (m.pha === 'trung' || m.pha === 'no') return;
+    const c = this.tamMb();
+    const k0 = Math.min(1, t0 / d.T), k1 = Math.min(1, d.t / d.T);
+    const dx = d.x1 - d.x0, dy = d.y1 - d.y0;
+    const buoc = Math.max(1, Math.ceil((Math.hypot(dx, dy) * (k1 - k0)) / 40));
+    for (let i = 0; i <= buoc; i++) {
+      const k = k0 + ((k1 - k0) * i) / buoc;
+      const px = d.x0 + dx * k, py = d.y0 + dy * k;
+      if (d.mb && Math.hypot(px - d.x0, py - d.y0) < MB_MIEN) continue;
+      if (Math.abs(px - c.x) < MB_TRUNG_BK && Math.abs(py - c.y) < MB_TRUNG_BK * 0.75) {
+        this.trungMb();
+        return;
+      }
+    }
+  }
+
+  private trungMb(): void {
+    const m = this.mayBay;
+    if (m.pha === 'trung' || m.pha === 'no') return;
+    m.pha = 'trung';
+    m.t = 0;
+    m.chay = false;
+    const c = this.tamMb();
+    this.chu.push({ id: this.id++, x: c.x, y: c.y - 200, text: '💥 TRÚNG CHƯỞNG!', mau: '#ff9f43', t: 0 });
+    this.rungMan(0.3, 8);
+  }
+
+  // Máy bay nổ: ba vụ nổ, mọi người rơi xuống đúng chỗ đó (đất liền: đứng dậy, biển: chết); trên đất liền thì máy bay hồi phục ở đó sau MB_HOI giây
+  private noMb(): void {
+    const m = this.mayBay;
+    const c = this.tamMb();
+    const dat = trongVuon(m.x, m.y) || doSau(m.x, m.y) > 0;
+    for (let i = 0; i < 3; i++) this.vet.push({ id: this.id++, x: c.x + ngauNhien(-60, 60), y: c.y + ngauNhien(-40, 40), t: 0, loai: 'chay', co: 1.4 + i * 0.3 });
+    this.am.phat('meChet');
+    this.rungMan(0.5, 14);
+    this.dungKhung(0.12);
+    m.pha = 'no';
+    m.t = 0;
+    m.chay = false;
+    const roi = m.ngoi;
+    m.ngoi = [];
+    roi.forEach((p, i) => {
+      const n = this.nguoi[p];
+      n.x = m.x + (i === 0 ? -70 : 70);
+      n.y = m.y + 25;
+      n.dich = null;
+      n.dangDi = false;
+      n.combo = 0;
+      if (dat) {
+        giuTrongMap(n, leNhanVat(n.nv.heSoTo));
+        n.nv.tiepDat();
+        this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: '🪂 RƠI XUỐNG!', mau: '#9be7ff', t: 0 });
+      } else {
+        this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: '🌊 RƠI XUỐNG BIỂN!', mau: '#5ab8ff', t: 0 });
+        this.chetNv(n);
+      }
+    });
+    if (dat) {
+      const g = { x: m.x, y: m.y };
+      if (trongVuon(g.x, g.y)) {
+        g.x = kep(g.x, TUONG + MB_LE, MAP - TUONG - MB_LE);
+        g.y = kep(g.y, TUONG + MB_LE, MAP - TUONG - MB_LE);
+      } else veDat(g);
+      m.goc = g;
+    } else if (this.nguoi.every((q) => q.het)) this.ketThuc(false);
+  }
+
+  // Nhân vật chết ngay (rơi xuống biển): giống lúc hết máu trong nhanSatThuong()
+  private chetNv(n: NguoiChoi): void {
+    n.hp = 0;
+    n.het = true;
+    this.am.phat('nvChet');
+    n.dich = null;
+    n.dangDi = false;
+    n.bay = null;
+    n.nv.tuKhi(false);
+    n.nv.nga();
+  }
+
+  /** Hình máy bay để vẽ (null = không hiện: đã nổ xong, chờ hồi phục) */
+  private mbHinh(): MbHinh | null {
+    const m = this.mayBay;
+    const co = this.nguoi.filter((n) => !n.vang).length;
+    const nang = MB_CENTRO + MB_NANG * m.z;
+    const h: MbHinh = { x: m.x, y: m.y, nang, khung: 0, a: 1, to: MB_TO, lat: m.lat, rung: 0, bong: m.z > 0 ? 1 : 0.6, nhan: null };
+    if (m.pha === 'dau') {
+      h.nang += Math.sin(this.t * 2.2) * 3;
+      h.nhan = `✈ ${m.ngoi.length}/${co}`;
+    } else if (m.pha === 'cat') h.khung = m.t < MB_CAT * 0.7 ? 3 : 1;
+    else if (m.pha === 'bay') h.khung = m.chay ? 2 : 1;
+    else if (m.pha === 'trung') {
+      h.khung = 4;
+      h.rung = Math.sin(this.t * 60) * 8;
+    } else {
+      if (m.t >= MB_NO_HINH) return null;
+      const k = m.t / MB_NO_HINH;
+      h.khung = 5;
+      h.to = MB_TO * (0.5 + 0.9 * Math.min(1, k * 2.5));
+      h.a = dongHe01((1 - k) * 2.5);
+      h.bong = 0;
+    }
+    return h;
+  }
+
+  /** Số giây còn lại tới lúc máy bay hồi phục, và chỗ nó sẽ xuất hiện lại */
+  private mbDem(): { x: number; y: number; con: number } | null {
+    const m = this.mayBay;
+    return m.pha === 'no' ? { x: m.goc.x, y: m.goc.y, con: Math.max(1, Math.ceil(MB_HOI - m.t)) } : null;
+  }
+
   // ─── Quả cầu trốn ───
 
   /** Nhân vật p đang ở trong quả cầu (trốn hoặc đang vỡ ra): ẩn, không điều khiển, gà không thấy, không bị đánh */
@@ -2895,7 +3147,8 @@ export class Game {
 
   /** Gà không thấy / không đánh được nhân vật này: đã gục, đang là mây hoặc đang trốn trong quả cầu */
   private khuat(n: NguoiChoi): boolean {
-    return n.het || n.nv.laMay || this.trongCau(this.nguoi.indexOf(n));
+    const p = this.nguoi.indexOf(n);
+    return n.het || n.nv.laMay || this.trongCau(p) || this.trongMb(p);
   }
 
   // Chạm quả cầu thì chui vào; trong cầu hồi máu tới đầy bình, đầy mana; hết CAU_TRON giây thì vỡ ra (hoạt ảnh) và thả nhân vật ra đúng chỗ đó
@@ -2903,7 +3156,7 @@ export class Game {
     for (const q of this.cauTron) {
       q.t += dt;
       if (q.pha === 'san') {
-        const p = this.nguoi.findIndex((n, i) => i === q.cua && !n.vang && !n.het && !n.nv.laMay && !n.bay && !n.nv.khoa && !this.trongCau(i)
+        const p = this.nguoi.findIndex((n, i) => i === q.cua && !n.vang && !n.het && !n.nv.laMay && !n.bay && !n.nv.khoa && !this.trongCau(i) && !this.trongMb(i)
           && Math.hypot(n.x - q.x, (n.y - q.y) / EP_GA) < CAU_BAN_KINH);
         if (p < 0) continue;
         const n = this.nguoi[p];
@@ -3251,6 +3504,8 @@ export class Game {
   private dungChieu(p: number, k: number): void {
     const n = this.nguoi[p];
     if (n.het || n.may.dang || this.trongCau(p)) return;
+    // Trên máy bay nút nào cũng bắn chưởng
+    if (this.trongMb(p)) k = 2;
     // Chiêu riêng (mây / socola) hết mana hoặc đang hồi thì dùng chiêu kế tiếp còn dùng được: chưởng → đá
     if (k === NHOM_MAY && this.hetMana(p, k)) k = [2, 1].find((j) => !this.hetMana(p, j)) ?? 1;
     if (this.hetMana(p, k) || n.nv.sp.nhomDon.length <= k) return;
@@ -3305,6 +3560,12 @@ export class Game {
 
   private datDichThe(p: number, x: number, y: number): void {
     const n = this.nguoi[p];
+    // Trên máy bay: chỉ phi công (người lên trước) lái, điều khiển di chuyển bình thường đặt điểm đến của máy bay; hành khách không lái được
+    if (this.trongMb(p)) {
+      const m = this.mayBay;
+      if (m.ngoi[0] === p && m.pha === 'bay') n.dich = { x: kep(x, TG.x0 + MB_LE, TG.x1 - MB_LE), y: kep(y, TG.y0 + MB_LE, TG.y1 - MB_LE) };
+      return;
+    }
     if (n.nv.khoa || n.bay || n.het || this.trongCau(p)) return;
     const o = this.nguoi[1 - p];
     const le = leNhanVat(n.nv.heSoTo);
