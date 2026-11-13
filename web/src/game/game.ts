@@ -94,8 +94,13 @@ type VatXep =
 export interface Cuu { p: number; kieu: 'may' | 'socola'; x: number; y: number; cho: number; t: number; tach: number; }
 
 /** Vật trang trí nền cỏ (cây, bụi, đá): chỉ để đẹp, không cản đường. loai là chỉ số trong TRANG_TRI_SPRITE (ve-canvas.ts) */
-export interface TrangTri { x: number; y: number; loai: number; lat: boolean; /** thời điểm (`t` của game) bị đánh đổ; chỉ cây (loai 0), chưa đổ thì không có */ doLuc?: number; /** hướng đổ: 1 = sang phải, -1 = sang trái */ huongDo?: number; /** cây đã rơi táo thì biến mất, chỉ còn quả táo */ mat?: boolean }
+export interface TrangTri { x: number; y: number; loai: number; lat: boolean; /** thời điểm (`t` của game) bị đánh đổ; chỉ cây (loai 0), chưa đổ thì không có */ doLuc?: number; /** hướng đổ: 1 = sang phải, -1 = sang trái */ huongDo?: number; /** cây đã rơi táo thì biến mất, chỉ còn quả táo */ mat?: boolean; /** cây to: đổ thì chắc chắn rơi CAY_TO_MAU táo đỏ + CAY_TO_MANA táo xanh */ to?: boolean }
 /** Bán kính (quanh gốc cây) mà đòn / chưởng quét qua thì cây đổ */
+// Cây đổ xong CAY_MOC_LAI giây thì mọc lại. Cây to (to gấp CAY_TO_HE_SO) đổ thì chắc chắn rơi CAY_TO_MAU táo đỏ + CAY_TO_MANA táo xanh
+const CAY_MOC_LAI = 10;
+const CAY_TO_HE_SO = 1.8;
+const CAY_TO_MAU = 2;
+const CAY_TO_MANA = 2;
 const CAY_DO_KINH = 90;
 /** Chiều cao thân cây tính từ gốc: đòn trúng trong khoảng này phía trên gốc là trúng cây */
 const CAY_DO_CAO = 220;
@@ -441,7 +446,9 @@ function taoTrangTri(): TrangTri[] {
       const y = gy + 60 + r() * (O - 60);
       if (Math.hypot(x - MAP / 2, y - MAP / 2) < 450) continue;
       const k = r();
-      kq.push({ x, y, loai: k < 0.35 ? 0 : k < 0.65 ? 1 : k < 0.85 ? 2 : 3, lat: r() < 0.5 });
+      const loai = k < 0.35 ? 0 : k < 0.65 ? 1 : k < 0.85 ? 2 : 3;
+      // Một phần cây là cây to (chọn theo toạ độ, không dùng r() để map không đổi)
+      kq.push({ x, y, loai, lat: r() < 0.5, to: loai === 0 && Math.floor(x * 7 + y * 13) % 4 === 0 });
     }
   }
   return kq;
@@ -926,6 +933,7 @@ export class Game {
     this.gaDanhNguoi();
     this.capNhatDan(dt);
     this.capNhatCuu(dt);
+    this.capNhatCay();
     this.capNhatVatPham(dt);
     this.anGaSocola();
     this.capNhatHieuUng(dt, dtE);
@@ -943,6 +951,13 @@ export class Game {
   }
 
   // Quả táo: hết hạn thì biến mất, nhân vật chạm vào thì nhặt (chạm là nhặt, kể cả khi đã đầy máu / mana)
+  // Cây đã đổ được CAY_MOC_LAI giây thì mọc lại (đứng thẳng, hết "mat")
+  private capNhatCay(): void {
+    for (const c of this.trangTri) {
+      if (c.doLuc !== undefined && this.t - c.doLuc >= CAY_MOC_LAI) { delete c.doLuc; delete c.huongDo; delete c.mat; }
+    }
+  }
+
   private capNhatVatPham(dt: number): void {
     const conLai: VatPham[] = [];
     for (const v of this.vatPham) {
@@ -1018,10 +1033,10 @@ export class Game {
     }
   }
 
-  private themVatPham(x: number, y: number): void {
+  private themVatPham(x: number, y: number, loai: 'do' | 'xanh' = Math.random() < 0.5 ? 'do' : 'xanh'): void {
     const v = { x, y };
     giuTrongMap(v, LE_VP);
-    this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: Math.random() < 0.5 ? 'do' : 'xanh' });
+    this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai });
   }
 
   // Táo xanh: cộng VP_MANA mana (tối đa MANA_TOI_DA) và mở khoá bay
@@ -1274,18 +1289,24 @@ export class Game {
     const bx = d.x0 + (d.x1 - d.x0) * k1, by = d.y0 + (d.y1 - d.y0) * k1;
     const ex = bx - ax, ey = by - ay, e2 = ex * ex + ey * ey;
     // Thân cây cao (vẽ phía trên gốc) nên đánh vào thân / tán cũng đổ: hộp quanh thân, rộng CAY_DO_KINH, từ CAY_DO_CAO phía trên gốc xuống dưới gốc một chút. Lấy mẫu dọc đường bay để không bỏ sót.
-    const r = CAY_DO_KINH * (d.to ? 1.4 : 1);
+    const rg = CAY_DO_KINH * (d.to ? 1.4 : 1);
     const buoc = Math.max(1, Math.ceil(Math.sqrt(e2) / 30));
     for (const c of this.trangTri) {
       if (c.loai !== 0 || c.doLuc !== undefined) continue;
+      const hs = c.to ? CAY_TO_HE_SO : 1;
+      const r = rg * hs;
       for (let i = 0; i <= buoc; i++) {
         const px = ax + (ex * i) / buoc, py = ay + (ey * i) / buoc;
-        if (Math.abs(px - c.x) > r || py < c.y - CAY_DO_CAO || py > c.y + 40) continue;
+        if (Math.abs(px - c.x) > r || py < c.y - CAY_DO_CAO * hs || py > c.y + 40) continue;
         c.doLuc = this.t;
         const dx = d.x1 - d.x0;
         c.huongDo = Math.abs(dx) > 20 ? Math.sign(dx) : c.lat ? -1 : 1;
         // Cây đổ có TAO_ROI cơ hội rơi 1 quả táo; rơi táo thì cây biến mất, chỉ còn quả táo ở gốc
-        if (Math.random() < TAO_ROI) {
+        if (c.to) {
+          // Cây to: chắc chắn rơi 2 táo đỏ (máu) + 2 táo xanh (mana)
+          c.mat = true;
+          for (let k = 0; k < CAY_TO_MAU + CAY_TO_MANA; k++) this.themVatPham(c.x + ngauNhien(-70, 70), c.y + ngauNhien(0, 50), k < CAY_TO_MAU ? 'do' : 'xanh');
+        } else if (Math.random() < TAO_ROI) {
           c.mat = true;
           this.themVatPham(c.x + ngauNhien(-30, 30), c.y + ngauNhien(0, 30));
         }
@@ -1541,7 +1562,7 @@ export class Game {
     this.cuuView = this.cuu.filter((c) => trong(c.x, c.y, 500));
     for (const c of this.cuuView) xep.push({ loai: 'cuu', y: c.y, cu: c });
     this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
-    for (const t of this.trangTri) if (!t.mat && trong(t.x, t.y, 400)) xep.push({ loai: 'td', y: t.y, td: t });
+    for (const t of this.trangTri) if (!t.mat && trong(t.x, t.y, t.to ? 700 : 400)) xep.push({ loai: 'td', y: t.y, td: t });
     xep.sort((a, b) => a.y - b.y);
     this.xep = xep;
     this.gaBayView = this.ga.filter((g) => g.loai === 'flyer' && this.thay(g.x, g.y) && trong(g.x, g.y, 400));

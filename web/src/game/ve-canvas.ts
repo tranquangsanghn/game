@@ -217,8 +217,9 @@ export class VeCanvas {
     const img = this.lay(MAP_CO);
     if (!img) return;
     const sp = TRANG_TRI_SPRITE[t.loai];
-    const w = sp.w * sp.k;
-    const h = sp.h * sp.k;
+    const to = t.to ? 1.8 : 1;
+    const w = sp.w * sp.k * to;
+    const h = sp.h * sp.k * to;
     ctx.save();
     ctx.translate(t.x, t.y);
     // Cây bị đánh thì đổ quanh gốc (nhanh dần rồi nằm luôn)
