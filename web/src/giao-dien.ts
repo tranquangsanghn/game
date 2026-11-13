@@ -206,13 +206,13 @@ export class GiaoDien {
     return `<span class="anh-nv" style="width:${(x1 - x0) * tiLe}px;height:${(y1 - y0) * tiLe}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * tiLe}px ${sp.atlasH * tiLe}px;background-position:-${gx * tiLe}px -${gy * tiLe}px"></span>`;
   }
 
-  /** Ảnh vua gà (gà tướng, khung đứng đầu tiên, không chạy animation) cho màn mục tiêu */
+  /** Ảnh vua gà (gà tướng, khung đứng đầu tiên, không chạy animation, đội vương miện 👑 như trong game) cho màn mục tiêu */
   private anhVuaGa(tiLe: number): string {
     const sp = GA_TUONG;
     const k = KHUNG_DUNG[0]!;
     const gx = (k % sp.cot) * sp.w;
     const gy = Math.floor(k / sp.cot) * sp.h;
-    return `<span class="anh-nv" style="image-rendering:auto;width:${sp.w * tiLe}px;height:${sp.h * tiLe}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * tiLe}px ${sp.atlasH * tiLe}px;background-position:-${gx * tiLe}px -${gy * tiLe}px"></span>`;
+    return `<span class="anh-nv" style="image-rendering:auto;width:${sp.w * tiLe}px;height:${sp.h * tiLe}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * tiLe}px ${sp.atlasH * tiLe}px;background-position:-${gx * tiLe}px -${gy * tiLe}px;position:relative;margin-top:${24 * tiLe}px"><span style="position:absolute;left:64%;top:14%;transform:translate(-50%,-85%);font-size:${27 * tiLe}px;line-height:1">👑</span></span>`;
   }
 
   private htmlBatDau(): string {
