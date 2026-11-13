@@ -1822,7 +1822,7 @@ export class Game {
     // Người đang được mây / socola phủ lên thì thân được thay bằng mây / socola (cuuView)
     this.cuuView = this.cuu.filter((c) => trong(c.x, c.y, 500));
     for (const c of this.cuuView) xep.push({ loai: 'cuu', y: c.y, cu: c });
-    this.cauView = this.cauTron.filter((q) => !this.nguoi[q.cua]?.vang && (q.pha !== 'moc' || q.t > CAU_MOC - 1) && trong(q.x, q.y, 400));
+    this.cauView = this.cauTron.filter((q) => (q.pha !== 'moc' || q.t > CAU_MOC - 1) && trong(q.x, q.y, 400));
     for (const q of this.cauView) xep.push({ loai: 'cau', y: q.y, cau: q });
     this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
     for (const t of this.trangTri) if (!t.mat && trong(t.x, t.y, t.to ? 700 : 400)) xep.push({ loai: 'td', y: t.y, td: t });
