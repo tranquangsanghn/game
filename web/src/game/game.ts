@@ -1050,9 +1050,9 @@ export class Game {
       if (n.bay) n.mana = Math.max(0, n.mana - MANA_BAY * dt);
       else if (n.mana < MANA_HOI_TOI_DA) n.mana = Math.min(MANA_HOI_TOI_DA, n.mana + MANA_HOI * dt);
 
-      // Tâm ngắm cập nhật mỗi khung hình: cần ngắm phải đang gạt thì ngắm theo hướng gạt, không thì tự ngắm; ẩn khi đã ngã hoặc đang là mây
+      // Tâm ngắm chỉ có ở chế độ chuột (nhân vật không dùng chuột thì tự ngắm); chế độ tay cầm không có tâm, đánh theo hướng đang quay mặt
       const m = this.diemNham(p);
-      n.nham = n.het || n.nv.laMay || (this.cheDo === 'chuot' && p === this.chuot) ? null : n.ngam ?? (m.co ? { x: m.x, y: m.y } : null);
+      n.nham = this.cheDo !== 'chuot' || n.het || n.nv.laMay || p === this.chuot ? null : n.ngam ?? (m.co ? { x: m.x, y: m.y } : null);
 
       if (n.nv.khoa) {
         n.dich = null;
@@ -2785,8 +2785,36 @@ export class Game {
     const n = this.nguoi[p];
     if (n.het || n.may.dang || this.hetMana(p, k) || n.nv.sp.nhomDon.length <= k) return;
     if (n.nv.nhom !== k) n.nv.datNhom(k, this.t);
-    const m = this.diemNham(p);
+    const m = this.diemHuong(p);
     this.ban(p, kepMap(m.x), kepMap(m.y));
+  }
+
+  // Tay cầm: đánh theo hướng đang quay mặt (hướng chạy / bay gần nhất). Có gà trong tầm và trong góc ~45° phía trước thì đòn trúng con gần nhất đó, không thì đánh thẳng về phía trước
+  private diemHuong(p: number): { x: number; y: number } {
+    const n = this.nguoi[p];
+    const len = Math.hypot(n.nhin.x, n.nhin.y) || 1;
+    const ux = n.nhin.x / len;
+    const uy = n.nhin.y / len;
+    const nhomSoc = n.nv.nhom === NHOM_MAY && !n.nv.sp.nhomDon[NHOM_MAY]?.may;
+    const tam = nhomSoc ? TAM_SOCOLA : n.nv.nhom === 2 ? 800 : n.nv.nhom === 1 ? 480 : 380;
+    let tot: Ga | null = null;
+    let dm = tam;
+    for (const g of this.ga) {
+      if (g.chet) continue;
+      const t = this.tamGa(g);
+      const dx = t.x - n.x;
+      const dy = t.y - n.y;
+      const d = Math.hypot(dx, dy) - (g.loai === 'boss' ? 125 : 0);
+      if (d >= dm || (dx * ux + dy * uy) / (Math.hypot(dx, dy) || 1) < 0.7) continue;
+      dm = d;
+      tot = g;
+    }
+    if (tot) {
+      const t = this.tamGa(tot);
+      return { x: t.x, y: t.y };
+    }
+    const xa = nhomSoc ? 500 : n.nv.nhom === 2 ? 600 : 250;
+    return { x: n.x + ux * xa, y: n.y + uy * xa - 60 };
   }
 
   // Chỉ xa thì bay theo vòng cung, gần thì chạy

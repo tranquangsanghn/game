@@ -43,7 +43,7 @@ Màn bắt đầu cho chọn chế độ chơi (nhớ lại lần sau):
 **🎮 Tay cầm** (Gamepad API, mapping "standard" kiểu PS; dành cho trẻ em nên chỉ dùng các nút đơn giản). Tay cầm thứ nhất điều khiển Mabu (thanh đen bên trái), tay cầm thứ hai điều khiển Zinbu (bên phải). Nối tay cầm rồi bấm một nút bất kỳ để trình duyệt nhận ra nó:
 - **Mũi tên (chữ thập)**: chạy
 - **Cần trái**: bay (gạt hướng nào bay hướng đó, tốn mana, bay xong nghỉ 5 giây; hết mana hoặc đang nghỉ thì chạy)
-- **✕**: đấm · **□**: đá · **△**: chưởng (chiêu đặc biệt) — giữ để đánh liên tục, game tự ngắm gà gần nhất
+- **✕**: đấm · **□**: đá · **△**: chưởng (chiêu đặc biệt) — giữ để đánh liên tục, đánh theo hướng đang quay mặt (không có tâm ngắm)
 - **○ hoặc cần phải** (đẩy đâu cũng được): chiêu riêng — Mabu biến thành mây, Zinbu biến gà thành socola
 - **Options**: bắt đầu / tạm dừng / tiếp tục · **Share (Select)**: khi chỉ có 1 tay cầm, chuyển tay cầm sang nhân vật kia
 - Tay cầm rung khi nhân vật bị đánh / gục; rút tay cầm hoặc chuyển sang cửa sổ khác thì ván tự tạm dừng; 2 tay cầm giữ cố định vai (rút / cắm lại không đổi người)
