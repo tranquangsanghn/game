@@ -268,3 +268,9 @@ kbd {
 .man-hd .nhom-nut { margin-top: 0; }
 
 .muc-tieu { color: #fff; font-size: 32px; font-weight: 800; text-align: center; margin: 0 24px 24px; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+
+/* Màn mục tiêu: chọn bản đồ (tay cầm ◀ ▶, chuột bấm) */
+.chon-map { display: flex; gap: 16px; margin: 0 0 8px; flex-wrap: wrap; justify-content: center; }
+.the-map { min-width: 200px; padding: 14px 20px; border: 3px solid rgba(255, 255, 255, 0.35); border-radius: 16px; background: rgba(255, 255, 255, 0.06); color: #fff; font-size: 22px; font-weight: 700; cursor: pointer; opacity: 0.55; transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s; }
+.the-map:hover { opacity: 0.85; }
+.the-map.dang-chon { opacity: 1; border-color: #facc15; background: rgba(255, 255, 255, 0.16); box-shadow: 0 0 24px #facc15; transform: translateY(-4px); }

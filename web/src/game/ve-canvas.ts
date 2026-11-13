@@ -1,6 +1,7 @@
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
 import type { NhanVatSprite } from './nhan-vat-sprite';
+import { bamDiem, doSau, nhieu } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
 // Toạ độ vẽ giữ nguyên như bản SVG cũ: viewBox (-SIDE, -BAR, W + 2·SIDE, H + BAR), căn giữa, giữ tỉ lệ.
@@ -76,10 +77,40 @@ const TG_MAT = { sx: 16, sy: 138, w: 48, h: 38 };
 const TG_GACH = { sx: 16, sy: 141, w: 48, h: 35 };
 const TG_VIEN = { sx: 16, sy: 10, w: 48, h: 6 };
 const TL_TUONG = 3;
+/** Đảo sa mạc: ảnh trang trí (gói "Desert Tileset", vẽ mượt), neo ở giữa đáy; thứ tự khớp loai (0 = cây đổ được) */
+const SA = 'assets/game/sa_mac/';
+const TRANG_TRI_SA = [
+  { url: SA + 'cay.png', w: 313, h: 260, k: 1.1 },
+  { url: SA + 'bui.png', w: 145, h: 88, k: 1.15 },
+  { url: SA + 'xuong_rong_1.png', w: 108, h: 111, k: 1.5 },
+  { url: SA + 'da.png', w: 124, h: 73, k: 1.3 },
+  { url: SA + 'xuong_rong_3.png', w: 86, h: 96, k: 1.5 },
+  { url: SA + 'xuong.png', w: 150, h: 51, k: 1.1 },
+  { url: SA + 'co.png', w: 102, h: 50, k: 1.0 },
+  { url: SA + 'bui_kho.png', w: 131, h: 74, k: 1.1 },
+  { url: SA + 'xuong_rong_2.png', w: 70, h: 45, k: 1.4 },
+];
+/** Ô cát gốc của gói tileset (128px): lấy đốm sẫm làm vân cát */
+const SA_CAT = SA + 'cat.png';
+/** Nền cát / biển vẽ sẵn theo mảnh MANH × MANH đơn vị bản đồ, độ phân giải 1/MANH_TL; mỗi khung chỉ dựng tối đa MANH_MOI mảnh mới */
+const MANH = 800;
+const MANH_TL = 2;
+const MANH_MOI = 4;
+// Bảng màu lấy từ tileset (kem viền trên, cam giữa, nâu bóng) + biển kiểu đảo Kame
+const C_KEM = [243, 213, 148];
+const C_CAT = [240, 195, 122];
+const C_UOT = [214, 168, 94];
+const C_BOT = [246, 252, 255];
+const C_NONG = [96, 206, 236];
+const C_SAU = [40, 122, 214];
 const CO_LAP = 16; // pattern 16×16 ô ngẫu nhiên rồi lặp: một fillRect, không lộ đường nối
 
 export class VeCanvas {
   private mauCo: CanvasPattern | null = null;
+  /** Đảo sa mạc: mảnh nền đã dựng (khoá "i,j"), ảnh toàn map độ phân giải thấp lót trước khi mảnh dựng xong, điểm ảnh ô cát */
+  private manhSa = new Map<string, HTMLCanvasElement>();
+  private tongSa: HTMLCanvasElement | null = null;
+  private vanCat: Uint8ClampedArray | null = null;
   private mauTuong: { mat: CanvasPattern; gach: CanvasPattern; vienNgang: CanvasPattern; vienDoc: CanvasPattern } | null = null;
   private anh = new Map<string, HTMLImageElement>();
   // Atlas đã nhuộm sẵn theo bộ lọc màu (nháy sáng, đen, vàng, đỏ…): nhuộm cả atlas MỘT lần rồi dùng lại.
@@ -89,6 +120,8 @@ export class VeCanvas {
   /** Nạp trước các atlas để khung hình đầu tiên đã có ảnh */
   napTruoc(...atlas: string[]): void {
     atlas.forEach((a) => this.lay(a));
+    // Ảnh của đảo sa mạc (nhỏ) nạp luôn để chọn map nào cũng có ngay
+    [SA_CAT, ...TRANG_TRI_SA.map((t) => t.url)].forEach((a) => this.lay(a));
   }
 
   /** Nhuộm sẵn atlas theo các bộ lọc ngay khi ảnh nạp xong, để lần đầu cần dùng không bị khựng */
@@ -286,13 +319,14 @@ export class VeCanvas {
     ctx.imageSmoothingEnabled = true;
   }
 
-  private veTrangTri(ctx: CanvasRenderingContext2D, t: TrangTri, now: number): void {
-    const img = this.lay(MAP_CO);
-    if (!img) return;
-    const sp = TRANG_TRI_SPRITE[t.loai];
+  private veTrangTri(ctx: CanvasRenderingContext2D, t: TrangTri, now: number, sa: boolean): void {
+    const spSa = sa ? TRANG_TRI_SA[t.loai] : undefined;
+    const sp = sa ? undefined : TRANG_TRI_SPRITE[t.loai];
+    const img = this.lay(spSa ? spSa.url : MAP_CO);
+    if (!img || !(spSa ?? sp)) return;
     const to = t.to ? 1.8 : 1;
-    const w = sp.w * sp.k * to;
-    const h = sp.h * sp.k * to;
+    const w = (spSa ?? sp)!.w * (spSa ?? sp)!.k * to;
+    const h = (spSa ?? sp)!.h * (spSa ?? sp)!.k * to;
     ctx.save();
     ctx.translate(t.x, t.y);
     // Cây bị đánh thì đổ quanh gốc (nhanh dần rồi nằm luôn)
@@ -301,14 +335,130 @@ export class VeCanvas {
       ctx.rotate((t.huongDo ?? 1) * (Math.PI / 2) * k * k);
     }
     if (t.lat) ctx.scale(-1, 1);
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(img, sp.sx, sp.sy, sp.w, sp.h, -w / 2, -h, w, h);
+    if (spSa) {
+      // Ảnh vẽ vector nên phóng mượt, cả ảnh là một vật
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(img, -w / 2, -h, w, h);
+    } else {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, sp!.sx, sp!.sy, sp!.w, sp!.h, -w / 2, -h, w, h);
+    }
     ctx.restore();
   }
 
+  /** Màu một điểm của đảo sa mạc theo khoảng cách tới bờ s (dương = cát, âm = biển); ghi vào p tại i */
+  private mauSa(p: Uint8ClampedArray, i: number, x: number, y: number, chiTiet: boolean): void {
+    const s = doSau(x, y);
+    let r: number, g: number, b: number;
+    const tron = (a: number[], c: number[], t: number) => {
+      r = a[0]! + (c[0]! - a[0]!) * t; g = a[1]! + (c[1]! - a[1]!) * t; b = a[2]! + (c[2]! - a[2]!) * t;
+    };
+    if (s >= 0) {
+      // Cát: mép ướt sẫm → viền kem sáng → cát cam có cồn và vân
+      if (s < 22) tron(C_UOT, C_KEM, s / 22);
+      else tron(C_KEM, C_CAT, Math.min(1, (s - 22) / 70));
+      if (chiTiet) {
+        const k = 0.93 + 0.12 * nhieu(x / 520, y / 520) + 0.04 * nhieu(x / 150 + 9, y / 150);
+        let m = k;
+        if (s > 80 && Math.sin((x * 0.55 + y) / 34 + nhieu(x / 300, y / 300) * 9) > 0.9) m *= 0.95;
+        const v = this.vanCat;
+        if (v && s > 30) {
+          const tx = ((Math.floor(x / 2) % 128) + 128) % 128, ty = ((Math.floor(y / 2) % 128) + 128) % 128;
+          if (v[(ty * 128 + tx) * 4]! < 128) m *= 0.9;
+        }
+        r! *= m; g! *= m; b! *= m;
+      }
+    } else {
+      // Biển: nông xanh ngọc sát bờ → sâu xanh dương; viền bọt trắng, gợn sóng quanh đảo, lấp lánh
+      tron(C_NONG, C_SAU, Math.min(1, -s / 650));
+      if (chiTiet) {
+        const d = -s;
+        if (d < 260) {
+          const gon = Math.sin(d / 17 - nhieu(x / 220, y / 220) * 7);
+          if (gon > 0.88) {
+            const t = 0.45 * (1 - d / 260);
+            r! += (255 - r!) * t; g! += (255 - g!) * t; b! += (255 - b!) * t;
+          }
+        }
+        if (d > 80 && bamDiem(Math.floor(x / 4), Math.floor(y / 4)) < 0.0025) { r = 214; g = 244; b = 255; }
+      }
+      const bot = s > -12 ? 1 : s > -26 ? (s + 26) / 14 * (0.5 + 0.5 * nhieu(x / 30, y / 30)) : 0;
+      if (bot > 0) { r! += (C_BOT[0]! - r!) * bot; g! += (C_BOT[1]! - g!) * bot; b! += (C_BOT[2]! - b!) * bot; }
+    }
+    p[i] = r!; p[i + 1] = g!; p[i + 2] = b!; p[i + 3] = 255;
+  }
+
+  /** Dựng một mảnh nền sa mạc (MANH đơn vị bản đồ, độ phân giải 1/MANH_TL) */
+  private taoManhSa(mi: number, mj: number): HTMLCanvasElement {
+    const n = MANH / MANH_TL;
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = n;
+    const x = cv.getContext('2d')!;
+    const d = x.createImageData(n, n);
+    for (let py = 0; py < n; py++) {
+      for (let px = 0; px < n; px++) {
+        this.mauSa(d.data, (py * n + px) * 4, mi * MANH + (px + 0.5) * MANH_TL, mj * MANH + (py + 0.5) * MANH_TL, true);
+      }
+    }
+    x.putImageData(d, 0, 0);
+    return cv;
+  }
+
+  /** Nền đảo sa mạc: ảnh lót toàn map (thô) rồi các mảnh chi tiết trong khung nhìn (dựng dần, nhớ lại) */
+  private veNenSa(ctx: CanvasRenderingContext2D, c: Game): void {
+    if (!this.vanCat) {
+      const img = this.lay(SA_CAT);
+      if (img) {
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = 128;
+        const x = cv.getContext('2d')!;
+        x.drawImage(img, 0, 0, 128, 128);
+        this.vanCat = x.getImageData(0, 0, 128, 128).data;
+        this.manhSa.clear();
+      }
+    }
+    const M = c.MAP;
+    if (!this.tongSa) {
+      const n = 200;
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = n;
+      const x = cv.getContext('2d')!;
+      const d = x.createImageData(n, n);
+      for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) this.mauSa(d.data, (j * n + i) * 4, ((i + 0.5) * M) / n, ((j + 0.5) * M) / n, false);
+      x.putImageData(d, 0, 0);
+      this.tongSa = cv;
+    }
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(this.tongSa, 0, 0, M, M);
+    // Vùng thế giới đang thấy (theo phép camera), lấn thêm một chút cho rung màn hình
+    const cam = c.gocCamera();
+    const x0 = -cam.x / cam.k - 40, x1 = (c.W - cam.x) / cam.k + 40;
+    const y0 = -cam.y / cam.k - 40, y1 = (c.H - cam.y) / cam.k + 40;
+    const so = Math.ceil(M / MANH);
+    let moi = 0;
+    for (let mj = Math.max(0, Math.floor(y0 / MANH)); mj <= Math.min(so - 1, Math.floor(y1 / MANH)); mj++) {
+      for (let mi = Math.max(0, Math.floor(x0 / MANH)); mi <= Math.min(so - 1, Math.floor(x1 / MANH)); mi++) {
+        const khoa = `${mi},${mj}`;
+        let m = this.manhSa.get(khoa);
+        if (!m && this.vanCat && moi < MANH_MOI) {
+          m = this.taoManhSa(mi, mj);
+          this.manhSa.set(khoa, m);
+          moi++;
+        }
+        // Chồng mép 1 đơn vị để không lộ đường nối giữa các mảnh
+        if (m) ctx.drawImage(m, mi * MANH, mj * MANH, MANH + 1, MANH + 1);
+      }
+    }
+  }
+
   private veTheGioi(ctx: CanvasRenderingContext2D, c: Game): void {
-    this.veNen(ctx, c);
-    this.veTuong(ctx, c);
+    if (c.banDoVan === 'sa') {
+      // Đảo sa mạc: biển bao quanh, không có tường gạch
+      this.veNenSa(ctx, c);
+    } else {
+      this.veNen(ctx, c);
+      this.veTuong(ctx, c);
+    }
 
     for (const v of c.vetView) {
       const k = v.t / (v.loai === 'chay' ? 0.7 : 0.45);
@@ -451,7 +601,7 @@ export class VeCanvas {
     // Gà dưới đất + nhân vật, xếp theo y
     for (const o of c.xep) {
       if (o.loai === 'ga') this.veGa(ctx, c, o.ga);
-      else if (o.loai === 'td') this.veTrangTri(ctx, o.td, c.t);
+      else if (o.loai === 'td') this.veTrangTri(ctx, o.td, c.t, c.banDoVan === 'sa');
       else if (o.loai === 'cuu') this.veCuu(ctx, c, o.cu);
       else if (o.loai === 'cau') this.veCau(ctx, c, o.cau);
       else this.veNhanVat(ctx, c, o.p);

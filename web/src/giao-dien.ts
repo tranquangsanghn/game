@@ -95,6 +95,13 @@ export class GiaoDien {
       if (this.huongDan) void this.lam('quay');
       else if (this.daBamX === this.game.menuChon) void this.lam((['mabu', 'zinbu', 'ca2'] as const)[this.game.menuChon]!);
     };
+    // Màn mục tiêu: trái / phải chọn bản đồ
+    this.game.onSang = (sang) => {
+      if (!this.huongDan || !this.buocMucTieu) return false;
+      this.game.banDo = sang > 0 ? 'sa' : 'co';
+      this.veManPhu();
+      return true;
+    };
     this.game.onKetThuc = (kq) => void this.ketThuc(kq);
   }
 
@@ -119,6 +126,8 @@ export class GiaoDien {
         this.buocMucTieu = false;
         break;
       case 'muc': this.buocMucTieu = true; break;
+      case 'map-co': this.game.banDo = 'co'; break;
+      case 'map-sa': this.game.banDo = 'sa'; break;
       case 'vao':
         if (this.huongDan) g.batDau(this.huongDan);
         this.huongDan = null;
@@ -259,6 +268,10 @@ export class GiaoDien {
     return `<div class="man-phu man-chon man-hd">
       ${this.anhVuaGa(2.6)}
       <p class="muc-tieu">Bạn phải tiêu diệt vua gà để thắng game</p>
+      <div class="chon-map">
+        ${(['co', 'sa'] as const).map((m) => `<button type="button" tabindex="-1" class="the-map${this.game.banDo === m ? ' dang-chon' : ''}" data-act="map-${m}">${m === 'co' ? '🌳 Đồng cỏ' : '🏝️ Đảo sa mạc'}</button>`).join('')}
+      </div>
+      ${tay ? '<p class="phu">◀ ▶ chọn bản đồ</p>' : ''}
       <div class="nhom-nut">
         <button type="button" tabindex="-1" class="nut-phu" data-act="quay">◀ Quay lại</button>
         <button type="button" tabindex="-1" class="nut-chinh" data-act="vao">${tay ? 'Vào chơi (A)' : 'Vào chơi'}</button>

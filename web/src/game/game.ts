@@ -3,6 +3,7 @@ import { VeCanvas } from './ve-canvas';
 import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
+import { chuanBiSaMac, doSau, veDat, type LoaiBanDo } from './ban-do';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
@@ -130,6 +131,8 @@ export interface TrangThaiLuu {
   ga: Ga[]; trungDe: TrungGa[]; vatPham: VatPham[]; cuu: Cuu[];
   /** Quả cầu trốn (thiếu = ván lưu cũ, tạo mới) */
   cauTron?: CauTron[];
+  /** Bản đồ của ván (thiếu = ván lưu cũ, đồng cỏ) */
+  banDo?: LoaiBanDo;
   /** Cây đã đổ: [chỉ số trong trangTri, thời điểm đổ, hướng đổ] */
   cayDo?: [number, number, number, number?][];
   nguoi: (Omit<NguoiChoi, 'nv' | 'nham' | 'ngam' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
@@ -478,8 +481,13 @@ const dongHe01 = (v: number) => kep(v, 0, 1);
 // Sát tường gạch quanh bản đồ là dừng hẳn
 const kepMap = (v: number) => kep(v, TUONG, MAP - TUONG);
 
+/** Bản đồ đang chơi: 'co' đồng cỏ (cả map là đất) · 'sa' đảo sa mạc (biển chặn đường, xem ban-do.ts) */
+let banDoHt: LoaiBanDo = 'co';
+/** Số loại trang trí của đảo sa mạc (0 = cây, còn lại bụi / xương rồng / đá / xương…; khớp TRANG_TRI_SA trong ve-canvas.ts) */
+const SO_TRANG_TRI_SA = 9;
+
 /** Rải cây / bụi / đá theo lưới có nhiễu, hạt giống cố định nên mỗi ván cùng một map; chừa vùng xuất phát ở giữa */
-function taoTrangTri(): TrangTri[] {
+function taoTrangTri(banDo: LoaiBanDo = 'co'): TrangTri[] {
   let h = 20240611;
   const r = () => {
     h = (h + 0x6d2b79f5) | 0;
@@ -496,8 +504,12 @@ function taoTrangTri(): TrangTri[] {
       const y = gy + 60 + r() * (O - 60);
       if (Math.hypot(x - MAP / 2, y - MAP / 2) < 450) continue;
       const k = r();
-      const loai = k < 0.35 ? 0 : k < 0.65 ? 1 : k < 0.85 ? 2 : 3;
+      const sa = banDo === 'sa';
+      // Sa mạc: cây thưa hơn, còn lại chia đều bụi / xương rồng / đá / bộ xương / cỏ khô (rút thêm số chỉ ở sa mạc để đồng cỏ không đổi)
+      const loai = sa ? (k < 0.22 ? 0 : 1 + Math.floor(r() * (SO_TRANG_TRI_SA - 1))) : k < 0.35 ? 0 : k < 0.65 ? 1 : k < 0.85 ? 2 : 3;
       const lat = r() < 0.5;
+      // Đảo sa mạc: chỉ mọc trên cát, cách mép nước đủ xa (cây cách xa hơn vì tán rộng)
+      if (sa && doSau(x, y) < (loai === 0 ? 220 : 110)) continue;
       // Để trống quanh 2 quả cầu trốn (bỏ sau khi đã rút số ngẫu nhiên để phần còn lại của map không đổi)
       // Không mọc sát / trong tường gạch quanh map
       if (Math.min(x, y, MAP - x, MAP - y) < TUONG + 150) continue;
@@ -533,6 +545,8 @@ const leCuaGa = (g: { loai: LoaiGa; to?: number }): Le => {
   const k = g.to ?? 1;
   return k === 1 ? le : { x: le.x * k, tren: le.tren * k, duoi: le.duoi * k };
 };
+// Gà đang bay (gà đen, gà mẹ đang dùng chiêu Bay) thì bay qua biển được
+const quaNuoc = (g: Ga) => g.loai === 'flyer' || g.chieu?.loai === 'bay';
 // Cỡ thật của gà (gà con nở từ trứng đỏ to hơn)
 const tlGa = (g: { loai: LoaiGa; to?: number }) => TL_GA[g.loai] * (g.to ?? 1);
 // Gà mẹ phụ = gà tướng không phải gà mẹ gốc
@@ -551,12 +565,18 @@ const dsMauCua = (g: Ga): MauTuong[] => (g.goc ? MAU_TUONG : g.kieuPhu === undef
 const hoiLaoCua = (g: Ga) => (g.kieuPhu === 0 ? LAO_HOI_CHUYEN : LAO_HOI);
 const hoiBayCua = (g: Ga) => (g.kieuPhu === 1 ? BAY_HOI_CHUYEN : BAY_HOI);
 // Kẹp vật vào trong bản đồ; trả về cờ chạm mép theo từng trục để vật tự bật lại
-function giuTrongMap(o: { x: number; y: number }, le: Le) {
+// Đảo sa mạc: biển chặn mọi vật đi trên mặt đất (bị đẩy lên bờ gần nhất); quaNuoc = đang bay nên được ở trên biển
+function giuTrongMap(o: { x: number; y: number }, le: Le, quaNuoc = false) {
   const x = kep(o.x, TUONG + le.x, MAP - TUONG - le.x);
   const y = kep(o.y, TUONG + le.tren, MAP - TUONG - le.duoi);
   const r = { cx: x !== o.x, cy: y !== o.y };
   o.x = x;
   o.y = y;
+  if (banDoHt === 'sa' && !quaNuoc) {
+    const d = veDat(o);
+    r.cx ||= d.cx;
+    r.cy ||= d.cy;
+  }
   return r;
 }
 
@@ -579,6 +599,8 @@ export class Game {
   onNutQuay: () => void = () => {};
   /** Tay cầm bấm X ở màn chọn chế độ: đánh dấu thẻ, chờ bấm B để xác nhận */
   onNutX: () => void = () => {};
+  /** Tay cầm 1 bấm trái / phải ở màn bắt đầu (sang = -1 / 1); giao diện trả true nếu đã dùng (chọn bản đồ ở màn mục tiêu) */
+  onSang: (sang: number) => boolean = () => false;
   /** Thẻ đang chọn ở màn chọn chế độ (0 Mabu · 1 Zinbu · 2 hai người), chữ thập / cần trái trái-phải để chọn */
   menuChon = 2;
   /** Màn kết thúc: đã bấm X, đang chờ bấm B để chơi lại */
@@ -632,7 +654,11 @@ export class Game {
   long: Long[] = [];
   xep: VatXep[] = [];
   /** Toàn bộ cây / bụi / đá của map (sinh một lần, cố định); chỉ vật trong khung nhìn mới vào `xep` */
-  readonly trangTri: TrangTri[] = taoTrangTri();
+  trangTri: TrangTri[] = taoTrangTri();
+  /** Bản đồ chọn ở màn mục tiêu (nhớ để Chơi lại giữ nguyên): 'co' đồng cỏ · 'sa' đảo sa mạc */
+  banDo: LoaiBanDo = 'co';
+  /** Bản đồ của ván đang dựng (trangTri, nền, biển): chỉ đổi khi bắt đầu ván, để màn chọn map không vẽ lẫn */
+  banDoVan: LoaiBanDo = 'co';
   gaBayView: Ga[] = [];
   /** Mọi gà mẹ (gốc + phụ) còn sống nằm trong khung nhìn và tầm nhìn: để vẽ thanh máu */
   tuongView: Ga[] = [];
@@ -800,6 +826,10 @@ export class Game {
   batDau(che: 'mabu' | 'zinbu' | 'ca2' = this.cheNguoi): void {
     this.choiLaiChoB = false;
     this.cheNguoi = che;
+    banDoHt = this.banDo;
+    this.banDoVan = this.banDo;
+    if (this.banDo === 'sa') chuanBiSaMac();
+    this.trangTri = taoTrangTri(this.banDo);
     this.nguoi = this.taoNguoiChoi();
     this.chonNguoiDau();
     this.ga = [];
@@ -845,7 +875,7 @@ export class Game {
   chupTrangThai(): TrangThaiLuu | null {
     if (this.man !== 'play' && this.man !== 'pause') return null;
     return JSON.parse(JSON.stringify({
-      phienBan: PHIEN_BAN_LUU,
+      phienBan: PHIEN_BAN_LUU, banDo: this.banDo,
       tGame: this.tGame, t: this.t, chamDen: this.chamDen, id: this.id,
       henTuong: this.henTuong, soLanTuong: this.soLanTuong, lanTuong: this.lanTuong,
       ga: this.ga, trungDe: this.trungDe, vatPham: this.vatPham, cuu: this.cuu, cauTron: this.cauTron,
@@ -862,6 +892,7 @@ export class Game {
   /** Nạp lại ván đã lưu và dừng ở màn Tạm dừng để người chơi bấm Tiếp tục */
   khoiPhuc(d: TrangThaiLuu): void {
     if (!d || d.phienBan !== PHIEN_BAN_LUU || !Array.isArray(d.nguoi) || d.nguoi.length !== 2) throw new Error('Dữ liệu lưu không hợp lệ');
+    this.banDo = d.banDo === 'sa' ? 'sa' : 'co';
     this.batDau();
     this.tGame = d.tGame; this.t = d.t; this.chamDen = d.chamDen; this.id = d.id;
     this.henTuong = d.henTuong; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
@@ -1002,7 +1033,7 @@ export class Game {
     const truoc = this.nguoi.map((n) => ({ x: n.x, y: n.y }));
     this.dieuKhien(dt);
     this.rangBuoc(truoc);
-    this.nguoi.forEach((n) => giuTrongMap(n, leNhanVat(n.nv.heSoTo)));
+    this.nguoi.forEach((n) => giuTrongMap(n, leNhanVat(n.nv.heSoTo), !!n.bay));
     this.nguoi.forEach((n, p) => this.mayQuet(n, p));
     this.capNhatGa(dtE);
     this.gaDanhNguoi();
@@ -1260,7 +1291,7 @@ export class Game {
           g.day.vx *= k;
           g.day.vy *= k;
         }
-        giuTrongMap(g, leCuaGa(g));
+        giuTrongMap(g, leCuaGa(g), quaNuoc(g));
         conLai.push(g);
         continue;
       }
@@ -1332,7 +1363,7 @@ export class Game {
       if (g.vx) g.lat = g.vx < 0;
       g.x += g.vx * dt * HE_SO_TOC_GA;
       g.y += g.vy * dt * HE_SO_TOC_GA;
-      const cham = giuTrongMap(g, leCuaGa(g));
+      const cham = giuTrongMap(g, leCuaGa(g), quaNuoc(g));
       if (g.tron) {
         // Vua gà đang chạy trốn nhanh: trừ quãng đã chạy, chạm mép map thì thôi
         g.tron = Math.max(0, g.tron - Math.hypot(g.vx, g.vy) * dt * HE_SO_TOC_GA);
@@ -1860,7 +1891,7 @@ export class Game {
         vx: Math.cos(huong) * v, vy: Math.sin(huong) * v, phase: Math.random() * 6, doiHuong: 0,
         chet: false, tChet: 0, lat: Math.cos(huong) < 0, hp: HP_GA, nhay: 0,
       };
-      giuTrongMap(g, leCuaGa(g));
+      giuTrongMap(g, leCuaGa(g), quaNuoc(g));
       this.ga.push(g);
       this.vet.push({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'bui' });
     }
@@ -1958,7 +1989,7 @@ export class Game {
       vx: Math.cos(huong) * v, vy: Math.sin(huong) * v, phase: Math.random() * 6, doiHuong: 0,
       chet: false, tChet: 0, lat: Math.cos(huong) < 0, hp: HP_GA * suc, nhay: 0, suc, to: GA_DB_TO[k], db: true,
     };
-    giuTrongMap(g, leCuaGa(g));
+    giuTrongMap(g, leCuaGa(g), quaNuoc(g));
     this.ga.push(g);
     this.vet.push({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'chay', co: 0.6 + 0.2 * k });
     if (k > 0) this.chu.push({ id: this.id++, x: g.x, y: g.y - 160, text: `GÀ CON x${suc}!`, mau: '#ff6a3c', t: 0 });
@@ -3022,7 +3053,7 @@ export class Game {
             const canMoi = Math.abs(cx) > 0.6 ? Math.sign(cx) : 0;
             const sang = (moi(g, 15) ? 1 : 0) - (moi(g, 14) ? 1 : 0) || (canMoi && canMoi !== this.menuCanCu ? canMoi : 0);
             this.menuCanCu = canMoi;
-            if (sang) this.menuChon = Math.max(0, Math.min(2, this.menuChon + sang));
+            if (sang && !this.onSang(sang)) this.menuChon = Math.max(0, Math.min(2, this.menuChon + sang));
           }
           // X: đánh dấu thẻ ở màn chọn chế độ · A / Menu: Tiếp / Vào chơi ở màn hướng dẫn · B: xác nhận / quay lại
           if (moi(g, 2)) this.onNutX();
