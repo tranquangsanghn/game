@@ -269,7 +269,7 @@ export class GiaoDien {
       ? 'Hai nhân vật bằng điểm nhau 🤝'
       : `👑 ${esc(g.nguoi[g.nguoiThang].ten)} ghi nhiều điểm nhất`;
     const kl = g.nguoiThangTran
-      ? `🏆 <b>${g.soNguoi < 2 ? esc(g.nguoi.find((n) => !n.vang)!.ten) : 'Mabu và Zinbu'} thắng!</b> Tướng gà cấp 2, tướng gà cấp 1 và toàn bộ gà con đã bị hạ.${mvp ? '<br>' + mvp : ''}`
+      ? `🏆 <b>${g.soNguoi < 2 ? esc(g.nguoi.find((n) => !n.vang)!.ten) : 'Mabu và Zinbu'} thắng!</b> Vua gà, tướng gà và toàn bộ gà con đã bị hạ.${mvp ? '<br>' + mvp : ''}`
       : `🐔 <b>Quái vật thắng!</b> ${g.soNguoi < 2 ? 'Nhân vật đã gục.' : 'Cả hai nhân vật đã gục.'}${mvp ? '<br>' + mvp : ''}`;
     const top = this.bang && this.bang.length
       ? `<table class="xep-hang"><caption class="phu">Bảng điểm cao nhất</caption>${this.bang.map((d, i) => `<tr><td>${i + 1}.</td><td>${esc(d.nguoiChoi)}</td><td><b>${d.diem}</b></td><td class="phu">${phut(d.thoiGian)}</td></tr>`).join('')}</table>`

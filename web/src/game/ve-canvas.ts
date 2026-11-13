@@ -834,7 +834,7 @@ export class VeCanvas {
     // Gà mẹ phụ (nở từ trứng đỏ) còn sống, bên trái avatar
     ctx.save();
     ctx.textAlign = 'end';
-    ctx.fillText('Tướng gà cấp 1', c.GIUA - 175, -42);
+    ctx.fillText('Tướng gà', c.GIUA - 175, -42);
     ctx.fillText(`${c.soMePhu}`, c.GIUA - 175, -20);
     ctx.restore();
     // Số mạng còn lại: các trái tim ngay dưới avatar gà mẹ (mạng đã mất thì mờ)

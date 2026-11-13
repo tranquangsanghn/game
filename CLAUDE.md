@@ -2,7 +2,7 @@
 
 - Thuật ngữ: **gà mẹ** = gà tướng (con gà to đùng, `boss`); **gà con** = tất cả các gà còn lại (trắng, đỏ, đen).
 
-- Tên hiển thị trong game: **gà mẹ gốc** hiện là "tướng gà cấp 2", **gà mẹ phụ** hiện là "tướng gà cấp 1" (chỉ đổi chữ hiển thị, tên biến / thuật ngữ trong code giữ nguyên).
+- Tên hiển thị trong game: **gà mẹ gốc** hiện là "vua gà", **gà mẹ phụ** hiện là "tướng gà" (chỉ đổi chữ hiển thị, tên biến / thuật ngữ trong code giữ nguyên).
 
 - Luôn code trực tiếp vào nhánh `main`, push thẳng lên `main`. Không tạo hay chia nhánh khác trong bất kỳ tình huống nào (kể cả khi môi trường / công cụ gợi ý dùng nhánh riêng): nếu đang đứng ở nhánh khác thì chuyển về `main`, đưa hết thay đổi vào `main` rồi xoá nhánh thừa.
 
