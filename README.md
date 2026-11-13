@@ -1,9 +1,29 @@
 # Dragon Ball
 
-Game 2 nhân vật, chơi bằng chuột + Tab hoặc tay cầm kiểu PS (chọn ở màn bắt đầu), viết bằng Angular, tách ra từ dự án EORM.
+Game 2 nhân vật, chơi bằng chuột + Tab hoặc tay cầm kiểu PS (chọn ở màn bắt đầu), viết bằng TypeScript thuần (Vite) + máy chủ Java / MySQL để lưu ván và điểm, tách ra từ dự án EORM.
 
 - Chơi online: https://tranquangsanghn.github.io/game/
-- Mỗi lần push lên `main`, GitHub Actions tự build và deploy lên GitHub Pages.
+- Mỗi lần push lên `main`, GitHub Actions tự build `web/` và deploy lên GitHub Pages (bản này không có máy chủ nên ván lưu tạm trong trình duyệt).
+
+## Chạy game + lưu vào MySQL
+
+Cần: Node 20+, Java 17+, Maven, MySQL 8 (đang chạy). Cấu trúc: `web/` (giao diện + game), `server/` (Java Spring Boot + MySQL).
+
+1. **Máy chủ** (cổng 8080). Tự tạo database `dragonball` và 2 bảng nếu chưa có (user MySQL cần quyền CREATE):
+   ```bash
+   cd server
+   DB_USER=root DB_PASS=matkhau mvn spring-boot:run
+   ```
+   Đổi cấu hình bằng biến môi trường: `DB_URL` (mặc định `jdbc:mysql://localhost:3306/dragonball?createDatabaseIfNotExist=true...`), `DB_USER` (mặc định `root`), `DB_PASS` (mặc định rỗng), `PORT`, `CORS_ORIGINS`.
+2. **Giao diện** (cổng 5173, tự chuyển `/api` sang máy chủ):
+   ```bash
+   cd web
+   npm install
+   npm run dev
+   ```
+3. Mở http://localhost:5173, nhập **tên người chơi** ở màn bắt đầu. Bấm ❚❚ **Tạm dừng → 💾 Lưu game** để lưu; lần sau mở lại, màn bắt đầu có nút **▶ Chơi tiếp ván đã lưu**. Hết ván thì điểm được ghi vào bảng điểm cao nhất.
+
+API: `GET/PUT/DELETE /api/saves/{tên}` (ván đang chơi) · `POST /api/scores`, `GET /api/scores?limit=5` (điểm). Test máy chủ: `cd server && mvn test` (dùng H2 trong bộ nhớ).
 
 ## Điều khiển
 

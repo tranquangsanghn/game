@@ -1,5 +1,5 @@
-import type { ChickenShootingGameComponent as Game, Ga } from './chicken-shooting-game.component';
-import type { KhungSprite } from './sprite.component';
+import type { Game, Ga } from './game';
+import type { KhungSprite } from './sprite';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
 // Toạ độ vẽ giữ nguyên như bản SVG cũ: viewBox (-SIDE, -BAR, W + 2·SIDE, H + BAR), căn giữa, giữ tỉ lệ.

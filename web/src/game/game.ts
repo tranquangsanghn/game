@@ -1,17 +1,12 @@
-import {
-  AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef,
-  EventEmitter, NgZone, OnDestroy, Output, PLATFORM_ID, ViewChild, inject
-} from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import { KhungSprite, SpriteComponent } from './sprite.component';
+import type { KhungSprite } from './sprite';
 import { VeCanvas } from './ve-canvas';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
-type ManChoi = 'start' | 'play' | 'pause' | 'over';
+export type ManChoi = 'start' | 'play' | 'pause' | 'over';
 // Chế độ điều khiển chọn ở màn bắt đầu: chuột (+ Tab đổi nhân vật) hoặc tay cầm
-type CheDo = 'chuot' | 'tayCam';
+export type CheDo = 'chuot' | 'tayCam';
 // hen = gà trắng (đi bộ) · rooster = gà đỏ (đi nhanh, nhảy) · flyer = gà đen (bay, thả trứng)
 // boss = gà tướng (to gấp 5 lần, đủ 3 màu, nhiều máu)
 type LoaiGa = 'hen' | 'rooster' | 'flyer' | 'boss';
@@ -36,14 +31,14 @@ interface ChieuTuong {
   loai: 'lao' | 'bay'; pha: 'bao' | 'chay' | 'nghi'; t: number; ux: number; uy: number; quang: number; trung: boolean[];
 }
 // Trứng do gà tướng đẻ: sau TRUNG_NO giây nở ra gà `loai`
-interface TrungGa { id: number; x: number; y: number; t: number; loai: 'hen' | 'rooster' | 'flyer'; }
+export interface TrungGa { id: number; x: number; y: number; t: number; loai: 'hen' | 'rooster' | 'flyer'; }
 interface Dan { id: number; p: number; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; }
-interface VatPham { id: number; x: number; y: number; t: number; }
+export interface VatPham { id: number; x: number; y: number; t: number; }
 interface Chu { id: number; x: number; y: number; text: string; mau: string; t: number; }
 interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay: number; vxoay: number; t: number; mau: string; }
 interface Vet { id: number; x: number; y: number; t: number; loai: 'bui' | 'no'; }
 interface ChuyenBay { x0: number; y0: number; x1: number; y1: number; t: number; T: number; }
-interface NguoiChoi {
+export interface NguoiChoi {
   ten: string; mau: string; diem: number; combo: number; tamX: number; tamY: number;
   hoiChieu: number; chumDen: number; banTrung: number; banTruot: number;
   x: number; y: number; dich: { x: number; y: number } | null; dangDi: boolean;
@@ -55,6 +50,16 @@ interface NguoiChoi {
 type VatXep =
   | { loai: 'ga'; y: number; ga: Ga }
   | { loai: 'nv'; y: number; p: number };
+
+
+export const PHIEN_BAN_LUU = 1;
+/** Dữ liệu một ván đã lưu: các trường tuỳ ý của game, máy chủ chỉ lưu nguyên khối JSON */
+export interface TrangThaiLuu {
+  phienBan: number; tGame: number; t: number; chamDen: number; id: number;
+  henTuong: number; henVatPham: number; soLanTuong: number; lanTuong: number;
+  ga: Ga[]; trungDe: TrungGa[]; vatPham: VatPham[];
+  nguoi: (Omit<NguoiChoi, 'nv' | 'nham' | 'ngam' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
+}
 
 // Chiều rộng khung nhìn (đơn vị khung) thay đổi theo tỉ lệ cửa sổ để map tràn hai bên; H cố định. Phía trên map có thanh đen cao BAR chứa các chiêu của gà mẹ (toạ độ y âm).
 const W_MAC_DINH = 1600;
@@ -292,22 +297,18 @@ function tronMau(a: number[], b: number[], k: number) {
   return `rgb(${c[0]},${c[1]},${c[2]})`;
 }
 
-@Component({
-  selector: 'app-chicken-shooting-game',
-  standalone: true,
-  imports: [SpriteComponent],
-  templateUrl: './chicken-shooting-game.component.html',
-  styleUrl: './chicken-shooting-game.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
-  @Output() dong = new EventEmitter<void>();
-  @ViewChild('khung') khungRef!: ElementRef<HTMLDivElement>;
-  @ViewChild('manHinh') canvasRef!: ElementRef<HTMLCanvasElement>;
+/** Kết quả một ván, gửi lên máy chủ */
+export interface KetQua { diem: number; diemMabu: number; diemZinbu: number; thoiGian: number; }
 
-  private cdr = inject(ChangeDetectorRef);
-  private zone = inject(NgZone);
-  private laTrinhDuyet = isPlatformBrowser(inject(PLATFORM_ID));
+export class Game {
+  /** Gọi khi bấm Đóng (trang cha tự xử lý) */
+  onDong: () => void = () => {};
+  /** Gọi khi màn chơi / dữ liệu đổi và cần vẽ lại phần HTML phủ (màn bắt đầu, tạm dừng, kết thúc) */
+  onManPhu: () => void = () => {};
+  /** Gọi khi ván kết thúc (để lưu điểm lên máy chủ) */
+  onKetThuc: (kq: KetQua) => void = () => {};
+  private khungEl!: HTMLDivElement;
+  private canvasEl!: HTMLCanvasElement;
 
   W = W_MAC_DINH;
   readonly BAR = BAR;
@@ -406,26 +407,28 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   private henTuong = CHO_TUONG_DAU;
   private goLangNghe: (() => void)[] = [];
 
-  constructor() {
+  constructor(khung: HTMLDivElement, canvas: HTMLCanvasElement) {
+    this.khungEl = khung;
+    this.canvasEl = canvas;
     this.capNhatView(0, true);
     this.docKyLuc();
   }
 
-  ngAfterViewInit(): void {
-    if (!this.laTrinhDuyet) return;
+  /** Gắn sự kiện và chạy vòng lặp game */
+  khoiDong(): void {
     (document.activeElement as HTMLElement | null)?.blur();
-    this.khungRef.nativeElement.focus();
+    this.khungEl.focus();
 
-    this.zone.runOutsideAngular(() => {
+    {
       // Khung chiếm cả cửa sổ: chiều rộng khung nhìn theo tỉ lệ cửa sổ nên map tràn sát hai bên, không còn dải đen
       const vua = () => {
-        const kt = this.khungRef.nativeElement.getBoundingClientRect();
+        const kt = this.khungEl.getBoundingClientRect();
         if (kt.width > 0 && kt.height > 0) this.W = kep(Math.round(((H + BAR) * kt.width) / kt.height - 2 * SIDE), W_TOI_THIEU, W_TOI_DA);
         // Canvas theo kích thước khung và độ phân giải màn hình (tối đa 2× cho nhẹ)
         this.cssW = kt.width;
         this.cssH = kt.height;
         this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const cv = this.canvasRef.nativeElement;
+        const cv = this.canvasEl;
         const pw = Math.max(1, Math.round(kt.width * this.dpr));
         const ph = Math.max(1, Math.round(kt.height * this.dpr));
         if (cv.width !== pw || cv.height !== ph) {
@@ -433,16 +436,16 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
           cv.height = ph;
         }
       };
-      this.ctx = this.canvasRef.nativeElement.getContext('2d');
+      this.ctx = this.canvasEl.getContext('2d');
       this.ve.napTruoc(MABU.atlas, ZINBU.atlas);
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO]);
       vua();
       const quanSat = new ResizeObserver(vua);
-      quanSat.observe(this.khungRef.nativeElement);
+      quanSat.observe(this.khungEl);
       this.goLangNghe.push(() => quanSat.disconnect());
 
-      const cv = this.canvasRef.nativeElement;
+      const cv = this.canvasEl;
       const nghe = <K extends keyof WindowEventMap>(el: Window | HTMLCanvasElement, ten: K, fn: (e: any) => void, capture = false) => {
         el.addEventListener(ten, fn, capture);
         this.goLangNghe.push(() => el.removeEventListener(ten, fn, capture));
@@ -450,7 +453,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       // Chế độ chuột: chuột phải chạy / bay, chuột trái ra đòn, bấm vào chiêu ở thanh đen để đổi chiêu, Tab đổi chuột sang nhân vật kia
       nghe(cv, 'pointermove', (e: PointerEvent) => this.diChuot(e));
       nghe(cv, 'pointerdown', (e: PointerEvent) => {
-        this.khungRef.nativeElement.focus({ preventScroll: true });
+        this.khungEl.focus({ preventScroll: true });
         this.bamChuot(e);
       });
       nghe(window, 'contextmenu', (e: Event) => { if (this.cheDo === 'chuot') e.preventDefault(); }, true);
@@ -458,10 +461,10 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
       this.lanCuoi = performance.now();
       this.rafId = requestAnimationFrame(this.vongLap);
-    });
+    }
   }
 
-  ngOnDestroy(): void {
+  huy(): void {
     cancelAnimationFrame(this.rafId);
     this.goLangNghe.forEach((go) => go());
   }
@@ -505,8 +508,49 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     else if (this.man === 'pause') this.man = 'play';
   }
 
+
+  // ─── Lưu / tải ván (gửi lên máy chủ Java + MySQL, xem server/) ───
+
+  /** Ảnh chụp trạng thái ván đang chơi (JSON thuần) để lưu; null nếu chưa chơi / đã kết thúc */
+  chupTrangThai(): TrangThaiLuu | null {
+    if (this.man !== 'play' && this.man !== 'pause') return null;
+    return JSON.parse(JSON.stringify({
+      phienBan: PHIEN_BAN_LUU,
+      tGame: this.tGame, t: this.t, chamDen: this.chamDen, id: this.id,
+      henTuong: this.henTuong, henVatPham: this.henVatPham, soLanTuong: this.soLanTuong, lanTuong: this.lanTuong,
+      ga: this.ga, trungDe: this.trungDe, vatPham: this.vatPham,
+      nguoi: this.nguoi.map((n) => {
+        const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
+        void nham; void ngam; void cuaCan; void dich;
+        // Đang bay thì coi như đã bay tới nơi
+        return { ...r, x: bay ? bay.x1 : n.x, y: bay ? bay.y1 : n.y, nhom: nv.nhom, lat: nv.lat, huong: nv.huong };
+      }),
+    }));
+  }
+
+  /** Nạp lại ván đã lưu và dừng ở màn Tạm dừng để người chơi bấm Tiếp tục */
+  khoiPhuc(d: TrangThaiLuu): void {
+    if (!d || d.phienBan !== PHIEN_BAN_LUU || !Array.isArray(d.nguoi) || d.nguoi.length !== 2) throw new Error('Dữ liệu lưu không hợp lệ');
+    this.batDau();
+    this.tGame = d.tGame; this.t = d.t; this.chamDen = d.chamDen; this.id = d.id;
+    this.henTuong = d.henTuong; this.henVatPham = d.henVatPham; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
+    this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham;
+    this.nguoi = d.nguoi.map((o, p) => {
+      const { nhom, lat, huong, ...r } = o;
+      const n: NguoiChoi = { ...this.taoNguoiChoi()[p], ...r };
+      n.nv.lat = lat;
+      n.nv.huong = huong;
+      n.nv.datNhom(nhom, this.t);
+      if (n.het) n.nv.nga();
+      else if (n.may.dang) n.nv.vaoMay();
+      return n;
+    });
+    this.capNhatView(0, true);
+    this.man = 'pause';
+  }
+
   dongGame(): void {
-    this.dong.emit();
+    this.onDong();
   }
 
   get chang(): number {
@@ -565,7 +609,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     }
     if (this.ctx) this.ve.ve(this.ctx, this, this.dpr);
     // Màn chơi chỉ vẽ canvas; phần HTML (màn bắt đầu / tạm dừng / kết thúc, nút) chỉ cập nhật khi cần
-    if (this.man !== 'play' || this.manDaVe !== this.man) this.cdr.detectChanges();
+    if (this.man !== 'play' || this.manDaVe !== this.man) this.onManPhu();
     this.manDaVe = this.man;
     this.rafId = requestAnimationFrame(this.vongLap);
   };
@@ -1517,6 +1561,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       n.dangDi = false;
       n.nv.tuKhi(false);
     });
+    this.onKetThuc({ diem: this.tongDiem, diemMabu: this.nguoi[0].diem, diemZinbu: this.nguoi[1].diem, thoiGian: Math.round(this.tGame) });
     if (this.tongDiem > this.kyLuc) {
       this.kyLuc = this.tongDiem;
       this.kyLucMoi = true;
@@ -1536,7 +1581,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   private toaDo(e: MouseEvent): { x: number; y: number } | null {
     if (!this.cssW || !this.cssH) return null;
-    const kt = this.canvasRef.nativeElement.getBoundingClientRect();
+    const kt = this.canvasEl.getBoundingClientRect();
     const { s, ox, oy } = this.phepChieu();
     return { x: (e.clientX - kt.left - ox) / s, y: (e.clientY - kt.top - oy) / s };
   }
@@ -1963,7 +2008,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private docKyLuc(): void {
-    if (!this.laTrinhDuyet) return;
     try {
       this.kyLuc = Number(localStorage.getItem(KHOA_KY_LUC)) || 0;
       this.cheDo = localStorage.getItem(KHOA_CHE_DO) === 'tayCam' ? 'tayCam' : 'chuot';

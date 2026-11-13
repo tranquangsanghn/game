@@ -1,6 +1,6 @@
 // Sprite gà: atlas 4×4 khung do tools/tao-atlas-ga.py sinh ra từ tools/ga-goc.png.
 // Kích thước khai báo là toạ độ logic (không phụ thuộc độ phân giải file PNG) — file PNG lớn hơn 2× (gà tướng 4×) cho nét.
-import { KhungSprite } from './sprite.component';
+import { KhungSprite } from './sprite';
 
 const khung = (atlas: string): KhungSprite => ({
   atlas, atlasW: 420, atlasH: 384, w: 105, h: 96, cot: 4, neoX: 52, neoY: 90,

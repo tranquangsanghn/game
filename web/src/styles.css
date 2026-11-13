@@ -1,4 +1,11 @@
-:host {
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #0f172a;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+#app {
   position: fixed;
   inset: 0;
   z-index: 10000;
@@ -6,7 +13,6 @@
   align-items: center;
   justify-content: center;
   background: #000;
-  animation: hienRa 0.25s ease-out;
 }
 
 @keyframes hienRa {
@@ -208,8 +214,20 @@ kbd {
 .chan-dung {
   float: right;
   width: 92px;
-  height: 128px;
+  height: 100px;
   margin: -6px -4px 0 8px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
 }
+
+.o-ten { display: flex; gap: 8px; align-items: center; justify-content: center; margin: 10px 0 2px; font-size: 14px; }
+.o-ten input { padding: 6px 12px; border: 2px solid #d9cbb3; border-radius: 999px; font-size: 15px; width: 180px; text-align: center; }
+.luu-tin { margin: 8px 0; padding: 8px 12px; border-radius: 10px; background: #eef7ee; border: 1px solid #b7dbb7; font-size: 14px; }
+.luu-tin.tam { background: #fff6e0; border-color: #f0d28a; }
+.thong-bao { min-height: 20px; margin: 6px 0 0; font-size: 14px; color: #1e7a3c; }
+.thong-bao.loi { color: #c0392b; }
+.xep-hang { margin: 8px auto 0; border-collapse: collapse; font-size: 14px; text-align: left; }
+.xep-hang td { padding: 2px 10px; }
+.nut-phu:disabled, .nut-chinh:disabled { opacity: 0.5; cursor: default; }
 
 
