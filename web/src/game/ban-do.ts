@@ -164,6 +164,17 @@ export function veDat(o: { x: number; y: number }): { cx: boolean; cy: boolean }
   return r;
 }
 
+/** Số đảo và đảo gần điểm (x, y) nhất (tính theo mép đảo; điểm trên dải cát thuộc đảo gần hơn) */
+export const SO_DAO = DAO.length;
+export function daoCua(x: number, y: number): number {
+  let k = 0, gan = Infinity;
+  DAO.forEach((d, i) => {
+    const v = Math.hypot(x - d.x, y - d.y) - d.r;
+    if (v < gan) { gan = v; k = i; }
+  });
+  return k;
+}
+
 /** Tính trước lưới (gọi lúc chọn bản đồ để khung hình đầu không bị khựng) */
 export function chuanBiSaMac(): void {
   layLuoiDi();

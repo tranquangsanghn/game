@@ -3,7 +3,7 @@ import { VeCanvas } from './ve-canvas';
 import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
-import { chuanBiSaMac, doSau, veDat, type LoaiBanDo } from './ban-do';
+import { chuanBiSaMac, daoCua, doSau, veDat, SO_DAO, type LoaiBanDo } from './ban-do';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
@@ -496,6 +496,7 @@ function taoTrangTri(banDo: LoaiBanDo = 'co'): TrangTri[] {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
   const kq: TrangTri[] = [];
+  const soCay = new Array<number>(SO_DAO).fill(0);
   const O = 230;
   for (let gx = 0; gx < MAP; gx += O) {
     for (let gy = 0; gy < MAP; gy += O) {
@@ -514,6 +515,15 @@ function taoTrangTri(banDo: LoaiBanDo = 'co'): TrangTri[] {
       // Không mọc sát / trong tường gạch quanh map
       if (Math.min(x, y, MAP - x, MAP - y) < TUONG + 150) continue;
       if (CAU_VI_TRI.some(([dx, dy]) => Math.hypot(x - MAP / 2 - dx, y - MAP / 2 - dy) < 500)) continue;
+      // Đảo sa mạc: mỗi đảo chỉ 1–2 cây (đảo chẵn 2, lẻ 1), cây thừa đổi thành bụi
+      if (sa && loai === 0) {
+        const d = daoCua(x, y);
+        if (soCay[d]! >= (d % 2 ? 1 : 2)) {
+          kq.push({ x, y, loai: 1, lat });
+          continue;
+        }
+        soCay[d]!++;
+      }
       // Một phần cây là cây to (chọn theo toạ độ, không dùng r() để map không đổi)
       kq.push({ x, y, loai, lat, to: loai === 0 && Math.floor(x * 7 + y * 13) % 4 === 0 });
     }
@@ -844,7 +854,8 @@ export class Game {
     this.trungDe = [];
     this.vatPham = [];
     this.cuu = [];
-    this.cauTron = taoCauTron();
+    // Đảo sa mạc không có quả cầu trốn
+    this.cauTron = this.banDo === 'sa' ? [] : taoCauTron();
     this.dungHinh = 0;
     this.henTuong = CHO_TUONG_DAU;
     this.soLanTuong = 0;
@@ -897,7 +908,8 @@ export class Game {
     this.tGame = d.tGame; this.t = d.t; this.chamDen = d.chamDen; this.id = d.id;
     this.henTuong = d.henTuong; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
     this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham; this.cuu = d.cuu ?? [];
-    this.cauTron = d.cauTron?.map((q, i) => ({ ...q, cua: q.cua ?? i })) ?? taoCauTron();
+    this.cauTron = this.banDo === 'sa' ? [] : d.cauTron?.map((q, i) => ({ ...q, cua: q.cua ?? i })) ?? taoCauTron();
+    if (this.banDo === 'sa') { this.ga = []; this.trungDe = []; }
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
     this.nguoi = d.nguoi.map((o, p) => {
@@ -1022,8 +1034,9 @@ export class Game {
     if (this.rung === 0) this.rungBien = RUNG_BIEN;
 
     this.capNhatTrungGa(dt);
-    this.henTuong -= dtE;
-    if (this.henTuong <= 0) {
+    // Đảo sa mạc không có gà: không sinh gà mẹ (nên cũng không có trứng, gà con)
+    if (this.banDoVan !== 'sa') this.henTuong -= dtE;
+    if (this.banDoVan !== 'sa' && this.henTuong <= 0) {
       if (this.ga.some((g) => g.goc && !g.chet)) this.henTuong = 10;
       else if (this.soLanTuong <= TUONG_HOI_SINH) {
         this.sinhTuong();
@@ -1045,7 +1058,8 @@ export class Game {
     this.capNhatVatPham(dt);
     this.anGaSocola();
     this.capNhatHieuUng(dt, dtE);
-    if (this.man === 'play') this.kiemTraThang();
+    // Đảo sa mạc chơi tự do: không có gà nên không có thắng (vẫn thua khi cả hai gục)
+    if (this.man === 'play' && this.banDoVan !== 'sa') this.kiemTraThang();
   }
 
   private dungKhung(giay: number): void {

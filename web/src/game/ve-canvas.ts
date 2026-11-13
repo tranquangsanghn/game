@@ -221,7 +221,8 @@ export class VeCanvas {
     }
 
     for (const p of [0, 1]) if (!c.nguoi[p].vang) this.veThanhBen(ctx, c, p);
-    this.veThanhTuong(ctx, c);
+    // Đảo sa mạc không có gà: thanh đen trên để trống
+    if (c.banDoVan !== 'sa') this.veThanhTuong(ctx, c);
     if (c.man === 'play' || c.man === 'pause') this.veHud(ctx, c);
   }
 
