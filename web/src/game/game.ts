@@ -1727,8 +1727,7 @@ export class Game {
     const kq: { x: number; y: number; goc: number; a: number; mau: string }[] = [];
     this.xTrungView = [];
     const song = this.nguoi.filter((n, p) => !n.het && !this.trongCau(p));
-    // Đảo sa mạc: không chỉ đường tới gà mẹ (vườn gà không vào được)
-    if (this.man !== 'play' || !song.length || banDoHt === 'sa') return kq;
+    if (this.man !== 'play' || !song.length) return kq;
     const gan = (o: { x: number; y: number }) => Math.min(...song.map((n) => Math.hypot(n.x - o.x, n.y - o.y)));
     const trung = this.trungDe.filter((e) => e.db).sort((a, b) => gan(a) - gan(b))[0];
     const tw = this.ga.find((g) => g.goc && !g.chet);
