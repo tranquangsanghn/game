@@ -135,7 +135,7 @@
 
 # Nguyên tắc mana & bay
 
-- Bay tốn mana (`mana`, trần 200, bình xanh lơ có số giữa bình ở thanh đen hai bên, dưới bình máu, không vẽ trên đầu nhân vật; `manaNv()`, `nlBay()`). Bắt đầu `MANA_BAN_DAU` = 100; bay tốn `MANA_BAY` = 30 mỗi giây bay; tự hồi `MANA_HOI` = 2 mỗi giây khi không bay nhưng chỉ tới `MANA_HOI_TOI_DA` = 100 rồi thôi (táo xanh / đòn trúng có thể đẩy cao hơn tới trần, không bị trừ xuống). Mỗi lần bay xong khoá `BAY_KHOA` = 5s (`bayKhoa`, bình xám) mới bay tiếp được; còn dưới `MANA_TOI_THIEU` = 15 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); mana không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn. Đổi cấu trúc trạng thái nên `PHIEN_BAN_LUU` = 4 (ván lưu cũ không tải được; bản 4 thêm `khien`, `cuu`, trạng thái gà mới).
+- Bay tốn mana (`mana`, trần 200, bình xanh lơ có số giữa bình ở thanh đen hai bên, dưới bình máu, không vẽ trên đầu nhân vật; `manaNv()`, `nlBay()`). Bắt đầu `MANA_BAN_DAU` = 100; bay tốn `MANA_BAY` = 15 mỗi giây bay; tự hồi `MANA_HOI` = 2 mỗi giây khi không bay nhưng chỉ tới `MANA_HOI_TOI_DA` = 100 rồi thôi (táo xanh / đòn trúng có thể đẩy cao hơn tới trần, không bị trừ xuống). Mỗi lần bay xong khoá `BAY_KHOA` = 5s (`bayKhoa`, bình xám) mới bay tiếp được; còn dưới `MANA_TOI_THIEU` = 15 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); mana không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn. Đổi cấu trúc trạng thái nên `PHIEN_BAN_LUU` = 4 (ván lưu cũ không tải được; bản 4 thêm `khien`, `cuu`, trạng thái gà mới).
 
 # Nguyên tắc chiêu Biến socola (riêng Zinbu)
 
