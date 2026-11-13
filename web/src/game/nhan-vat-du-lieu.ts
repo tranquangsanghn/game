@@ -2,9 +2,11 @@
 import { NhanVatSprite } from './nhan-vat-sprite';
 
 export const MABU: NhanVatSprite = {
-  ten: 'Mabu', atlas: 'assets/game/mabu_atlas.png', atlasW: 2240, atlasH: 1176, w: 140, h: 84, cot: 16,
+  ten: 'Mabu', atlas: 'assets/game/mabu_atlas.png', atlasW: 2240, atlasH: 1344, w: 140, h: 84, cot: 16,
   neoX: 70, neoY: 81,
-  huong: { len: { dung: [199], di: [199, 200, 201, 202, 201, 200] }, xuong: { dung: [3], di: [3, 211] } },
+  // Khung 224-249 (2 hàng cuối atlas): Mabu kiểu nhìn chéo từ trên xuống — 224-228 nhìn xuống, 229-233 quay lưng,
+  // 234-249 nhìn nghiêng (đã lật quay phải) cho đấm / đá. Bắn chưởng, mây, chết... vẫn dùng khung cũ.
+  huong: { len: { dung: [229], di: [230, 231, 232, 233] }, xuong: { dung: [224], di: [225, 226, 227, 228] } },
   anim: {
     idle: { f: [8, 9, 10, 9], ms: 150, lap: true },
     taunt_flex: { f: [130, 131, 132, 136, 137, 138, 137, 138], ms: 117, lap: false },
@@ -29,13 +31,13 @@ export const MABU: NhanVatSprite = {
     thrown: { f: [109, 110, 111, 112], ms: 117, lap: false },
     lie: { f: [143], ms: 17, lap: false },
     lie_thrown: { f: [112], ms: 17, lap: false },
-    punch_combo: { f: [14, 15, 14, 209, 15, 209, 16], ms: 67, lap: false },
-    punch_long: { f: [14, 15, 16], ms: 100, lap: false },
-    punch_long_2: { f: [208, 209, 210], ms: 100, lap: false },
-    punch_dash: { f: [144, 145, 146, 145, 146, 144], ms: 67, lap: false, tien: { tu: 1, den: 4, v: 3.2 } },
-    punch_charge: { f: [102, 103, 104, 104], ms: 100, lap: false, tien: { tu: 2, den: 3, v: 2.5 } },
-    kick_arc: { f: [90, 89, 88, 87, 86, 87, 88, 89, 90], ms: 67, lap: false },
-    antenna_whip: { f: [150, 151, 152], ms: 83, lap: false },
+    punch_combo: { f: [247, 248, 247, 248, 247, 248], ms: 67, lap: false },
+    punch_long: { f: [241, 242, 241], ms: 100, lap: false },
+    punch_long_2: { f: [244, 245, 246, 245], ms: 100, lap: false },
+    punch_dash: { f: [247, 248, 248, 248, 247], ms: 67, lap: false, tien: { tu: 1, den: 3, v: 3.2 } },
+    punch_charge: { f: [239, 240, 247, 248], ms: 100, lap: false, tien: { tu: 2, den: 3, v: 2.5 } },
+    kick_arc: { f: [234, 235, 236, 237], ms: 100, lap: false },
+    antenna_whip: { f: [238, 243, 243, 238], ms: 83, lap: false },
     roll: { f: [77, 78, 79, 80, 77, 78, 79, 80], ms: 67, lap: false, tien: { tu: 0, den: 7, v: 3.0 } },
     energy_ball: { f: [170, 171, 172, 172, 171, 170], ms: 100, lap: false, ban: { o: 2, dx: 60, dy: -38 } },
     // Biến thành đám mây (khung 2 → 1 → 0 là 3 hình mây trong atlas), rồi biến lại
