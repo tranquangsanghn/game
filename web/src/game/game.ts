@@ -1923,7 +1923,9 @@ export class Game {
       xep.push({ loai: 'ga', y: g.y, ga: g });
     }
     for (const g of this.keoGa) if (trong(g.x, g.y, 120)) xep.push({ loai: 'ga', y: g.y, ga: g });
-    this.cellView = this.cell.filter((c) => this.thay(c.x, c.y) && trong(c.x, c.y - 20 * cellK(c.cap), 60 * cellK(c.cap) + 200));
+    // Đang ở đảo nào thì Cell của đảo đó không bị sương mù: thấy hết nếu nằm trong khung nhìn
+    const daoNv = this.trenDao ? this.daoHienTai : -1;
+    this.cellView = this.cell.filter((c) => (daoNv >= 0 && daoCua(c.x, c.y) === daoNv ? true : this.thay(c.x, c.y)) && trong(c.x, c.y - 20 * cellK(c.cap), 60 * cellK(c.cap) + 200));
     for (const c of this.cellView) xep.push({ loai: 'cell', y: c.y, ce: c });
     // Người đang được mây / socola phủ lên thì thân được thay bằng mây / socola (cuuView)
     this.cuuView = this.cuu.filter((c) => trong(c.x, c.y, 500));
