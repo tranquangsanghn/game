@@ -143,8 +143,8 @@
     @let xt = xThanh(p);
     <g pointer-events="none">
       <circle [attr.cx]="tn.x" [attr.cy]="tn.y" [attr.r]="R_NV" fill="#000" />
-      <g [attr.transform]="'translate(' + (tn.x + (p === 0 ? 70 : -70)) + ',' + tn.y + ')'" [attr.opacity]="ng.het ? 0.4 : 1">
-        <svg x="-55" y="-60" width="110" height="110" viewBox="-36 -66 72 76">
+      <g [attr.transform]="'translate(' + (tn.x + (p === 0 ? 55 : -55)) + ',' + (tn.y - 48) + ')'" [attr.opacity]="ng.het ? 0.4 : 1">
+        <svg x="-45" y="-45" width="90" height="90" viewBox="-36 -66 72 76">
           <g cgSprite [sp]="ng.nv.sp" [khung]="ng.nv.khung" [lat]="ng.nv.lat"></g>
         </svg>
       </g>

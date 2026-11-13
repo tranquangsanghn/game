@@ -1290,13 +1290,13 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     this.nguoi[p].nv.doiNhom(buoc, this.t);
   }
 
-  // Thanh đen bên trái (Mabu) / bên phải (Zinbu) map: x giữa thanh, và tâm nửa vòng tròn chứa nhân vật (nằm sát mép trong của thanh, giữa chiều cao map)
+  // Thanh đen bên trái (Mabu) / bên phải (Zinbu) map: x giữa thanh, và tâm nửa vòng tròn chứa nhân vật (nằm đúng ở góc dưới map như cũ)
   xThanh(p: number): number {
     return p === 0 ? -SIDE / 2 : this.W + SIDE / 2;
   }
 
   tamNv(p: number) {
-    return { x: p === 0 ? 0 : this.W, y: H / 2 };
+    return { x: p === 0 ? 0 : this.W, y: H };
   }
 
   // Các nút chiêu xếp dọc trong thanh đen, canh giữa theo nửa vòng tròn (giống chiêu gà mẹ trên thanh ngang)
@@ -1308,7 +1308,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   // Chuột có nằm trên vùng không phải map không: thanh đen trên / hai bên, nửa vòng tròn của gà mẹ và của Mabu / Zinbu
   private tronBang(x: number, y: number): boolean {
     return y < 0 || x < 0 || x > this.W || Math.hypot(x - this.GIUA, y) <= R_BANG * HE_BANG_TUONG
-      || [0, 1].some((p) => Math.hypot(x - this.tamNv(p).x, y - H / 2) <= R_NV);
+      || [0, 1].some((p) => Math.hypot(x - this.tamNv(p).x, y - this.tamNv(p).y) <= R_NV);
   }
 
   // Chiêu hết mana (đang khoá / chưa hồi) hoặc Mây đang chạy / đang hồi: không dùng được
