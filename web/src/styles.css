@@ -253,6 +253,9 @@ kbd {
 }
 .the-chon.dang-chon { transform: translateY(-6px); background: rgba(255, 255, 255, 0.14); box-shadow: 0 0 28px var(--mau); }
 .the-chon:hover { transform: translateY(-6px); background: rgba(255, 255, 255, 0.14); box-shadow: 0 0 28px var(--mau); }
+/* Chế độ tay cầm: thẻ đang chọn sáng và nổi lên, các thẻ còn lại mờ và chìm xuống */
+.co-chon .the-chon { opacity: 0.4; transform: translateY(14px) scale(0.92); background: rgba(255, 255, 255, 0.03); box-shadow: none; filter: saturate(0.5); }
+.co-chon .the-chon.dang-chon { opacity: 1; transform: translateY(-12px) scale(1.06); background: rgba(255, 255, 255, 0.16); box-shadow: 0 0 36px var(--mau); filter: none; }
 .the-anh { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 8px; padding-bottom: 14px; }
 .anh-nv { display: block; background-repeat: no-repeat; image-rendering: pixelated; }
 .the-chu { font-size: 24px; font-weight: 700; }

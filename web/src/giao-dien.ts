@@ -226,7 +226,7 @@ export class GiaoDien {
   private htmlBatDau(): string {
     const the = (act: string, mau: string, anh: string, chu: string) =>
       `<button type="button" tabindex="-1" class="the-chon${this.game.cheDo === 'tayCam' && ['mabu', 'zinbu', 'ca2'][this.game.menuChon] === act ? ' dang-chon' : ''}" data-act="${act}" style="--mau:${mau}"><span class="the-anh">${anh}</span><span class="the-chu">${chu}</span></button>`;
-    return `<div class="man-phu man-chon"><div class="hang-the">
+    return `<div class="man-phu man-chon"><div class="hang-the${this.game.cheDo === 'tayCam' ? ' co-chon' : ''}">
       ${the('mabu', '#ec4899', this.anhNv(0, 3.4), '1 người chơi')}
       ${the('zinbu', '#facc15', this.anhNv(1, 3.4), '1 người chơi')}
       ${the('ca2', '#38bdf8', this.anhNv(0, 2.4) + this.anhNv(1, 2.4), '2 người chơi')}
