@@ -71,8 +71,8 @@
   - Gà đen: 60 · 1,5s (nhận 30)
   - Gà tướng: 80 · 2,5s (nhận 40)
 - Nhân vật dạng mây không nhận sát thương. Nhân vật hết máu thì ngã và không điều khiển được; cả hai cùng hết máu thì thua (`ketThuc()`).
-- Quái chỉ chết khi máu về 0 (chết thì mới tính điểm). Đòn trúng mà chưa chết thì gà nháy sáng. Hạ gà tướng không còn thưởng mạng; thay vào đó hồi `HOI_MAU_TUONG` = 60 máu cho mỗi nhân vật còn sống.
-- Vật phẩm là quả táo (`vatPham` → `vatPhamView`), chỉ rơi từ cây đổ: mỗi cây đổ có `TAO_ROI` = 30% rơi 1 quả, đỏ hoặc xanh ngẫu nhiên 50/50 (không còn rơi theo thời gian, không rơi từ gà con / gà mẹ). Táo đỏ hồi `VP_HOI` = 100 máu (cộng dồn, tối đa `HP_NV`). Táo xanh hồi 100 mana = đầy mana mọi nhóm đòn (mở khoá luôn) và thể lực bay (`hoiDayMana()`). Nhân vật (không phải mây, chưa gục) đi vào bán kính `VP_BAN_KINH` là nhặt ngay, kể cả khi đã đầy máu / mana (hiện chữ bay); không ai nhặt sau `VP_TON_TAI` = 45s thì biến mất (nhấp nháy 8s cuối). Không bị sương mù.
+- Quái chỉ chết khi máu về 0 (chết thì mới tính điểm). Đòn trúng mà chưa chết thì gà nháy sáng. Hạ gà tướng không còn thưởng mạng; thay vào đó hồi `HOI_MAU_TUONG` = 60 máu (không trần) cho mỗi nhân vật còn sống.
+- Vật phẩm là quả táo (`vatPham` → `vatPhamView`), chỉ rơi từ cây đổ: mỗi cây đổ có `TAO_ROI` = 30% rơi 1 quả, đỏ hoặc xanh ngẫu nhiên 50/50 (không rơi theo thời gian, không rơi từ gà). Máu và mana không có trần: táo đỏ cộng `VP_HOI` = 100 máu, táo xanh cộng 100% mana tối đa của mọi nhóm đòn (Đá +10, Chiêu +5 lần đánh) và thể lực bay (+2 giây), mở khoá luôn (`hoiDayMana()`); cộng dồn mãi, bình mana / máu chỉ vẽ đầy tối đa. Tự hồi mana / thể lực chỉ chạy khi đang dưới mức tối đa gốc. Nhân vật (không phải mây, chưa gục) đi vào bán kính `VP_BAN_KINH` là nhặt ngay. Gà (mọi loại, kể cả gà mẹ) đi qua trong `VP_GA_BAN_KINH` thì mổ ăn táo đỏ, hồi 100 máu không trần (táo xanh gà không ăn); gà không làm cây đổ. Không ai nhặt sau `VP_TON_TAI` = 45s thì biến mất (nhấp nháy 8s cuối). Không bị sương mù.
 
 # Nguyên tắc mana
 

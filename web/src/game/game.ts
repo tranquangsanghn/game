@@ -158,6 +158,7 @@ const HOI_MAU_TUONG = 60;
 const TAO_ROI = 0.3;
 const VP_HOI = 100;
 const VP_BAN_KINH = 90;
+const VP_GA_BAN_KINH = 60;
 const VP_TON_TAI = 45;
 // Hai thanh đen hai bên map (chứa chiêu thức và máu của Mabu / Zinbu) rộng SIDE; nửa vòng tròn chứa nhân vật nhô vào map, bán kính R_NV = 2/3 bảng cũ
 const SIDE = 75;
@@ -699,10 +700,19 @@ export class Game {
           this.hoiDayMana(n);
           this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${VP_HOI} mana`, mau: '#3aa0ff', t: 0 });
         } else {
-          const hoi = Math.min(VP_HOI, HP_NV - n.hp);
-          n.hp += hoi;
-          this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: hoi > 0 ? `+${hoi} ❤` : 'Đầy máu', mau: '#35d96a', t: 0 });
+          n.hp += VP_HOI;
+          this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${VP_HOI} ❤`, mau: '#35d96a', t: 0 });
         }
+        this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
+        continue;
+      }
+      // Gà đi qua chỉ mổ ăn táo đỏ (táo xanh gà không ăn): hồi VP_HOI máu, không có trần
+      const ga = xanh ? undefined : this.ga.find((g) => !g.chet && Math.hypot(g.x - v.x, g.y - v.y) < VP_GA_BAN_KINH);
+      if (ga) {
+        ga.hp += VP_HOI;
+        ga.mo = MO_THOI_GIAN;
+        ga.lat = v.x < ga.x;
+        this.chu.push({ id: this.id++, x: ga.x, y: this.tamGa(ga).y - 60, text: `+${VP_HOI} ❤`, mau: '#ff6b6b', t: 0 });
         this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
         continue;
       }
@@ -717,12 +727,12 @@ export class Game {
     this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: Math.random() < 0.5 ? 'do' : 'xanh' });
   }
 
-  // Táo xanh: đầy mana mọi nhóm đòn (mở khoá luôn) và thể lực bay
+  // Táo xanh: cộng thêm VP_HOI% mana tối đa cho mọi nhóm đòn và thể lực bay (cộng dồn, không có trần), mở khoá luôn
   private hoiDayMana(n: NguoiChoi): void {
-    n.mana = MANA_TOI_DA.map((m) => m);
+    n.mana = n.mana.map((m, g) => m + (MANA_TOI_DA[g] * VP_HOI) / 100);
     n.khoaMana = n.khoaMana.map(() => 0);
     n.hoiMana = n.hoiMana.map(() => 0);
-    n.bayNl = BAY_NL_TOI_DA;
+    n.bayNl += (BAY_NL_TOI_DA * VP_HOI) / 100;
     n.bayKhoa = 0;
   }
 
@@ -733,7 +743,7 @@ export class Game {
       this.capNhatMay(n, dt);
       n.bayKhoa = Math.max(0, n.bayKhoa - dt);
       if (n.bay) n.bayNl = Math.max(0, n.bayNl - dt);
-      else n.bayNl = Math.min(BAY_NL_TOI_DA, n.bayNl + BAY_NL_HOI * dt);
+      else if (n.bayNl < BAY_NL_TOI_DA) n.bayNl = Math.min(BAY_NL_TOI_DA, n.bayNl + BAY_NL_HOI * dt);
 
       // Tâm ngắm cập nhật mỗi khung hình: cần ngắm phải đang gạt thì ngắm theo hướng gạt, không thì tự ngắm; ẩn khi đã ngã hoặc đang là mây
       const m = this.diemNham(p);
@@ -1585,7 +1595,7 @@ export class Game {
     this.congDiem(p, DIEM.boss * hs, tam.x, tam.y - 110, `+${DIEM.boss * hs} HẠ GÀ TƯỚNG!`);
     // Hạ được gà tướng thì nhân vật còn sống được hồi máu
     this.nguoi.forEach((m) => {
-      if (!m.het) m.hp = Math.min(HP_NV, m.hp + HOI_MAU_TUONG);
+      if (!m.het) m.hp += HOI_MAU_TUONG;
     });
   }
 
@@ -1862,7 +1872,7 @@ export class Game {
 
   /** 0..1: thể lực bay còn lại (thanh nhỏ trên đầu nhân vật) */
   nlBay(p: number): number {
-    return this.nguoi[p].bayNl / BAY_NL_TOI_DA;
+    return Math.min(1, this.nguoi[p].bayNl / BAY_NL_TOI_DA);
   }
 
   private datDichThe(p: number, x: number, y: number): void {
@@ -1955,7 +1965,7 @@ export class Game {
   }
 
   mauNv(p: number): number {
-    return Math.max(0, this.nguoi[p].hp) / HP_NV;
+    return Math.min(1, Math.max(0, this.nguoi[p].hp) / HP_NV);
   }
 
   // 0..1: mana còn lại của nhóm đòn đang dùng (Đấm luôn đầy)
@@ -1963,14 +1973,14 @@ export class Game {
     const n = this.nguoi[p];
     const g = n.nv.nhom;
     if (g === NHOM_MAY) return n.may.dang ? n.may.con / MAY_THOI_GIAN : 1 - n.may.hoi / MAY_HOI;
-    return g === 0 ? 1 : n.mana[g] / MANA_TOI_DA[g];
+    return g === 0 ? 1 : Math.min(1, n.mana[g] / MANA_TOI_DA[g]);
   }
 
   // 0..1: mana / thời gian của một nhóm đòn bất kỳ (vòng tiến độ trên nút chiêu thức)
   manaNhom(p: number, k: number): number {
     const n = this.nguoi[p];
     if (k === NHOM_MAY) return n.may.dang ? n.may.con / MAY_THOI_GIAN : 1 - n.may.hoi / MAY_HOI;
-    return k === 0 ? 1 : n.mana[k] / MANA_TOI_DA[k];
+    return k === 0 ? 1 : Math.min(1, n.mana[k] / MANA_TOI_DA[k]);
   }
 
   // Quả cầu mana chỉ có một, đổi màu theo nhóm đòn đang dùng
