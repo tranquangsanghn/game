@@ -1539,7 +1539,8 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   // Thanh máu trên đầu gà tướng (to hơn của nhân vật vì gà tướng cao gấp nhiều lần)
   thanhTuong(g: Ga): string {
-    return `translate(${g.x.toFixed(1)},${(g.y - 310).toFixed(1)}) scale(3)`;
+    // Gà mẹ đang bay (g.h) thì thanh máu nâng theo, vẫn nằm trên đầu
+    return `translate(${g.x.toFixed(1)},${(g.y - 310 - g.h * EP_GA).toFixed(1)}) scale(3)`;
   }
 
   // Biểu tượng nhóm đòn nằm ngay dưới chân nhân vật
