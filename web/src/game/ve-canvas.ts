@@ -1,6 +1,6 @@
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
-import { cellK, CELL_CHET_T, CELL_KHUNG, SO_CAP, SP_CELL, type Cell } from './cell';
+import { capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, SO_CAP, SP_CELL, type Cell } from './cell';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { bamDiem, doSau, doSauVuon, nhieu, TG } from './ban-do';
 
@@ -1324,11 +1324,11 @@ export class VeCanvas {
     ctx.rect(-35, 0, 70, 70);
     ctx.clip();
     if (c.trenDao) {
-      // Đang ở đảo: avatar là Cell đỏ (cấp cao nhất), đứng nhún nhảy
+      // Đang ở đảo: avatar là Cell của đảo đó, đứng nhún nhảy
       ctx.globalAlpha = 1;
       ctx.translate(0, 66);
       ctx.scale(1.3, 1.3);
-      this.sprite(ctx, SP_CELL, (SO_CAP - 1) * SP_CELL.cot + CELL_KHUNG.dung[Math.floor(c.t * 2.5) % CELL_KHUNG.dung.length], false, false);
+      this.sprite(ctx, SP_CELL, capCuaDao(c.daoHienTai) * SP_CELL.cot + CELL_KHUNG.dung[Math.floor(c.t * 2.5) % CELL_KHUNG.dung.length], false, false);
     } else {
       ctx.translate(0, 35);
       ctx.scale(70 / 110, 70 / 110);
@@ -1337,6 +1337,8 @@ export class VeCanvas {
     }
     ctx.restore();
 
+    // Ở đảo: không có số lượng gà, không có chiêu của gà (chỉ còn avatar Cell)
+    if (c.trenDao) return;
     ctx.font = `700 18px ${FONT}`;
     ctx.fillStyle = '#ffd27a';
     ctx.fillText('Gà con', c.GIUA + 175, -42);

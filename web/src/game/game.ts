@@ -1811,6 +1811,13 @@ export class Game {
   }
 
   // Góc rung của quả trứng sắp nở
+  /** Đảo gần nhân vật còn sống nhất (trung điểm); avatar trên thanh đen là Cell của đảo này khi `trenDao` */
+  get daoHienTai(): number {
+    const song = this.nguoi.filter((n) => !n.vang && !n.het);
+    if (!song.length) return 0;
+    return daoCua(song.reduce((t, n) => t + n.x, 0) / song.length, song.reduce((t, n) => t + n.y, 0) / song.length);
+  }
+
   /** Nhân vật còn sống nào cũng đang ngoài vườn gà (ở đảo / trên biển): hiệu ứng của vườn gà tắt, avatar trên thanh đen là Cell đỏ */
   get trenDao(): boolean {
     if (banDoHt !== 'sa') return false;
