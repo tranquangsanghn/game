@@ -115,6 +115,9 @@ const C_NONG = [96, 206, 236];
 const C_SAU = [40, 122, 214];
 const CO_LAP = 16; // pattern 16×16 ô ngẫu nhiên rồi lặp: một fillRect, không lộ đường nối
 
+/** Chế độ thử nhẹ (mở game với ?nhe=1): nền đảo phẳng, không trang trí đảo, Cell / bánh vẽ tối giản, không chưởng tiệc */
+const NHE = typeof location !== 'undefined' && new URLSearchParams(location.search).has('nhe');
+
 export class VeCanvas {
   private mauCo: CanvasPattern | null = null;
   /** Đảo sa mạc: mảnh nền đã dựng (khoá "i,j"), ảnh toàn map độ phân giải thấp lót trước khi mảnh dựng xong, điểm ảnh ô cát */
@@ -521,6 +524,12 @@ export class VeCanvas {
     const trongVuon =
       -cam.x / cam.k - 40 >= 0 && -cam.y / cam.k - 40 >= 0 && (c.W - cam.x) / cam.k + 40 <= c.MAP && (c.H - cam.y) / cam.k + 40 <= c.MAP;
     if (c.banDoVan !== 'sa' || trongVuon) return;
+    if (NHE) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = '#e8b86a';
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      return;
+    }
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
     ctx.beginPath();
     ctx.rect(0, 0, c.W, c.H);
@@ -678,7 +687,7 @@ export class VeCanvas {
     // Gà dưới đất + nhân vật, xếp theo y
     for (const o of c.xep) {
       if (o.loai === 'ga') this.veGa(ctx, c, o.ga);
-      else if (o.loai === 'td') this.veTrangTri(ctx, o.td, c.t, !!o.td.sa);
+      else if (o.loai === 'td') { if (!(NHE && o.td.sa)) this.veTrangTri(ctx, o.td, c.t, !!o.td.sa); }
       else if (o.loai === 'cuu') this.veCuu(ctx, c, o.cu);
       else if (o.loai === 'cau') this.veCau(ctx, c, o.cau);
       else if (o.loai === 'cell') this.veCell(ctx, c, o.ce);
@@ -690,7 +699,7 @@ export class VeCanvas {
     this.veMbDem(ctx, c);
 
     // Kamehameha của Cell bắn vào bánh sinh nhật
-    for (const q of c.chuongTiecView) this.veChuongTiec(ctx, q);
+    if (!NHE) for (const q of c.chuongTiecView) this.veChuongTiec(ctx, q);
 
     for (let p = 0; p < c.nguoi.length; p++) this.veThanhTrenDau(ctx, c, p);
     for (const g of c.tuongView) this.veMauTuong(ctx, c, g);
@@ -1099,7 +1108,7 @@ export class VeCanvas {
     const tcc = ce.tiec ? c.tiecCua(ce) : undefined;
     const tiec = !!tcc?.on && !ce.chet;
     // Cấp cao nhất: quầng sáng đỏ cam bằng gradient (không dùng shadowBlur: sprite phóng rất to nên làm mờ cực chậm)
-    if (ce.cap === SO_CAP - 1 && !ce.chet) {
+    if (!NHE && ce.cap === SO_CAP - 1 && !ce.chet) {
       const g = ctx.createRadialGradient(0, -32, 2, 0, -32, 36);
       g.addColorStop(0, `rgba(255,${150 + Math.round(60 * Math.sin(c.t * 6))},40,0.5)`);
       g.addColorStop(1, 'rgba(255,120,30,0)');
@@ -1118,7 +1127,7 @@ export class VeCanvas {
       }
       this.sprite(ctx, SP_CELL_TIEC, ce.cap * SP_CELL_TIEC.cot + kt, ce.lat, false);
     } else this.sprite(ctx, SP_CELL, ce.cap * SP_CELL.cot + c.cellKhung(ce), ce.lat, false);
-    if (tiec) {
+    if (tiec && !NHE) {
       ctx.shadowBlur = 0;
       ctx.font = `bold 9px ${FONT}`;
       ctx.textAlign = 'center';
@@ -1136,6 +1145,7 @@ export class VeCanvas {
     ctx.save();
     ctx.translate(tc.x, tc.y);
     // Quầng sáng dưới đáy
+    if (!NHE) {
     ctx.save();
     ctx.scale(1, 0.35);
     const R = 330 * BANH_TO;
@@ -1147,6 +1157,7 @@ export class VeCanvas {
     ctx.arc(0, 0, R, 0, TAU);
     ctx.fill();
     ctx.restore();
+    }
     ctx.save();
     ctx.scale(BANH_TO, BANH_TO);
     this.sprite(ctx, SP_BANH, Math.floor(c.t * BANH_FPS) % BANH_KHUNG, false, true);
