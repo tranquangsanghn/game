@@ -83,6 +83,8 @@ export interface NguoiChoi {
   khien: number; khienCon: number; thuongLuc: number;
   nhin: { x: number; y: number }; nham: { x: number; y: number } | null; ngam: { x: number; y: number } | null; cuaCan: boolean;
   may: { dang: boolean; con: number; hoi: number };
+  /** Sức mạnh: hệ số nhân sát thương mọi đòn đánh gà (mặc định 1; ăn gà mẹ socola được cộng thêm) */
+  suc: number;
 }
 type VatXep =
   | { loai: 'ga'; y: number; ga: Ga }
@@ -255,6 +257,9 @@ const VP_HOI = 100;
 // Táo xanh hồi VP_MANA mana (có trần MANA_TOI_DA)
 const VP_MANA = 30;
 const VP_BAN_KINH = 90;
+/** Gà mẹ đang hoá socola: nhân vật chạm vào (trong bán kính này × độ to) là ăn, nhận ĂN_TUONG_TI_LE máu hiện có và sức mạnh của nó */
+const AN_TUONG_BAN_KINH = 150;
+const AN_TUONG_TI_LE = 0.3;
 const VP_GA_BAN_KINH = 60;
 const VP_TON_TAI = 45;
 // Hai thanh đen hai bên map (chứa chiêu thức và máu của Mabu / Zinbu) rộng SIDE; nửa vòng tròn chứa nhân vật nhô vào map, bán kính R_NV = 2/3 bảng cũ
@@ -1020,7 +1025,8 @@ export class Game {
   // Gà con nở từ trứng đỏ đang hoá socola: nhân vật chạm vào là ăn (nhận như thanh socola), con gà biến mất và tính như hạ gà
   private anGaSocola(): void {
     for (const g of this.ga) {
-      if (g.chet || g.loai === 'boss' || (g.socola ?? 0) <= 0) continue;
+      if (g.chet || (g.socola ?? 0) <= 0) continue;
+      if (g.loai === 'boss') { this.anTuongSocola(g); continue; }
       const p = this.nguoi.findIndex((m) => !m.het && !m.nv.laMay && Math.hypot(m.x - g.x, m.y - g.y) < VP_BAN_KINH);
       if (p < 0) continue;
       this.anSocola(this.nguoi[p]);
@@ -1036,6 +1042,22 @@ export class Game {
       const diem = DIEM[g.loai] * (g.suc ?? 1) * hs;
       this.congDiem(p, diem, tam.x, tam.y - 30, `🍫 +${diem}${hs > 1 ? ` x${hs}` : ''}`);
     }
+  }
+
+  // Gà mẹ (gốc hoặc phụ) đang hoá socola: nhân vật chạm vào là ăn luôn, nhận 30% máu hiện có và 30% sức mạnh của nó; gà mẹ chết như bị hạ
+  private anTuongSocola(g: Ga): void {
+    const bk = AN_TUONG_BAN_KINH * (g.to ?? 1);
+    const p = this.nguoi.findIndex((m) => !m.het && !m.vang && !m.nv.laMay && Math.hypot(m.x - g.x, m.y - g.y) < bk);
+    if (p < 0) return;
+    const n = this.nguoi[p];
+    const mau = Math.max(1, Math.round(Math.max(0, g.hp) * AN_TUONG_TI_LE));
+    const suc = Math.round(AN_TUONG_TI_LE * heSoLan(g) * (g.suc ?? 1) * 100) / 100;
+    this.hoiMau(n, mau);
+    n.suc = Math.round((n.suc + suc) * 100) / 100;
+    this.am.phat('anTao');
+    this.chu.push({ id: this.id++, x: n.x, y: n.y - 280, text: `🍫 ĂN GÀ MẸ! +${mau} ❤ SỨC MẠNH x${n.suc}`, mau: '#c98a4b', t: 0 });
+    g.hp = 0;
+    this.trungTuong(g, p);
   }
 
   private themVatPham(x: number, y: number, loai: 'do' | 'xanh' = Math.random() < 0.5 ? 'do' : 'xanh'): void {
@@ -2319,6 +2341,8 @@ export class Game {
 
   // kieu = nhóm đòn (0 Đấm · 1 Đá · 2 Chiêu đặc biệt; bỏ trống cho mây / socola). Trả về true nếu đòn thật sự trúng (không né / miss / phản)
   private trungGa(g: Ga, p: number, sat: number, kieu?: number): boolean {
+    // Sức mạnh nhân vật (ăn gà mẹ socola) nhân sát thương mọi đòn
+    sat *= this.nguoi[p]?.suc ?? 1;
     if (g.loai === 'boss' && g.mau) {
       const n = this.nguoi[p];
       const t = this.tamGa(g);
@@ -3147,7 +3171,7 @@ export class Game {
       hp: mot && p !== co ? 0 : HP_KHOI_DAU, het: mot && p !== co, diem: 0, combo: 0, tamX: W_MAC_DINH / 2, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
       x: MAP / 2 + (mot ? 0 : p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
       nv: this.taoNhanVat(p), bay: null, mana: MANA_BAN_DAU, bayKhoa: 0, khien: 0, khienCon: 0, thuongLuc: -999,
-      nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, ngam: null, cuaCan: false, may: { dang: false, con: 0, hoi: 0 },
+      nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, ngam: null, cuaCan: false, may: { dang: false, con: 0, hoi: 0 }, suc: 1,
     }));
   }
 
