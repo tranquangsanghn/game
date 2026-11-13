@@ -1069,9 +1069,13 @@ export class VeCanvas {
     // Dự tiệc: ngồi (hơi thấp xuống), bay nốt nhạc ♪ trên đầu
     const tcc = ce.tiec ? c.tiecCua(ce) : undefined;
     const tiec = !!tcc?.on && !ce.chet;
+    // Cấp cao nhất: quầng sáng đỏ cam bằng gradient (không dùng shadowBlur: sprite phóng rất to nên làm mờ cực chậm)
     if (ce.cap === SO_CAP - 1 && !ce.chet) {
-      ctx.shadowColor = `rgba(255,${150 + Math.round(60 * Math.sin(c.t * 6))},40,0.95)`;
-      ctx.shadowBlur = 18 * ctx.getTransform().a;
+      const g = ctx.createRadialGradient(0, -32, 4, 0, -32, 56);
+      g.addColorStop(0, `rgba(255,${150 + Math.round(60 * Math.sin(c.t * 6))},40,0.55)`);
+      g.addColorStop(1, 'rgba(255,120,30,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(-56, -88, 112, 112);
     }
     // Hàng của mỗi cấp trong atlas: đổi khung = cấp * số cột + khung
     // Đang vận nội công / phóng chưởng vào bánh: dùng atlas riêng (gồng, hào quang, phóng); hào quang đập nhẹ, thân rung khi gồng
