@@ -70,7 +70,7 @@ export interface TrungGa {
 interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn +SOCOLA_HOI_MAU máu */
-export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola'; }
+export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; }
 interface Chu { id: number; x: number; y: number; text: string; mau: string; t: number; }
 interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay: number; vxoay: number; t: number; mau: string; }
 /** chay = cháy nổ (lửa + tia lửa); co = hệ số kích thước */
@@ -216,7 +216,11 @@ const SAT_GA: Record<string, number> = { hen: 32, rooster: 48, flyer: 60, boss: 
 const CHAM_GA: Record<string, number> = { hen: 70, rooster: 70, flyer: 70, boss: 220 };
 const HOI_DANH_GA: Record<string, number> = { hen: 1.2, rooster: 0.8, flyer: 1.5, boss: 2 };
 // Gà tướng hồi sinh tối đa TUONG_HOI_SINH lần; mỗi lần hồi sinh hệ số sát thương cộng thêm TUONG_TANG_SAT (1 → 1,5 → 2)
-const TUONG_HOI_SINH = 2;
+const TUONG_HOI_SINH = 0;
+// Vua gà (gà mẹ gốc) có HP_VUA máu, không hồi sinh; vương miện đính ngọc rồng 1 sao, rơi xuống đất khi nó chết
+const HP_VUA = 200;
+const NGOC_BAN_KINH = 110;
+const SP_NGOC: KhungSprite = { atlas: 'assets/game/ngoc_rong.png', atlasW: 1792, atlasH: 256, w: 256, h: 256, cot: 7, neoX: 128, neoY: 128 };
 const TUONG_TANG_SAT = 0.5;
 // Gà mẹ không còn né ngẫu nhiên: cứ THE_CHU_KY giây vào "thế phòng thủ" THE_KEO_DAI giây (cộng THE_TANG mỗi lần hồi sinh), trong thế né 100% mọi đòn (hiện chữ "NÉ!", có quầng xanh bao quanh), ngoài thế thì không né đòn nào
 const THE_CHU_KY = 6;
@@ -581,7 +585,7 @@ const tlGa = (g: { loai: LoaiGa; to?: number }) => TL_GA[g.loai] * (g.to ?? 1);
 // Gà mẹ phụ = gà tướng không phải gà mẹ gốc
 const laMePhu = (g: Ga) => g.loai === 'boss' && !g.goc;
 // Máu tối đa: vua gà (gà mẹ gốc) mỗi lần hồi sinh thêm HP_GA (100 → 200 → 300), gà khác HP_GA (gà nở từ trứng đỏ × suc)
-const hpToiDa = (g: Ga) => (g.goc ? HP_GA * (1 + (g.lan ?? 0)) : HP_GA * (g.db ? g.suc ?? 1 : 1));
+const hpToiDa = (g: Ga) => (g.goc ? HP_VUA : HP_GA * (g.db ? g.suc ?? 1 : 1));
 // Hệ số sát thương của gà tướng theo lần hồi sinh; sát thương gốc của mọi con gà
 const heSoLan = (g: Ga) => 1 + TUONG_TANG_SAT * (g.lan ?? 0);
 const satGa = (g: Ga) => SAT_GA[g.loai] * (g.loai === 'boss' ? heSoLan(g) : 1) * (g.suc ?? 1);
@@ -713,6 +717,7 @@ export class Game {
   // Quả cầu trốn giữa map (cauTron) và các quả nằm trong khung nhìn (cauView, cũng được xếp theo y trong xep)
   cauTron: CauTron[] = taoCauTron();
   readonly SP_CAU = SP_CAU;
+  readonly SP_NGOC = SP_NGOC;
   cauView: CauTron[] = [];
   // Giây hit-stop còn lại và biên độ rung màn hình
   private dungHinh = 0;
@@ -812,7 +817,7 @@ export class Game {
         }
       };
       this.ctx = this.canvasEl.getContext('2d');
-      this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas);
+      this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas);
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG, LOC_SOCOLA, LOC_SOCOLA_HONG]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO, LOC_SOCOLA, ...LOC_PHU]);
       vua();
@@ -1112,7 +1117,18 @@ export class Game {
     const conLai: VatPham[] = [];
     for (const v of this.vatPham) {
       v.t += dt;
-      if (v.t >= VP_TON_TAI) continue;
+      const ngoc = v.loai === 'ngoc';
+      if (!ngoc && v.t >= VP_TON_TAI) continue;
+      if (ngoc) {
+        const m = this.nguoi.find((q) => !this.khuat(q) && !q.bay && Math.hypot(q.x - v.x, q.y - v.y) < NGOC_BAN_KINH);
+        if (m) {
+          this.am.phat('anTao');
+          this.chu.push({ id: this.id++, x: m.x, y: m.y - 220, text: '⭐ NGỌC RỒNG 1 SAO!', mau: '#ffb347', t: 0 });
+          this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'chay', co: 1.2 });
+          this.chuongLenTroi(this.nguoi.indexOf(m));
+        } else conLai.push(v);
+        continue;
+      }
       const xanh = v.loai === 'xanh';
       const n = this.nguoi.find((m) => !this.khuat(m) && Math.hypot(m.x - v.x, m.y - v.y) < VP_BAN_KINH);
       if (n) {
@@ -1981,7 +1997,7 @@ export class Game {
   private taoTuong(x: number, y: number, lat: boolean, lan: number, goc: boolean, kieuPhu?: number): Ga {
     return {
       id: this.id++, loai: 'boss', x, y, h: 0, h0: 0, vx: 0, vy: 0, phase: 0, doiHuong: 0,
-      chet: false, tChet: 0, lat, hp: goc ? HP_GA * (1 + lan) : HP_GA, nhay: 0, de: 0,
+      chet: false, tChet: 0, lat, hp: goc ? HP_VUA : HP_GA, nhay: 0, de: 0,
       lan, chieu: null, hoiLao: LAO_HOI, hoiBay: BAY_HOI, mau: null, conMau: 0, hoiMau: MAU_CHU_KY, luotMau: 0, dot: 0,
       goc, socola: 0,
       ...(goc ? {} : { daDe: true, choChieu: 1, kieuPhu, hoiLao: 3, hoiBay: 3 }),
@@ -2172,7 +2188,7 @@ export class Game {
     if (!muc || gan > TAM_LAO) {
       let xa = TAM_NGUI_TAO;
       for (const v of this.vatPham) {
-        if (v.loai === 'xanh') continue;
+        if (v.loai === 'xanh' || v.loai === 'ngoc') continue;
         const d = Math.hypot(v.x - g.x, v.y - g.y);
         if (d < xa) { xa = d; muc = v; }
       }
@@ -2723,6 +2739,9 @@ export class Game {
     this.vet.push({ id: this.id++, x: g.x - 90, y: tam.y + 40, t: 0, loai: 'chay', co: 1.4 });
     this.vet.push({ id: this.id++, x: g.x + 90, y: tam.y - 40, t: 0, loai: 'chay', co: 1.4 });
     if (g.goc) {
+      // Ngọc rồng 1 sao trên vương miện rơi xuống đất
+      this.vatPham.push({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'ngoc' });
+      this.chu.push({ id: this.id++, x: g.x, y: tam.y - 160, text: '⭐ NGỌC RỒNG RƠI!', mau: '#ffb347', t: 0 });
       // Gà mẹ gốc: chỉ hồi sinh sau khi chết, chờ đủ CHO_TUONG giây kể từ lúc chết
       this.henTuong = CHO_TUONG;
       this.congDiem(p, DIEM.boss * hs, tam.x, tam.y - 110, `+${DIEM.boss * hs} HẠ GÀ TƯỚNG!`);

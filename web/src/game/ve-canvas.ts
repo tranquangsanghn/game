@@ -606,7 +606,8 @@ export class VeCanvas {
     ctx.lineCap = 'butt';
 
     for (const v of c.vatPhamView) {
-      if (v.loai === 'socola') this.veSocola(ctx, v);
+      if (v.loai === 'ngoc') this.veNgoc(ctx, c.SP_NGOC, v.x, v.y, v.t, 0.55);
+      else if (v.loai === 'socola') this.veSocola(ctx, v);
       else this.veVatPham(ctx, v);
     }
 
@@ -763,7 +764,7 @@ export class VeCanvas {
   }
 
   // Quả táo: đỏ hồi máu, xanh hồi mana; nảy nhẹ trên đất, có vầng sáng cùng màu
-  private veVatPham(ctx: CanvasRenderingContext2D, v: { x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' }): void {
+  private veVatPham(ctx: CanvasRenderingContext2D, v: { x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc' }): void {
     const xanh = v.loai === 'xanh';
     const mau = xanh ? '#2fa8ff' : '#ff3b3b';
     ctx.save();
@@ -993,7 +994,19 @@ export class VeCanvas {
       ctx.textAlign = 'center';
       ctx.fillText('👑', t.x, t.y - 28);
       ctx.restore();
+      // Ngọc rồng 1 sao đính trên vương miện
+      this.veNgoc(ctx, c.SP_NGOC, t.x, t.y - 88, c.tGame, 0.16);
     }
+  }
+
+  /** Ngọc rồng 1 sao (khung 0 của atlas), phát sáng vàng cam, nhấp nhô nhẹ; (x, y) là tâm viên ngọc, k = tỉ lệ */
+  private veNgoc(ctx: CanvasRenderingContext2D, sp: KhungSprite, x: number, y: number, t: number, k: number): void {
+    ctx.save();
+    ctx.translate(x, y - (k > 0.3 ? 40 : 0) + 4 * Math.sin(t * 3));
+    ctx.scale(k, k);
+    this.sang(ctx, '#ffb347');
+    this.sprite(ctx, sp, 0, false, true);
+    ctx.restore();
   }
 
   // Thanh máu trên đầu nhân vật; dạng mây thì không có
