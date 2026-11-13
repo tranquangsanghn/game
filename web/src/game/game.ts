@@ -67,7 +67,7 @@ export interface TrungGa {
   ap?: number;
 }
 /** soc = chưởng biến socola của Zinbu · troi = chưởng tự bắn lên trời (chỉ để đẹp, không gây sát thương) */
-interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** bắn ra từ trên máy bay (không tự trúng máy bay ngay quanh chỗ bắn) */ mb?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
+interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn hồi SOCOLA_GA_TI_LE máu tối đa */
 export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; }
@@ -129,8 +129,6 @@ const MB_TOC = 850;
 const MB_LUNG = 0.4;
 const MB_HOI = 15;
 const MB_NO_HINH = 1.3;
-/** Chưởng bắn ra từ máy bay không tự trúng máy bay trong quãng này (tính từ chỗ bắn) */
-const MB_MIEN = 220;
 const MB_LE = 260;
 const taoMayBay = (x: number, y: number): MayBay => ({ x, y, pha: 'dau', t: 0, z: 0, ngoi: [], lat: false, chay: false, goc: { x, y } });
 
@@ -2595,13 +2593,13 @@ export class Game {
   private ban(p: number, x: number, y: number): void {
     const n = this.nguoi[p];
     if (n.hoiChieu > 0 || n.nv.khoa || n.het || this.trongCau(p)) return;
-    // Trên máy bay chỉ bắn được chưởng (Chiêu đặc biệt)
+    // Trên máy bay: đấm / đá bình thường; bắn chưởng (Chiêu đặc biệt / socola) thì máy bay nổ; không biến mây
     const tren = this.trongMb(p);
-    if (tren && n.nv.nhom !== 2) return;
     const nhom = n.nv.nhom;
     // Nhóm 3: Mabu biến mây, Zinbu biến socola
     const nhomMay = !!n.nv.sp.nhomDon[nhom]?.may;
     const soc = nhom === NHOM_MAY && !nhomMay;
+    if (tren && nhomMay) return;
     const chieu = nhom === 2 || soc;
     // Chiêu đặc biệt (chưởng) tốn MANA_CHUONG, Biến mây / socola tốn MANA_DAC_BIET; Đấm / Đá miễn phí (còn hồi mana khi trúng)
     const phi = nhom === 2 ? MANA_CHUONG : nhom === NHOM_MAY ? MANA_DAC_BIET : 0;
@@ -2647,8 +2645,9 @@ export class Game {
       const x1 = x + tanX + dx;
       const y1 = y + tanY + Math.abs(dx) * 0.3;
       const T = Math.hypot(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
-      this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0, sat: soc ? SAT_SOCOLA : SAT_THUONG[nhom][p], soc: soc && i === 0, nhom, an, mb: tren || undefined });
+      this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0, sat: soc ? SAT_SOCOLA : SAT_THUONG[nhom][p], soc: soc && i === 0, nhom, an });
     });
+    if (tren && chieu) this.trungMb();
   }
 
   // Thanh đen bên trái (Mabu) / bên phải (Zinbu) map: x giữa thanh, và tâm nửa vòng tròn chứa nhân vật (nằm đúng ở góc dưới map như cũ)
@@ -3025,7 +3024,7 @@ export class Game {
     }
   }
 
-  // Chưởng (Chiêu đặc biệt / socola, không tính chưởng tự bắn lên trời) bay qua thân máy bay thì máy bay trúng; chưởng bắn từ chính máy bay chỉ tính sau khi bay khỏi chỗ bắn
+  // Chưởng (Chiêu đặc biệt / socola, không tính chưởng tự bắn lên trời) bay qua thân máy bay thì máy bay trúng (người ngồi trên máy bay bắn chưởng thì máy bay nổ ngay, xem ban())
   private danTrungMb(d: Dan, t0: number): void {
     const m = this.mayBay;
     if (m.pha === 'trung' || m.pha === 'no') return;
@@ -3036,7 +3035,6 @@ export class Game {
     for (let i = 0; i <= buoc; i++) {
       const k = k0 + ((k1 - k0) * i) / buoc;
       const px = d.x0 + dx * k, py = d.y0 + dy * k;
-      if (d.mb && Math.hypot(px - d.x0, py - d.y0) < MB_MIEN) continue;
       if (Math.abs(px - c.x) < MB_TRUNG_BK && Math.abs(py - c.y) < MB_TRUNG_BK * 0.75) {
         this.trungMb();
         return;
@@ -3504,8 +3502,8 @@ export class Game {
   private dungChieu(p: number, k: number): void {
     const n = this.nguoi[p];
     if (n.het || n.may.dang || this.trongCau(p)) return;
-    // Trên máy bay nút nào cũng bắn chưởng
-    if (this.trongMb(p)) k = 2;
+    // Trên máy bay không biến mây: dùng đấm thay
+    if (this.trongMb(p) && k === NHOM_MAY && !!n.nv.sp.nhomDon[k]?.may) k = 0;
     // Chiêu riêng (mây / socola) hết mana hoặc đang hồi thì dùng chiêu kế tiếp còn dùng được: chưởng → đá
     if (k === NHOM_MAY && this.hetMana(p, k)) k = [2, 1].find((j) => !this.hetMana(p, j)) ?? 1;
     if (this.hetMana(p, k) || n.nv.sp.nhomDon.length <= k) return;
