@@ -27,6 +27,8 @@ export interface Ga {
   mau?: MauTuong | null; conMau?: number; hoiMau?: number; luotMau?: number; dot?: number;
   // Gà mẹ GỐC (đánh dấu khác biệt): chỉ con này đẻ trứng, chỉ sống sót chứ không đi đánh; gà mẹ phụ (nở từ trứng đỏ) mới đi đánh. deDb = đếm ngược tới quả trứng đỏ kế tiếp
   goc?: boolean;
+  // Vua gà (gà mẹ gốc) dưới TRON_MAU máu: quãng chạy trốn nhanh còn lại (px thật) và hướng; daTron = đã dùng lần trốn chạy duy nhất của mạng này
+  tron?: number; tronX?: number; tronY?: number; daTron?: boolean;
   // Gà mẹ đang bị biến thành socola: số giây còn lại (đứng yên, không né, không đánh)
   socola?: number; comboSoc?: boolean;
   // Gà con nở từ trứng đỏ: sức mạnh (nhân máu và sát thương) và độ to (nhân kích thước)
@@ -208,6 +210,10 @@ const THE_KEO_DAI = 2;
 const THE_TANG = 0.5;
 // Chiêu Gọi gà con (mọi gà mẹ): máu dưới GOI_MAU (40%) thì gọi GOI_DAN (cộng thêm 1 con mỗi lần hồi sinh) gà con ra bảo vệ, hồi GOI_HOI giây
 const GOI_MAU = 0.4;
+// Vua gà (gà mẹ gốc) dưới TRON_MAU máu: bỏ canh trứng đỏ / đi ăn socola, chỉ chạy trốn nhân vật;
+// mỗi mạng được đúng 1 lần chạy trốn nhanh: tốc độ gấp TRON_TOC lần tốc độ chạy trốn thường (TOC_TRON), quãng TRON_QUANG = 2 × quãng bay của Zinbu (BAY_CAN)
+const TRON_MAU = 0.2;
+const TRON_TOC = 4;
 const GOI_HOI = 30;
 const GOI_DAN: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'rooster', 'flyer'];
 const GOI_HIEN = 1.2;
@@ -287,6 +293,7 @@ const MANA_TOI_THIEU = 15;
 const BAY_KHOA = 2;
 const VUNG_BAY_CAN = 0.6; // cần trái phải gạt mạnh mới bay (tránh bay nhầm)
 const BAY_CAN = 600; // mỗi lần gạt cần trái bay một đoạn (xa hơn BAY_KHI_XA)
+const TRON_QUANG = 2 * BAY_CAN;
 const VUNG_CHET_CAN = 0.25; // cần analog gạt dưới mức này coi như nằm yên
 const TOC_DO_DAN = 2400;
 // Chiêu Biến mây (riêng Mabu, nhóm đòn 3): mây to gấp 2, quét trúng mọi con gà nó đi qua. Hiệu lực MAY_THOI_GIAN giây, sau đó chờ MAY_HOI giây mới dùng lại.
@@ -1284,6 +1291,11 @@ export class Game {
       g.x += g.vx * dt * HE_SO_TOC_GA;
       g.y += g.vy * dt * HE_SO_TOC_GA;
       const cham = giuTrongMap(g, leCuaGa(g));
+      if (g.tron) {
+        // Vua gà đang chạy trốn nhanh: trừ quãng đã chạy, chạm mép map thì thôi
+        g.tron = Math.max(0, g.tron - Math.hypot(g.vx, g.vy) * dt * HE_SO_TOC_GA);
+        if (cham.cx || cham.cy) g.tron = 0;
+      }
       if (g.chieu) {
         // Đang lao / bay mà chạm mép map thì dừng lại nghỉ, không bật lại
         if (g.chieu.pha === 'chay' && (cham.cx || cham.cy)) this.nghiChieu(g, g.chieu);
@@ -1928,8 +1940,49 @@ export class Game {
     return kq;
   }
 
+  // Vua gà dưới TRON_MAU máu: chỉ chạy trốn nhân vật gần nhất (trong TAM_NHIN_TUONG), mỗi mạng 1 lần chạy trốn nhanh. Trả về true nếu đã điều khiển.
+  private tronNhanh(g: Ga): boolean {
+    if (g.hp >= HP_GA * TRON_MAU) {
+      g.tron = 0;
+      return false;
+    }
+    if (g.tron) {
+      g.vx = (g.tronX ?? 0) * TOC_TRON * TRON_TOC;
+      g.vy = (g.tronY ?? 0) * TOC_TRON * TRON_TOC;
+      g.lat = g.vx < 0;
+      return true;
+    }
+    let muc: NguoiChoi | null = null;
+    let gan = TAM_NHIN_TUONG;
+    for (const n of this.nguoi) {
+      if (n.het || n.nv.laMay) continue;
+      const d = Math.hypot(n.x - g.x, n.y - g.y);
+      if (d < gan) { gan = d; muc = n; }
+    }
+    if (!muc) return false;
+    const d = Math.hypot(g.x - muc.x, g.y - muc.y) || 1;
+    const ux = (g.x - muc.x) / d;
+    const uy = (g.y - muc.y) / d;
+    let toc = TOC_TRON;
+    if (!g.daTron) {
+      // Lần chạy trốn nhanh duy nhất của mạng này: khoá hướng ra xa nhân vật gần nhất
+      g.daTron = true;
+      g.tron = TRON_QUANG;
+      g.tronX = ux;
+      g.tronY = uy;
+      toc *= TRON_TOC;
+      this.chu.push({ id: this.id++, x: g.x, y: g.y - 380, text: '🏃 VUA GÀ TRỐN CHẠY!', mau: '#ffd23c', t: 0 });
+    }
+    g.vx = ux * toc;
+    g.vy = uy * toc;
+    g.lat = g.vx < 0;
+    g.doiHuong = 0;
+    return true;
+  }
+
   // Gà mẹ gốc không đi đánh: có trứng đỏ đang ấp thì canh quanh quả trứng, không thì chạy trốn nhân vật gần nhất, không ai tới gần thì đi loanh quanh
   private dieuTuongGoc(g: Ga, dt: number): void {
+    if (this.tronNhanh(g)) return;
     const e = this.trungDe.find((t) => t.db && t.me === g.id);
     if (e) {
       const d = Math.hypot(e.x - g.x, e.y - g.y);
