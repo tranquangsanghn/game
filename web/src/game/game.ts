@@ -169,7 +169,7 @@ const GOI_DAN: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'roos
 const GOI_HIEN = 1.2;
 // Gà mẹ phụ chuyên một kiểu (xoay vòng theo thứ tự sinh), mỗi kiểu một màu riêng (hue-rotate trên atlas, nhuộm sẵn) và màu thanh máu
 const KIEU_PHU = 5;
-const MAU_PHU = ['#3fa7ff', '#3ddc84', '#b46bff', '#ff6bd6', '#2fe0d0'];
+const MAU_PHU = ['#3fa7ff', '#ffd23f', '#b46bff', '#ff6bd6', '#ff3b30'];
 // Nhuộm cả thân theo màu của con đó, chỉ giữ đầu trắng, mỏ và chân (tiền tố "tint:" được ve-canvas.ts nhận ra)
 const LOC_PHU = MAU_PHU.map((m) => `tint:${m}`);
 // Hồi chiêu riêng của kiểu chuyên: kiểu Lao hồi 8s, kiểu Bay hồi 12s (gà mẹ khác theo LAO_HOI / BAY_HOI)
@@ -573,7 +573,7 @@ export class Game {
       };
       this.ctx = this.canvasEl.getContext('2d');
       this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png');
-      for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG]);
+      for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG, LOC_SOCOLA]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO, LOC_SOCOLA, ...LOC_PHU]);
       vua();
       const quanSat = new ResizeObserver(vua);
@@ -820,6 +820,7 @@ export class Game {
     this.gaDanhNguoi();
     this.capNhatDan(dt);
     this.capNhatVatPham(dt);
+    this.anGaSocola();
     this.capNhatHieuUng(dt, dtE);
     if (this.man === 'play') this.kiemTraThang();
   }
@@ -834,12 +835,7 @@ export class Game {
       const n = this.nguoi.find((m) => !m.het && !m.nv.laMay && Math.hypot(m.x - v.x, m.y - v.y) < VP_BAN_KINH);
       if (n) {
         if (v.loai === 'socola') {
-          // Socola: +200 máu và +200 mana (không trần), mở khoá bay, rồi tự bắn chưởng lên trời
-          n.hp += SOCOLA_HOI_MAU;
-          n.mana += SOCOLA_HOI_MANA;
-          n.bayKhoa = 0;
-          this.chu.push({ id: this.id++, x: n.x, y: n.y - 250, text: `🍫 +${SOCOLA_HOI_MAU} ❤ +${SOCOLA_HOI_MANA} mana`, mau: '#c98a4b', t: 0 });
-          this.chuongLenTroi(this.nguoi.indexOf(n));
+          this.anSocola(n);
         } else if (xanh) {
           this.hoiDayMana(n);
           this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${VP_HOI} mana`, mau: '#2fa8ff', t: 0 });
@@ -872,6 +868,36 @@ export class Game {
       conLai.push(v);
     }
     this.vatPham = conLai;
+  }
+
+  // Socola: +200 máu và +200 mana (không trần), mở khoá bay, rồi tự bắn chưởng lên trời
+  private anSocola(n: NguoiChoi): void {
+    n.hp += SOCOLA_HOI_MAU;
+    n.mana += SOCOLA_HOI_MANA;
+    n.bayKhoa = 0;
+    this.chu.push({ id: this.id++, x: n.x, y: n.y - 250, text: `🍫 +${SOCOLA_HOI_MAU} ❤ +${SOCOLA_HOI_MANA} mana`, mau: '#c98a4b', t: 0 });
+    this.chuongLenTroi(this.nguoi.indexOf(n));
+  }
+
+  // Gà con nở từ trứng đỏ đang hoá socola: nhân vật chạm vào là ăn (nhận như thanh socola), con gà biến mất và tính như hạ gà
+  private anGaSocola(): void {
+    for (const g of this.ga) {
+      if (g.chet || g.loai === 'boss' || (g.socola ?? 0) <= 0) continue;
+      const p = this.nguoi.findIndex((m) => !m.het && !m.nv.laMay && Math.hypot(m.x - g.x, m.y - g.y) < VP_BAN_KINH);
+      if (p < 0) continue;
+      this.anSocola(this.nguoi[p]);
+      const tam = this.tamGa(g);
+      g.hp = 0;
+      g.chet = true;
+      g.tChet = 1;
+      this.vet.push({ id: this.id++, x: g.x, y: tam.y, t: 0, loai: 'chay', co: 0.7 });
+      const n = this.nguoi[p];
+      n.combo++;
+      n.banTrung++;
+      const hs = this.heSo(p);
+      const diem = DIEM[g.loai] * (g.suc ?? 1) * hs;
+      this.congDiem(p, diem, tam.x, tam.y - 30, `🍫 +${diem}${hs > 1 ? ` x${hs}` : ''}`);
+    }
   }
 
   private themVatPham(x: number, y: number): void {
@@ -968,6 +994,18 @@ export class Game {
         g.tChet += dt;
         g.h = Math.max(0, g.h0 + 180 * g.tChet - 600 * g.tChet * g.tChet);
         if (g.tChet < (g.loai === 'boss' ? 2 : 1)) conLai.push(g);
+        continue;
+      }
+      // Gà con đang hoá socola: đứng yên, hết giờ thì tự hoá giải
+      if (g.loai !== 'boss' && (g.socola ?? 0) > 0) {
+        g.socola = (g.socola ?? 0) - dt;
+        g.vx = g.vy = 0;
+        g.nhay = Math.max(0, g.nhay - dt);
+        if (g.socola <= 0) {
+          g.socola = 0;
+          this.chu.push({ id: this.id++, x: g.x, y: this.tamGa(g).y - 60, text: 'HOÁ GIẢI!', mau: '#9be7ff', t: 0 });
+        }
+        conLai.push(g);
         continue;
       }
       g.phase += dt;
@@ -1144,6 +1182,17 @@ export class Game {
 
   // Gà con thành socola: chết ngay (biến mất, không rơi lông), để lại một thanh socola ăn được; tính điểm / combo như hạ gà
   private bienSocolaGa(g: Ga, p: number): void {
+    // Gà con nở từ trứng đỏ không chết ngay: chỉ mất máu (SAT_SOCOLA) rồi hoá socola SOCOLA_THOI_GIAN giây;
+    // nhân vật ăn trong lúc đó thì nhận socola, không ai ăn thì tự hoá giải (chỉ mất máu). Hết máu thì chết như thường.
+    if (g.db) {
+      this.trungGa(g, p, SAT_SOCOLA);
+      if (!g.chet && (g.socola ?? 0) <= 0) {
+        g.socola = SOCOLA_THOI_GIAN;
+        g.vx = g.vy = 0;
+        this.chu.push({ id: this.id++, x: g.x, y: this.tamGa(g).y - 60, text: '🍫 HOÁ SOCOLA!', mau: '#c98a4b', t: 0 });
+      }
+      return;
+    }
     const n = this.nguoi[p];
     const tam = this.tamGa(g);
     g.hp = 0;
@@ -2492,6 +2541,7 @@ export class Game {
       if (g.mau === 'vang') return LOC_VANG;
       if (g.mau === 'do') return LOC_DO;
     }
+    if ((g.socola ?? 0) > 0) return LOC_SOCOLA;
     if (g.nhay > 0) return MAU_SANG;
     return laMePhu(g) && g.kieuPhu !== undefined ? LOC_PHU[g.kieuPhu] : null;
   }
