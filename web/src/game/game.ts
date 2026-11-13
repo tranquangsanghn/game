@@ -210,6 +210,9 @@ const TAM_NHIN = TAM_DANH_XA * 1.5;
 const TAM_NHIN_TUONG = TAM_NHIN * 3;
 // Tầm gà con phát hiện và lao vào nhân vật = tầm đánh xa nhất (không đổi theo tầm nhìn)
 const TAM_LAO = TAM_DANH_XA;
+// Gà con ngửi thấy nhân vật trong TAM_NGUI_NV thì đi về phía nhân vật (xu hướng đuổi theo); ngửi thấy táo đỏ trong TAM_NGUI_TAO thì đi tới ăn
+const TAM_NGUI_NV = 1500;
+const TAM_NGUI_TAO = 500;
 // Tốc độ gà lao vào nhân vật (gà bay giữ nguyên tốc độ bay, chỉ đổi hướng)
 // Hệ số nhân tốc độ di chuyển thật của mọi loại gà (kể cả gà tướng): 1/4 tốc độ gốc ghi trong các hằng số
 const HE_SO_TOC_GA = 0.25;
@@ -1177,14 +1180,24 @@ export class Game {
   }
 
   // Gà tướng: đi về phía người gần nhất, tới gần thì dừng lại
-  // Gà thường: có nhân vật nằm trong tầm đánh xa nhất (TAM_LAO) thì lao vào nhân vật gần nhất. Trả về true nếu đang lao.
+  // Gà thường: có nhân vật trong tầm ngửi (TAM_NGUI_NV) thì đuổi theo nhân vật gần nhất; táo đỏ trong tầm ngửi thì đi ăn. Trả về true nếu đang lao.
   private gaLao(g: Ga, dt: number): boolean {
-    let muc: NguoiChoi | null = null;
-    let gan = TAM_LAO;
+    void dt;
+    let muc: { x: number; y: number } | null = null;
+    let gan = TAM_NGUI_NV;
     for (const n of this.nguoi) {
       if (n.het || n.nv.laMay) continue;
       const d = Math.hypot(n.x - g.x, n.y - g.y);
       if (d < gan) { gan = d; muc = n; }
+    }
+    // Nhân vật chưa vào tầm đánh (TAM_LAO) mà có táo đỏ trong tầm ngửi TAM_NGUI_TAO thì đi tới táo trước
+    if (!muc || gan > TAM_LAO) {
+      let xa = TAM_NGUI_TAO;
+      for (const v of this.vatPham) {
+        if (v.loai === 'xanh') continue;
+        const d = Math.hypot(v.x - g.x, v.y - g.y);
+        if (d < xa) { xa = d; muc = v; }
+      }
     }
     if (!muc) return false;
     const dx = muc.x - g.x;
@@ -1938,6 +1951,11 @@ export class Game {
 
   mauNv(p: number): number {
     return Math.min(1, Math.max(0, this.nguoi[p].hp) / HP_NV);
+  }
+
+  /** Số mạng còn lại của gà mẹ (tổng TUONG_HOI_SINH + 1 mạng; đang chờ hồi sinh thì mạng vừa chết không tính) */
+  mangTuong(): number {
+    return Math.max(0, this.TUONG_HOI_SINH + 1 - this.lanTuong - (this.tuongSong ? 0 : 1));
   }
 
   // Vị trí điểm neo (chân) của sprite nhân vật trên map và hệ số phóng

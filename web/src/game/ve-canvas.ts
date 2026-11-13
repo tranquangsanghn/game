@@ -648,7 +648,24 @@ export class VeCanvas {
     ctx.font = `700 18px ${FONT}`;
     ctx.fillStyle = '#ffd27a';
     ctx.fillText('Gà mẹ', c.GIUA + 150, -42);
-    ctx.fillText(`hồi sinh ${c.lanTuong}/${c.TUONG_HOI_SINH}`, c.GIUA + 150, -20);
+    // Số mạng còn lại: các trái tim ngay dưới avatar gà mẹ (mạng đã mất thì mờ)
+    const tong = c.TUONG_HOI_SINH + 1;
+    const con = c.mangTuong();
+    ctx.save();
+    ctx.font = `700 22px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+    for (let i = 0; i < tong; i++) {
+      const x = c.GIUA + (i - (tong - 1) / 2) * 28;
+      ctx.globalAlpha = i < con ? 1 : 0.3;
+      ctx.strokeText('❤', x, c.R_TUONG + 20);
+      ctx.fillStyle = i < con ? '#ff3b3b' : '#888';
+      ctx.fillText('❤', x, c.R_TUONG + 20);
+    }
+    ctx.restore();
 
     for (const b of c.bangTuong()) {
       ctx.save();
