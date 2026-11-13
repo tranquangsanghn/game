@@ -70,7 +70,7 @@ export interface TrungGa {
 interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn hồi SOCOLA_GA_TI_LE máu tối đa */
-export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; }
+export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; }
 interface Chu { id: number; x: number; y: number; text: string; mau: string; t: number; }
 interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay: number; vxoay: number; t: number; mau: string; }
 /** chay = cháy nổ (lửa + tia lửa); co = hệ số kích thước */
@@ -433,12 +433,10 @@ const CHO_TUONG_DAU = 0;
 const CHO_TUONG = 10;
 const TOC_DO_TUONG = 60;
 // Gà mẹ gốc đẻ trứng: mỗi lượt 4 quả thường (2 gà trắng, 1 gà đỏ, 1 gà đen, DAN_TRUNG; +1 mỗi lần hồi sinh) rồi quả thứ 5 là trứng đỏ đặc biệt; trứng thường nở sau TRUNG_NO giây; khoảng cách giữa 2 lượt theo choDeTrung().
-// Số gà thường (demGaThuong, không tính gà mẹ phụ và gà / trứng của trứng đỏ) + trứng thường đang ấp đạt GA_TOI_DA thì không đẻ trứng thường nữa.
 const DAN_TRUNG: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'flyer'];
 const TRUNG_NO = 2;
 const TRUNG_CHO = 15;
-const GA_TOI_DA = 20;
-// Trứng đỏ đặc biệt (do gà mẹ GỐC đẻ: quả thứ 5 của mỗi lượt trứng, cứ TRUNG_CHO giây, không tính vào GA_TOI_DA): to gấp TRUNG_DB_TO lần quả thường, gà mẹ gốc canh quanh nó (TRUNG_DB_BAO_VE).
+// Trứng đỏ đặc biệt (do gà mẹ GỐC đẻ: quả thứ 5 của mỗi lượt trứng, cứ TRUNG_CHO giây): to gấp TRUNG_DB_TO lần quả thường, gà mẹ gốc canh quanh nó (TRUNG_DB_BAO_VE).
 // Trong thời gian ấp (apTrungDb) nở đều 4 gà con mạnh dần (GA_DB_SUC: sức mạnh nhân máu / sát thương, GA_DB_TO: độ to): gà con thường, x2 to gấp đôi, x3, x4; hết thời gian ấp thì nở ra một gà mẹ phụ (đi đánh thay gà mẹ gốc, không giới hạn số lượng).
 const TRUNG_DB_TO = 5;
 const TRUNG_DB_NO = 10;
@@ -474,7 +472,7 @@ const LOC_SOCOLA_HONG = 'brightness(0.6) sepia(1) saturate(8) hue-rotate(-62deg)
 /** Đòn ăn: Zinbu quất râu (antenna_whip), Mabu bắn chưởng (energy_ball); gà con trúng thì hoá socola, bị kéo về và nhân vật nhận AN_TI_LE máu (hiện có) của gà thành cả máu lẫn mana */
 const DON_AN: Record<string, string> = { Zinbu: 'antenna_whip', Mabu: 'energy_ball' };
 const AN_TI_LE = [0.03, 0.05]; // theo chỉ số nhân vật: Mabu 3%, Zinbu 5%
-const SOCOLA_GA_TI_LE = 0.02; // gà ăn socola hồi 2% máu tối đa của chính nó
+const SOCOLA_GA_TI_LE = 0.02; // gà ăn socola hồi 2% máu tối đa của con gà đã chết thành socola đó (VatPham.hpGa)
 const KEO_TOC = 1400;
 
 const TEN_DON: Record<string, string> = {
@@ -1005,11 +1003,6 @@ export class Game {
     return this.ga.filter((g) => laMePhu(g) && !g.chet).length;
   }
 
-  /** Số gà tính vào GA_TOI_DA: không tính gà mẹ phụ và gà / trứng của trứng đỏ (không giới hạn) */
-  private demGaThuong(): number {
-    return this.ga.filter((g) => !g.chet && !laMePhu(g) && !g.db).length + this.trungDe.filter((e) => !e.db).length;
-  }
-
   get nguoiThang(): number {
     const [a, b] = this.nguoi;
     if (a.vang || b.vang) return -1;
@@ -1164,7 +1157,7 @@ export class Game {
         ga.lat = v.x < ga.x;
         if (socola) {
           // Ăn socola: hồi 2% máu tối đa, sức mạnh và độ to tăng theo
-          const hoiGa = Math.max(1, Math.round(hpToiDa(ga) * SOCOLA_GA_TI_LE));
+          const hoiGa = Math.max(1, Math.round((v.hpGa ?? HP_GA) * SOCOLA_GA_TI_LE));
           ga.hp += hoiGa;
           ga.suc = Math.min(SOCOLA_SUC_TOI_DA, (ga.suc ?? 1) + SOCOLA_SUC_GA);
           ga.to = Math.min(ga.loai === 'boss' ? SOCOLA_TO_TOI_DA_ME : SOCOLA_TO_TOI_DA, (ga.to ?? 1) + SOCOLA_TO_GA);
@@ -1659,7 +1652,7 @@ export class Game {
     this.vet.push({ id: this.id++, x: g.x, y: tam.y, t: 0, loai: 'chay', co: 0.7 });
     const v = { x: g.x, y: g.y };
     giuTrongMap(v, LE_VP);
-    this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'socola', luong });
+    this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'socola', luong, hpGa: hpToiDa(g) });
     n.combo++;
     n.banTrung++;
     const hs = this.heSo(p);
@@ -1923,18 +1916,15 @@ export class Game {
     return { x: kepX(n.x + Math.cos(goc) * r), y: kepY(n.y + Math.sin(goc) * r) };
   }
 
-  // Gà tướng đẻ một lượt trứng quanh mình, trừ khi tổng số gà đã đủ GA_TOI_DA
+  // Gà tướng đẻ một lượt trứng quanh mình
   private deTrung(boss: Ga): void {
     this.am.phat('deTrung');
-    if (this.demGaThuong() < GA_TOI_DA) {
-      const dan = DAN_TRUNG;
-      for (const loai of dan) {
-        const v = { x: boss.x + ngauNhien(-110, 110), y: boss.y + ngauNhien(-60, 90) };
-        giuTrongMap(v, LE_TRUNG, false, 'vuon');
-        this.trungDe.push({ id: this.id++, loai, t: 0, x: v.x, y: v.y });
-      }
+    for (const loai of DAN_TRUNG) {
+      const v = { x: boss.x + ngauNhien(-110, 110), y: boss.y + ngauNhien(-60, 90) };
+      giuTrongMap(v, LE_TRUNG, false, 'vuon');
+      this.trungDe.push({ id: this.id++, loai, t: 0, x: v.x, y: v.y });
     }
-    // Quả thứ 5 của mỗi lượt là trứng đỏ đặc biệt (không tính vào GA_TOI_DA)
+    // Quả thứ 5 của mỗi lượt là trứng đỏ đặc biệt
     this.deTrungDb(boss);
   }
 
@@ -2022,7 +2012,7 @@ export class Game {
     };
   }
 
-  // Gọi gà con ra bảo vệ gà mẹ (không tính vào GA_TOI_DA)
+  // Gọi gà con ra bảo vệ gà mẹ
   private goiGaCon(g: Ga): void {
     g.hoiGoi = GOI_HOI;
     g.dangGoi = GOI_HIEN;
@@ -2045,7 +2035,7 @@ export class Game {
     this.rung = Math.max(this.rung, 0.2);
   }
 
-  // Gà mẹ gốc đẻ một quả trứng đỏ đặc biệt (không tính vào GA_TOI_DA); mỗi lần chỉ có một quả đang ấp của gà mẹ này
+  // Gà mẹ gốc đẻ một quả trứng đỏ đặc biệt; mỗi lần chỉ có một quả đang ấp của gà mẹ này
   private deTrungDb(boss: Ga): void {
     if (this.trungDe.some((e) => e.db && e.me === boss.id)) return;
     const v = { x: boss.x + ngauNhien(-140, 140), y: boss.y + ngauNhien(40, 150) };
@@ -2715,7 +2705,7 @@ export class Game {
       const v = { x: g.x, y: g.y };
       giuTrongMap(v, LE_VP);
       const luong = Math.max(1, Math.round(HP_GA * (g.suc ?? 1) * AN_TI_LE[1]!));
-      this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'socola', luong });
+      this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'socola', luong, hpGa: hpToiDa(g) });
       this.vet.push({ id: this.id++, x: g.x, y: tam.y, t: 0, loai: 'chay', co: 0.7 });
       this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 60, text: '🍫 HOÁ SOCOLA!', mau: '#c98a4b', t: 0 });
     } else {
