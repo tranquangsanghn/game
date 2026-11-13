@@ -54,7 +54,7 @@ Màn bắt đầu (chế độ tay cầm) hiện tên các tay cầm đã nối 
 
 **Biến socola (chỉ Zinbu)**: chiêu quất râu quét rộng. Gà con dính thì chết luôn và thành thanh socola, Mabu / Zinbu chạm vào là ăn được: +200 máu và +200 mana. Gà mẹ dính thì chịu sát thương rồi hoá socola 5 giây (đứng yên, không né); lúc đó nếu Mabu đang ở dạng mây quét trúng thì gà mẹ luôn mất 30% máu mỗi nhịp, từ 30% trở xuống thì chết luôn. Hồi chiêu 6 giây.
 
-**Biến mây (chỉ Mabu)**: chọn nút đám mây (mana tím) trên bảng chiêu rồi ra đòn. Mabu biến thành đám mây to gấp 2 trong 7 giây, không còn thanh máu / mana, mọi con gà mây quét qua đều trúng đòn. Sau đó phải chờ 40 giây mới dùng lại.
+**Biến mây (chỉ Mabu)**: chọn nút đám mây (mana tím) trên bảng chiêu rồi ra đòn. Mabu biến thành đám mây to gấp 2 trong 7 giây, không còn thanh máu / mana, mọi con gà mây quét qua đều trúng đòn. Sau đó phải chờ 25 giây mới dùng lại.
 
 ## Máu, mana và chiêu (cân bằng mới)
 

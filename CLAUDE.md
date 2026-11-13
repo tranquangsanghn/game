@@ -84,14 +84,14 @@
 
 # Nguyên tắc chiêu Biến mây
 
-- Riêng Mabu (nhóm đòn 3, `NHOM_MAY`), Jinbu/Zinbu không có. Bấm để biến thành mây to gấp 2 trong `MAY_THOI_GIAN` = 7s, sau đó chờ `MAY_HOI` = 40s mới dùng lại.
+- Riêng Mabu (nhóm đòn 3, `NHOM_MAY`), Jinbu/Zinbu không có. Bấm để biến thành mây to gấp 2 trong `MAY_THOI_GIAN` = 7s, sau đó chờ `MAY_HOI` = 25s mới dùng lại.
 - Dạng mây: không có thanh máu, vòng sáng hay hàng biểu tượng nhóm đòn, không ra đòn khác, không bay (chỉ trôi, nhanh hơn). Mọi con gà chạm vùng mây (`mayQuet`) đều dính đòn `SAT_MAY` (250); gà tướng chỉ dính một lần mỗi `MAY_NHIP` giây. Đang là mây thì không nhận sát thương.
 - Biểu tượng Mây là hình đám mây, đứng cuối cùng bên phải trong hàng biểu tượng.
 - Mây to hơn nên dùng lề bản đồ riêng `LE_MAY` (nội suy theo `heSoTo` lúc biến hình), render lọc với lề rộng hơn.
 
 # Nguyên tắc tốc độ đánh
 
-- Tốc độ đánh của Mabu và Zinbu là thời gian hồi `hoiChieu` giữa 2 đòn trong `ban()`, theo nhóm: Đấm 0,4s (đang đi 0,6s) · Đá 0,64s · Chiêu đặc biệt 1,6s. Không đổi khi chỉnh animation.
+- Tốc độ đánh của Mabu và Zinbu là thời gian hồi `hoiChieu` giữa 2 đòn trong `ban()`, theo nhóm: Đấm 0,4s (đang đi 0,6s) · Đá 0,64s · Chiêu đặc biệt 1s. Không đổi khi chỉnh animation.
 - Animation mỗi đòn tự co giãn (`tocDon` trong `NhanVat`) để chạy xong trong 90% của `THOI_GIAN_DON` = 0,5s (~0,45s), bất kể đòn có bao nhiêu khung hình. Quãng lao tới của đòn có chuyển động (`tien`) không đổi dù tua nhanh hay chậm.
 - Tốc độ đánh của gà nằm ở `HOI_DANH_GA`.
 
@@ -135,11 +135,11 @@
 
 # Nguyên tắc mana & bay
 
-- Bay tốn mana (`mana`, trần 200, bình xanh lơ có số giữa bình ở thanh đen hai bên, dưới bình máu, không vẽ trên đầu nhân vật; `manaNv()`, `nlBay()`). Bắt đầu `MANA_BAN_DAU` = 100; bay tốn `MANA_BAY` = 15 mỗi giây bay; tự hồi `MANA_HOI` = 2 mỗi giây khi không bay nhưng chỉ tới `MANA_HOI_TOI_DA` = 100 rồi thôi (táo xanh / đòn trúng có thể đẩy cao hơn tới trần, không bị trừ xuống). Mỗi lần bay xong khoá `BAY_KHOA` = 5s (`bayKhoa`, bình xám) mới bay tiếp được; còn dưới `MANA_TOI_THIEU` = 15 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); mana không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn. Đổi cấu trúc trạng thái nên `PHIEN_BAN_LUU` = 4 (ván lưu cũ không tải được; bản 4 thêm `khien`, `cuu`, trạng thái gà mới).
+- Bay tốn mana (`mana`, trần 200, bình xanh lơ có số giữa bình ở thanh đen hai bên, dưới bình máu, không vẽ trên đầu nhân vật; `manaNv()`, `nlBay()`). Bắt đầu `MANA_BAN_DAU` = 100; bay tốn `MANA_BAY` = 15 mỗi giây bay; tự hồi `MANA_HOI` = 2 mỗi giây khi không bay nhưng chỉ tới `MANA_HOI_TOI_DA` = 100 rồi thôi (táo xanh / đòn trúng có thể đẩy cao hơn tới trần, không bị trừ xuống). Mỗi lần bay xong khoá `BAY_KHOA` = 2s (`bayKhoa`, bình xám) mới bay tiếp được; còn dưới `MANA_TOI_THIEU` = 15 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); mana không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn. Đổi cấu trúc trạng thái nên `PHIEN_BAN_LUU` = 4 (ván lưu cũ không tải được; bản 4 thêm `khien`, `cuu`, trạng thái gà mới).
 
 # Nguyên tắc chiêu Biến socola (riêng Zinbu)
 
-- Nhóm đòn 3 của Zinbu (`NHOM_MAY` = 3, `nhomDon[3]` không có cờ `may`), tách từ đòn quất râu quét (`antenna_wide`, trước nằm trong Chiêu đặc biệt; Chiêu đặc biệt giờ chỉ còn `roll` / `energy_ball`). Biểu tượng là thanh socola. Ra đòn bằng chưởng nổ (`soc` trong `Dan`, tầm `TAM_SOCOLA` = 700, nổ `BAN_KINH_SOCOLA` = 260, hồi `SOCOLA_HOI` = 6s, không tốn mana).
+- Nhóm đòn 3 của Zinbu (`NHOM_MAY` = 3, `nhomDon[3]` không có cờ `may`), tách từ đòn quất râu quét (`antenna_wide`, trước nằm trong Chiêu đặc biệt; Chiêu đặc biệt giờ chỉ còn `roll` / `energy_ball`). Biểu tượng là thanh socola. Ra đòn bằng chưởng nổ (`soc` trong `Dan`, tầm `TAM_SOCOLA` = 700, nổ `BAN_KINH_SOCOLA` = 260, hồi `SOCOLA_HOI` = 3s, không tốn mana).
 - Gà con (trắng, đỏ, đen) dính thì chết luôn và thành thanh socola (`VatPham` loại `socola`, `bienSocolaGa()`; tính điểm / combo như hạ gà). Nhân vật (không phải mây, chưa gục) chạm vào là ăn: +`SOCOLA_NV_MAU` = 100 máu và +`SOCOLA_NV_MANA` = 100 mana (có trần, máu thừa thành khiên, mở khoá bay) rồi tự bắn chưởng lên trời. Tốn `MANA_DAC_BIET` = 40 mana mỗi lần ra chiêu. (Gà ăn socola vẫn +`SOCOLA_HOI_MAU` = 200 máu.)
 - Gà con nở từ trứng đỏ (`db`) không chết ngay: chỉ mất máu `SAT_SOCOLA` rồi hoá socola `SOCOLA_THOI_GIAN` = 5s (đứng yên, nhuộm nâu); nhân vật chạm vào trong lúc đó thì ăn (nhận như thanh socola, con gà biến mất, `anGaSocola()`), không ai ăn thì tự hoá giải (chỉ mất máu); hết máu thì chết như thường.
 - Gà mẹ dính thì nhận `SAT_SOCOLA` = 150 như đòn thường (vẫn có thể né / phản / MISS theo màu); chỉ khi đòn trúng mới hoá socola `SOCOLA_THOI_GIAN` = 5s (`socola`, `socolaTuong()`): đứng yên, không né, không đánh / đẻ / dùng chiêu (đồng hồ tạm dừng), nhuộm nâu (`LOC_SOCOLA`).

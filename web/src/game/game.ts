@@ -174,7 +174,7 @@ const SAT_SOCOLA = 150;
 const TAM_SOCOLA = 700;
 const BAN_KINH_SOCOLA = 260;
 const SOCOLA_THOI_GIAN = 5;
-const SOCOLA_HOI = 6;
+const SOCOLA_HOI = 3;
 // Ăn socola (nhân vật chạm vào): cộng máu và mana (không có trần), rồi tự bắn chưởng lên trời
 const SOCOLA_HOI_MAU = 200;
 // Nhân vật ăn socola: hồi ít hơn gà vì có trần (phần vượt trần thành khiên)
@@ -280,7 +280,7 @@ const MANA_DAC_BIET = 40;
 const MANA_HOI = 2;
 const MANA_BAY = 15;
 const MANA_TOI_THIEU = 15;
-const BAY_KHOA = 5;
+const BAY_KHOA = 2;
 const VUNG_BAY_CAN = 0.6; // cần trái phải gạt mạnh mới bay (tránh bay nhầm)
 const BAY_CAN = 600; // mỗi lần gạt cần trái bay một đoạn (xa hơn BAY_KHI_XA)
 const VUNG_CHET_CAN = 0.25; // cần analog gạt dưới mức này coi như nằm yên
@@ -294,7 +294,7 @@ const R_NUT = 30;
 // Bảng chiêu gà mẹ (giữa phía trên) thu nhỏ còn 1/3 so với kích thước gốc, tâm vẫn ở mép trên giữa màn hình
 const HE_BANG_TUONG = 1 / 3;
 const MAY_THOI_GIAN = 7;
-const MAY_HOI = 40;
+const MAY_HOI = 25;
 const MAY_TOC_DO = 1.35;
 // Vùng mây quét trúng trên mặt đất (bán kính ngang / dọc, đơn vị bản đồ), cộng thêm khi trúng gà tướng to
 const MAY_RX = 330;
@@ -2278,7 +2278,7 @@ export class Game {
     n.mana -= phi;
     // Thời gian hồi giữa 2 đòn theo nhóm (không phụ thuộc độ dài animation); combo cao thì chưởng hồi nhanh hơn
     const giamHoi = nhom === 2 && n.combo >= COMBO_GIAM_HOI ? COMBO_HOI_CHUONG : 1;
-    n.hoiChieu = soc ? SOCOLA_HOI : (chieu ? 0.8 * giamHoi : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
+    n.hoiChieu = soc ? SOCOLA_HOI : (chieu ? 0.5 * giamHoi : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
     if (!n.dangDi) {
       n.nv.lat = x < n.x;
       n.nv.huong = 'ngang';
