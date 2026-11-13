@@ -58,7 +58,21 @@ const duongElip = (ctx: CanvasRenderingContext2D, rx: number, ry: number, cx = 0
 const dongHe = (a: number) => Math.max(0, Math.min(1, a));
 const rad = (deg: number) => (deg * Math.PI) / 180;
 
+/** Sprite trang trí cắt từ gói "EPIC RPG World Pack – Grass Land" (map_co.png). Neo ở giữa đáy; k = tỉ lệ phóng */
+const MAP_CO = 'assets/game/map_co.png';
+const TRANG_TRI_SPRITE = [
+  { sx: 268, sy: 343, w: 98, h: 175, k: 1.7 }, // cây
+  { sx: 200, sy: 497, w: 44, h: 29, k: 1.8 }, // bụi có hoa
+  { sx: 209, sy: 562, w: 66, h: 36, k: 1.8 }, // bụi
+  { sx: 612, sy: 478, w: 110, h: 66, k: 1.5 }, // đá
+];
+/** 6 ô cỏ chính (gốc 32px) trong tileset; phóng gấp TL lần */
+const O_CO = [[448, 32], [480, 32], [512, 32], [448, 64], [480, 64], [512, 64]];
+const TL = 2;
+const CO_LAP = 16; // pattern 16×16 ô ngẫu nhiên rồi lặp: một fillRect, không lộ đường nối
+
 export class VeCanvas {
+  private mauCo: CanvasPattern | null = null;
   private anh = new Map<string, HTMLImageElement>();
   // Atlas đã nhuộm sẵn theo bộ lọc màu (nháy sáng, đen, vàng, đỏ…): nhuộm cả atlas MỘT lần rồi dùng lại.
   // Không dùng ctx.filter lúc vẽ từng sprite vì rất chậm (mỗi sprite vài ms).
@@ -147,9 +161,48 @@ export class VeCanvas {
 
   // ─── Thế giới (trong nhóm camera) ───
 
-  private veTheGioi(ctx: CanvasRenderingContext2D, c: Game): void {
-    ctx.fillStyle = '#c9d8bf';
+  /** Nền cỏ: pattern dựng từ ô cỏ của gói map (hạt giống cố định); chưa nạp xong ảnh thì tạm màu cỏ */
+  private veNen(ctx: CanvasRenderingContext2D, c: Game): void {
+    if (!this.mauCo) {
+      const img = this.lay(MAP_CO);
+      if (img) {
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = CO_LAP * 32 * TL;
+        const x = cv.getContext('2d')!;
+        x.imageSmoothingEnabled = false;
+        let h = 7;
+        for (let i = 0; i < CO_LAP; i++) {
+          for (let j = 0; j < CO_LAP; j++) {
+            h = (Math.imul(h, 1103515245) + 12345) >>> 0;
+            const [sx, sy] = O_CO[(h >>> 16) % O_CO.length];
+            x.drawImage(img, sx, sy, 32, 32, i * 32 * TL, j * 32 * TL, 32 * TL, 32 * TL);
+          }
+        }
+        this.mauCo = ctx.createPattern(cv, 'repeat');
+      }
+    }
+    ctx.fillStyle = this.mauCo ?? '#52c13a';
+    ctx.imageSmoothingEnabled = false;
     ctx.fillRect(0, 0, c.MAP, c.MAP);
+    ctx.imageSmoothingEnabled = true;
+  }
+
+  private veTrangTri(ctx: CanvasRenderingContext2D, t: { x: number; y: number; loai: number; lat: boolean }): void {
+    const img = this.lay(MAP_CO);
+    if (!img) return;
+    const sp = TRANG_TRI_SPRITE[t.loai];
+    const w = sp.w * sp.k;
+    const h = sp.h * sp.k;
+    ctx.save();
+    ctx.translate(t.x, t.y);
+    if (t.lat) ctx.scale(-1, 1);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, sp.sx, sp.sy, sp.w, sp.h, -w / 2, -h, w, h);
+    ctx.restore();
+  }
+
+  private veTheGioi(ctx: CanvasRenderingContext2D, c: Game): void {
+    this.veNen(ctx, c);
 
     for (const v of c.vetView) {
       const k = v.t / 0.45;
@@ -245,6 +298,7 @@ export class VeCanvas {
     // Gà dưới đất + nhân vật, xếp theo y
     for (const o of c.xep) {
       if (o.loai === 'ga') this.veGa(ctx, c, o.ga);
+      else if (o.loai === 'td') this.veTrangTri(ctx, o.td);
       else this.veNhanVat(ctx, c, o.p);
     }
     for (const g of c.gaBayView) this.veGa(ctx, c, g);

@@ -49,7 +49,11 @@ export interface NguoiChoi {
 }
 type VatXep =
   | { loai: 'ga'; y: number; ga: Ga }
-  | { loai: 'nv'; y: number; p: number };
+  | { loai: 'nv'; y: number; p: number }
+  | { loai: 'td'; y: number; td: TrangTri };
+
+/** Vật trang trí nền cỏ (cây, bụi, đá): chỉ để đẹp, không cản đường. loai là chỉ số trong TRANG_TRI_SPRITE (ve-canvas.ts) */
+export interface TrangTri { x: number; y: number; loai: number; lat: boolean }
 
 
 export const PHIEN_BAN_LUU = 1;
@@ -261,6 +265,30 @@ const kep = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 // Sát mép bản đồ là dừng hẳn; ngoài mép là vùng đen
 const kepMap = (v: number) => kep(v, 0, MAP);
 
+/** Rải cây / bụi / đá theo lưới có nhiễu, hạt giống cố định nên mỗi ván cùng một map; chừa vùng xuất phát ở giữa */
+function taoTrangTri(): TrangTri[] {
+  let h = 20240611;
+  const r = () => {
+    h = (h + 0x6d2b79f5) | 0;
+    let t = Math.imul(h ^ (h >>> 15), 1 | h);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const kq: TrangTri[] = [];
+  const O = 230;
+  for (let gx = 0; gx < MAP; gx += O) {
+    for (let gy = 0; gy < MAP; gy += O) {
+      if (r() > 0.6) continue;
+      const x = gx + r() * O;
+      const y = gy + 60 + r() * (O - 60);
+      if (Math.hypot(x - MAP / 2, y - MAP / 2) < 450) continue;
+      const k = r();
+      kq.push({ x, y, loai: k < 0.35 ? 0 : k < 0.65 ? 1 : k < 0.85 ? 2 : 3, lat: r() < 0.5 });
+    }
+  }
+  return kq;
+}
+
 // Lề giữ vật nằm trọn trong bản đồ (đơn vị bản đồ). Sprite vẽ phía trên toạ độ chân nên lề trên lớn hơn lề dưới.
 // Thêm loại vật mới thì khai báo lề ở đây và gọi giuTrongMap() cho nó.
 interface Le { x: number; tren: number; duoi: number; }
@@ -348,6 +376,8 @@ export class Game {
   chu: Chu[] = [];
   long: Long[] = [];
   xep: VatXep[] = [];
+  /** Toàn bộ cây / bụi / đá của map (sinh một lần, cố định); chỉ vật trong khung nhìn mới vào `xep` */
+  readonly trangTri: TrangTri[] = taoTrangTri();
   gaBayView: Ga[] = [];
   tuong: Ga | null = null;
   // Gà tướng còn sống (không lọc theo khung nhìn) cho bảng chiêu ở giữa phía trên
@@ -437,7 +467,7 @@ export class Game {
         }
       };
       this.ctx = this.canvasEl.getContext('2d');
-      this.ve.napTruoc(MABU.atlas, ZINBU.atlas);
+      this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png');
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO]);
       vua();
@@ -953,6 +983,7 @@ export class Game {
       xep.push({ loai: 'ga', y: g.y, ga: g });
     }
     this.nguoi.forEach((n, i) => { if (trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
+    for (const t of this.trangTri) if (trong(t.x, t.y, 400)) xep.push({ loai: 'td', y: t.y, td: t });
     xep.sort((a, b) => a.y - b.y);
     this.xep = xep;
     this.gaBayView = this.ga.filter((g) => g.loai === 'flyer' && this.thay(g.x, g.y) && trong(g.x, g.y, 400));
