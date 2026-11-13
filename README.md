@@ -9,7 +9,7 @@ Game 2 nhân vật, chơi bằng chuột + Tab hoặc tay cầm kiểu PS (chọ
 
 Cần: Node 20+, Java 17+, Maven, MySQL 8 (đang chạy). Cấu trúc: `web/` (giao diện + game), `server/` (Java Spring Boot + MySQL).
 
-1. **Máy chủ** (cổng 8080). Tự tạo database `dragonball` và 2 bảng nếu chưa có (user MySQL cần quyền CREATE):
+1. **Máy chủ** (cổng 8091). Tự tạo database `dragonball` và 2 bảng nếu chưa có (user MySQL cần quyền CREATE):
    ```bash
    cd server
    DB_USER=root DB_PASS=matkhau mvn spring-boot:run
