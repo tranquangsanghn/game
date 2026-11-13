@@ -210,3 +210,5 @@
 - Cây mọc lại: cây đổ (kể cả cây đã rơi táo và biến mất) sau `CAY_MOC_LAI` = 10s thì mọc lại đứng thẳng (`capNhatCay()`). Một phần cây là **cây to** (`TrangTri.to`, to gấp `CAY_TO_HE_SO` = 1,8; hộp đánh đổ cũng to theo): đổ thì chắc chắn rơi `CAY_TO_MAU` = 2 táo đỏ + `CAY_TO_MANA` = 2 táo xanh.
 
 - Màn kết thúc (tay cầm): chơi lại phải bấm ✕ rồi ○ (B) (`choiLaiChoB`); Options / ✕ đơn lẻ không còn chơi lại ngay.
+
+- Màn chọn chế độ 1 / 2 người (tay cầm): chỉ tay cầm 1 điều khiển, chữ thập / cần trái trái-phải chọn thẻ, bấm ✕ rồi ○ (B) mới xác nhận vào màn hướng dẫn (`daBamX` trong `giao-dien.ts`).
