@@ -931,7 +931,8 @@ export class Game {
         this.khungEl.focus({ preventScroll: true });
         this.bamChuot(e);
       });
-      nghe(window, 'contextmenu', (e: Event) => { if (this.cheDo === 'chuot') e.preventDefault(); }, true);
+      // Luôn chặn menu chuột phải của trình duyệt (kể cả chế độ tay cầm mặc định): hiện menu sẽ cướp focus, mất điều khiển
+      nghe(window, 'contextmenu', (e: Event) => e.preventDefault(), true);
       nghe(window, 'keydown', (e: KeyboardEvent) => this.phimXuong(e), true);
       // Trình duyệt ngừng đọc tay cầm khi tab mất focus: tạm dừng ván để không bị đánh trong lúc không điều khiển được
       nghe(window, 'blur', () => { if (this.cheDo === 'tayCam' && this.man === 'play') this.tamDung(); });
