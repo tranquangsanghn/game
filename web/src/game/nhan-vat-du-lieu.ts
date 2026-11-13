@@ -108,7 +108,9 @@ export const ZINBU: NhanVatSprite = {
   nhomDon: [
     { ten: 'Đấm', vong: false, don: ['punch_combo', 'punch_long', 'punch_long_2', 'punch_dash', 'punch_charge'] },
     { ten: 'Đá', vong: false, don: ['kick_long', 'kick_long_2', 'kick_sweep', 'kick_arc', 'antenna_whip'] },
-    { ten: 'Chiêu đặc biệt', vong: true, don: ['antenna_wide', 'roll', 'energy_ball'] },
+    { ten: 'Chiêu đặc biệt', vong: true, don: ['roll', 'energy_ball'] },
+    // Riêng Zinbu: quất râu quét rộng thành chiêu riêng, biến quái thành socola (xem noSocola() trong game.ts)
+    { ten: 'Biến socola', vong: false, don: ['antenna_wide'] },
   ],
   kieuChet: [
     [{ anim: 'hit' }, { anim: 'knockdown' }, { anim: 'lie', giu: true }],

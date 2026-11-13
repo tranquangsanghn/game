@@ -51,6 +51,8 @@ Màn bắt đầu cho chọn chế độ chơi (nhớ lại lần sau):
 
 Màn bắt đầu (chế độ tay cầm) hiện tên các tay cầm đã nối và nút vừa bấm (để dò tay cầm lạ có gửi đúng chỉ số nút không).
 
+**Biến socola (chỉ Zinbu)**: chiêu quất râu quét rộng. Gà con dính thì chết luôn và thành thanh socola, Mabu / Zinbu chạm vào là ăn được: +200 máu và +200 mana. Gà mẹ dính thì chịu sát thương rồi hoá socola 5 giây (đứng yên, không né); lúc đó nếu Mabu đang ở dạng mây quét trúng thì gà mẹ luôn mất 30% máu mỗi nhịp, từ 30% trở xuống thì chết luôn. Hồi chiêu 6 giây.
+
 **Biến mây (chỉ Mabu)**: chọn nút đám mây (mana tím) trên bảng chiêu rồi ra đòn. Mabu biến thành đám mây to gấp 2 trong 7 giây, không còn thanh máu / mana, mọi con gà mây quét qua đều trúng đòn. Sau đó phải chờ 40 giây mới dùng lại.
 
 ## Gà
@@ -59,6 +61,8 @@ Sprite gà lấy từ `tools/ga-goc.png`; chạy `python3 tools/tao-atlas-ga.py`
 
 - **Gà trắng** (10đ): đi bộ · **Gà đỏ** (20đ): đi nhanh, nhảy · **Gà đen** (30đ): bay và thả trứng
 - **Gà tướng / gà mẹ** (500đ): to gấp 5 lần, 100 máu, đẻ trứng ra gà con. Có chiêu Lao (500 px/s, sát thương ×2, 15s/lần) và Bay (700 px/s, sát thương ×3, 20s/lần) kèm vệt đỏ báo hiệu, rồi lộ sơ hở 3s; cứ 20s lại đổi màu 5s: đen (phản đòn), vàng (miễn đòn), đỏ (đốt cháy xung quanh). Chiêu của gà mẹ nằm trên thanh đen phía trên màn hình. Hồi sinh tối đa 3 lần, mỗi lần sát thương +50%, né thêm 15% và đẻ thêm 1 trứng. Hạ được thì cả đội hồi 60 máu
+- **Gà mẹ gốc** (có vương miện): chỉ chạy trốn và đẻ trứng. Cứ 15 giây đẻ một **trứng đỏ** to gấp 5 lần, gà mẹ canh quanh nó; cứ 2 giây nở một gà con mạnh dần (thường → x2 → x3 → x4, to dần), tới 10 giây nở ra một **gà mẹ phụ** đi đánh nhân vật thay gà mẹ gốc (không giới hạn số lượng). Muốn thắng phải diệt hết gà mẹ gốc (3 mạng), gà mẹ phụ, gà con và trứng
+- Chưởng cháy nổ tự bắn lên trời khi ăn socola hoặc hạ được gà mẹ
 - **Vật phẩm máu** (trái tim): thỉnh thoảng xuất hiện trên map hoặc do gà rơi, Mabu / Zinbu đi vào để nhặt, hồi 50 máu
 
 Kỷ lục lưu trong `localStorage` của trình duyệt.

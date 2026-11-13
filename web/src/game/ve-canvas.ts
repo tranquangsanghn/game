@@ -1,5 +1,6 @@
 import type { Game, Ga, TrangTri } from './game';
 import type { KhungSprite } from './sprite';
+import type { NhanVatSprite } from './nhan-vat-sprite';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
 // Toạ độ vẽ giữ nguyên như bản SVG cũ: viewBox (-SIDE, -BAR, W + 2·SIDE, H + BAR), căn giữa, giữ tỉ lệ.
@@ -210,11 +211,13 @@ export class VeCanvas {
     this.veNen(ctx, c);
 
     for (const v of c.vetView) {
-      const k = v.t / 0.45;
+      const k = v.t / (v.loai === 'chay' ? 0.7 : 0.45);
       ctx.save();
       ctx.translate(v.x, v.y);
       ctx.globalAlpha = dongHe(1 - k);
-      if (v.loai === 'no') {
+      if (v.loai === 'chay') {
+        this.veChay(ctx, v, k);
+      } else if (v.loai === 'no') {
         duongTron(ctx, 30 + v.t * 200);
         ctx.fillStyle = '#ff9fd0';
         ctx.globalAlpha = dongHe(1 - k) * 0.35 * dongHe(1 - k);
@@ -272,17 +275,32 @@ export class VeCanvas {
     for (const e of c.trungView) {
       ctx.save();
       ctx.translate(e.x, e.y);
+      // Trứng đỏ đặc biệt to gấp TRUNG_DB_TO (5) lần, có vầng sáng đỏ và đốm trắng
+      const kt = e.db ? c.TRUNG_DB_TO : 1;
+      ctx.scale(kt, kt);
+      if (e.db) {
+        duongTron(ctx, 40, 0, -20);
+        ctx.fillStyle = `rgba(255,59,48,${0.15 + 0.1 * Math.abs(Math.sin(e.t * 4))})`;
+        ctx.fill();
+      }
       duongElip(ctx, 22, 7);
       ctx.fillStyle = 'rgba(0,0,0,0.2)';
       ctx.fill();
       ctx.translate(0, -20);
       ctx.rotate(rad(c.rungTrung(e)));
       duongElip(ctx, 17, 22);
-      ctx.fillStyle = e.loai === 'hen' ? '#fff6d5' : e.loai === 'rooster' ? '#e9a79d' : '#9a9aa8';
+      ctx.fillStyle = e.db ? '#e5322d' : e.loai === 'hen' ? '#fff6d5' : e.loai === 'rooster' ? '#e9a79d' : '#9a9aa8';
       ctx.fill();
-      ctx.strokeStyle = 'rgba(0,0,0,0.25)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = e.db ? '#ffd2cc' : 'rgba(0,0,0,0.25)';
+      ctx.lineWidth = e.db ? 1.4 : 2;
       ctx.stroke();
+      if (e.db) {
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        for (const [x, y, r] of [[-6, -8, 2.6], [5, -2, 2], [-3, 8, 2.2], [7, 9, 1.6]]) {
+          duongTron(ctx, r, x, y);
+          ctx.fill();
+        }
+      }
       ctx.restore();
     }
 
@@ -298,7 +316,10 @@ export class VeCanvas {
     }
     ctx.lineCap = 'butt';
 
-    for (const v of c.vatPhamView) this.veVatPham(ctx, v);
+    for (const v of c.vatPhamView) {
+      if (v.loai === 'socola') this.veSocola(ctx, v);
+      else this.veVatPham(ctx, v);
+    }
 
     // Gà dưới đất + nhân vật, xếp theo y
     for (const o of c.xep) {
@@ -309,23 +330,25 @@ export class VeCanvas {
     for (const g of c.gaBayView) this.veGa(ctx, c, g);
 
     for (let p = 0; p < c.nguoi.length; p++) this.veThanhTrenDau(ctx, c, p);
-    if (c.tuong) this.veMauTuong(ctx, c, c.tuong);
+    for (const g of c.tuongView) this.veMauTuong(ctx, c, g);
 
     // Đạn / chưởng
     for (const d of c.danView) {
       if (!d.to) continue;
       const vt = c.danHienTai(d);
+      // Chưởng socola nâu; chưởng tự bắn lên trời là quả cầu lửa có đuôi cháy dài
+      const mauDan = d.soc ? '#a8693a' : d.troi ? '#ffb347' : '#ff9fd0';
       ctx.save();
       ctx.lineCap = 'round';
-      ctx.lineWidth = 26;
-      ctx.strokeStyle = 'rgba(255,194,226,0.6)';
+      ctx.lineWidth = d.troi ? 34 : 26;
+      ctx.strokeStyle = d.soc ? 'rgba(168,105,58,0.6)' : d.troi ? 'rgba(255,140,40,0.55)' : 'rgba(255,194,226,0.6)';
       ctx.beginPath();
       ctx.moveTo(vt.xs, vt.ys);
       ctx.lineTo(vt.x, vt.y);
       ctx.stroke();
-      this.sang(ctx, '#ff9fd0');
+      this.sang(ctx, mauDan);
       duongTron(ctx, 30, vt.x, vt.y);
-      ctx.fillStyle = '#ff9fd0';
+      ctx.fillStyle = mauDan;
       ctx.fill();
       ctx.strokeStyle = c.nguoi[d.p].mau;
       ctx.lineWidth = 3;
@@ -379,8 +402,76 @@ export class VeCanvas {
     }
   }
 
+  // Cháy nổ: quầng lửa (trắng vàng → cam → đỏ sẫm) nở ra, tia lửa bắn toả ra và khói đen mờ dần. Gốc toạ độ đã ở tâm vụ nổ; k = 0..1 tiến độ
+  private veChay(ctx: CanvasRenderingContext2D, v: { id: number; t: number; co?: number }, k: number): void {
+    const co = v.co ?? 1;
+    const a = dongHe(1 - k);
+    const R = (40 + k * 190) * co;
+    const lua = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+    lua.addColorStop(0, `rgba(255,252,210,${a})`);
+    lua.addColorStop(0.3, `rgba(255,190,50,${a * 0.9})`);
+    lua.addColorStop(0.65, `rgba(235,80,25,${a * 0.6})`);
+    lua.addColorStop(1, 'rgba(90,25,10,0)');
+    ctx.globalAlpha = 1;
+    duongTron(ctx, R);
+    ctx.fillStyle = lua;
+    ctx.fill();
+    // Khói
+    duongTron(ctx, R * 0.7, 0, -R * 0.4 * k);
+    ctx.fillStyle = `rgba(40,30,28,${a * 0.25})`;
+    ctx.fill();
+    // Tia lửa (hướng cố định theo id vụ nổ)
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 6 * co * a + 1;
+    for (let i = 0; i < 10; i++) {
+      const g = ((v.id * 37 + i * 36) % 360) * (Math.PI / 180);
+      const r0 = R * (0.55 + 0.25 * ((i * 7) % 3) / 2);
+      const r1 = r0 + 30 * co * (1 - k * 0.5);
+      ctx.strokeStyle = i % 2 ? `rgba(255,220,90,${a})` : `rgba(255,120,40,${a})`;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(g) * r0, Math.sin(g) * r0 * 0.8);
+      ctx.lineTo(Math.cos(g) * r1, Math.sin(g) * r1 * 0.8);
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+  }
+
+  // Thanh socola: nền nâu, ô vuông, bóng sáng; nảy nhẹ trên đất
+  private veSocola(ctx: CanvasRenderingContext2D, v: { t: number }): void {
+    ctx.save();
+    ctx.globalAlpha = v.t > 37 && (v.t * 6) % 1 < 0.5 ? 0.35 : 1;
+    duongElip(ctx, 28, 8);
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.fill();
+    duongTron(ctx, 42, 0, -28);
+    ctx.fillStyle = `rgba(201,138,75,${0.12 + 0.08 * ((v.t * 4) % 1)})`;
+    ctx.fill();
+    const tri = (v.t * 4) % 2 < 1 ? (v.t * 4) % 1 : 1 - ((v.t * 4) % 1);
+    ctx.translate(0, -30 - 5 * tri);
+    ctx.rotate(rad(-8));
+    tronCD(ctx, -24, -16, 48, 32, 5);
+    ctx.fillStyle = '#6b3a1e';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    // Ô vuông
+    ctx.strokeStyle = '#4a2610';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (const x of [-8, 8]) { ctx.moveTo(x, -16); ctx.lineTo(x, 16); }
+    ctx.moveTo(-24, 0);
+    ctx.lineTo(24, 0);
+    ctx.stroke();
+    // Bóng sáng
+    ctx.fillStyle = 'rgba(255,230,200,0.5)';
+    tronCD(ctx, -20, -13, 10, 5, 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   // Quả táo: đỏ hồi máu, xanh hồi mana; nảy nhẹ trên đất, có vầng sáng cùng màu
-  private veVatPham(ctx: CanvasRenderingContext2D, v: { x: number; y: number; t: number; loai?: 'do' | 'xanh' }): void {
+  private veVatPham(ctx: CanvasRenderingContext2D, v: { x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' }): void {
     const xanh = v.loai === 'xanh';
     const mau = xanh ? '#2fa8ff' : '#ff3b3b';
     ctx.save();
@@ -452,11 +543,27 @@ export class VeCanvas {
     duongElip(ctx, 44 * bong, 12 * bong);
     ctx.fillStyle = `rgba(0,0,0,${0.22 * bong})`;
     ctx.fill();
+    // Gà con nở từ trứng đỏ (sức mạnh > 1): quầng đỏ dưới chân
+    if (!g.chet && (g.suc ?? 1) > 1) {
+      duongElip(ctx, 56 * bong, 17 * bong);
+      ctx.fillStyle = `rgba(255,59,48,${0.18 + 0.05 * (g.suc ?? 1)})`;
+      ctx.fill();
+    }
     ctx.translate(0, h.dy);
     ctx.rotate(rad(h.xoay));
     ctx.translate(0, 40);
     this.sprite(ctx, c.gaSprite(g), c.gaKhung(g), g.lat, true, c.locGa(g));
     ctx.restore();
+    // Gà mẹ gốc đánh dấu bằng vương miện vàng trên đầu
+    if (g.goc && !g.chet) {
+      const t = c.thanhTuong(g);
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.font = `800 64px ${FONT}`;
+      ctx.textAlign = 'center';
+      ctx.fillText('👑', t.x, t.y - 28);
+      ctx.restore();
+    }
   }
 
   // Thanh máu trên đầu nhân vật; dạng mây thì không có
@@ -486,7 +593,7 @@ export class VeCanvas {
     ctx.fillStyle = 'rgba(13,27,18,0.75)';
     ctx.fill();
     tronCD(ctx, -31, -3, Math.min(62, Math.max(0, (62 * g.hp) / c.HP_GA)), 6, 3);
-    ctx.fillStyle = '#ff4d4d';
+    ctx.fillStyle = g.goc ? '#ffd23f' : '#ff4d4d';
     ctx.fill();
     ctx.restore();
   }
@@ -579,7 +686,7 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  private bieuTuongNv(ctx: CanvasRenderingContext2D, k: number, sp: KhungSprite): void {
+  private bieuTuongNv(ctx: CanvasRenderingContext2D, k: number, sp: NhanVatSprite): void {
     const P = duong();
     ctx.fillStyle = '#fff';
     ctx.strokeStyle = '#0d1b12';
@@ -605,6 +712,25 @@ export class VeCanvas {
       ctx.fill(P.nutDa);
       ctx.stroke(P.nutDa);
       ctx.stroke(P.nutDaVach);
+    } else if (k === 3 && !sp.nhomDon[3]?.may) {
+      // Biến socola (Zinbu): thanh socola nâu có ô vuông
+      ctx.save();
+      ctx.rotate(rad(-10));
+      tronCD(ctx, -10, -7, 20, 14, 2.5);
+      ctx.fillStyle = '#8a4a24';
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = '#4a2610';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(-3.3, -7);
+      ctx.lineTo(-3.3, 7);
+      ctx.moveTo(3.3, -7);
+      ctx.lineTo(3.3, 7);
+      ctx.moveTo(-10, 0);
+      ctx.lineTo(10, 0);
+      ctx.stroke();
+      ctx.restore();
     } else if (k === 3) {
       ctx.save();
       ctx.translate(0, 4);
@@ -649,6 +775,12 @@ export class VeCanvas {
     ctx.fillStyle = '#ffd27a';
     ctx.fillText('Gà con', c.GIUA + 150, -42);
     ctx.fillText(`${c.soGaCon}`, c.GIUA + 150, -20);
+    // Gà mẹ phụ (nở từ trứng đỏ) còn sống, bên trái avatar
+    ctx.save();
+    ctx.textAlign = 'end';
+    ctx.fillText('Gà mẹ phụ', c.GIUA - 150, -42);
+    ctx.fillText(`${c.soMePhu}`, c.GIUA - 150, -20);
+    ctx.restore();
     // Số mạng còn lại: các trái tim ngay dưới avatar gà mẹ (mạng đã mất thì mờ)
     const tong = c.TUONG_HOI_SINH + 1;
     const con = c.mangTuong();

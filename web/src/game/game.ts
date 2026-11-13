@@ -24,6 +24,12 @@ export interface Ga {
   daDe?: boolean; choChieu?: number; nghiChung?: number; soHo?: number;
   lan?: number; chieu?: ChieuTuong | null; hoiLao?: number; hoiBay?: number;
   mau?: MauTuong | null; conMau?: number; hoiMau?: number; luotMau?: number; dot?: number;
+  // Gà mẹ GỐC (đánh dấu khác biệt): chỉ con này đẻ trứng, chỉ sống sót chứ không đi đánh; gà mẹ phụ (nở từ trứng đỏ) mới đi đánh. deDb = đếm ngược tới quả trứng đỏ kế tiếp
+  goc?: boolean; deDb?: number;
+  // Gà mẹ đang bị biến thành socola: số giây còn lại (đứng yên, không né, không đánh)
+  socola?: number;
+  // Gà con nở từ trứng đỏ: sức mạnh (nhân máu và sát thương) và độ to (nhân kích thước)
+  suc?: number; to?: number;
 }
 type MauTuong = 'den' | 'vang' | 'do';
 // Chiêu lao / bay của gà tướng: báo hiệu → chạy thẳng một đường (không đổi hướng) → nghỉ
@@ -31,13 +37,20 @@ interface ChieuTuong {
   loai: 'lao' | 'bay'; pha: 'bao' | 'chay' | 'nghi'; t: number; ux: number; uy: number; quang: number; trung: boolean[];
 }
 // Trứng do gà tướng đẻ: sau TRUNG_NO giây nở ra gà `loai`
-export interface TrungGa { id: number; x: number; y: number; t: number; loai: 'hen' | 'rooster' | 'flyer'; }
-interface Dan { id: number; p: number; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; }
+export interface TrungGa {
+  id: number; x: number; y: number; t: number; loai: 'hen' | 'rooster' | 'flyer';
+  /** Trứng đỏ đặc biệt: to gấp TRUNG_DB_TO lần, gà mẹ gốc canh quanh nó; cứ 2s nở một gà con mạnh dần, tới 10s nở ra một gà mẹ phụ */
+  db?: boolean; no?: number; me?: number;
+}
+/** soc = chưởng biến socola của Zinbu · troi = chưởng tự bắn lên trời (chỉ để đẹp, không gây sát thương) */
+interface Dan { id: number; p: number; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
-export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh'; }
+/** socola = gà con bị biến thành socola, ăn được +200 máu +200 mana */
+export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola'; }
 interface Chu { id: number; x: number; y: number; text: string; mau: string; t: number; }
 interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay: number; vxoay: number; t: number; mau: string; }
-interface Vet { id: number; x: number; y: number; t: number; loai: 'bui' | 'no'; }
+/** chay = cháy nổ (lửa + tia lửa); co = hệ số kích thước */
+interface Vet { id: number; x: number; y: number; t: number; loai: 'bui' | 'no' | 'chay'; co?: number; }
 interface ChuyenBay { x0: number; y0: number; x1: number; y1: number; t: number; T: number; }
 export interface NguoiChoi {
   ten: string; mau: string; diem: number; combo: number; tamX: number; tamY: number;
@@ -65,7 +78,7 @@ const CAY_DO_KINH = 90;
 const CAY_DO_CAO = 220;
 
 
-export const PHIEN_BAN_LUU = 2;
+export const PHIEN_BAN_LUU = 3;
 /** Dữ liệu một ván đã lưu: các trường tuỳ ý của game, máy chủ chỉ lưu nguyên khối JSON */
 export interface TrangThaiLuu {
   phienBan: number; tGame: number; t: number; chamDen: number; id: number;
@@ -112,6 +125,20 @@ const NE_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0.5 
 // Sát thương nhân vật gây ra: [Mabu, Zinbu] theo nhóm đòn 0 Đấm · 1 Đá · 2 Chiêu đặc biệt; mây (riêng Mabu)
 const SAT_THUONG = [[50, 50], [70, 100], [100, 150]];
 const SAT_MAY = 250;
+// Chiêu Biến socola (riêng Zinbu, nhóm đòn 3): chưởng bay tới điểm chuột (tối đa TAM_SOCOLA), nổ bán kính BAN_KINH_SOCOLA. Gà con dính thì chết luôn và thành socola; gà mẹ dính sát thương SAT_SOCOLA (như chiêu đặc biệt cũ) rồi hoá socola SOCOLA_THOI_GIAN giây (đứng yên, không né). Hồi SOCOLA_HOI giây.
+const SAT_SOCOLA = 150;
+const TAM_SOCOLA = 700;
+const BAN_KINH_SOCOLA = 260;
+const SOCOLA_THOI_GIAN = 5;
+const SOCOLA_HOI = 6;
+// Ăn socola (nhân vật chạm vào): cộng máu và mana (không có trần), rồi tự bắn chưởng lên trời
+const SOCOLA_HOI_MAU = 200;
+const SOCOLA_HOI_MANA = 200;
+// Gà mẹ đang là socola mà dính mây của Mabu: luôn mất SOCOLA_MAY_MAT (30%) máu tối đa (không né, không giảm sát thương); máu còn từ 30% trở xuống thì chết luôn
+const SOCOLA_MAY_MAT = 0.3;
+// Chưởng tự bắn lên trời: bay SOCOLA_TROI_CAO lên trên, mất TROI_THOI_GIAN giây rồi nổ cháy
+const TROI_CAO = 700;
+const TROI_THOI_GIAN = 0.8;
 // Quái chạm nhân vật thì đánh: sát thương gốc, bán kính chạm (chân với chân), thời gian chờ giữa 2 lần đánh (tốc độ đánh)
 const SAT_GA: Record<string, number> = { hen: 32, rooster: 48, flyer: 60, boss: 80 };
 const CHAM_GA: Record<string, number> = { hen: 70, rooster: 70, flyer: 70, boss: 220 };
@@ -254,6 +281,19 @@ const DAN_TRUNG: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'ro
 const TRUNG_NO = 2;
 const TRUNG_CHO = 30;
 const GA_TOI_DA = 20;
+// Trứng đỏ đặc biệt (do gà mẹ GỐC đẻ, cứ TRUNG_DB_CHO giây một quả, không tính vào GA_TOI_DA): to gấp TRUNG_DB_TO lần quả thường, gà mẹ gốc canh quanh nó (TRUNG_DB_BAO_VE).
+// Cứ TRUNG_DB_NHIP giây nở một gà con mạnh dần (GA_DB_SUC: sức mạnh nhân máu / sát thương, GA_DB_TO: độ to): 2s gà con thường, 4s x2 to gấp đôi, 6s x3, 8s x4; hết TRUNG_DB_NO giây thì nở ra một gà mẹ phụ (đi đánh thay gà mẹ gốc, không giới hạn số lượng).
+const TRUNG_DB_CHO = 15;
+const TRUNG_DB_TO = 5;
+const TRUNG_DB_NHIP = 2;
+const TRUNG_DB_NO = 10;
+const TRUNG_DB_BAO_VE = 260;
+const GA_DB_SUC = [1, 2, 3, 4];
+const GA_DB_TO = [1, 2, 2.5, 3];
+// Gà mẹ gốc chạy trốn nhân vật trong tầm TAM_NHIN_TUONG (tốc độ gốc, sẽ nhân HE_SO_TOC_GA)
+const TOC_TRON = 480;
+// Gà mẹ phụ chết: điểm thưởng (không hồi máu cho đội, không hồi sinh)
+const DIEM_PHU = 200;
 // Mũi tên chỉ hướng tới gà tướng (kiểu đường chim bay của Google Maps): cứ HUONG_CHU_KY giây hiện một lần, kéo dài HUONG_HIEN giây (mờ dần vào / ra),
 // chỉ từ nhân vật gần gà tướng hơn, hướng về gà tướng, từng cụm 3 mũi tên ">" cách nhau HUONG_CACH, nằm trong khoảng HUONG_BAT_DAU..HUONG_TOI_DA tính từ nhân vật.
 // Gà tướng đã gần (trong HUONG_GAN) thì không cần chỉ nữa.
@@ -267,9 +307,11 @@ const HUONG_BAT_DAU = 180;
 const HUONG_TOI_DA = 1100;
 const HUONG_GAN = 600;
 const DIEM_DANH_TUONG = 15;
+// Bộ lọc màu socola của gà mẹ (vẽ bằng atlas nhuộm sẵn)
+const LOC_SOCOLA = 'sepia(1) saturate(1.6) brightness(0.5) contrast(1.1)';
 
 const TEN_DON: Record<string, string> = {
-  antenna_wide: 'Quất râu quét', roll: 'Cuộn tròn', energy_ball: 'Cầu năng lượng',
+  roll: 'Cuộn tròn', energy_ball: 'Cầu năng lượng',
 };
 
 const ngauNhien = (a: number, b: number) => a + Math.random() * (b - a);
@@ -316,12 +358,21 @@ const leNhanVat = (k: number): Le => ({
   tren: LE_NV.tren + (LE_MAY.tren - LE_NV.tren) * (k - 1),
   duoi: LE_NV.duoi + (LE_MAY.duoi - LE_NV.duoi) * (k - 1),
 });
-const leCuaGa = (g: { loai: LoaiGa }): Le => (g.loai === 'boss' ? LE_TUONG : g.loai === 'flyer' ? LE_BAY : LE_GA);
+// Gà con nở từ trứng đỏ to hơn (g.to) nên lề cũng rộng ra theo
+const leCuaGa = (g: { loai: LoaiGa; to?: number }): Le => {
+  const le = g.loai === 'boss' ? LE_TUONG : g.loai === 'flyer' ? LE_BAY : LE_GA;
+  const k = g.to ?? 1;
+  return k === 1 ? le : { x: le.x * k, tren: le.tren * k, duoi: le.duoi * k };
+};
+// Cỡ thật của gà (gà con nở từ trứng đỏ to hơn)
+const tlGa = (g: { loai: LoaiGa; to?: number }) => TL_GA[g.loai] * (g.to ?? 1);
+// Gà mẹ phụ = gà tướng không phải gà mẹ gốc
+const laMePhu = (g: Ga) => g.loai === 'boss' && !g.goc;
 // Hệ số sát thương của gà tướng theo lần hồi sinh; sát thương gốc của mọi con gà
 const heSoLan = (g: Ga) => 1 + TUONG_TANG_SAT * (g.lan ?? 0);
-const satGa = (g: Ga) => SAT_GA[g.loai] * (g.loai === 'boss' ? heSoLan(g) : 1);
+const satGa = (g: Ga) => SAT_GA[g.loai] * (g.loai === 'boss' ? heSoLan(g) : 1) * (g.suc ?? 1);
 // Tỉ lệ né của gà: gà tướng tăng dần theo lần hồi sinh
-const neGa = (g: Ga) => (g.loai === 'boss' ? ((g.soHo ?? 0) > 0 ? 0 : Math.min(NE_TOI_DA, NE_GA.boss + TUONG_TANG_NE * (g.lan ?? 0))) : NE_GA[g.loai]);
+const neGa = (g: Ga) => (g.loai === 'boss' ? ((g.soHo ?? 0) > 0 || (g.socola ?? 0) > 0 ? 0 : Math.min(NE_TOI_DA, NE_GA.boss + TUONG_TANG_NE * (g.lan ?? 0))) : NE_GA[g.loai]);
 // Kẹp vật vào trong bản đồ; trả về cờ chạm mép theo từng trục để vật tự bật lại
 function giuTrongMap(o: { x: number; y: number }, le: Le) {
   const x = kep(o.x, le.x, MAP - le.x);
@@ -369,6 +420,7 @@ export class Game {
   readonly S_NV = S_NV;
   readonly SP_TUONG = GA_TUONG;
   readonly TUONG_HOI_SINH = TUONG_HOI_SINH;
+  readonly TRUNG_DB_TO = TRUNG_DB_TO;
   readonly HE_BANG_TUONG = HE_BANG_TUONG;
   readonly R_CUNG = R_CUNG;
   // Chu vi vòng tiến độ quanh nút chiêu của gà tướng
@@ -391,9 +443,12 @@ export class Game {
   /** Toàn bộ cây / bụi / đá của map (sinh một lần, cố định); chỉ vật trong khung nhìn mới vào `xep` */
   readonly trangTri: TrangTri[] = taoTrangTri();
   gaBayView: Ga[] = [];
-  tuong: Ga | null = null;
-  // Gà tướng còn sống (không lọc theo khung nhìn) cho bảng chiêu ở giữa phía trên
+  /** Mọi gà mẹ (gốc + phụ) còn sống nằm trong khung nhìn và tầm nhìn: để vẽ thanh máu */
+  tuongView: Ga[] = [];
+  // Gà mẹ GỐC còn sống (không lọc theo khung nhìn): avatar, số mạng, mũi tên chỉ hướng
   tuongSong: Ga | null = null;
+  // Gà mẹ đang đánh (phụ gần nhân vật nhất; chưa có thì gà mẹ gốc): chiêu hiện trên thanh đen phía trên
+  tuongBang: Ga | null = null;
   // Vật phẩm máu trên map (vatPhamView: chỉ cái nằm trong khung nhìn)
   vatPham: VatPham[] = [];
   vatPhamView: VatPham[] = [];
@@ -482,7 +537,7 @@ export class Game {
       this.ctx = this.canvasEl.getContext('2d');
       this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png');
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG]);
-      this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO]);
+      this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO, LOC_SOCOLA]);
       vua();
       const quanSat = new ResizeObserver(vua);
       quanSat.observe(this.khungEl);
@@ -635,6 +690,16 @@ export class Game {
     return this.ga.filter((g) => g.loai !== 'boss' && !g.chet).length;
   }
 
+  /** Số gà mẹ phụ còn sống (nở từ trứng đỏ) */
+  get soMePhu(): number {
+    return this.ga.filter((g) => laMePhu(g) && !g.chet).length;
+  }
+
+  /** Số gà tính vào GA_TOI_DA: không tính gà mẹ phụ và gà / trứng của trứng đỏ (không giới hạn) */
+  private demGaThuong(): number {
+    return this.ga.filter((g) => !g.chet && !laMePhu(g) && g.suc === undefined).length + this.trungDe.filter((e) => !e.db).length;
+  }
+
   // Thắng khi gà mẹ đã dùng hết mạng (đã hồi sinh đủ lần và chết) và không còn gà con nào, kể cả trứng chưa nở
   private kiemTraThang(): void {
     if (this.soLanTuong > TUONG_HOI_SINH && !this.ga.some((g) => !g.chet) && !this.trungDe.length) this.ketThuc(true);
@@ -702,7 +767,7 @@ export class Game {
     this.capNhatTrungGa(dt);
     this.henTuong -= dtE;
     if (this.henTuong <= 0) {
-      if (this.ga.some((g) => g.loai === 'boss' && !g.chet)) this.henTuong = 10;
+      if (this.ga.some((g) => g.goc && !g.chet)) this.henTuong = 10;
       else if (this.soLanTuong <= TUONG_HOI_SINH) {
         this.sinhTuong();
         this.henTuong = CHO_TUONG;
@@ -730,7 +795,14 @@ export class Game {
       const xanh = v.loai === 'xanh';
       const n = this.nguoi.find((m) => !m.het && !m.nv.laMay && Math.hypot(m.x - v.x, m.y - v.y) < VP_BAN_KINH);
       if (n) {
-        if (xanh) {
+        if (v.loai === 'socola') {
+          // Socola: +200 máu và +200 mana (không trần), mở khoá bay, rồi tự bắn chưởng lên trời
+          n.hp += SOCOLA_HOI_MAU;
+          n.mana += SOCOLA_HOI_MANA;
+          n.bayKhoa = 0;
+          this.chu.push({ id: this.id++, x: n.x, y: n.y - 250, text: `🍫 +${SOCOLA_HOI_MAU} ❤ +${SOCOLA_HOI_MANA} mana`, mau: '#c98a4b', t: 0 });
+          this.chuongLenTroi(this.nguoi.indexOf(n));
+        } else if (xanh) {
           this.hoiDayMana(n);
           this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${VP_HOI} mana`, mau: '#2fa8ff', t: 0 });
         } else {
@@ -741,7 +813,7 @@ export class Game {
         continue;
       }
       // Gà đi qua chỉ mổ ăn táo đỏ (táo xanh gà không ăn): hồi VP_HOI máu, không có trần
-      const ga = xanh ? undefined : this.ga.find((g) => !g.chet && Math.hypot(g.x - v.x, g.y - v.y) < VP_GA_BAN_KINH);
+      const ga = xanh || v.loai === 'socola' ? undefined : this.ga.find((g) => !g.chet && Math.hypot(g.x - v.x, g.y - v.y) < VP_GA_BAN_KINH);
       if (ga) {
         ga.hp += VP_HOI;
         ga.mo = MO_THOI_GIAN;
@@ -855,21 +927,37 @@ export class Game {
       const bay = g.loai === 'flyer';
       g.nhay = Math.max(0, g.nhay - dt);
       g.mo = Math.max(0, (g.mo ?? 0) - dt);
-      if (g.loai === 'boss') {
+      if (g.loai === 'boss' && (g.socola ?? 0) > 0) {
+        // Đang là socola: đứng yên, mọi đồng hồ của gà mẹ tạm dừng; hết giờ thì nghỉ một chút rồi hoạt động lại
+        g.socola = (g.socola ?? 0) - dt;
+        g.vx = g.vy = 0;
+        if (g.socola <= 0) {
+          g.socola = 0;
+          g.nghiChung = Math.max(g.nghiChung ?? 0, 1);
+        }
+      } else if (g.loai === 'boss') {
         this.capNhatChieuTuong(g, dt);
-        // Đang lao / bay thì không đẻ trứng
-        if (!g.chieu) g.de = (g.de ?? 0) - dt;
-        if ((g.de ?? 0) <= 0) {
-          g.de = TRUNG_CHO;
-          this.deTrung(g);
-          // Mỗi lần xuất hiện / hồi sinh: đẻ lượt đầu rồi chờ trứng nở xong mới được dùng chiêu Lao / Bay
-          if (!g.daDe) {
-            g.daDe = true;
-            g.choChieu = TRUNG_NO;
+        // Chỉ gà mẹ gốc đẻ trứng (đang lao / bay thì không đẻ; gà mẹ gốc không có Lao / Bay)
+        if (g.goc) {
+          if (!g.chieu) g.de = (g.de ?? 0) - dt;
+          if ((g.de ?? 0) <= 0) {
+            g.de = TRUNG_CHO;
+            this.deTrung(g);
+            // Mỗi lần xuất hiện / hồi sinh: đẻ lượt đầu rồi chờ trứng nở xong mới được dùng chiêu màu
+            if (!g.daDe) {
+              g.daDe = true;
+              g.choChieu = TRUNG_NO;
+            }
+          }
+          g.deDb = (g.deDb ?? TRUNG_DB_CHO) - dt;
+          if (g.deDb <= 0) {
+            g.deDb = TRUNG_DB_CHO;
+            this.deTrungDb(g);
           }
         }
         g.choChieu = Math.max(0, (g.choChieu ?? 0) - dt);
-        this.dieuTuong(g, dt);
+        if (g.goc) this.dieuTuongGoc(g, dt);
+        else this.dieuTuong(g, dt);
       }
       else if (this.gaLao(g, dt)) {
         // đang lao vào nhân vật trong tầm
@@ -910,8 +998,9 @@ export class Game {
     for (const d of this.dan) {
       const t0 = d.t;
       d.t += dt;
-      this.danDoCay(d, t0);
+      if (!d.troi) this.danDoCay(d, t0);
       if (d.t < d.T) conLai.push(d);
+      else if (d.troi) this.noTroi(d);
       else this.chamDich(d);
     }
     this.dan = conLai;
@@ -946,6 +1035,10 @@ export class Game {
 
   private chamDich(d: Dan): void {
     const { x1: x, y1: y, p } = d;
+    if (d.soc) {
+      this.noSocola(d);
+      return;
+    }
     if (d.to) {
       this.no(d);
       return;
@@ -953,7 +1046,7 @@ export class Game {
     const trungDon = this.ga.filter((v) => {
       if (v.chet) return false;
       const tam = this.tamGa(v);
-      return Math.hypot(tam.x - x, tam.y - y) < BAN_KINH_GA * TL_GA[v.loai] * S_GA * 1.25;
+      return Math.hypot(tam.x - x, tam.y - y) < BAN_KINH_GA * tlGa(v) * S_GA * 1.25;
     });
     // Gà nhỏ đứng trước mặt gà tướng thì ưu tiên gà nhỏ
     const g = trungDon.find((v) => v.loai !== 'boss') ?? trungDon[0];
@@ -977,11 +1070,80 @@ export class Game {
     });
     trung.forEach((g) => this.trungGa(g, d.p, d.sat));
     this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'no' });
+    this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 0.9 });
     this.rung = Math.max(this.rung, 0.15);
     if (!trung.length) {
       this.nguoi[d.p].combo = 0;
       this.nguoi[d.p].banTruot++;
     }
+  }
+
+  // Chiêu Biến socola: gà con trong vùng nổ chết luôn và thành socola; gà mẹ dính sát thương rồi hoá socola
+  private noSocola(d: Dan): void {
+    const trung = this.ga.filter((g) => {
+      if (g.chet) return false;
+      const tam = this.tamGa(g);
+      return Math.hypot(tam.x - d.x1, tam.y - d.y1) < BAN_KINH_SOCOLA + (g.loai === 'boss' ? 150 : 0);
+    });
+    this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 1.3 });
+    this.rung = Math.max(this.rung, 0.15);
+    // Gà con trước, gà mẹ sau (gà mẹ có thể chết và đẻ thêm hiệu ứng)
+    for (const g of trung.filter((v) => v.loai !== 'boss')) this.bienSocolaGa(g, d.p);
+    for (const g of trung.filter((v) => v.loai === 'boss')) this.socolaTuong(g, d.p, d.sat);
+    if (!trung.length) {
+      this.nguoi[d.p].combo = 0;
+      this.nguoi[d.p].banTruot++;
+    }
+  }
+
+  // Gà con thành socola: chết ngay (biến mất, không rơi lông), để lại một thanh socola ăn được; tính điểm / combo như hạ gà
+  private bienSocolaGa(g: Ga, p: number): void {
+    const n = this.nguoi[p];
+    const tam = this.tamGa(g);
+    g.hp = 0;
+    g.chet = true;
+    g.tChet = 1;
+    this.vet.push({ id: this.id++, x: g.x, y: tam.y, t: 0, loai: 'chay', co: 0.7 });
+    const v = { x: g.x, y: g.y };
+    giuTrongMap(v, LE_VP);
+    this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'socola' });
+    n.combo++;
+    n.banTrung++;
+    const hs = this.heSo(p);
+    const diem = DIEM[g.loai] * (g.suc ?? 1) * hs;
+    this.congDiem(p, diem, tam.x, tam.y - 30, `🍫 +${diem}${hs > 1 ? ` x${hs}` : ''}`);
+  }
+
+  // Gà mẹ dính chiêu socola: nhận sát thương như đòn thường (có thể né / phản / miss theo màu); chỉ khi đòn trúng và gà mẹ còn sống mới hoá socola
+  private socolaTuong(g: Ga, p: number, sat: number): void {
+    const truoc = g.hp;
+    this.trungGa(g, p, sat);
+    if (g.chet || g.hp >= truoc || (g.socola ?? 0) > 0) return;
+    g.socola = SOCOLA_THOI_GIAN;
+    g.chieu = null;
+    g.mau = null;
+    g.conMau = 0;
+    g.vx = g.vy = 0;
+    const t = this.tamGa(g);
+    this.chu.push({ id: this.id++, x: t.x, y: t.y - 150, text: '🍫 HOÁ SOCOLA!', mau: '#c98a4b', t: 0 });
+  }
+
+  // Tự bắn chưởng lên trời (tự động): mỗi tia bay lên cao rồi nổ cháy trên trời
+  private chuongLenTroi(p: number): void {
+    const n = this.nguoi[p];
+    if (!n || n.vang || n.het || n.nv.laMay) return;
+    const tay = this.viTriTay(p);
+    for (const dx of [-170, 0, 170]) {
+      this.dan.push({
+        id: this.id++, p, x0: tay.x, y0: tay.y, x1: tay.x + dx, y1: tay.y - TROI_CAO + Math.abs(dx) * 0.25, t: 0, T: TROI_THOI_GIAN + Math.abs(dx) * 0.0005,
+        phu: true, to: true, sat: 0, troi: true,
+      });
+    }
+  }
+
+  private noTroi(d: Dan): void {
+    this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 1.5 });
+    this.rung = Math.max(this.rung, 0.1);
   }
 
   private capNhatHieuUng(dt: number, dtE: number): void {
@@ -1002,18 +1164,20 @@ export class Game {
     this.long = this.long.filter((l) => l.t < 1.3);
 
     for (const v of this.vet) v.t += dt;
-    this.vet = this.vet.filter((v) => v.t < 0.45);
+    this.vet = this.vet.filter((v) => v.t < (v.loai === 'chay' ? 0.7 : 0.45));
   }
 
   // Góc rung của quả trứng sắp nở
   rungTrung(e: TrungGa): number {
+    // Trứng đỏ rung mạnh dần theo thời gian
+    if (e.db) return Math.sin(e.t * 30) * (2 + e.t * 1.2);
     return e.t > 1 ? Math.sin(e.t * 40) * 12 : 0;
   }
 
   // Các mũi tên ">" chỉ từ mỗi nhân vật về phía gà tướng; chỉ lấy mũi tên nằm trong khung nhìn
   private huongToiTuong(trong: (x: number, y: number, le: number) => boolean) {
     const kq: { x: number; y: number; goc: number; a: number; mau: string }[] = [];
-    const tw = this.ga.find((g) => g.loai === 'boss' && !g.chet);
+    const tw = this.ga.find((g) => g.goc && !g.chet);
     const pha = this.tGame % HUONG_CHU_KY;
     if (!tw || this.man !== 'play' || pha > HUONG_HIEN) return kq;
     const a = Math.sin((Math.PI * pha) / HUONG_HIEN) * 0.5;
@@ -1064,11 +1228,11 @@ export class Game {
     const trong = (x: number, y: number, le: number) =>
       Math.abs(x - this.camX) < this.W / 2 / z + le && y - this.camY > -TAM_VIEW_Y / z - le && y - this.camY < (H - TAM_VIEW_Y) / z + le;
     this.vatPhamView = this.vatPham.filter((v) => trong(v.x, v.y, 100));
-    this.trungView = this.trungDe.filter((e) => this.thay(e.x, e.y) && trong(e.x, e.y, 100));
+    this.trungView = this.trungDe.filter((e) => this.thay(e.x, e.y) && trong(e.x, e.y, e.db ? 300 : 100));
     this.huongView = this.huongToiTuong(trong);
     this.nhinNguon = [
       ...this.nguoi.filter((n) => !n.het).map((n) => ({ x: n.x, y: n.y })),
-      ...this.dan.map((d) => { const vt = this.danHienTai(d); return { x: vt.x, y: vt.y }; }),
+      ...this.dan.filter((d) => !d.troi).map((d) => { const vt = this.danHienTai(d); return { x: vt.x, y: vt.y }; }),
     ];
     const xep: VatXep[] = [];
     for (const g of this.ga) {
@@ -1088,19 +1252,23 @@ export class Game {
     this.longView = this.long.filter((l) => trong(l.x, l.y, 100));
     this.nhamView = this.nguoi.flatMap((n) => (n.nham && trong(n.nham.x, n.nham.y, 100) ? [{ x: n.nham.x, y: n.nham.y, mau: n.mau }] : []));
     this.chuView = this.chu.filter((c) => trong(c.x, c.y, 300));
-    // Chỉ gà tướng có thanh máu trên đầu; chỉ lấy khi nằm trong khung nhìn
-    const t = this.ga.find((g) => g.loai === 'boss' && !g.chet);
-    this.tuongSong = t ?? null;
+    // Chỉ nhân vật và gà mẹ (gốc + phụ) có thanh máu trên đầu; chỉ lấy khi nằm trong khung nhìn
+    const cacTuong = this.ga.filter((g) => g.loai === 'boss' && !g.chet);
+    this.tuongSong = cacTuong.find((g) => g.goc) ?? null;
+    const song = this.nguoi.filter((n) => !n.het);
+    const gan = (g: Ga) => Math.min(...song.map((n) => Math.hypot(n.x - g.x, n.y - g.y)), Infinity);
+    this.tuongBang = cacTuong.filter(laMePhu).sort((a, b) => gan(a) - gan(b))[0] ?? this.tuongSong;
     this.vachView = [];
-    if (t?.chieu?.pha === 'bao' && this.thay(t.x, t.y)) {
+    for (const t of cacTuong) {
+      if (t.chieu?.pha !== 'bao' || !this.thay(t.x, t.y)) continue;
       const c = t.chieu;
       const x2 = t.x + c.ux * c.quang;
       const y2 = t.y + c.uy * c.quang;
       if ([0, 0.25, 0.5, 0.75, 1].some((k) => trong(t.x + (x2 - t.x) * k, t.y + (y2 - t.y) * k, 450))) {
-        this.vachView = [{ x1: t.x, y1: t.y, x2, y2, a: 0.25 + 0.2 * Math.abs(Math.sin(c.t * 10)) }];
+        this.vachView.push({ x1: t.x, y1: t.y, x2, y2, a: 0.25 + 0.2 * Math.abs(Math.sin(c.t * 10)) });
       }
     }
-    this.tuong = t && this.thay(t.x, t.y) && trong(t.x, t.y, 450) ? t : null;
+    this.tuongView = cacTuong.filter((t) => this.thay(t.x, t.y) && trong(t.x, t.y, 450));
   }
 
   // Điểm có nằm trong tầm nhìn của nhân vật hoặc chưởng nào không
@@ -1166,7 +1334,7 @@ export class Game {
 
   // Gà tướng đẻ một lượt trứng quanh mình, trừ khi tổng số gà đã đủ GA_TOI_DA
   private deTrung(boss: Ga): void {
-    if (this.ga.filter((g) => !g.chet).length + this.trungDe.length >= GA_TOI_DA) return;
+    if (this.demGaThuong() >= GA_TOI_DA) return;
     const dan = [...DAN_TRUNG, ...TRUNG_THEM.slice(0, boss.lan ?? 0)];
     for (const loai of dan) {
       this.trungDe.push({
@@ -1181,6 +1349,15 @@ export class Game {
     const conLai: TrungGa[] = [];
     for (const e of this.trungDe) {
       e.t += dt;
+      if (e.db) {
+        // Trứng đỏ: cứ TRUNG_DB_NHIP giây nở một gà con mạnh dần, hết TRUNG_DB_NO giây thì nở ra gà mẹ phụ
+        const nhip = Math.min(GA_DB_SUC.length, Math.floor(e.t / TRUNG_DB_NHIP));
+        for (let k = e.no ?? 0; k < nhip; k++) this.nuaGaDb(e, k);
+        e.no = Math.max(e.no ?? 0, nhip);
+        if (e.t < TRUNG_DB_NO) conLai.push(e);
+        else this.sinhMePhu(e);
+        continue;
+      }
       if (e.t < TRUNG_NO) {
         conLai.push(e);
         continue;
@@ -1212,14 +1389,105 @@ export class Game {
       y = ngauNhien(600, MAP - 600);
       if (co.every((n) => Math.hypot(n.x - x, n.y - y) >= 2000)) break;
     }
-    this.ga.push({
-      id: this.id++, loai: 'boss', x, y, h: 0, h0: 0, vx: 0, vy: 0, phase: 0, doiHuong: 0,
-      chet: false, tChet: 0, lat: x > mx, hp: HP_GA, nhay: 0, de: 0,
-      lan, chieu: null, hoiLao: LAO_HOI, hoiBay: BAY_HOI, mau: null, conMau: 0, hoiMau: MAU_CHU_KY, luotMau: 0, dot: 0,
-    });
+    this.ga.push(this.taoTuong(x, y, x > mx, lan, true));
     const chuTuong = lan === 0 ? '🐔 GÀ TƯỚNG XUẤT HIỆN!' : `🐔 GÀ TƯỚNG HỒI SINH LẦN ${lan}!`;
     this.chu.push({ id: this.id++, x: mx, y: my - 330, text: chuTuong, mau: '#ff9f1a', t: 0 });
     this.rung = Math.max(this.rung, 0.4);
+  }
+
+  // Tạo một gà mẹ: goc = gà mẹ gốc (đẻ trứng, chỉ sống sót) hay gà mẹ phụ (nở từ trứng đỏ, đi đánh)
+  private taoTuong(x: number, y: number, lat: boolean, lan: number, goc: boolean): Ga {
+    return {
+      id: this.id++, loai: 'boss', x, y, h: 0, h0: 0, vx: 0, vy: 0, phase: 0, doiHuong: 0,
+      chet: false, tChet: 0, lat, hp: HP_GA, nhay: 0, de: 0,
+      lan, chieu: null, hoiLao: LAO_HOI, hoiBay: BAY_HOI, mau: null, conMau: 0, hoiMau: MAU_CHU_KY, luotMau: 0, dot: 0,
+      goc, deDb: TRUNG_DB_CHO, socola: 0,
+      ...(goc ? {} : { daDe: true, choChieu: 1 }),
+    };
+  }
+
+  // Gà mẹ gốc đẻ một quả trứng đỏ đặc biệt (không tính vào GA_TOI_DA); mỗi lần chỉ có một quả đang ấp của gà mẹ này
+  private deTrungDb(boss: Ga): void {
+    if (this.trungDe.some((e) => e.db && e.me === boss.id)) return;
+    const x = kepMap(boss.x + ngauNhien(-140, 140));
+    const y = kepMap(boss.y + ngauNhien(40, 150));
+    this.trungDe.push({ id: this.id++, loai: 'hen', t: 0, x, y, db: true, no: 0, me: boss.id });
+    this.chu.push({ id: this.id++, x: boss.x, y: boss.y - 360, text: '🥚 TRỨNG ĐỎ!', mau: '#ff4d4d', t: 0 });
+  }
+
+  // Trứng đỏ nở gà con ở nhịp k (0 → gà con thường, 1 → x2 to gấp đôi, 2 → x3, 3 → x4)
+  private nuaGaDb(e: TrungGa, k: number): void {
+    const loai = (['hen', 'rooster', 'flyer'] as const)[Math.floor(Math.random() * 3)];
+    const bay = loai === 'flyer';
+    const huong = ngauNhien(0, Math.PI * 2);
+    const v = bay ? ngauNhien(110, 130) : 0;
+    const suc = GA_DB_SUC[k];
+    const g: Ga = {
+      id: this.id++, loai, x: e.x + Math.cos(huong) * 120, y: e.y + Math.sin(huong) * 60, h: 0, h0: bay ? ngauNhien(200, 300) : 0,
+      vx: Math.cos(huong) * v, vy: Math.sin(huong) * v, phase: Math.random() * 6, doiHuong: 0,
+      chet: false, tChet: 0, lat: Math.cos(huong) < 0, hp: HP_GA * suc, nhay: 0, suc, to: GA_DB_TO[k],
+    };
+    giuTrongMap(g, leCuaGa(g));
+    this.ga.push(g);
+    this.vet.push({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'chay', co: 0.6 + 0.2 * k });
+    if (k > 0) this.chu.push({ id: this.id++, x: g.x, y: g.y - 160, text: `GÀ CON x${suc}!`, mau: '#ff6a3c', t: 0 });
+  }
+
+  // Trứng đỏ nở ra gà mẹ phụ: đi đánh nhân vật thay gà mẹ gốc
+  private sinhMePhu(e: TrungGa): void {
+    const g = this.taoTuong(e.x, e.y, Math.random() < 0.5, this.lanTuong, false);
+    giuTrongMap(g, LE_TUONG);
+    this.ga.push(g);
+    this.vet.push({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'chay', co: 2 });
+    this.chu.push({ id: this.id++, x: g.x, y: g.y - 360, text: '🐔 GÀ MẸ MỚI RA ĐỜI!', mau: '#ff9f1a', t: 0 });
+    this.rung = Math.max(this.rung, 0.3);
+  }
+
+  // Gà mẹ gốc không đi đánh: có trứng đỏ đang ấp thì canh quanh quả trứng, không thì chạy trốn nhân vật gần nhất, không ai tới gần thì đi loanh quanh
+  private dieuTuongGoc(g: Ga, dt: number): void {
+    const e = this.trungDe.find((t) => t.db && t.me === g.id);
+    if (e) {
+      const d = Math.hypot(e.x - g.x, e.y - g.y);
+      if (d > TRUNG_DB_BAO_VE) {
+        g.vx = ((e.x - g.x) / d) * TOC_DO_TUONG * 2;
+        g.vy = ((e.y - g.y) / d) * TOC_DO_TUONG * 2;
+        g.doiHuong = 0;
+      } else {
+        g.doiHuong -= dt;
+        if (g.doiHuong <= 0) {
+          g.doiHuong = ngauNhien(1, 2.5);
+          const goc = ngauNhien(0, Math.PI * 2);
+          const v = Math.random() < 0.3 ? 0 : TOC_DO_TUONG;
+          g.vx = Math.cos(goc) * v;
+          g.vy = Math.sin(goc) * v;
+        }
+      }
+      if (g.vx) g.lat = g.vx < 0;
+      return;
+    }
+    let muc: NguoiChoi | null = null;
+    let gan = TAM_NHIN_TUONG;
+    for (const n of this.nguoi) {
+      if (n.het || n.nv.laMay) continue;
+      const d = Math.hypot(n.x - g.x, n.y - g.y);
+      if (d < gan) { gan = d; muc = n; }
+    }
+    if (muc) {
+      const d = Math.hypot(muc.x - g.x, muc.y - g.y) || 1;
+      g.vx = ((g.x - muc.x) / d) * TOC_TRON;
+      g.vy = ((g.y - muc.y) / d) * TOC_TRON;
+      g.lat = g.vx < 0;
+      g.doiHuong = 0;
+      return;
+    }
+    g.doiHuong -= dt;
+    if (g.doiHuong <= 0) {
+      g.doiHuong = ngauNhien(2, 5);
+      const goc = ngauNhien(0, Math.PI * 2);
+      const v = Math.random() < 0.25 ? 0 : TOC_DO_TUONG * 0.6;
+      g.vx = Math.cos(goc) * v;
+      g.vy = Math.sin(goc) * v;
+    }
   }
 
   // Gà tướng: đi về phía người gần nhất, tới gần thì dừng lại
@@ -1237,7 +1505,7 @@ export class Game {
     if (!muc || gan > TAM_LAO) {
       let xa = TAM_NGUI_TAO;
       for (const v of this.vatPham) {
-        if (v.loai === 'xanh') continue;
+        if (v.loai === 'xanh' || v.loai === 'socola') continue;
         const d = Math.hypot(v.x - g.x, v.y - g.y);
         if (d < xa) { xa = d; muc = v; }
       }
@@ -1453,23 +1721,40 @@ export class Game {
         g.chamMay = this.t + MAY_NHIP;
       }
       this.vet.push({ id: this.id++, x: g.x, y: this.tamGa(g).y, t: 0, loai: 'no' });
+      // Gà mẹ đang là socola (Zinbu) mà dính mây (Mabu): luôn mất 30% máu tối đa, từ 30% trở xuống thì chết luôn
+      if (boss && (g.socola ?? 0) > 0) {
+        this.comboSocolaMay(g, p);
+        continue;
+      }
       this.trungGa(g, p, SAT_MAY);
     }
+  }
+
+  private comboSocolaMay(g: Ga, p: number): void {
+    const t = this.tamGa(g);
+    const nguong = HP_GA * SOCOLA_MAY_MAT;
+    g.hp = g.hp <= nguong ? 0 : g.hp - nguong;
+    this.vet.push({ id: this.id++, x: g.x, y: t.y, t: 0, loai: 'chay', co: 1.1 });
+    this.chu.push({ id: this.id++, x: t.x + ngauNhien(-40, 40), y: t.y - 90, text: g.hp > 0 ? '🍫☁ -30%!' : '🍫☁ NGHIỀN NÁT!', mau: '#c98a4b', t: 0 });
+    this.trungTuong(g, p);
   }
 
   // Nhóm Đấm: 1 viên, không tốn mana · Đá: 2 viên tản · Chiêu đặc biệt: 1 quả cầu nổ diện rộng. Đá và chiêu tốn 1 mana mỗi lần.
   private ban(p: number, x: number, y: number): void {
     const n = this.nguoi[p];
     if (n.hoiChieu > 0 || n.nv.khoa) return;
-    const chieu = n.nv.nhom === 2;
     const nhom = n.nv.nhom;
-    if (nhom === NHOM_MAY) {
+    // Nhóm 3: Mabu biến mây, Zinbu biến socola
+    const nhomMay = !!n.nv.sp.nhomDon[nhom]?.may;
+    const soc = nhom === NHOM_MAY && !nhomMay;
+    const chieu = nhom === 2 || soc;
+    if (nhomMay) {
       this.vaoMay(n);
       return;
     }
     if (n.may.dang) return;
     // Thời gian hồi giữa 2 đòn theo nhóm (không phụ thuộc độ dài animation)
-    n.hoiChieu = (chieu ? 0.8 : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
+    n.hoiChieu = soc ? SOCOLA_HOI : (chieu ? 0.8 : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
     if (!n.dangDi) {
       n.nv.lat = x < n.x;
       n.nv.huong = 'ngang';
@@ -1477,7 +1762,7 @@ export class Game {
     if (!n.bay) n.nv.raDon(this.t);
 
     // Giới hạn tầm theo đòn vừa ra: chuột trỏ xa hơn tầm thì đòn dừng ở mép tầm đánh
-    const tam = chieu ? TAM_CHIEU : TAM_DON[n.nv.donVuaRa ?? ''] ?? (n.nv.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN);
+    const tam = soc ? TAM_SOCOLA : chieu ? TAM_CHIEU : TAM_DON[n.nv.donVuaRa ?? ''] ?? (n.nv.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN);
     const ddx = x - n.x;
     const ddy = y - n.y;
     const dd = Math.hypot(ddx, ddy);
@@ -1494,7 +1779,7 @@ export class Game {
       const x1 = x + tanX + dx;
       const y1 = y + tanY + Math.abs(dx) * 0.3;
       const T = Math.hypot(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
-      this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0, sat: SAT_THUONG[nhom][p] });
+      this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0, sat: soc ? SAT_SOCOLA : SAT_THUONG[nhom][p], soc: soc && i === 0 });
     });
   }
 
@@ -1521,7 +1806,7 @@ export class Game {
   hetMana(p: number, k: number): boolean {
     const n = this.nguoi[p];
     if (k === 0) return false;
-    if (k === NHOM_MAY) return n.may.dang || n.may.hoi > 0;
+    if (k === NHOM_MAY && n.nv.sp.nhomDon[k]?.may) return n.may.dang || n.may.hoi > 0;
     return false;
   }
 
@@ -1580,7 +1865,8 @@ export class Game {
     n.banTrung++;
     const hs = this.heSo(p);
     const nhan = hs > 1 ? ` x${hs}` : '';
-    this.congDiem(p, DIEM[g.loai] * hs, tam.x, tam.y - 30, `+${DIEM[g.loai] * hs}${nhan}`);
+    const diem = DIEM[g.loai] * (g.suc ?? 1) * hs;
+    this.congDiem(p, diem, tam.x, tam.y - 30, `+${diem}${nhan}`);
     if (n.combo > 0 && n.combo % 5 === 0 && hs > 1) {
       this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 70, text: `${n.ten} COMBO x${hs}!`, mau: '#ff9f1a', t: 0 });
     }
@@ -1611,25 +1897,38 @@ export class Game {
     g.hp = 0;
     g.chet = true;
     g.h0 = 0;
-    // Chỉ hồi sinh sau khi chết, chờ đủ CHO_TUONG giây kể từ lúc chết
-    this.henTuong = CHO_TUONG;
+    g.socola = 0;
     rai(40);
     this.rung = Math.max(this.rung, 0.6);
-    this.congDiem(p, DIEM.boss * hs, tam.x, tam.y - 110, `+${DIEM.boss * hs} HẠ GÀ TƯỚNG!`);
-    // Hạ được gà tướng thì nhân vật còn sống được hồi máu
-    this.nguoi.forEach((m) => {
-      if (!m.het) m.hp += HOI_MAU_TUONG;
-    });
+    // Cháy nổ khi gà mẹ chết
+    this.vet.push({ id: this.id++, x: g.x, y: tam.y, t: 0, loai: 'chay', co: 2.4 });
+    this.vet.push({ id: this.id++, x: g.x - 90, y: tam.y + 40, t: 0, loai: 'chay', co: 1.4 });
+    this.vet.push({ id: this.id++, x: g.x + 90, y: tam.y - 40, t: 0, loai: 'chay', co: 1.4 });
+    if (g.goc) {
+      // Gà mẹ gốc: chỉ hồi sinh sau khi chết, chờ đủ CHO_TUONG giây kể từ lúc chết
+      this.henTuong = CHO_TUONG;
+      this.congDiem(p, DIEM.boss * hs, tam.x, tam.y - 110, `+${DIEM.boss * hs} HẠ GÀ TƯỚNG!`);
+      // Hạ được gà mẹ gốc thì nhân vật còn sống được hồi máu
+      this.nguoi.forEach((m) => {
+        if (!m.het) m.hp += HOI_MAU_TUONG;
+      });
+    } else {
+      // Gà mẹ phụ: chết hẳn, chỉ thưởng điểm
+      this.congDiem(p, DIEM_PHU * hs, tam.x, tam.y - 110, `+${DIEM_PHU * hs} HẠ GÀ MẸ PHỤ!`);
+    }
+    // Mừng chiến thắng: hai nhân vật tự bắn chưởng lên trời
+    this.nguoi.forEach((_, q) => this.chuongLenTroi(q));
   }
 
   // Quái chạm nhân vật thì đánh (mỗi con có thời gian chờ riêng). Nhân vật dạng mây, đang ngã hoặc đã hết máu thì bỏ qua.
   private gaDanhNguoi(): void {
     for (const g of this.ga) {
-      if (g.chet || g.chieu || (g.choDanh ?? 0) > this.t) continue;
+      // Gà mẹ gốc không đi đánh; gà mẹ đang là socola thì đứng yên không đánh
+      if (g.chet || g.chieu || g.goc || (g.socola ?? 0) > 0 || (g.choDanh ?? 0) > this.t) continue;
       for (let p = 0; p < 2; p++) {
         const n = this.nguoi[p];
         if (n.het || n.nv.laMay || n.nv.khoa) continue;
-        if (Math.hypot(n.x - g.x, n.y - g.y) >= CHAM_GA[g.loai]) continue;
+        if (Math.hypot(n.x - g.x, n.y - g.y) >= CHAM_GA[g.loai] * (g.to ?? 1)) continue;
         g.choDanh = this.t + HOI_DANH_GA[g.loai];
         g.mo = MO_THOI_GIAN;
         if (g.loai === 'boss') g.kieuMo = ((g.kieuMo ?? 0) + 1) % 2;
@@ -1951,7 +2250,7 @@ export class Game {
   // Tự ngắm vào con gà gần nhất trong tầm; không có thì đánh theo hướng đang nhìn
   private diemNham(p: number): { x: number; y: number; co: boolean } {
     const n = this.nguoi[p];
-    const tam = n.nv.nhom === 2 ? 800 : n.nv.nhom === 1 ? 480 : 380;
+    const tam = n.nv.nhom === NHOM_MAY && !n.nv.sp.nhomDon[NHOM_MAY]?.may ? TAM_SOCOLA : n.nv.nhom === 2 ? 800 : n.nv.nhom === 1 ? 480 : 380;
     let tot: Ga | null = null;
     let dm = tam;
     for (const g of this.ga) {
@@ -2014,7 +2313,7 @@ export class Game {
   // Bảng chiêu của gà tướng (giữa phía trên, hình bán nguyệt úp): 0 Mổ + đá · 1 Lao · 2 Bay · 3 Đen · 4 Vàng · 5 Đỏ.
   // tien 0..1 là vòng tiến độ (hồi chiêu, hoặc thời gian còn lại khi màu đang chạy); không bấm được, chỉ để xem
   bangTuong(): { k: number; x: number; y: number; dung: boolean; tien: number; op: number }[] {
-    const g = this.tuongSong;
+    const g = this.tuongBang;
     return [0, 1, 2, 3, 4, 5].map((k) => {
       let dung = false;
       let tien = 0;
@@ -2042,6 +2341,7 @@ export class Game {
   // Bộ lọc màu của gà: nháy sáng khi trúng đòn, báo hiệu trước khi lao / bay, đổi màu đen / vàng / đỏ
   locGa(g: Ga): string | null {
     if (g.loai === 'boss') {
+      if ((g.socola ?? 0) > 0) return LOC_SOCOLA;
       if (g.chieu?.pha === 'bao' && Math.floor(g.chieu.t * 14) % 2 === 0) return LOC_BAO;
       if (g.mau === 'den') return LOC_DEN;
       if (g.mau === 'vang') return LOC_VANG;
@@ -2052,7 +2352,7 @@ export class Game {
 
   // Nhóm đòn hiện biểu tượng dưới chân, theo thứ tự: Đấm → Chiêu đặc biệt → Đá → (Mabu) Mây
   dsBieuTuong(p: number): number[] {
-    return this.nguoi[p].nv.sp.nhomDon.some((d) => d.may) ? [0, 2, 1, NHOM_MAY] : [0, 2, 1];
+    return this.nguoi[p].nv.sp.nhomDon.length > NHOM_MAY ? [0, 2, 1, NHOM_MAY] : [0, 2, 1];
   }
 
   private viTriTay(p: number) {
@@ -2062,15 +2362,15 @@ export class Game {
   }
 
   tamGa(g: Ga) {
-    return { x: g.x, y: g.y - (CHAN_GA * TL_GA[g.loai] * S_GA + g.h) * EP_GA };
+    return { x: g.x, y: g.y - (CHAN_GA * tlGa(g) * S_GA + g.h) * EP_GA };
   }
 
   // Hình dạng vẽ của gà: vị trí chân, hệ số phóng ngang / dọc (dọc bị ép dẹt EP_GA), độ dời dy lên tâm thân và góc xoay (độ) quanh tâm thân
   // (mổ, đá, ngã, chúi khi Lao); sprite vẽ lùi xuống tới chân.
   gaHinh(g: Ga): { x: number; y: number; kx: number; ky: number; dy: number; xoay: number } {
-    const k = S_GA * TL_GA[g.loai];
+    const k = S_GA * tlGa(g);
     let xoay = g.chet && g.loai !== 'boss' ? g.tChet * 540 : 0;
-    const bay = g.h / (S_GA * TL_GA[g.loai]);
+    const bay = g.h / (S_GA * tlGa(g));
     let nang = 0;
     // Mổ: gật mạnh về phía trước; gà tướng đá thì ngửa người và nhảy lên
     if (!g.chet && (g.mo ?? 0) > 0) {
@@ -2092,6 +2392,7 @@ export class Game {
 
   gaKhung(g: Ga): number {
     if (g.chet) return KHUNG_CHET;
+    if ((g.socola ?? 0) > 0) return KHUNG_DUNG[0];
     if (g.loai === 'flyer' || (g.chieu?.loai === 'bay' && g.chieu.pha !== 'nghi')) return KHUNG_BAY[Math.floor(g.phase * 14) % KHUNG_BAY.length];
     const nhip = g.loai === 'boss' ? 0.5 : 1;
     if (g.vx || g.vy) return KHUNG_CHAY[Math.floor(g.phase * 10 * nhip) % KHUNG_CHAY.length];

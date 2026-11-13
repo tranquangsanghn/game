@@ -64,6 +64,7 @@
   - Đấm: Mabu 50 · Zinbu 50
   - Đá: Mabu 70 · Zinbu 100
   - Chiêu đặc biệt (bắn chưởng): Mabu 100 · Zinbu 150
+  - Biến socola (riêng Zinbu, `SAT_SOCOLA`): 150 lên gà mẹ (xem mục "Nguyên tắc chiêu Biến socola")
   - Biến mây (riêng Mabu): 250 (`SAT_MAY`); với gà tướng cứ mỗi `MAY_NHIP` giây trừ một lần
 - Quái gây sát thương khi chạm nhân vật; sát thương gốc (`SAT_GA`) và tốc độ đánh = số giây giữa 2 đòn (`HOI_DANH_GA`) theo loại, mỗi con có đồng hồ riêng:
   - Gà trắng: 32 sát thương · 1,2s (nhận 16)
@@ -106,7 +107,7 @@
 # Nguyên tắc sinh gà & mũi tên chỉ gà tướng
 
 - Gà con không tự sinh theo thời gian nữa: chỉ do gà mẹ (gà tướng) đẻ. Gà tướng xuất hiện ngay từ đầu ván ở chỗ ngẫu nhiên trên map (cách cả hai nhân vật ≥ 2000); bị hạ thì sau `CHO_TUONG` = 30 giây xuất hiện lại.
-- Gà tướng đẻ 5 trứng mỗi lượt (tăng theo lần hồi sinh) quanh mình (`deTrung()`), cách nhau `TRUNG_CHO` = 30s (lượt đầu ngay khi xuất hiện). Trứng nở sau `TRUNG_NO` = 2s (`capNhatTrungGa()`) thành 2 gà trắng, 2 gà đỏ, 1 gà đen (`DAN_TRUNG`). Tổng số gà còn sống (kể cả gà tướng) + trứng đang ấp ≥ `GA_TOI_DA` = 20 thì không đẻ. Gà không bị xoá khi ở xa nhân vật.
+- Gà tướng đẻ 5 trứng mỗi lượt (tăng theo lần hồi sinh) quanh mình (`deTrung()`), cách nhau `TRUNG_CHO` = 30s (lượt đầu ngay khi xuất hiện). Trứng nở sau `TRUNG_NO` = 2s (`capNhatTrungGa()`) thành 2 gà trắng, 2 gà đỏ, 1 gà đen (`DAN_TRUNG`). Tổng số gà còn sống (kể cả gà mẹ gốc, không tính gà mẹ phụ và gà / trứng của trứng đỏ, `demGaThuong()`) + trứng thường đang ấp ≥ `GA_TOI_DA` = 20 thì không đẻ. Gà không bị xoá khi ở xa nhân vật.
 - Trứng cũng bị sương mù: chỉ vẽ trong tầm nhìn (`trungView`).
 - Không có mini map. Thay vào đó là mũi tên chỉ hướng (kiểu đường chim bay của Google Maps, `huongToiTuong()` → `huongView`): cứ `HUONG_CHU_KY` = 5s hiện một lần (mờ dần vào / ra trong `HUONG_HIEN` = 2,5s), chỉ từ nhân vật còn sống gần gà tướng hơn (không phải cả hai) về phía gà tướng; mũi tên ">" nhỏ, mờ, đi theo cụm `HUONG_CUM` = 3 mũi liền nhau (cách `HUONG_LIEN`), các cụm cách xa nhau `HUONG_CACH`. Gà tướng đã gần (trong `HUONG_GAN`) hoặc đã chết thì không hiện. Lọc theo khung nhìn như mọi vật khác.
 
@@ -132,10 +133,29 @@
 
 # Nguyên tắc mana & bay
 
-- Bay tốn mana (`mana`, số không có trần, bình xanh lơ có số giữa bình ở thanh đen hai bên, dưới bình máu, không vẽ trên đầu nhân vật; `manaNv()`, `nlBay()`). Bắt đầu `MANA_BAN_DAU` = 100; bay tốn `MANA_BAY` = 50 mỗi giây bay; tự hồi `MANA_HOI` = 2 mỗi giây khi không bay nhưng chỉ tới `MANA_HOI_TOI_DA` = 100 rồi thôi (táo xanh có thể đẩy cao hơn, không bị trừ xuống). Mỗi lần bay xong khoá `BAY_KHOA` = 5s (`bayKhoa`, bình xám) mới bay tiếp được; còn dưới `MANA_TOI_THIEU` = 15 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); mana không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn. Đổi cấu trúc trạng thái nên `PHIEN_BAN_LUU` = 2 (ván lưu cũ không tải được).
+- Bay tốn mana (`mana`, số không có trần, bình xanh lơ có số giữa bình ở thanh đen hai bên, dưới bình máu, không vẽ trên đầu nhân vật; `manaNv()`, `nlBay()`). Bắt đầu `MANA_BAN_DAU` = 100; bay tốn `MANA_BAY` = 50 mỗi giây bay; tự hồi `MANA_HOI` = 2 mỗi giây khi không bay nhưng chỉ tới `MANA_HOI_TOI_DA` = 100 rồi thôi (táo xanh có thể đẩy cao hơn, không bị trừ xuống). Mỗi lần bay xong khoá `BAY_KHOA` = 5s (`bayKhoa`, bình xám) mới bay tiếp được; còn dưới `MANA_TOI_THIEU` = 15 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); mana không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn. Đổi cấu trúc trạng thái nên `PHIEN_BAN_LUU` = 3 (ván lưu cũ không tải được).
+
+# Nguyên tắc chiêu Biến socola (riêng Zinbu)
+
+- Nhóm đòn 3 của Zinbu (`NHOM_MAY` = 3, `nhomDon[3]` không có cờ `may`), tách từ đòn quất râu quét (`antenna_wide`, trước nằm trong Chiêu đặc biệt; Chiêu đặc biệt giờ chỉ còn `roll` / `energy_ball`). Biểu tượng là thanh socola. Ra đòn bằng chưởng nổ (`soc` trong `Dan`, tầm `TAM_SOCOLA` = 700, nổ `BAN_KINH_SOCOLA` = 260, hồi `SOCOLA_HOI` = 6s, không tốn mana).
+- Gà con (trắng, đỏ, đen, cả gà con của trứng đỏ) dính thì chết luôn và thành thanh socola (`VatPham` loại `socola`, `bienSocolaGa()`; tính điểm / combo như hạ gà). Gà không ăn socola. Nhân vật (không phải mây, chưa gục) chạm vào là ăn: +`SOCOLA_HOI_MAU` = 200 máu và +`SOCOLA_HOI_MANA` = 200 mana (không trần, mở khoá bay) rồi tự bắn chưởng lên trời.
+- Gà mẹ dính thì nhận `SAT_SOCOLA` = 150 như đòn thường (vẫn có thể né / phản / MISS theo màu); chỉ khi đòn trúng mới hoá socola `SOCOLA_THOI_GIAN` = 5s (`socola`, `socolaTuong()`): đứng yên, không né, không đánh / đẻ / dùng chiêu (đồng hồ tạm dừng), nhuộm nâu (`LOC_SOCOLA`).
+- Kết hợp: gà mẹ đang là socola mà dính mây của Mabu thì mỗi nhịp `MAY_NHIP` luôn mất 30% máu tối đa (`SOCOLA_MAY_MAT`, không né, không giảm sát thương); máu còn từ 30% trở xuống thì chết luôn (`comboSocolaMay()`).
+
+# Nguyên tắc trứng đỏ & gà mẹ phụ
+
+- Gà mẹ chia hai loại (cả hai đều `loai: 'boss'`): **gà mẹ gốc** (`goc`, đánh dấu vương miện vàng, thanh máu vàng, có 3 mạng như cũ) và **gà mẹ phụ** (`laMePhu()`, nở từ trứng đỏ, 1 mạng 100 máu, không giới hạn số lượng). Chỉ gà mẹ gốc đẻ trứng; gà mẹ phụ mới đi đánh nhân vật (đuổi, mổ, Lao / Bay, đổi màu như gà mẹ trước đây, `dieuTuong()`). Gà mẹ phụ kế thừa lần hồi sinh hiện tại (`lan`) của gà mẹ gốc.
+- Gà mẹ gốc không mổ / Lao / Bay: chỉ sống sót và đẻ trứng (`dieuTuongGoc()`): có trứng đỏ đang ấp thì canh quanh nó trong `TRUNG_DB_BAO_VE`, không thì chạy trốn nhân vật trong `TAM_NHIN_TUONG`. Vẫn có ba màu đen / vàng / đỏ để tự vệ. Mũi tên chỉ hướng và số mạng chỉ tính gà mẹ gốc.
+- Cứ `TRUNG_DB_CHO` = 15s gà mẹ gốc đẻ 1 trứng đỏ (`deTrungDb()`, ngoài lượt trứng thường, không tính vào `GA_TOI_DA`): to gấp `TRUNG_DB_TO` = 5. Cứ `TRUNG_DB_NHIP` = 2s nở một gà con mạnh dần (`nuaGaDb()`; sức mạnh `suc` nhân máu và sát thương, độ to `to`): 2s gà con thường, 4s x2 to gấp đôi, 6s x3, 8s x4; đủ `TRUNG_DB_NO` = 10s thì nở ra một gà mẹ phụ (`sinhMePhu()`). Gà mẹ phụ chết chỉ thưởng `DIEM_PHU` điểm, không hồi máu, không hồi sinh; gà mẹ gốc chết thì hồi sinh như cũ (`henTuong`).
+- Thanh đen phía trên hiện chiêu của gà mẹ phụ gần nhân vật nhất (`tuongBang`), chưa có thì của gà mẹ gốc; có chữ "Gà mẹ phụ" và số lượng bên trái avatar.
+
+# Nguyên tắc hiệu ứng cháy nổ
+
+- `Vet` loại `chay` (`veChay()` trong `ve-canvas.ts`): quầng lửa, khói, tia lửa; `co` là hệ số kích thước, sống 0,7s. Dùng cho mọi vụ nổ chưởng, socola, trứng đỏ nở, gà mẹ chết (3 vụ nổ).
+- Chưởng tự bắn lên trời (`chuongLenTroi()`, `Dan.troi`, hoàn toàn tự động, không sát thương, không đổ cây, không mang tầm nhìn): nhân vật ăn socola bắn 3 tia, và khi hạ được một gà mẹ thì cả hai nhân vật cùng bắn; nổ cháy trên trời (`noTroi()`).
 
 # Nguyên tắc thắng / thua
 
-- Nhân vật thắng (`kiemTraThang()` → `ketThuc(true)`, `nguoiThangTran` = true): gà mẹ đã dùng hết mạng (đã sinh đủ `TUONG_HOI_SINH` + 1 lần và đã chết), không còn gà con nào sống và không còn trứng chưa nở, tức diệt hết gà mẹ và gà con. Màn kết thúc hiện "Chiến thắng!".
+- Nhân vật thắng (`kiemTraThang()` → `ketThuc(true)`, `nguoiThangTran` = true): gà mẹ đã dùng hết mạng (đã sinh đủ `TUONG_HOI_SINH` + 1 lần và đã chết), không còn gà con và gà mẹ phụ nào sống và không còn trứng (kể cả trứng đỏ) chưa nở, tức diệt hết gà mẹ và gà con. Màn kết thúc hiện "Chiến thắng!".
 - Quái vật thắng (`ketThuc(false)`): cả hai nhân vật cùng hết máu. Màn kết thúc hiện "Quái vật thắng!".
 - Cả hai trường hợp đều ghi điểm / kỷ lục như cũ; điểm chỉ dùng để chọn nhân vật ghi nhiều điểm nhất (MVP) ở màn kết thúc, không quyết định thắng thua.
