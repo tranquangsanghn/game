@@ -707,10 +707,6 @@ export class Game {
   tuongView: Ga[] = [];
   // Gà mẹ GỐC còn sống (không lọc theo khung nhìn): avatar, số mạng, mũi tên chỉ hướng
   tuongSong: Ga | null = null;
-  /** Có nhân vật còn sống ở trong / gần vườn gà (cách tường tối đa 800) */
-  ganVuon(): boolean {
-    return this.nguoi.some((n) => !n.vang && !n.het && n.x > -800 && n.y > -800 && n.x < MAP + 800 && n.y < MAP + 800);
-  }
   // Gà mẹ đang đánh (phụ gần nhân vật nhất; chưa có thì gà mẹ gốc): chiêu hiện trên thanh đen phía trên
   tuongBang: Ga | null = null;
   // Vật phẩm máu trên map (vatPhamView: chỉ cái nằm trong khung nhìn)

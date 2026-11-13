@@ -223,8 +223,8 @@ export class VeCanvas {
     }
 
     for (const p of [0, 1]) if (!c.nguoi[p].vang) this.veThanhBen(ctx, c, p);
-    // Thế giới mở: chiêu gà mẹ chỉ hiện khi có nhân vật ở trong / gần vườn gà
-    if (c.banDoVan !== 'sa' || c.ganVuon()) this.veThanhTuong(ctx, c);
+    // Bố cục đen ngoài map là layout chung, luôn hiện; chỉ nội dung đổi theo nhân vật
+    this.veThanhTuong(ctx, c);
     if (c.man === 'play' || c.man === 'pause') this.veHud(ctx, c);
   }
 
