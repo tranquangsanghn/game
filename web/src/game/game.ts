@@ -2745,7 +2745,9 @@ export class Game {
       const dy = (duoc(g, 13) ? 1 : 0) - (duoc(g, 12) ? 1 : 0);
       const bay = this.canGat(g, 0, 1, VUNG_BAY_CAN);
       const phai = this.canGat(g, 2, g.mapping === 'standard' || g.axes.length < 6 ? 3 : 5);
-      const chay = dx || dy ? { x: dx, y: dy, m: Math.hypot(dx, dy) } : { x: 0, y: 0, m: 0 };
+      // Cần trái gạt nhẹ (chưa tới ngưỡng bay) thì chạy theo hướng gạt; chữ thập vẫn ưu tiên
+      const canNhe = this.canGat(g, 0, 1);
+      const chay = dx || dy ? { x: dx, y: dy, m: Math.hypot(dx, dy) } : canNhe;
       // Hướng nhìn theo hướng đang bay / chạy; không có điều khiển nào thì giữ nguyên
       const huong = bay.m > 0 ? bay : chay;
       if (huong.m > 0) n.nhin = { x: huong.x / huong.m, y: huong.y / huong.m };
