@@ -516,8 +516,8 @@ export class VeCanvas {
 
     // Hai bình cầu xếp dọc ngay trên nút trên cùng: trên = máu (xanh lá, số máu nằm giữa bình), dưới = mana (xanh lơ, số mana nằm giữa bình, xám khi đang khoá bay sau lần bay)
     const ym = c.yMauNv(p);
-    this.veBinh(ctx, xt, ym - 28, dongHe(c.mauNv(p)), '#35d96a', ng.het);
-    this.veBinh(ctx, xt, ym + 14, dongHe(c.nlBay(p)), ng.bayKhoa > 0 ? '#8a9a94' : '#4fd8ff', ng.het);
+    this.veBinh(ctx, xt, ym - 28, dongHe(c.mauNv(p)), '#ff3b3b', ng.het);
+    this.veBinh(ctx, xt, ym + 14, dongHe(c.nlBay(p)), ng.bayKhoa > 0 ? '#8a9a94' : '#2fa8ff', ng.het);
     ctx.save();
     ctx.globalAlpha = ng.het ? 0.4 : 1;
     ctx.font = `700 15px ${FONT}`;

@@ -693,10 +693,10 @@ export class Game {
       if (n) {
         if (xanh) {
           this.hoiDayMana(n);
-          this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${VP_HOI} mana`, mau: '#3aa0ff', t: 0 });
+          this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${VP_HOI} mana`, mau: '#2fa8ff', t: 0 });
         } else {
           n.hp += VP_HOI;
-          this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${VP_HOI} ❤`, mau: '#35d96a', t: 0 });
+          this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${VP_HOI} ❤`, mau: '#ff3b3b', t: 0 });
         }
         this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
         continue;
