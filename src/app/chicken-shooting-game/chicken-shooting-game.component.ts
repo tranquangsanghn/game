@@ -140,6 +140,8 @@ const NHOM_MAY = 3;
 // Bảng chiêu thức: bán kính cung và bán kính mỗi nút
 const R_CUNG = 185;
 const R_NUT = 30;
+// Bảng chiêu gà mẹ (giữa phía trên) thu nhỏ còn 1/3 so với kích thước gốc, tâm vẫn ở mép trên giữa màn hình
+const HE_BANG_TUONG = 1 / 3;
 const MAY_THOI_GIAN = 7;
 const MAY_HOI = 40;
 const MAY_TOC_DO = 1.35;
@@ -286,6 +288,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   readonly S_NV = S_NV;
   readonly SP_TUONG = GA_TUONG;
   readonly TUONG_HOI_SINH = TUONG_HOI_SINH;
+  readonly HE_BANG_TUONG = HE_BANG_TUONG;
   readonly R_CUNG = R_CUNG;
   // Chu vi vòng tiến độ quanh nút chiêu của gà tướng
   readonly CHU_VI_NUT = 2 * Math.PI * (R_NUT + 6);
@@ -1194,7 +1197,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   // Chuột có nằm trong vùng khoét của một bảng chiêu thức không
   private tronBang(x: number, y: number): boolean {
     // Bảng gà tướng ở giữa phía trên cũng không ra đòn / di chuyển khi chuột nằm trên đó
-    return Math.hypot(x - GIUA, y) <= R_BANG || [0, 1].some((p) => {
+    return Math.hypot(x - GIUA, y) <= R_BANG * HE_BANG_TUONG || [0, 1].some((p) => {
       return Math.hypot(x - this.gocBang(p), y - H) <= R_BANG;
     });
   }

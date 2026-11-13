@@ -147,7 +147,7 @@
     <!-- Bảng chiêu của gà tướng: bán nguyệt úp ở giữa phía trên, chỉ để xem. Avatar animation ở giữa, 6 chiêu xếp vòng cung phía dưới.
          Chiêu đang dùng sáng; Lao / Bay / màu có vòng tiến độ (hồi chiêu hoặc thời gian còn lại) -->
     @let tg = tuongSong;
-    <g pointer-events="none">
+    <g pointer-events="none" [attr.transform]="'translate(' + GIUA + ',0) scale(' + HE_BANG_TUONG + ') translate(' + (-GIUA) + ',0)'">
       <circle [attr.cx]="GIUA" cy="0" [attr.r]="R_BANG" fill="#000" />
       <g [attr.transform]="'translate(' + GIUA + ',5)'" [attr.opacity]="tg ? 1 : 0.25">
         <svg x="-55" y="0" width="110" height="110" viewBox="-55 -100 110 110">
