@@ -904,8 +904,8 @@ export class Game {
     this.ngocNhat = [];
     this.ngocBay = [];
     this.cuu = [];
-    // Đảo sa mạc không có quả cầu trốn
-    this.cauTron = this.banDo === 'sa' ? [] : taoCauTron();
+    // Quả cầu trốn nằm trong vườn gà (giữa thế giới mở)
+    this.cauTron = taoCauTron();
     this.dungHinh = 0;
     this.henTuong = CHO_TUONG_DAU;
     this.soLanTuong = 0;
@@ -958,7 +958,7 @@ export class Game {
     this.tGame = d.tGame; this.t = d.t; this.chamDen = d.chamDen; this.id = d.id;
     this.henTuong = d.henTuong; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
     this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham; this.ngocNhat = d.ngocNhat ?? []; this.ngocBay = []; this.cuu = d.cuu ?? [];
-    this.cauTron = this.banDo === 'sa' ? [] : d.cauTron?.map((q, i) => ({ ...q, cua: q.cua ?? i })) ?? taoCauTron();
+    this.cauTron = d.cauTron?.length ? d.cauTron.map((q, i) => ({ ...q, cua: q.cua ?? i })) : taoCauTron();
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
     this.nguoi = d.nguoi.map((o, p) => {
