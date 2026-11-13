@@ -75,7 +75,7 @@ const TUONG_GACH = 'assets/game/tuong_gach.png';
 const TG_MAT = { sx: 16, sy: 138, w: 48, h: 38 };
 const TG_GACH = { sx: 16, sy: 141, w: 48, h: 35 };
 const TG_VIEN = { sx: 16, sy: 10, w: 48, h: 6 };
-const TL_TUONG = 5;
+const TL_TUONG = 3;
 const CO_LAP = 16; // pattern 16×16 ô ngẫu nhiên rồi lặp: một fillRect, không lộ đường nối
 
 export class VeCanvas {

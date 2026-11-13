@@ -143,7 +143,7 @@ const BAR = 80;
 const H = 900;
 const MAP = 6400;
 // Tường gạch bao quanh bản đồ: dải dày TUONG ở cả 4 mép (nằm trong 0..MAP). Không vật nào đi vào tường (giuTrongMap, kepMap).
-const TUONG = 320;
+const TUONG = 114; // = đúng một lớp mặt tường (38px × TL_TUONG 3)
 // Hai bảng chiêu thức khoét vào map ở hai góc dưới (hình bán nguyệt nền đen, tâm nằm trên mép dưới): Mabu bên trái, Zinbu bên phải. Map vẫn chiếm cả màn hình.
 const R_BANG = 225;
 const TAM_VIEW_Y = 520;
