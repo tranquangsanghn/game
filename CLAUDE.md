@@ -19,7 +19,7 @@
 
 - Ngoại lệ do người dùng yêu cầu: có thêm thanh đen phía trên map chứa chiêu của gà mẹ (xem mục "Nguyên tắc gà mẹ"). Khung game chiếm cả cửa sổ, chiều rộng khung nhìn `W` tự theo tỉ lệ cửa sổ (`ResizeObserver`) nên map tràn sát hai bên, không có dải đen hai bên; `H` cố định.
 - Bố cục: khung game chiếm cả cửa sổ. Map nằm giữa; phía trên có thanh đen ngang `BAR` (chiêu gà mẹ), hai bên có 2 thanh đen dọc rộng `SIDE` (Mabu trái, Zinbu phải). Toạ độ map vẫn là x 0..`W`, y 0..`H`; thanh đen nằm ở toạ độ âm / lớn hơn `W` (viewBox `-SIDE -BAR`). `W` tự theo tỉ lệ cửa sổ.
-- Trên mỗi thanh bên: tên, máu (số `hp/HP_NV` và thanh), rồi các chiêu thức xếp dọc, canh giữa theo nửa vòng tròn (`nutBang()`, `xThanh()`). Nửa vòng tròn đen bán kính `R_NV` (= 2/3 `R_BANG`) nằm đúng ở góc dưới map như cũ, tâm ở góc dưới (`tamNv()`), chỉ có animation hiện tại của nhân vật (cùng `khung` / `lat` với trên map). Không thu nhỏ map vì bảng.
+- Trên mỗi thanh bên (không có tên nhân vật): các chiêu thức xếp dọc từ dưới lên trên, nút đầu (Đấm) sát đáy (`nutBang()`, `xThanh()`); máu (số `hp/HP_NV` và thanh) nằm ngay phía trên nút trên cùng (`yMauNv()`). Nửa vòng tròn đen bán kính `R_NV` (= 2/3 `R_BANG`) nằm đúng ở góc dưới map như cũ, tâm ở góc dưới (`tamNv()`), chỉ có animation hiện tại của nhân vật (cùng `khung` / `lat` với trên map). Không thu nhỏ map vì bảng.
 - Chiêu đang dùng sáng + phát sáng, chiêu khác mờ, hết mana / đang khoá / Mây đang chạy hoặc hồi (`hetMana()`) thì mờ hẳn và không chọn được.
 - Đổi chiêu bằng bấm chuột trái vào nút (`chonNut()` → `NhanVat.datNhom`), bất kể chuột đang điều khiển ai. Không còn con lăn. Chuột trên thanh đen hoặc nửa vòng tròn (`tronBang()` → `trenBang`) thì không ra đòn, không di chuyển, tâm ngắm ẩn.
 

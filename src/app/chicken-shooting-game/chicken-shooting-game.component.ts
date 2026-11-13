@@ -1299,10 +1299,14 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     return { x: p === 0 ? 0 : this.W, y: H };
   }
 
-  // Các nút chiêu xếp dọc trong thanh đen, canh giữa theo nửa vòng tròn (giống chiêu gà mẹ trên thanh ngang)
+  // Các nút chiêu xếp dọc trong thanh đen, từ dưới lên trên (Đấm sát đáy); máu nằm ngay phía trên nút trên cùng
   nutBang(p: number): { k: number; x: number; y: number }[] {
-    const ds = this.dsBieuTuong(p);
-    return ds.map((k, i) => ({ k, x: this.xThanh(p), y: H / 2 + (i - (ds.length - 1) / 2) * 70 }));
+    return this.dsBieuTuong(p).map((k, i) => ({ k, x: this.xThanh(p), y: H - 50 - i * 70 }));
+  }
+
+  // Dòng số máu nằm trên nút chiêu trên cùng; thanh máu nằm ngay dưới dòng này
+  yMauNv(p: number): number {
+    return H - 50 - (this.dsBieuTuong(p).length - 1) * 70 - 62;
   }
 
   // Chuột có nằm trên vùng không phải map không: thanh đen trên / hai bên, nửa vòng tròn của gà mẹ và của Mabu / Zinbu

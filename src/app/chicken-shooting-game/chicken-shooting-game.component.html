@@ -135,7 +135,7 @@
       pointer-events="none" />
 
 
-    <!-- Hai thanh đen hai bên map: Mabu trái, Zinbu phải. Trên thanh: tên + máu (số và thanh), các chiêu xếp dọc, bấm vào nút để chọn chiêu.
+    <!-- Hai thanh đen hai bên map: Mabu trái, Zinbu phải. Trên thanh: máu (số và thanh) ở trên, các chiêu xếp dọc từ dưới lên, bấm vào nút để chọn chiêu.
          Chiêu đang dùng sáng, chiêu khác mờ, hết mana thì mờ hẳn và không chọn được. Nửa vòng tròn đen nhô vào map chỉ có animation nhân vật -->
     @for (p of [0, 1]; track p) {
     @let ng = nguoi[p];
@@ -148,10 +148,9 @@
           <g cgSprite [sp]="ng.nv.sp" [khung]="ng.nv.khung" [lat]="ng.nv.lat"></g>
         </svg>
       </g>
-      <text [attr.x]="xt" y="46" text-anchor="middle" [attr.fill]="ng.mau" font-size="22" font-weight="800">{{ ng.ten }}</text>
-      <text [attr.x]="xt" y="82" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">❤ {{ hpNv(p) }}/{{ HP_NV }}</text>
-      <rect [attr.x]="xt - 40" y="94" width="80" height="10" rx="5" fill="#16241b" />
-      <rect [attr.x]="xt - 38" y="96" [attr.width]="76 * mauNv(p)" height="6" rx="3" fill="#35d96a" />
+      <text [attr.x]="xt" [attr.y]="yMauNv(p)" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">❤ {{ hpNv(p) }}/{{ HP_NV }}</text>
+      <rect [attr.x]="xt - 40" [attr.y]="yMauNv(p) + 12" width="80" height="10" rx="5" fill="#16241b" />
+      <rect [attr.x]="xt - 38" [attr.y]="yMauNv(p) + 14" [attr.width]="76 * mauNv(p)" height="6" rx="3" fill="#35d96a" />
       @for (b of nutBang(p); track b.k) {
       @let dung = ng.nv.nhom === b.k;
       @let het = hetMana(p, b.k);
