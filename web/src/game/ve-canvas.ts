@@ -589,23 +589,27 @@ export class VeCanvas {
     }
   }
 
-  // Cứu đồng đội: người ngã được phủ mây (Mabu cứu Zinbu) hoặc một cục socola to (Zinbu cứu Mabu). Có vòng đếm giờ, vòng tầm cứu và số giây còn lại
+  // Cứu đồng đội: người ngã được phủ mây (Mabu cứu Zinbu) hoặc một cục socola to (Zinbu cứu Mabu). Nối người còn sống bằng sợi dây, có số giây đếm ngược
   private veCuu(ctx: CanvasRenderingContext2D, c: Game, cu: Cuu): void {
     if (cu.cho > 0) return;
-    const gan = c.cuuGan(cu);
     const con = Math.max(0, Math.ceil(c.CUU_THOI_GIAN - cu.t));
-    const mau = c.nguoi[1 - cu.p].mau;
+    const s = c.nguoi[1 - cu.p];
+    const mau = s.mau;
+    // Sợi dây nối người còn sống với mây / socola (cùng kiểu dây buộc khi 2 người đi xa nhau)
+    if (!s.het && !s.vang) {
+      ctx.save();
+      ctx.globalAlpha = 0.9;
+      ctx.strokeStyle = '#ff4d4d';
+      ctx.lineWidth = 5 / c.camZ;
+      ctx.setLineDash([14 / c.camZ, 10 / c.camZ]);
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y - 40);
+      ctx.lineTo(cu.x, cu.y - 40);
+      ctx.stroke();
+      ctx.restore();
+    }
     ctx.save();
     ctx.translate(cu.x, cu.y);
-    // Vòng tầm cứu (dẹt như mặt đất): sáng khi người cứu đang đứng trong vòng
-    duongElip(ctx, c.CUU_BAN_KINH, c.CUU_BAN_KINH * c.EP_GA);
-    ctx.fillStyle = gan ? 'rgba(126,231,135,0.10)' : 'rgba(255,255,255,0.04)';
-    ctx.fill();
-    ctx.setLineDash([22, 18]);
-    ctx.strokeStyle = gan ? 'rgba(126,231,135,0.75)' : 'rgba(255,255,255,0.35)';
-    ctx.lineWidth = 4 / c.camZ;
-    ctx.stroke();
-    ctx.setLineDash([]);
     const pop = 0.4 + 0.6 * dongHe(cu.tach);
     if (cu.kieu === 'may') {
       // Mây tách ra từ Mabu: dùng đúng khung mây của Mabu, to gấp 2, bồng bềnh
@@ -622,33 +626,25 @@ export class VeCanvas {
       this.veSocola(ctx, { x: 0, y: 0, t: c.t % 10 });
       ctx.restore();
     }
-    // Vòng tiến độ + số giây đếm ngược trên đầu
+    // Số giây đếm ngược (15 → 0) trên đầu
     ctx.translate(0, -230);
-    duongTron(ctx, 46);
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fill();
-    ctx.lineWidth = 9;
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(0, 0, 46, -Math.PI / 2, -Math.PI / 2 + TAU * dongHe(cu.t / c.CUU_THOI_GIAN));
-    ctx.strokeStyle = gan ? mau : '#8a9a94';
-    ctx.stroke();
-    ctx.font = `800 40px ${FONT}`;
+    ctx.font = `800 64px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#fff';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 9;
+    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+    ctx.strokeText(`${con}`, 0, 2);
+    ctx.fillStyle = mau;
     ctx.fillText(`${con}`, 0, 2);
-    if (!gan) {
-      ctx.font = `800 26px ${FONT}`;
-      ctx.globalAlpha = 0.5 + 0.5 * Math.abs(Math.sin(c.t * 5));
-      ctx.lineJoin = 'round';
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-      ctx.strokeText('LẠI GẦN ĐỂ CỨU!', 0, -70);
-      ctx.fillStyle = '#ffd23f';
-      ctx.fillText('LẠI GẦN ĐỂ CỨU!', 0, -70);
-    }
+    // Lời nhắc người còn sống
+    const loi = `Bạn sống được ${c.CUU_THOI_GIAN}s thì đồng đội sẽ sống lại`;
+    ctx.font = `800 26px ${FONT}`;
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+    ctx.strokeText(loi, 0, -58);
+    ctx.fillStyle = '#ffd23f';
+    ctx.fillText(loi, 0, -58);
     ctx.restore();
   }
 

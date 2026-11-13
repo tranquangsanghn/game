@@ -90,7 +90,7 @@ type VatXep =
   | { loai: 'td'; y: number; td: TrangTri }
   | { loai: 'cuu'; y: number; cu: Cuu };
 
-/** Cứu đồng đội: nhân vật còn sống phủ mây (Mabu cứu Zinbu) hoặc socola (Zinbu cứu Mabu) lên người ngã; đứng trong CUU_BAN_KINH đủ CUU_THOI_GIAN giây thì người ngã hồi sinh */
+/** Cứu đồng đội: nhân vật còn sống phủ mây (Mabu cứu Zinbu) hoặc socola (Zinbu cứu Mabu) lên người ngã; sống sót CUU_THOI_GIAN giây (mây / socola bám theo, nối bằng dây) thì người ngã hồi sinh */
 export interface Cuu { p: number; kieu: 'may' | 'socola'; x: number; y: number; cho: number; t: number; tach: number; }
 
 /** Vật trang trí nền cỏ (cây, bụi, đá): chỉ để đẹp, không cản đường. loai là chỉ số trong TRANG_TRI_SPRITE (ve-canvas.ts) */
@@ -261,7 +261,7 @@ const BAY_KHI_XA = 450;
 const BAY_TOI_DA = 1200;
 // Mana: bắt đầu MANA_BAN_DAU, trần MANA_TOI_DA. Dùng để bay (MANA_BAY mỗi giây bay), bắn Chiêu đặc biệt (MANA_CHUONG mỗi chưởng) và Biến mây / socola (MANA_DAC_BIET).
 // Đấm / Đá trúng thì hồi MANA_DAM. Tự hồi MANA_HOI mỗi giây khi không bay (chỉ hồi tới MANA_HOI_TOI_DA rồi thôi, táo xanh / đòn trúng có thể đẩy cao hơn tới trần); còn dưới MANA_TOI_THIEU thì không bay. Mỗi lần bay xong khoá BAY_KHOA giây mới bay tiếp.
-const MANA_BAN_DAU = 100;
+const MANA_BAN_DAU = 200;
 const MANA_TOI_DA = 200;
 const MANA_HOI_TOI_DA = 100;
 const MANA_DAM = 5;
@@ -344,9 +344,11 @@ const DEN_NHAO_THEM = 200;
 const DEN_NGHI = 1.2;
 const HEN_VAY = 55;
 const HEN_DAN = 700;
-// Cứu đồng đội: người còn sống phủ mây (Mabu) / socola (Zinbu) lên người ngã sau CUU_CHO giây, đứng trong CUU_BAN_KINH đủ CUU_THOI_GIAN giây thì người ngã hồi sinh với CUU_MAU máu
-const CUU_THOI_GIAN = 10;
-const CUU_BAN_KINH = 500;
+// Cứu đồng đội: người còn sống phủ mây (Mabu) / socola (Zinbu) lên người ngã sau CUU_CHO giây, sống sót CUU_THOI_GIAN giây (mây / socola bám theo, nối bằng dây) thì người ngã hồi sinh với CUU_MAU máu
+const CUU_THOI_GIAN = 15;
+// Khoảng cách bám: mây / socola trôi theo người cứu tới khi còn cách chừng này (nối bằng sợi dây)
+const CUU_BAM = 170;
+const CUU_TOC_BAM = 900;
 const CUU_CHO = 1.5;
 const CUU_TACH = 1;
 const CUU_MAU = 100;
@@ -1024,18 +1026,12 @@ export class Game {
   }
 
   private hoiMana(n: NguoiChoi, luong: number): void {
-    n.mana = Math.min(MANA_TOI_DA, n.mana + luong);
+    n.mana += luong;
   }
 
-  // Hồi máu có trần HP_NV; phần vượt trần thành khiên tạm (tối đa KHIEN_TOI_DA, đếm lại KHIEN_THOI_GIAN giây)
+  // Hồi máu không giới hạn (ăn táo / socola / hạ gà mẹ cộng thẳng vào máu, không còn trần hay khiên)
   private hoiMau(n: NguoiChoi, luong: number): void {
-    const truoc = n.hp;
-    n.hp = Math.min(HP_NV, n.hp + luong);
-    const thua = luong - (n.hp - truoc);
-    if (thua > 0) {
-      n.khien = Math.min(KHIEN_TOI_DA, n.khien + thua);
-      n.khienCon = KHIEN_THOI_GIAN;
-    }
+    n.hp += luong;
   }
 
   private dieuKhien(dt: number): void {
@@ -2480,7 +2476,7 @@ export class Game {
     this.cuu.push({ p, kieu: p === 1 ? 'may' : 'socola', x: n.x, y: n.y, cho: CUU_CHO, t: 0, tach: 0 });
   }
 
-  // Đếm giờ cứu: sau CUU_CHO giây thì mây / socola xuất hiện (tách ra từ người cứu), người cứu đứng trong CUU_BAN_KINH thì đếm CUU_THOI_GIAN, đủ thì hồi sinh
+  // Đếm giờ cứu: sau CUU_CHO giây thì mây / socola xuất hiện (tách ra từ người cứu), mây / socola bám theo người cứu (nối bằng dây), đếm ngược CUU_THOI_GIAN giây khi người cứu còn sống, hết giờ thì hồi sinh
   private capNhatCuu(dt: number): void {
     const conLai: Cuu[] = [];
     for (const c of this.cuu) {
@@ -2492,13 +2488,27 @@ export class Game {
         if (c.cho === 0 && !s.het) {
           this.vet.push({ id: this.id++, x: s.x, y: s.y - 40, t: 0, loai: 'no' });
           this.vet.push({ id: this.id++, x: c.x, y: c.y - 40, t: 0, loai: 'no' });
-          this.chu.push({ id: this.id++, x: c.x, y: c.y - 230, text: `Đứng gần ${CUU_THOI_GIAN}s để cứu!`, mau: '#9be7ff', t: 0 });
+          this.chu.push({ id: this.id++, x: c.x, y: c.y - 230, text: `Bạn sống được ${CUU_THOI_GIAN}s thì đồng đội sẽ sống lại`, mau: '#9be7ff', t: 0 });
         }
         conLai.push(c);
         continue;
       }
       c.tach = Math.min(1, c.tach + dt / CUU_TACH);
-      if (!s.het && !s.vang && Math.hypot(s.x - c.x, s.y - c.y) <= CUU_BAN_KINH) c.t += dt;
+      if (!s.het && !s.vang) {
+        c.t += dt;
+        // Bám theo người còn sống: trôi tới điểm cách CUU_BAM, đứng cùng phía với lúc đầu
+        const dx = c.x - s.x;
+        const dy = c.y - s.y;
+        const d = Math.hypot(dx, dy) || 1;
+        if (d > CUU_BAM) {
+          const b = Math.min(d - CUU_BAM, Math.max(CUU_TOC_BAM * dt, (d - CUU_BAM) * Math.min(1, dt * 6)));
+          c.x -= (dx / d) * b;
+          c.y -= (dy / d) * b;
+          giuTrongMap(c, leNhanVat(n.nv.heSoTo));
+        }
+        n.x = c.x;
+        n.y = c.y;
+      }
       if (c.t < CUU_THOI_GIAN) {
         conLai.push(c);
         continue;
@@ -2524,15 +2534,8 @@ export class Game {
     return this.cuu.some((c) => c.p === p && c.cho <= 0);
   }
 
-  /** Người cứu đang đứng đủ gần để đếm giờ cứu */
-  cuuGan(c: Cuu): boolean {
-    const s = this.nguoi[1 - c.p];
-    return !s.het && !s.vang && Math.hypot(s.x - c.x, s.y - c.y) <= CUU_BAN_KINH;
-  }
-
   readonly COMBO_GIAM_HOI = COMBO_GIAM_HOI;
   readonly CUU_THOI_GIAN = CUU_THOI_GIAN;
-  readonly CUU_BAN_KINH = CUU_BAN_KINH;
 
   private congDiem(p: number, diem: number, x: number, y: number, text: string): void {
     this.nguoi[p].diem += diem;
@@ -2742,7 +2745,9 @@ export class Game {
       const dy = (duoc(g, 13) ? 1 : 0) - (duoc(g, 12) ? 1 : 0);
       const bay = this.canGat(g, 0, 1, VUNG_BAY_CAN);
       const phai = this.canGat(g, 2, g.mapping === 'standard' || g.axes.length < 6 ? 3 : 5);
-      const chay = dx || dy ? { x: dx, y: dy, m: Math.hypot(dx, dy) } : { x: 0, y: 0, m: 0 };
+      // Cần trái gạt nhẹ (chưa tới ngưỡng bay) thì chạy theo hướng gạt; chữ thập vẫn ưu tiên
+      const canNhe = this.canGat(g, 0, 1);
+      const chay = dx || dy ? { x: dx, y: dy, m: Math.hypot(dx, dy) } : canNhe;
       // Hướng nhìn theo hướng đang bay / chạy; không có điều khiển nào thì giữ nguyên
       const huong = bay.m > 0 ? bay : chay;
       if (huong.m > 0) n.nhin = { x: huong.x / huong.m, y: huong.y / huong.m };
@@ -2798,7 +2803,10 @@ export class Game {
   // Dùng thẳng nhóm đòn k (chọn chiêu và ra đòn cùng lúc, tự ngắm); chiêu đang hồi / khoá thì bỏ qua
   private dungChieu(p: number, k: number): void {
     const n = this.nguoi[p];
-    if (n.het || n.may.dang || this.hetMana(p, k) || n.nv.sp.nhomDon.length <= k) return;
+    if (n.het || n.may.dang) return;
+    // Chiêu riêng (mây / socola) hết mana hoặc đang hồi thì dùng chiêu kế tiếp còn dùng được: chưởng → đá
+    if (k === NHOM_MAY && this.hetMana(p, k)) k = [2, 1].find((j) => !this.hetMana(p, j)) ?? 1;
+    if (this.hetMana(p, k) || n.nv.sp.nhomDon.length <= k) return;
     if (n.nv.nhom !== k) n.nv.datNhom(k, this.t);
     const m = this.diemHuong(p);
     this.ban(p, kepMap(m.x), kepMap(m.y));
@@ -2845,7 +2853,7 @@ export class Game {
 
   /** 0..1: độ đầy của bình mana (so với trần MANA_TOI_DA) */
   nlBay(p: number): number {
-    return Math.min(1, this.nguoi[p].mana / MANA_TOI_DA);
+    return Math.min(1, this.nguoi[p].mana / Math.max(MANA_TOI_DA, this.nguoi[p].mana));
   }
 
   private datDichThe(p: number, x: number, y: number): void {
@@ -2938,7 +2946,7 @@ export class Game {
   }
 
   mauNv(p: number): number {
-    return Math.min(1, Math.max(0, this.nguoi[p].hp) / HP_NV);
+    return Math.min(1, Math.max(0, this.nguoi[p].hp) / Math.max(HP_NV, this.nguoi[p].hp));
   }
 
   /** Số mạng còn lại của gà mẹ (tổng TUONG_HOI_SINH + 1 mạng; đang chờ hồi sinh thì mạng vừa chết không tính) */

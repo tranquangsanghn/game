@@ -188,7 +188,7 @@
 # Nguyên tắc cứu đồng đội
 
 - Một nhân vật ngã mà người kia còn sống thì bắt đầu cứu (`batDauCuu()` → `cuu` / `cuuView`, `Cuu` lưu trong ván lưu): **Mabu cứu Zinbu bằng mây** (mây tách ra từ Mabu, phủ lên Zinbu), **Zinbu cứu Mabu bằng một cục socola to**. Sau `CUU_CHO` = 1,5s (cho animation ngã chạy) thân người ngã được thay bằng mây / socola (`dangCuu()`, vẽ `veCuu()`, xếp theo y trong `xep`).
-- Người cứu đứng trong `CUU_BAN_KINH` = 500 quanh mây / socola đủ `CUU_THOI_GIAN` = 10s (chỉ đếm khi đang đứng trong vòng; ra khỏi vòng thì tạm dừng, hiện "LẠI GẦN ĐỂ CỨU!") thì người ngã hồi sinh tại chỗ với `CUU_MAU` = 100 máu (`capNhatCuu()`, `NhanVat.hoiSinh()`). Người cứu ngã thì ngừng đếm; cả hai cùng ngã vẫn là thua. Gà không đụng tới mây / socola cứu người.
+- Mây / socola không còn vòng tròn: sau `CUU_CHO` nó bám theo người còn sống (cách `CUU_BAM` = 170, `capNhatCuu()`), nối với người đó bằng sợi dây đỏ nét đứt như dây buộc khi 2 người đi xa nhau, đếm ngược `CUU_THOI_GIAN` = 15s (số to trên đầu, kèm chữ "Bạn sống được 15s thì đồng đội sẽ sống lại") khi người cứu còn sống; hết 15s thì người ngã hồi sinh tại chỗ với `CUU_MAU` = 100 máu (`capNhatCuu()`, `NhanVat.hoiSinh()`). Người cứu ngã thì ngừng đếm; cả hai cùng ngã vẫn là thua. Gà không đụng tới mây / socola cứu người.
 - Nhân vật đã ngã (`het`) không điều khiển, không ra đòn, không bay (kể cả chế độ chuột, `ban()` / `datDichThe()`).
 
 # Nguyên tắc cảm giác đánh
@@ -200,3 +200,9 @@
 # Nguyên tắc âm thanh
 
 - Âm thanh nằm trong `web/public/assets/am-thanh/`, phát qua `AmThanh` (`web/src/game/am-thanh.ts`, `this.am` trong `Game`): `phat('dam' | 'da' | 'chuong' | 'anTao' | 'deTrung' | 'meChet' | 'nvChet')`, nhạc nền lặp (`nhacNen()`) chỉ chạy khi đang chơi (`man === 'play'`), tạm dừng / kết thúc thì dừng. Đấm / Đá / chưởng (kể cả socola) phát trong `ban()`, ăn táo / socola trong `capNhatVatPham()`, gà mẹ đẻ trứng trong `deTrung()`, gà mẹ chết (gốc hoặc phụ) và nhân vật gục. Trình duyệt chỉ cho phát sau lần bấm / nhấn phím đầu tiên (nhạc nền tự thử lại). Thêm âm mới thì thêm vào `FILE` / `AM_LUONG`.
+
+# Ghi chú mới nhất (ghi đè các mục trên)
+
+- Mana vào ván `MANA_BAN_DAU` = 200. Ăn máu (táo, socola, hạ gà mẹ) và ăn mana (táo xanh, socola, đòn trúng) cộng không giới hạn (không còn trần `HP_NV` / `MANA_TOI_DA` khi cộng, không còn khiên từ máu thừa); `HP_NV` / `MANA_TOI_DA` chỉ còn là mốc đầy bình, bình vẽ theo `max(mốc, giá trị hiện có)`. Tự hồi vẫn chỉ tới `HP_HOI_TOI_DA` / `MANA_HOI_TOI_DA`.
+- Cần trái gạt nhẹ (dưới `VUNG_BAY_CAN`) thì chạy bộ theo hướng gạt (không còn đứng yên); gạt mạnh mà hết mana / đang khoá bay thì vẫn chạy, không đứng.
+- Tay cầm: chiêu riêng (○ / cần phải: Biến mây / socola) hết mana hoặc đang hồi thì tự dùng chưởng, hết mana chưởng thì dùng đá (`dungChieu()`), không còn bấm mà không có tác dụng. Mây đang chạy vẫn không ra đòn khác.
