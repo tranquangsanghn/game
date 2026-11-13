@@ -117,7 +117,7 @@ const SAT_GA: Record<string, number> = { hen: 32, rooster: 48, flyer: 60, boss: 
 const CHAM_GA: Record<string, number> = { hen: 70, rooster: 70, flyer: 70, boss: 220 };
 const HOI_DANH_GA: Record<string, number> = { hen: 1.2, rooster: 0.8, flyer: 1.5, boss: 2.5 };
 // Gà tướng hồi sinh tối đa TUONG_HOI_SINH lần; mỗi lần sau sát thương nhân TUONG_TANG_SAT so với lần trước, tỉ lệ né cộng thêm TUONG_TANG_NE (tối đa NE_TOI_DA)
-const TUONG_HOI_SINH = 3;
+const TUONG_HOI_SINH = 2;
 const TUONG_TANG_SAT = 0.5;
 const TUONG_TANG_NE = 0.15;
 const NE_TOI_DA = 0.8;
