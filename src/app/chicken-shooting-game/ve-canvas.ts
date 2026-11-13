@@ -12,7 +12,7 @@ const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 interface DuongVe {
   tim: Path2D; timSang: Path2D; huong: Path2D; long: Path2D; ngam: Path2D; muiTen: Path2D;
   nutDa: Path2D; nutDaVach: Path2D; nutChuong: Path2D; nutChuongKhoi: Path2D;
-  tuMo: Path2D; tuLao: Path2D; tuBay: Path2D; tuMoVach: Path2D; tuDo: Path2D;
+  chuot: Path2D; tuMo: Path2D; tuLao: Path2D; tuBay: Path2D; tuMoVach: Path2D; tuDo: Path2D;
 }
 let duongCache: DuongVe | null = null;
 const duong = (): DuongVe =>
@@ -28,6 +28,7 @@ const duong = (): DuongVe =>
     nutDaVach: new Path2D('M-7,6 h18'),
     nutChuong: new Path2D('M-1,-6 L-12,0 L-1,6 Z'),
     nutChuongKhoi: new Path2D('M-12,-8 h7 M-14,0 h5 M-12,8 h7'),
+    chuot: new Path2D('M-28,0 h14 M14,0 h14 M0,-28 v14 M0,14 v14'),
     // Biểu tượng nút chiêu của gà mẹ
     tuMo: new Path2D('M-9,-6 L9,0 L-9,6 Z'),
     tuMoVach: new Path2D('M-9,8 h18'),
@@ -107,12 +108,10 @@ export class VeCanvas {
 
   // ─── Khung hình ───
 
-  /** Vẽ 1 khung hình. Kích thước (px) lấy từ chính canvas; cssW / cssH là kích thước hiển thị, dpr là hệ số điểm ảnh. */
-  ve(ctx: CanvasRenderingContext2D, c: Game, cssW: number, cssH: number, dpr: number): void {
+  /** Vẽ 1 khung hình. Kích thước (px) lấy từ chính canvas; dpr là hệ số điểm ảnh. Phép chiếu khung nhìn → màn hình lấy từ c.phepChieu() (dùng chung với đọc chuột). */
+  ve(ctx: CanvasRenderingContext2D, c: Game, dpr: number): void {
     const { W, H, BAR, SIDE } = c;
-    const s = Math.min(cssW / (W + 2 * SIDE), cssH / (H + BAR));
-    const ox = (cssW - s * (W + 2 * SIDE)) / 2 + SIDE * s;
-    const oy = (cssH - s * (H + BAR)) / 2 + BAR * s;
+    const { s, ox, oy } = c.phepChieu();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
@@ -677,6 +676,20 @@ export class VeCanvas {
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 4;
       ctx.stroke(P.muiTen);
+      ctx.restore();
+    }
+    // Chế độ chuột: tâm ngắm theo chuột của nhân vật đang được điều khiển (ẩn khi chuột nằm trên bảng chiêu thức)
+    if (c.cheDo === 'chuot' && !c.trenBang) {
+      const n = c.nguoi[c.chuot];
+      ctx.save();
+      ctx.translate(n.tamX, n.tamY);
+      duongTron(ctx, 3);
+      ctx.fillStyle = n.mau;
+      ctx.fill();
+      ctx.strokeStyle = n.mau;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.stroke(P.chuot);
       ctx.restore();
     }
     ctx.font = `600 22px ${FONT}`;

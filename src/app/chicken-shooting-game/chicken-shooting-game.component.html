@@ -1,4 +1,4 @@
-<div class="khung" #khung tabindex="-1" [class.dang-choi]="man === 'play'">
+<div class="khung" #khung tabindex="-1" [class.dang-choi]="man === 'play'" [class.tren-bang]="trenBang && cheDo === 'chuot'">
   <!-- Toàn bộ cảnh game vẽ bằng Canvas 2D trong ve-canvas.ts; phần HTML dưới đây chỉ là nút và các màn phủ -->
   <canvas #manHinh></canvas>
 
@@ -11,6 +11,10 @@
   <div class="man-phu">
     <div class="hop">
       <h1>🐉 Dragon Ball</h1>
+      <div class="chon-che-do" role="group" aria-label="Chế độ chơi">
+        <button type="button" tabindex="-1" class="che-do" [class.chon]="cheDo === 'chuot'" (click)="datCheDo('chuot')">🖱️ Chuột + Tab</button>
+        <button type="button" tabindex="-1" class="che-do" [class.chon]="cheDo === 'tayCam'" (click)="datCheDo('tayCam')">🎮 Tay cầm</button>
+      </div>
       <div class="hai-cot">
         @for (i of [0, 1]; track i) {
         <div class="the" [class.teo]="i === 0" [class.ty]="i === 1">
@@ -18,6 +22,15 @@
           <svg class="chan-dung" viewBox="-36 -66 72 76" aria-hidden="true">
             <g cgSprite [sp]="nvm.sp" [khung]="nvm.khung" [lat]="false"></g>
           </svg>
+          @if (cheDo === 'chuot') {
+          @if (i === 0) {
+          <h3>1P Mabu · chuột</h3>
+          <p><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Bấm vào chiêu</b> ở thanh đen bên trái: đổi nhóm đòn<br /><b>Tab</b>: chuyển chuột sang nhân vật kia</p>
+          } @else {
+          <h3>2P Zinbu · chuột</h3>
+          <p>Điều khiển giống Mabu, chiêu thức ở thanh đen bên phải.<br />Chỉ có 1 chuột: bấm <b>Tab</b> để chuyển chuột sang Zinbu</p>
+          }
+          } @else {
           @if (i === 0) {
           <h3>1P Mabu · tay cầm 1</h3>
           <p><b>Cần trái</b>: chạy · <b>Cần phải</b>: ngắm (không gạt thì tự ngắm)<br /><b>✕ / R2</b>: ra đòn (giữ để đánh liên tục) · <b>○ / L2</b>: bay<br /><b>L1 / R1</b>: đổi chiêu · <b>Options</b>: tạm dừng</p>
@@ -25,9 +38,11 @@
           <h3>2P Zinbu · tay cầm 2</h3>
           <p>Điều khiển giống Mabu.<br />Chỉ có 1 tay cầm: bấm <b>Share</b> (Select) để chuyển tay cầm sang Zinbu</p>
           }
+          }
         </div>
         }
       </div>
+      @if (cheDo === 'tayCam') {
       <p class="phu">
         @if (tayCamTen.length) {
         🎮 Đã nối {{ tayCamTen.length }} tay cầm: {{ tayCamTen.join(' · ') }}@if (tayCamNut) { · vừa bấm {{ tayCamNut }} }
@@ -35,7 +50,8 @@
         🎮 Chưa thấy tay cầm: nối tay cầm rồi bấm một nút bất kỳ trên nó
         }
       </p>
-      <button type="button" tabindex="-1" class="nut-chinh" (click)="batDau()">Bắt đầu (✕ / Options)</button>
+      }
+      <button type="button" tabindex="-1" class="nut-chinh" (click)="batDau()">{{ cheDo === 'tayCam' ? 'Bắt đầu (✕ / Options)' : 'Bắt đầu' }}</button>
     </div>
   </div>
   }
@@ -73,7 +89,7 @@
         @if (kyLucMoi) {<span class="ky-luc-moi">Kỷ lục mới!</span>}
       </p>
       <div class="nhom-nut">
-        <button type="button" tabindex="-1" class="nut-chinh" (click)="batDau()">Chơi lại (✕)</button>
+        <button type="button" tabindex="-1" class="nut-chinh" (click)="batDau()">{{ cheDo === 'tayCam' ? 'Chơi lại (✕)' : 'Chơi lại' }}</button>
         <button type="button" tabindex="-1" class="nut-phu" (click)="dongGame()">Đóng</button>
       </div>
     </div>
