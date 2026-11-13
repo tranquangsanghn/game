@@ -74,6 +74,8 @@ export class GiaoDien {
     goc.append(this.khung);
 
     this.game = new Game(this.khung, this.canvas);
+    // Chỉ khi chạy dev (vite): để kiểm thử / chụp ảnh demo từ console
+    if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = this.game;
     this.game.onDong = () => this.onDong();
     this.game.onManPhu = () => this.veManPhu();
     // Tay cầm bấm ✕ / Options ở màn bắt đầu: mở hướng dẫn, bấm lần nữa mới vào chơi

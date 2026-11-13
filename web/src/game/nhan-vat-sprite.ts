@@ -184,6 +184,14 @@ export class NhanVat {
     if (this.trangThai === 'may' && this.anim !== 'may_ra') this.choi('may_ra');
   }
 
+  /** Được cứu: đứng dậy từ chỗ ngã (cho phép điều khiển lại sau khi dậy xong) */
+  hoiSinh(): void {
+    this.cao = 0;
+    this.donCho = null;
+    this.trangThai = 'dayLai';
+    this.choi('get_up');
+  }
+
   tiepDat(): void {
     if (this.trangThai !== 'thuong' && this.trangThai !== 'bay') return;
     this.cao = 0;

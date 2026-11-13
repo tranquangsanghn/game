@@ -56,6 +56,15 @@ Màn bắt đầu (chế độ tay cầm) hiện tên các tay cầm đã nối 
 
 **Biến mây (chỉ Mabu)**: chọn nút đám mây (mana tím) trên bảng chiêu rồi ra đòn. Mabu biến thành đám mây to gấp 2 trong 7 giây, không còn thanh máu / mana, mọi con gà mây quét qua đều trúng đòn. Sau đó phải chờ 40 giây mới dùng lại.
 
+## Máu, mana và chiêu (cân bằng mới)
+
+- **Máu**: vào ván 100, trần 200. Máu vượt trần (táo đỏ +100, socola +100, hạ gà mẹ +60) thành **khiên tạm** 5 giây (tối đa 100). Không bị thương 5 giây thì tự hồi 2 máu/giây tới 100.
+- **Mana**: vào ván 100, trần 200. Bay tốn 30/giây, **chưởng tốn 30**, **Biến mây / socola tốn 40**. **Đấm / Đá trúng hồi 5 mana** (đánh gần để gom mana, xả chưởng khi gà đông). Táo xanh +30 mana.
+- **Đá** hất lùi và làm choáng gà con 0,7s; **chưởng** xuyên qua mọi gà trên đường bay rồi nổ; combo 10+ thì chưởng hồi nhanh gấp đôi (hiện COMBO trên đầu nhân vật).
+- **Cứu đồng đội**: một người ngã mà người kia còn sống thì Mabu phủ **mây** lên Zinbu / Zinbu phủ **cục socola** lên Mabu; đứng trong 500 quanh đó 10 giây thì người ngã hồi sinh (100 máu).
+- **Gà mẹ**: ngoài thế phòng thủ giảm 40% sát thương (mỗi đòn tối đa 60); lúc **sơ hở** sau Lao / Bay nhận ×2 ("CƠ HỘI x2!"). Gà mẹ gốc dưới 50% máu vào **giai đoạn 2**, đẻ trứng nhanh hơn.
+- **Gà con**: gà trắng đi thành đàn và vây quanh; gà đỏ lao 1,5s rồi khựng 1s (nhận thêm 50% sát thương); gà đen bay vòng quanh, báo hiệu bằng vệt đỏ rồi nhào xuống.
+
 ## Gà
 
 Sprite gà lấy từ `tools/ga-goc.png`; chạy `python3 tools/tao-atlas-ga.py` để sinh lại các atlas trong `public/assets/game/` (cần Pillow + numpy).

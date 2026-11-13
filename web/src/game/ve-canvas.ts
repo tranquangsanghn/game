@@ -1,4 +1,4 @@
-import type { Game, Ga, TrangTri } from './game';
+import type { Game, Ga, TrangTri, Cuu } from './game';
 import type { KhungSprite } from './sprite';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 
@@ -358,8 +358,8 @@ export class VeCanvas {
 
     // Vệt đỏ báo hiệu Lao / Bay
     ctx.lineCap = 'round';
-    ctx.lineWidth = 90;
     for (const v of c.vachView) {
+      ctx.lineWidth = v.w ?? 90;
       ctx.strokeStyle = `rgba(255,59,48,${dongHe(v.a)})`;
       ctx.beginPath();
       ctx.moveTo(v.x1, v.y1);
@@ -377,6 +377,7 @@ export class VeCanvas {
     for (const o of c.xep) {
       if (o.loai === 'ga') this.veGa(ctx, c, o.ga);
       else if (o.loai === 'td') this.veTrangTri(ctx, o.td, c.t);
+      else if (o.loai === 'cuu') this.veCuu(ctx, c, o.cu);
       else this.veNhanVat(ctx, c, o.p);
     }
     for (const g of c.gaBayView) this.veGa(ctx, c, g);
@@ -572,6 +573,83 @@ export class VeCanvas {
     ctx.scale(t.k, t.k);
     this.sprite(ctx, n.nv.sp, n.nv.khung, n.nv.lat, false);
     ctx.restore();
+    // Khiên tạm (máu vượt trần): quầng xanh nhấp nháy bao quanh thân, mờ dần khi sắp hết
+    if (n.khien > 0 && !n.het) {
+      ctx.save();
+      ctx.translate(n.x, t.y - 30);
+      const a = dongHe(n.khienCon / 1.5) * (0.5 + 0.5 * Math.abs(Math.sin(c.t * 6)));
+      const r = 95 * n.nv.heSoTo;
+      duongElip(ctx, r * 0.8, r);
+      ctx.fillStyle = `rgba(90,200,255,${0.1 + 0.12 * a})`;
+      ctx.fill();
+      ctx.strokeStyle = `rgba(170,230,255,${0.4 + 0.5 * a})`;
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // Cứu đồng đội: người ngã được phủ mây (Mabu cứu Zinbu) hoặc một cục socola to (Zinbu cứu Mabu). Có vòng đếm giờ, vòng tầm cứu và số giây còn lại
+  private veCuu(ctx: CanvasRenderingContext2D, c: Game, cu: Cuu): void {
+    if (cu.cho > 0) return;
+    const gan = c.cuuGan(cu);
+    const con = Math.max(0, Math.ceil(c.CUU_THOI_GIAN - cu.t));
+    const mau = c.nguoi[1 - cu.p].mau;
+    ctx.save();
+    ctx.translate(cu.x, cu.y);
+    // Vòng tầm cứu (dẹt như mặt đất): sáng khi người cứu đang đứng trong vòng
+    duongElip(ctx, c.CUU_BAN_KINH, c.CUU_BAN_KINH * c.EP_GA);
+    ctx.fillStyle = gan ? 'rgba(126,231,135,0.10)' : 'rgba(255,255,255,0.04)';
+    ctx.fill();
+    ctx.setLineDash([22, 18]);
+    ctx.strokeStyle = gan ? 'rgba(126,231,135,0.75)' : 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 4 / c.camZ;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    const pop = 0.4 + 0.6 * dongHe(cu.tach);
+    if (cu.kieu === 'may') {
+      // Mây tách ra từ Mabu: dùng đúng khung mây của Mabu, to gấp 2, bồng bềnh
+      const sp = c.nguoi[0].nv.sp;
+      ctx.save();
+      ctx.translate(0, -34 + 6 * Math.sin(c.t * 4));
+      ctx.scale(c.S_NV * 2 * pop, c.S_NV * 2 * pop);
+      this.sprite(ctx, sp, sp.anim['may'].f[0], false, false);
+      ctx.restore();
+    } else {
+      // Cục socola to
+      ctx.save();
+      ctx.scale(2.8 * pop, 2.8 * pop);
+      this.veSocola(ctx, { x: 0, y: 0, t: c.t % 10 });
+      ctx.restore();
+    }
+    // Vòng tiến độ + số giây đếm ngược trên đầu
+    ctx.translate(0, -230);
+    duongTron(ctx, 46);
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fill();
+    ctx.lineWidth = 9;
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, 46, -Math.PI / 2, -Math.PI / 2 + TAU * dongHe(cu.t / c.CUU_THOI_GIAN));
+    ctx.strokeStyle = gan ? mau : '#8a9a94';
+    ctx.stroke();
+    ctx.font = `800 40px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(`${con}`, 0, 2);
+    if (!gan) {
+      ctx.font = `800 26px ${FONT}`;
+      ctx.globalAlpha = 0.5 + 0.5 * Math.abs(Math.sin(c.t * 5));
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+      ctx.strokeText('LẠI GẦN ĐỂ CỨU!', 0, -70);
+      ctx.fillStyle = '#ffd23f';
+      ctx.fillText('LẠI GẦN ĐỂ CỨU!', 0, -70);
+    }
+    ctx.restore();
   }
 
   private veGa(ctx: CanvasRenderingContext2D, c: Game, g: Ga): void {
@@ -610,6 +688,15 @@ export class VeCanvas {
     ctx.translate(0, 40);
     this.sprite(ctx, c.gaSprite(g), c.gaKhung(g), g.lat, true, c.locGa(g));
     ctx.restore();
+    // Gà đỏ khựng lại thở dốc (nhận thêm sát thương) · gà con bị Đá làm choáng
+    if (!g.chet && ((g.kiet ?? 0) > 0 || (g.choang ?? 0) > 0)) {
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.font = `800 40px ${FONT}`;
+      ctx.textAlign = 'center';
+      ctx.fillText((g.choang ?? 0) > 0 ? '💫' : '💦', h.x, h.y - 115 * (g.to ?? 1) - g.h * c.EP_GA);
+      ctx.restore();
+    }
     // Gà mẹ gốc đánh dấu bằng vương miện vàng trên đầu
     if (g.goc && !g.chet) {
       const t = c.thanhTuong(g);
@@ -625,7 +712,7 @@ export class VeCanvas {
   // Thanh máu trên đầu nhân vật; dạng mây thì không có
   private veThanhTrenDau(ctx: CanvasRenderingContext2D, c: Game, p: number): void {
     const n = c.nguoi[p];
-    if (n.vang || n.nv.laMay) return;
+    if (n.vang || n.nv.laMay || c.dangCuu(p)) return;
     const t = c.thanhTrenDau(p);
     ctx.save();
     ctx.translate(t.x, t.y);
@@ -636,6 +723,25 @@ export class VeCanvas {
     tronCD(ctx, -31, -3, 62 * c.mauNv(p), 6, 3);
     ctx.fillStyle = '#35d96a';
     ctx.fill();
+    ctx.restore();
+    // Combo đang chạy (từ 3 đòn) và khiên tạm; combo đủ cao thì chưởng hồi nhanh (⚡)
+    if (n.het) return;
+    const dong: string[] = [];
+    if (n.combo >= 3) dong.push(`COMBO ${n.combo}${n.combo >= c.COMBO_GIAM_HOI ? ' ⚡' : ''}`);
+    if (n.khien > 0) dong.push(`🛡 ${Math.ceil(n.khien)}`);
+    if (!dong.length) return;
+    ctx.save();
+    ctx.font = `800 26px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 5;
+    dong.forEach((d, i) => {
+      const y = t.y - 22 - i * 30;
+      ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+      ctx.strokeText(d, t.x, y);
+      ctx.fillStyle = d.startsWith('🛡') ? '#9be7ff' : '#ffb347';
+      ctx.fillText(d, t.x, y);
+    });
     ctx.restore();
   }
 
