@@ -1077,11 +1077,11 @@ export class VeCanvas {
     // Đang vận nội công / phóng chưởng vào bánh: dùng atlas riêng (gồng, hào quang, phóng); hào quang đập nhẹ, thân rung khi gồng
     const kt = c.cellTiecKhung(ce);
     if (kt !== null) {
-      if ((TIEC_KHUNG.hao as readonly number[]).includes(kt)) ctx.scale(1 + 0.04 * Math.sin(c.t * 10), 1 + 0.04 * Math.sin(c.t * 10));
+      if ((TIEC_KHUNG.hao as readonly number[]).includes(kt)) ctx.scale(1 + 0.04 * Math.sin(c.t * 30), 1 + 0.04 * Math.sin(c.t * 30));
       else if (kt === TIEC_KHUNG.bien) {
         // Biến hình: gió xanh nháy ngang / dọc quanh người, thân rung
-        this.sprite(ctx, SP_CELL_TIEC, ce.cap * SP_CELL_TIEC.cot + (Math.floor(c.t * 6) % 2 ? TIEC_KHUNG.gioNgang : TIEC_KHUNG.gioDoc), ce.lat, false);
-        ctx.translate(Math.sin(c.t * 25) * 1.2, 0);
+        this.sprite(ctx, SP_CELL_TIEC, ce.cap * SP_CELL_TIEC.cot + (Math.floor(c.t * 16) % 2 ? TIEC_KHUNG.gioNgang : TIEC_KHUNG.gioDoc), ce.lat, false);
+        ctx.translate(Math.sin(c.t * 80) * 1.2, 0);
       }
       this.sprite(ctx, SP_CELL_TIEC, ce.cap * SP_CELL_TIEC.cot + kt, ce.lat, false);
     } else this.sprite(ctx, SP_CELL, ce.cap * SP_CELL.cot + c.cellKhung(ce), ce.lat, false);

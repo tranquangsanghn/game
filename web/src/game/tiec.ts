@@ -1,4 +1,4 @@
-// Tiệc sinh nhật của Cell: lúc bắt đầu ván, Cell của MỌI đảo (1 con hay nhiều con) đi vòng tròn quanh một cái bánh, bắn chưởng vào bánh (mỗi Cell 2s một phát); nhạc "Happy Birthday" là nhạc nền của khu đảo (am-thanh.ts).
+// Tiệc sinh nhật của Cell: lúc bắt đầu ván, Cell của MỌI đảo (1 con hay nhiều con) đi vòng tròn quanh một cái bánh, bắn chưởng vào bánh (đi vòng 2s rồi dừng bắn); nhạc "Happy Birthday" là nhạc nền của khu đảo (am-thanh.ts).
 // Tiệc tan khi có nhân vật lại gần (Cell ngửi thấy) hoặc có Cell bị đánh; bánh vẫn ở lại cháy.
 // File này chỉ có dữ liệu + hàm thuần; logic chạy trong Game (`capNhatTiec()`), vẽ trong ve-canvas.ts (`veBanh()`).
 import type { KhungSprite } from './sprite';
@@ -19,11 +19,12 @@ export const TIEC_NGUI = 450;
 /** Chưởng (kamehameha) bay tới bánh trong `TIEC_CHUONG_T` giây */
 export const TIEC_CHUONG_T = 0.7;
 /** Chu trình của Cell dự tiệc (giây), lặp liên tục: biến hình (người méo + gió xanh) → vận nội công (hào quang bùng lên) → phóng một trong 3 loại chưởng (ngẫu nhiên) → biến hình… */
-export const TIEC_BIEN = 0.5;
-export const TIEC_AURA = 0.8;
+export const TIEC_BIEN = 0.6;
+export const TIEC_AURA = 0.9;
 export const TIEC_PHONG = 0.7;
-/** Mỗi Cell bắn đúng 1 chưởng mỗi `TIEC_CHU_KY` = 2 giây */
-export const TIEC_CHU_KY = TIEC_BIEN + TIEC_AURA + TIEC_PHONG;
+/** Cả đội cùng đi vòng `TIEC_DI` = 2s rồi cùng dừng lại bắn 1 chưởng (biến hình → hào quang → phóng), rồi lại đi tiếp; chu kỳ chung tính theo giờ tiệc `tc.t` nên vòng luôn cách đều */
+export const TIEC_DI = 2;
+export const TIEC_CHU_KY = TIEC_DI + TIEC_BIEN + TIEC_AURA + TIEC_PHONG;
 /** Atlas của từng cấp (hàng = cấp): cột 0–2 hào quang · 3 gồng (không dùng) · 4 / 5 / 6 phóng chưởng xanh / vàng / tím · 7 biến hình · 8 / 9 gió ngang / dọc; tách bằng tools/tao-atlas-cell-tiec.py */
 export const SP_CELL_TIEC: KhungSprite = { atlas: 'assets/game/cell_tiec.png', atlasW: 800, atlasH: 320, w: 80, h: 64, cot: 10, neoX: 40, neoY: 60 };
 export const TIEC_KHUNG = { hao: [0, 1, 2], bien: 7, gioNgang: 8, gioDoc: 9, phong: [4, 5, 6] } as const;
@@ -48,7 +49,7 @@ export interface ChuongTiec { id: number; x0: number; y0: number; x1: number; y1
 /** Vị trí Cell trên vòng quanh bánh (vòng gần tròn, hơi dẹt theo chiều dọc) */
 export const viTriVong = (tc: Tiec, goc: number) => ({ x: tc.x + Math.cos(goc) * tc.bk, y: tc.y + Math.sin(goc) * tc.bk * 0.9 });
 /** Tốc độ đi quanh bánh (px/s) theo độ to của Cell */
-export const TIEC_TOC = 7;
+export const TIEC_TOC = 12;
 
 /**
  * Dựng tiệc cho MỌI đảo: Cell của mỗi đảo (1 con cũng vậy) đi vòng tròn quanh một cái bánh đặt trên cát (cả vòng nằm trên cát, tìm không được thì thu nhỏ vòng).
@@ -89,8 +90,6 @@ export function taoTiec(cell: Cell[]): Tiec[] {
       c.y = c.hy = c.dy = p.y;
       c.tiec = true;
       c.dao = dao;
-      c.nap = Math.random() * TIEC_CHU_KY; // lệch pha để không bắn cùng lúc
-      c.loaiChuong = Math.floor(Math.random() * CHUONG_LOAI.length);
     });
     kq.push(tc);
   }
