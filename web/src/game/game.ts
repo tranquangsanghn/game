@@ -114,6 +114,8 @@ export interface CauTron { x: number; y: number; pha: 'san' | 'trong' | 'vo' | '
 const FPS_THAP = 50;
 const DPR_BUOC = 0.25;
 const DPR_SAN = 1;
+/** Độ phân giải canvas nền so với điểm ảnh CSS (thấp để nhẹ, nền vốn mịn) */
+const NEN_TL = 0.5;
 const taoCauTron = (): CauTron[] => CAU_VI_TRI.map(([dx, dy], cua) => ({ x: MAP / 2 + dx, y: MAP / 2 + dy, pha: 'san', p: -1, t: 0, cua }));
 
 /**
@@ -852,6 +854,9 @@ export class Game {
   private dprTran = 2;
   private fpsThap = 0;
   private datKhung: () => void = () => {};
+  /** Canvas nền (cát / biển) nằm dưới canvas chính, độ phân giải NEN_TL × điểm ảnh CSS */
+  private canvasNen: HTMLCanvasElement | null = null;
+  private ctxNen: CanvasRenderingContext2D | null = null;
   private manDaVe: ManChoi | null = null;
   private id = 1;
   private rafId = 0;
@@ -889,8 +894,23 @@ export class Game {
           cv.width = pw;
           cv.height = ph;
         }
+        const nen = this.canvasNen;
+        if (nen) {
+          const nw = Math.max(1, Math.round(kt.width * NEN_TL));
+          const nh = Math.max(1, Math.round(kt.height * NEN_TL));
+          if (nen.width !== nw || nen.height !== nh) {
+            nen.width = nw;
+            nen.height = nh;
+          }
+        }
       };
       this.ctx = this.canvasEl.getContext('2d');
+      // Canvas nền nằm ngay dưới canvas chính (xem VeCanvas.veNenRieng)
+      this.canvasNen = document.createElement('canvas');
+      this.canvasNen.className = 'canvas-nen';
+      this.canvasNen.setAttribute('aria-hidden', 'true');
+      this.canvasEl.before(this.canvasNen);
+      this.ctxNen = this.canvasNen.getContext('2d');
       this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas, SP_CELL.atlas, SP_CELL_TIEC.atlas, ...CHUONG_LOAI.map((l) => l.atlas));
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG, LOC_SOCOLA, LOC_SOCOLA_HONG]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO, LOC_SOCOLA, ...LOC_PHU]);
@@ -1148,7 +1168,7 @@ export class Game {
       this.capNhatView(dt);
     }
     this.am.nhacNen(this.man === 'play', this.trenDao);
-    if (this.ctx) this.ve.ve(this.ctx, this, this.dpr);
+    if (this.ctx) this.ve.ve(this.ctx, this, this.dpr, this.ctxNen, NEN_TL);
     // Màn chơi chỉ vẽ canvas; phần HTML (màn bắt đầu / tạm dừng / kết thúc, nút) chỉ cập nhật khi cần
     if (this.man !== 'play' || this.manDaVe !== this.man) this.onManPhu();
     this.manDaVe = this.man;

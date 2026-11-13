@@ -197,7 +197,7 @@ export class VeCanvas {
   // ─── Khung hình ───
 
   /** Vẽ 1 khung hình. Kích thước (px) lấy từ chính canvas; dpr là hệ số điểm ảnh. Phép chiếu khung nhìn → màn hình lấy từ c.phepChieu() (dùng chung với đọc chuột). */
-  ve(ctx: CanvasRenderingContext2D, c: Game, dpr: number): void {
+  ve(ctx: CanvasRenderingContext2D, c: Game, dpr: number, ctxNen: CanvasRenderingContext2D | null = null, dprNen = 1): void {
     const { W, H, BAR, SIDE } = c;
     const { s, ox, oy } = c.phepChieu();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -207,8 +207,14 @@ export class VeCanvas {
     ctx.filter = 'none';
     ctx.lineJoin = 'miter';
     ctx.lineCap = 'butt';
+    if (ctxNen) this.veNenRieng(ctxNen, c, dprNen);
+    // Canvas chính trong suốt trong map (nền cát / biển ở canvas riêng bên dưới); chỉ tô đen thanh trên và hai thanh bên
     ctx.fillStyle = '#000';
-    ctx.fillRect(-SIDE, -BAR, W + 2 * SIDE, H + BAR);
+    if (ctxNen) {
+      ctx.fillRect(-SIDE, -BAR, W + 2 * SIDE, BAR);
+      ctx.fillRect(-SIDE, 0, SIDE, H);
+      ctx.fillRect(W, 0, SIDE, H);
+    } else ctx.fillRect(-SIDE, -BAR, W + 2 * SIDE, H + BAR);
 
     // Một camera chung; chỉ vẽ trong map (thanh đen phía trên chứa chiêu gà mẹ)
     ctx.save();
@@ -502,13 +508,28 @@ export class VeCanvas {
     }
   }
 
-  private veTheGioi(ctx: CanvasRenderingContext2D, c: Game): void {
-    // Đảo sa mạc: biển + vòng đảo cát, vườn gà (map cỏ có tường) nằm giữa biển
+  /** Nền cát / biển vẽ ở canvas riêng nằm dưới canvas chính, độ phân giải thấp (dprNen × điểm ảnh CSS) rồi trình duyệt phóng lên: phủ kín màn hình bằng ảnh phóng rất tốn ở độ phân giải cao, nền vốn mịn nên không mất nét */
+  private veNenRieng(ctx: CanvasRenderingContext2D, c: Game, dpr: number): void {
+    const { s, ox, oy } = c.phepChieu();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     // Khung nhìn nằm trọn trong vườn gà (nền cỏ che hết) thì khỏi vẽ biển / cát bên dưới
     const cam = c.gocCamera();
     const trongVuon =
       -cam.x / cam.k - 40 >= 0 && -cam.y / cam.k - 40 >= 0 && (c.W - cam.x) / cam.k + 40 <= c.MAP && (c.H - cam.y) / cam.k + 40 <= c.MAP;
-    if (c.banDoVan === 'sa' && !trongVuon) this.veNenSa(ctx, c);
+    if (c.banDoVan !== 'sa' || trongVuon) return;
+    ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
+    ctx.beginPath();
+    ctx.rect(0, 0, c.W, c.H);
+    ctx.clip();
+    ctx.translate(cam.x, cam.y);
+    ctx.scale(cam.k, cam.k);
+    this.veNenSa(ctx, c);
+  }
+
+  private veTheGioi(ctx: CanvasRenderingContext2D, c: Game): void {
+    // Đảo sa mạc: biển + vòng đảo cát, vườn gà (map cỏ có tường) nằm giữa biển
+    // Khung nhìn nằm trọn trong vườn gà (nền cỏ che hết) thì khỏi vẽ biển / cát bên dưới
     this.veNen(ctx, c);
     this.veTuong(ctx, c);
 
