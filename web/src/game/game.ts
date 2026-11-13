@@ -4,7 +4,7 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { chuanBiSaMac, daoCua, doSau, trongVuon, veDat, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, CELL_XICH, SP_CELL, taoCell, type Cell } from './cell';
+import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, CELL_XICH, SP_CELL, taoCell, type Cell } from './cell';
 import { taoTiec, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_CHU_KY, TIEC_DI, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -1941,7 +1941,7 @@ export class Game {
     for (const g of this.keoGa) if (trong(g.x, g.y, 120)) xep.push({ loai: 'ga', y: g.y, ga: g });
     // Đang ở đảo nào thì Cell của đảo đó không bị sương mù: thấy hết nếu nằm trong khung nhìn
     const daoNv = this.trenDao ? this.daoHienTai : -1;
-    this.cellView = this.cell.filter((c) => (daoNv >= 0 && daoCua(c.x, c.y) === daoNv ? true : this.thay(c.x, c.y)) && trong(c.x, c.y - 20 * cellK(c.cap), 60 * cellK(c.cap) + 200));
+    this.cellView = this.cell.filter((c) => (daoNv >= 0 && daoCua(c.x, c.y) === daoNv ? true : this.thay(c.x, c.y)) && trong(c.x, c.y - 32 * cellK(c.cap), (c.cap === SO_CAP - 1 ? 58 : 40) * cellK(c.cap) + 60));
     for (const c of this.cellView) xep.push({ loai: 'cell', y: c.y, ce: c });
     // Bánh sinh nhật + chưởng Cell bắn vào bánh: cùng quy tắc sương mù như Cell của đảo
     const thayTiec = (x: number, y: number) => (daoNv >= 0 && daoCua(x, y) === daoNv ? true : this.thay(x, y));
