@@ -102,8 +102,9 @@ type VatXep =
   | { loai: 'cau'; y: number; cau: CauTron };
 
 /** Quả cầu trốn: san = sẵn sàng · trong = có nhân vật p đang trốn · vo = đang vỡ ra (hoạt ảnh) · moc = đã vỡ, chờ CAU_MOC giây mọc quả mới. t = số giây của pha hiện tại */
-export interface CauTron { x: number; y: number; pha: 'san' | 'trong' | 'vo' | 'moc'; p: number; t: number; }
-const taoCauTron = (): CauTron[] => CAU_VI_TRI.map(([dx, dy]) => ({ x: MAP / 2 + dx, y: MAP / 2 + dy, pha: 'san', p: -1, t: 0 }));
+/** cua = chủ quả cầu (0 Mabu · 1 Zinbu): chỉ đúng người đó chui vào được, quả cầu có avatar của người đó */
+export interface CauTron { x: number; y: number; pha: 'san' | 'trong' | 'vo' | 'moc'; p: number; t: number; cua: number; }
+const taoCauTron = (): CauTron[] => CAU_VI_TRI.map(([dx, dy], cua) => ({ x: MAP / 2 + dx, y: MAP / 2 + dy, pha: 'san', p: -1, t: 0, cua }));
 
 /** Cứu đồng đội: nhân vật còn sống phủ mây (Mabu cứu Zinbu) hoặc socola (Zinbu cứu Mabu) lên người ngã; sống sót CUU_THOI_GIAN giây (mây / socola bám theo, nối bằng dây) thì người ngã hồi sinh */
 export interface Cuu { p: number; kieu: 'may' | 'socola'; x: number; y: number; cho: number; t: number; tach: number; }
@@ -860,7 +861,7 @@ export class Game {
     this.tGame = d.tGame; this.t = d.t; this.chamDen = d.chamDen; this.id = d.id;
     this.henTuong = d.henTuong; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
     this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham; this.cuu = d.cuu ?? [];
-    this.cauTron = d.cauTron ?? taoCauTron();
+    this.cauTron = d.cauTron?.map((q, i) => ({ ...q, cua: q.cua ?? i })) ?? taoCauTron();
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
     this.nguoi = d.nguoi.map((o, p) => {
@@ -1707,7 +1708,7 @@ export class Game {
     // Người đang được mây / socola phủ lên thì thân được thay bằng mây / socola (cuuView)
     this.cuuView = this.cuu.filter((c) => trong(c.x, c.y, 500));
     for (const c of this.cuuView) xep.push({ loai: 'cuu', y: c.y, cu: c });
-    this.cauView = this.cauTron.filter((q) => (q.pha !== 'moc' || q.t > CAU_MOC - 1) && trong(q.x, q.y, 400));
+    this.cauView = this.cauTron.filter((q) => !this.nguoi[q.cua]?.vang && (q.pha !== 'moc' || q.t > CAU_MOC - 1) && trong(q.x, q.y, 400));
     for (const q of this.cauView) xep.push({ loai: 'cau', y: q.y, cau: q });
     this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
     for (const t of this.trangTri) if (!t.mat && trong(t.x, t.y, t.to ? 700 : 400)) xep.push({ loai: 'td', y: t.y, td: t });
@@ -2779,7 +2780,7 @@ export class Game {
     for (const q of this.cauTron) {
       q.t += dt;
       if (q.pha === 'san') {
-        const p = this.nguoi.findIndex((n, i) => !n.vang && !n.het && !n.nv.laMay && !n.bay && !n.nv.khoa && !this.trongCau(i)
+        const p = this.nguoi.findIndex((n, i) => i === q.cua && !n.vang && !n.het && !n.nv.laMay && !n.bay && !n.nv.khoa && !this.trongCau(i)
           && Math.hypot(n.x - q.x, (n.y - q.y) / EP_GA) < CAU_BAN_KINH);
         if (p < 0) continue;
         const n = this.nguoi[p];
@@ -2824,8 +2825,8 @@ export class Game {
 
   /** Hình quả cầu để vẽ: khung atlas (hàng 0 Mabu · hàng 1 Zinbu), độ mờ, độ lắc (độ) và số giây còn trốn (null = không hiện) */
   cauHinh(q: CauTron): { khung: number; a: number; lac: number; rungX: number; con: number | null } {
-    const hang = Math.max(0, q.p) * 6;
-    if (q.pha === 'moc') return { khung: 0, a: dongHe01(q.t - (CAU_MOC - 1)), lac: 0, rungX: 0, con: null };
+    const hang = q.cua * 6;
+    if (q.pha === 'moc') return { khung: hang, a: dongHe01(q.t - (CAU_MOC - 1)), lac: 0, rungX: 0, con: null };
     if (q.pha === 'vo') return { khung: hang + 2 + Math.min(3, Math.floor((q.t / CAU_VO) * 4)), a: 1, lac: 0, rungX: 0, con: null };
     if (q.pha === 'trong') {
       const con = CAU_TRON - q.t;
@@ -2833,7 +2834,7 @@ export class Game {
       if (con < 3) return { khung: hang + 1, a: 1, lac: 0, rungX: Math.sin(this.t * 55) * (2 + (3 - con) * 2), con: Math.ceil(con) };
       return { khung: hang, a: 1, lac: Math.sin(this.t * 5) * 3, rungX: 0, con: Math.ceil(con) };
     }
-    return { khung: 0, a: 1, lac: 0, rungX: 0, con: null };
+    return { khung: hang, a: 1, lac: 0, rungX: 0, con: null };
   }
 
   dangCuu(p: number): boolean {

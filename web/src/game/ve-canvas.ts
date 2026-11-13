@@ -653,6 +653,8 @@ export class VeCanvas {
     ctx.scale(1.4, 1.4);
     this.sprite(ctx, c.SP_CAU, h.khung, false, false);
     ctx.restore();
+    // Quả cầu đang trống: avatar của chủ quả cầu (khung cuối: nhân vật giơ tay) trong vòng tròn phía trên, chỉ người đó chui vào được
+    if (q.pha === 'san' || q.pha === 'moc') this.veAvatarCau(ctx, c, q, h.a);
     if (h.con === null) return;
     // Số giây còn trốn trên đầu quả cầu
     ctx.save();
@@ -665,6 +667,39 @@ export class VeCanvas {
     ctx.strokeText(`${h.con}`, q.x, q.y - 360);
     ctx.fillStyle = c.nguoi[q.p]?.mau ?? '#ff9fd0';
     ctx.fillText(`${h.con}`, q.x, q.y - 360);
+    ctx.restore();
+  }
+
+  private veAvatarCau(ctx: CanvasRenderingContext2D, c: Game, q: CauTron, a: number): void {
+    const R = 85;
+    const mau = c.nguoi[q.cua]?.mau ?? '#ff9fd0';
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.translate(q.x, q.y - 370 + 6 * Math.sin(c.t * 3));
+    duongTron(ctx, R);
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.fill();
+    ctx.save();
+    ctx.clip();
+    // Neo sprite ở dưới vòng tròn để phần đầu + thân nằm giữa vòng
+    ctx.translate(0, 170);
+    ctx.scale(0.85, 0.85);
+    this.sprite(ctx, c.SP_CAU, q.cua * 6 + 5, false, false);
+    ctx.restore();
+    duongTron(ctx, R);
+    ctx.lineWidth = 7;
+    ctx.strokeStyle = mau;
+    this.sang(ctx, mau);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Mũi nhọn chỉ xuống quả cầu
+    ctx.beginPath();
+    ctx.moveTo(-16, R + 2);
+    ctx.lineTo(0, R + 24);
+    ctx.lineTo(16, R + 2);
+    ctx.closePath();
+    ctx.fillStyle = mau;
+    ctx.fill();
     ctx.restore();
   }
 
