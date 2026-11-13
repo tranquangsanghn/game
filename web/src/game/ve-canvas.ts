@@ -225,6 +225,7 @@ export class VeCanvas {
     for (const p of [0, 1]) if (!c.nguoi[p].vang) this.veThanhBen(ctx, c, p);
     // Bố cục đen ngoài map là layout chung, luôn hiện; chỉ nội dung đổi theo nhân vật
     this.veThanhTuong(ctx, c);
+    this.veNgocTrenBang(ctx, c);
     if (c.man === 'play' || c.man === 'pause') this.veHud(ctx, c);
   }
 
@@ -1002,7 +1003,7 @@ export class VeCanvas {
   /** Ngọc rồng 1 sao (khung 0 của atlas), phát sáng vàng cam, nhấp nhô nhẹ; (x, y) là tâm viên ngọc, k = tỉ lệ */
   private veNgoc(ctx: CanvasRenderingContext2D, sp: KhungSprite, x: number, y: number, t: number, k: number): void {
     ctx.save();
-    ctx.translate(x, y - (k > 0.3 ? 40 : 0) + 4 * Math.sin(t * 3));
+    ctx.translate(x, y - (k > 0.25 ? (40 * (k - 0.25)) / 0.3 : 0) + 4 * Math.sin(t * 3));
     ctx.scale(k, k);
     this.sang(ctx, '#ffb347');
     this.sprite(ctx, sp, 0, false, true);
@@ -1209,6 +1210,27 @@ export class VeCanvas {
       ctx.lineCap = 'butt';
     }
     ctx.lineJoin = 'miter';
+  }
+
+  // ─── Thanh đen phía trên, bên trái: ngọc rồng đã nhặt (viên mới nhặt bay từ chỗ nhặt lên đây) ───
+
+  private veNgocTrenBang(ctx: CanvasRenderingContext2D, c: Game): void {
+    const toa = (i: number) => ({ x: 44 + i * 54, y: -c.BAR / 2 });
+    const xong = c.ngocNhat.length - c.ngocBay.length;
+    for (let i = 0; i < xong; i++) {
+      const p = toa(i);
+      this.veNgoc(ctx, c.SP_NGOC, p.x, p.y, c.tGame + i, 0.2);
+    }
+    const cam = c.gocCamera();
+    for (const b of c.ngocBay) {
+      const k = Math.min(1, b.t / c.NGOC_BAY_T);
+      const e = k * k * (3 - 2 * k);
+      const p = toa(b.slot);
+      const x0 = cam.x + b.x * cam.k, y0 = cam.y + b.y * cam.k;
+      const x = x0 + (p.x - x0) * e;
+      const y = y0 + (p.y - y0) * e - Math.sin(Math.PI * e) * 120;
+      this.veNgoc(ctx, c.SP_NGOC, x, y, b.t * 2, 0.55 + (0.2 - 0.55) * e);
+    }
   }
 
   // ─── Thanh đen phía trên: chiêu của gà mẹ ───

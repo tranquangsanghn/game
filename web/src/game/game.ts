@@ -129,6 +129,8 @@ export interface TrangThaiLuu {
   phienBan: number; tGame: number; t: number; chamDen: number; id: number;
   henTuong: number; soLanTuong: number; lanTuong: number;
   ga: Ga[]; trungDe: TrungGa[]; vatPham: VatPham[]; cuu: Cuu[];
+  /** Ngọc rồng đã nhặt (thiếu = chưa có) */
+  ngocNhat?: number[];
   /** Quả cầu trốn (thiếu = ván lưu cũ, tạo mới) */
   cauTron?: CauTron[];
   /** Bản đồ của ván (thiếu = ván lưu cũ, đồng cỏ) */
@@ -707,6 +709,10 @@ export class Game {
   tuongView: Ga[] = [];
   // Gà mẹ GỐC còn sống (không lọc theo khung nhìn): avatar, số mạng, mũi tên chỉ hướng
   tuongSong: Ga | null = null;
+  /** Ngọc rồng đã nhặt (số sao, theo thứ tự nhặt) xếp ở thanh đen trên, bên trái; ngocBay = viên đang bay từ chỗ nhặt lên thanh đen */
+  ngocNhat: number[] = [];
+  ngocBay: { x: number; y: number; t: number; slot: number }[] = [];
+  readonly NGOC_BAY_T = 1.1;
   // Gà mẹ đang đánh (phụ gần nhân vật nhất; chưa có thì gà mẹ gốc): chiêu hiện trên thanh đen phía trên
   tuongBang: Ga | null = null;
   // Vật phẩm máu trên map (vatPhamView: chỉ cái nằm trong khung nhìn)
@@ -895,6 +901,8 @@ export class Game {
     this.rung = 0;
     this.trungDe = [];
     this.vatPham = [];
+    this.ngocNhat = [];
+    this.ngocBay = [];
     this.cuu = [];
     // Đảo sa mạc không có quả cầu trốn
     this.cauTron = this.banDo === 'sa' ? [] : taoCauTron();
@@ -931,7 +939,7 @@ export class Game {
       phienBan: PHIEN_BAN_LUU, banDo: this.banDo,
       tGame: this.tGame, t: this.t, chamDen: this.chamDen, id: this.id,
       henTuong: this.henTuong, soLanTuong: this.soLanTuong, lanTuong: this.lanTuong,
-      ga: this.ga, trungDe: this.trungDe, vatPham: this.vatPham, cuu: this.cuu, cauTron: this.cauTron,
+      ga: this.ga, trungDe: this.trungDe, vatPham: this.vatPham, ngocNhat: this.ngocNhat, cuu: this.cuu, cauTron: this.cauTron,
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       nguoi: this.nguoi.map((n) => {
         const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
@@ -949,7 +957,7 @@ export class Game {
     this.batDau();
     this.tGame = d.tGame; this.t = d.t; this.chamDen = d.chamDen; this.id = d.id;
     this.henTuong = d.henTuong; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
-    this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham; this.cuu = d.cuu ?? [];
+    this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham; this.ngocNhat = d.ngocNhat ?? []; this.ngocBay = []; this.cuu = d.cuu ?? [];
     this.cauTron = this.banDo === 'sa' ? [] : d.cauTron?.map((q, i) => ({ ...q, cua: q.cua ?? i })) ?? taoCauTron();
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
@@ -1122,6 +1130,8 @@ export class Game {
 
   private capNhatVatPham(dt: number): void {
     const conLai: VatPham[] = [];
+    for (const b of this.ngocBay) b.t += dt;
+    this.ngocBay = this.ngocBay.filter((b) => b.t < this.NGOC_BAY_T);
     for (const v of this.vatPham) {
       v.t += dt;
       const ngoc = v.loai === 'ngoc';
@@ -1133,6 +1143,8 @@ export class Game {
           this.chu.push({ id: this.id++, x: m.x, y: m.y - 220, text: '⭐ NGỌC RỒNG 1 SAO!', mau: '#ffb347', t: 0 });
           this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'chay', co: 1.2 });
           this.chuongLenTroi(this.nguoi.indexOf(m));
+          this.ngocBay.push({ x: v.x, y: v.y - 40, t: 0, slot: this.ngocNhat.length });
+          this.ngocNhat.push(1);
         } else conLai.push(v);
         continue;
       }
