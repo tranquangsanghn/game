@@ -50,6 +50,8 @@ export interface Cell {
   chet: boolean; tChet: number;
   /** đang ngồi dự tiệc sinh nhật (xem tiec.ts) và đếm ngược tới lần bắn chưởng vào bánh kế tiếp */
   tiec?: boolean; banTiec?: number;
+  /** đảo của tiệc đang dự và góc hiện tại trên vòng quanh bánh */
+  dao?: number; goc?: number;
 }
 
 /** Cấp Cell của đảo `i`: đảo 0 (lớn nhất) cấp 4, đảo 1..4 cấp 0..3 */

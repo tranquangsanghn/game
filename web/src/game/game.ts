@@ -5,7 +5,7 @@ import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { chuanBiSaMac, daoCua, doSau, trongVuon, veDat, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, CELL_XICH, SP_CELL, taoCell, type Cell } from './cell';
-import { BANH_TO, taoTiec, TIEC_BAN_MAX, TIEC_BAN_MIN, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
+import { taoTiec, TIEC_TOC, viTriVong, TIEC_BAN_MAX, TIEC_BAN_MIN, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
@@ -105,7 +105,7 @@ type VatXep =
   | { loai: 'cau'; y: number; cau: CauTron }
   | { loai: 'mb'; y: number }
   | { loai: 'cell'; y: number; ce: Cell }
-  | { loai: 'banh'; y: number };
+  | { loai: 'banh'; y: number; tc: Tiec };
 
 /** Quả cầu trốn: san = sẵn sàng · trong = có nhân vật p đang trốn · vo = đang vỡ ra (hoạt ảnh) · moc = đã vỡ, chờ CAU_MOC giây mọc quả mới. t = số giây của pha hiện tại */
 /** cua = chủ quả cầu (0 Mabu · 1 Zinbu): chỉ đúng người đó chui vào được, quả cầu có avatar của người đó */
@@ -167,7 +167,7 @@ export interface TrangThaiLuu {
   /** Cell canh đảo (thiếu = ván lưu cũ, tạo mới) */
   cell?: Cell[];
   /** Tiệc sinh nhật của Cell (thiếu = ván lưu cũ, không có tiệc) */
-  tiec?: Tiec | null;
+  tiec?: Tiec[] | null;
   /** Máy bay (thiếu = ván lưu cũ, tạo mới ở chỗ ban đầu) */
   mayBay?: MayBay;
   /** Vườn gà ngủ / tổ trứng chờ vua gà (thiếu = vườn đang hoạt động bình thường) */
@@ -732,10 +732,10 @@ export class Game {
   cell: Cell[] = [];
   cellView: Cell[] = [];
   /** Tiệc sinh nhật Cell: bánh ở giữa vòng Cell; chưởng Cell bắn vào bánh (chỉ để đẹp, không lưu); banhView = bánh nằm trong khung nhìn */
-  tiec: Tiec | null = null;
+  tiec: Tiec[] = [];
   chuongTiec: ChuongTiec[] = [];
   chuongTiecView: ChuongTiec[] = [];
-  banhView: { x: number; y: number } | null = null;
+  banhView: Tiec[] = [];
   trungDe: TrungGa[] = [];
   trungView: TrungGa[] = [];
   huongView: { x: number; y: number; goc: number; a: number; mau: string }[] = [];
@@ -1030,9 +1030,9 @@ export class Game {
     this.cauTron = d.cauTron?.length ? d.cauTron.map((q, i) => ({ ...q, cua: q.cua ?? i })) : taoCauTron();
     if (d.vuon) { this.vuonNgu = d.vuon.ngu; this.toTrung = d.vuon.to; this.toDe = d.vuon.toDe; this.daNoPhu = d.vuon.daNoPhu; this.choVua = d.vuon.choVua; }
     if (d.cell?.length) this.cell = d.cell;
-    this.tiec = d.tiec ?? null;
+    this.tiec = Array.isArray(d.tiec) ? d.tiec : [];
     this.chuongTiec = [];
-    if (!this.tiec?.on) for (const c of this.cell) c.tiec = false;
+    for (const c of this.cell) if (!this.tiecCua(c)?.on) c.tiec = false;
     if (d.mayBay) this.mayBay = { ...taoMayBay(d.mayBay.x, d.mayBay.y), ...d.mayBay };
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
@@ -1945,9 +1945,8 @@ export class Game {
     for (const c of this.cellView) xep.push({ loai: 'cell', y: c.y, ce: c });
     // Bánh sinh nhật + chưởng Cell bắn vào bánh: cùng quy tắc sương mù như Cell của đảo
     const thayTiec = (x: number, y: number) => (daoNv >= 0 && daoCua(x, y) === daoNv ? true : this.thay(x, y));
-    const tc = this.tiec;
-    this.banhView = tc && thayTiec(tc.x, tc.y) && trong(tc.x, tc.y - 250 * BANH_TO, 400 * BANH_TO) ? { x: tc.x, y: tc.y } : null;
-    if (this.banhView) xep.push({ loai: 'banh', y: tc!.y });
+    this.banhView = this.tiec.filter((tc) => thayTiec(tc.x, tc.y) && trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to));
+    for (const tc of this.banhView) xep.push({ loai: 'banh', y: tc.y, tc });
     this.chuongTiecView = this.chuongTiec.filter((q) => {
       const k = q.t / TIEC_CHUONG_T;
       const x = q.x0 + (q.x1 - q.x0) * k, y = q.y0 + (q.y1 - q.y0) * k;
@@ -3000,7 +2999,7 @@ export class Game {
   // Cell nhận đòn: trừ máu, nháy sáng, hết máu thì ngã (tính điểm / combo). Trả về true nếu đòn trúng.
   private trungCell(c: Cell, p: number, sat: number): boolean {
     if (c.chet) return false;
-    if (c.tiec) this.ketThucTiec();
+    if (c.tiec) this.ketThucTiec(this.tiecCua(c));
     const n = this.nguoi[p];
     const mat = Math.max(1, Math.round(sat * (n?.suc ?? 1)));
     const tam = this.tamCell(c);
@@ -3028,9 +3027,10 @@ export class Game {
       c.nhay = Math.max(0, c.nhay - dt);
       c.danh = Math.max(0, c.danh - dt);
       // Đang dự tiệc: ngồi quanh bánh, bắn chưởng vào bánh; có nhân vật lại gần thì tiệc tan
-      if (c.tiec && this.tiec?.on) {
-        if (this.nguoi.some((n) => !n.vang && !this.khuat(n) && Math.hypot(n.x - c.x, n.y - c.y) < TIEC_NGUI)) this.ketThucTiec();
-        else { this.cellTiec(c, dt); continue; }
+      const tcc = c.tiec ? this.tiecCua(c) : undefined;
+      if (tcc?.on) {
+        if (this.nguoi.some((n) => !n.vang && !this.khuat(n) && Math.hypot(n.x - c.x, n.y - c.y) < TIEC_NGUI)) this.ketThucTiec(tcc);
+        else { this.cellTiec(c, tcc, dt); continue; }
       }
       const to = CELL_TO[c.cap]!;
       let muc: { x: number; y: number } | null = null;
@@ -3092,40 +3092,54 @@ export class Game {
 
   // ─── Tiệc sinh nhật của Cell ───
 
-  /** Tiệc tan: mọi Cell đứng dậy (về AI bình thường: ngửi thấy nhân vật thì đuổi); bánh ở lại */
-  private ketThucTiec(): void {
-    if (!this.tiec?.on) return;
-    this.tiec.on = false;
-    for (const c of this.cell) c.tiec = false;
-    this.chu.push({ id: this.id++, x: this.tiec.x, y: this.tiec.y - 420, text: '🎂 TIỆC TAN RỒI!', mau: '#ffd166', t: 0 });
+  /** Tiệc của đảo Cell `c` */
+  tiecCua(c: Cell): Tiec | undefined {
+    return this.tiec.find((t) => t.dao === c.dao);
   }
 
-  /** Một Cell ngồi dự tiệc: quay mặt vào bánh, cứ vài giây bắn một chưởng vào bánh */
-  private cellTiec(c: Cell, dt: number): void {
-    const tc = this.tiec!;
-    c.chay = false;
-    c.lat = tc.x < c.x;
+  /** Tiệc tan: mọi Cell của đảo đứng dậy (về AI bình thường: ngửi thấy nhân vật thì đuổi); bánh ở lại */
+  private ketThucTiec(tc: Tiec | undefined): void {
+    if (!tc?.on) return;
+    tc.on = false;
+    for (const c of this.cell) if (c.dao === tc.dao) c.tiec = false;
+    this.chu.push({ id: this.id++, x: tc.x, y: tc.y - 420 * tc.to / 0.6, text: '🎂 TIỆC TAN RỒI!', mau: '#ffd166', t: 0 });
+  }
+
+  /** Một Cell dự tiệc: đi vòng tròn quanh bánh, cứ vài giây bắn một chưởng vào bánh */
+  private cellTiec(c: Cell, tc: Tiec, dt: number): void {
+    const k = cellK(c.cap);
+    c.goc = (c.goc ?? 0) + ((TIEC_TOC * k) / tc.bk) * dt;
+    const p = viTriVong(tc, c.goc);
+    c.x = p.x; c.y = p.y;
+    c.chay = true;
+    c.lat = Math.sin(c.goc) > 0;
     c.banTiec = (c.banTiec ?? 0) - dt;
     if (c.banTiec > 0) return;
     c.banTiec = TIEC_BAN_MIN + Math.random() * (TIEC_BAN_MAX - TIEC_BAN_MIN);
     c.danh = CELL_DANH_T;
     const tam = this.tamCell(c);
-    this.chuongTiec.push({ id: this.id++, x0: c.x + (c.lat ? -1 : 1) * 14 * cellK(c.cap), y0: tam.y, x1: tc.x + ngauNhien(-50, 50), y1: tc.y - 150 * BANH_TO + ngauNhien(-60, 60), t: 0 });
+    this.chuongTiec.push({ id: this.id++, x0: c.x + (tc.x < c.x ? -1 : 1) * 14 * k, y0: tam.y, x1: tc.x + ngauNhien(-50, 50) * tc.to / 0.6, y1: tc.y - 150 * tc.to + ngauNhien(-60, 60) * tc.to / 0.6, t: 0 });
   }
 
-  /** Chưởng của tiệc bay tới bánh thì nổ; tiếng hát to dần khi nhân vật lại gần bánh */
+  /** Chưởng của tiệc bay tới bánh thì nổ; tiếng hát (của tiệc gần nhất) to dần khi nhân vật lại gần bánh */
   private capNhatTiec(dt: number): void {
-    const tc = this.tiec;
-    if (!tc) return;
     for (const q of this.chuongTiec) {
       q.t += dt;
       if (q.t >= TIEC_CHUONG_T) this.vet.push({ id: this.id++, x: q.x1, y: q.y1, t: 0, loai: 'chay', co: 0.35 });
     }
     this.chuongTiec = this.chuongTiec.filter((q) => q.t < TIEC_CHUONG_T);
-    if (!tc.on) { this.am.hatTiec(null, 0); return; }
-    tc.t += dt;
-    const gan = Math.min(...this.nguoi.filter((n) => !n.vang && !n.het).map((n) => Math.hypot(n.x - tc.x, n.y - tc.y)), Infinity);
-    this.am.hatTiec(tc.t, Math.pow(kep(1 - gan / 3200, 0, 1), 1.5));
+    let tot: Tiec | null = null, gan = Infinity;
+    for (const tc of this.tiec) {
+      if (!tc.on) continue;
+      tc.t += dt;
+      for (const n of this.nguoi) {
+        if (n.vang || n.het) continue;
+        const d = Math.hypot(n.x - tc.x, n.y - tc.y);
+        if (d < gan) { gan = d; tot = tc; }
+      }
+    }
+    if (!tot) { this.am.hatTiec(null, 0); return; }
+    this.am.hatTiec(tot.t, Math.pow(kep(1 - gan / 3200, 0, 1), 1.5));
   }
 
   // Khung hình Cell: ngã · trúng đòn · đánh · chạy · đứng

@@ -1,7 +1,8 @@
+import type { Tiec } from './tiec';
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
 import { capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, SO_CAP, SP_CELL, type Cell } from './cell';
-import { BANH_FPS, BANH_KHUNG, BANH_TO, loiDangHat, LOI, notDangHat, SP_BANH, TIEC_CHUONG_T } from './tiec';
+import { BANH_FPS, BANH_KHUNG, loiDangHat, LOI, notDangHat, SP_BANH, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { bamDiem, doSau, doSauVuon, nhieu, TG } from './ban-do';
 
@@ -625,7 +626,7 @@ export class VeCanvas {
       else if (o.loai === 'cuu') this.veCuu(ctx, c, o.cu);
       else if (o.loai === 'cau') this.veCau(ctx, c, o.cau);
       else if (o.loai === 'cell') this.veCell(ctx, c, o.ce);
-      else if (o.loai === 'banh') this.veBanh(ctx, c);
+      else if (o.loai === 'banh') this.veBanh(ctx, c, o.tc);
       else if (o.loai === 'mb') this.veMayBay(ctx, c);
       else this.veNhanVat(ctx, c, o.p);
     }
@@ -1030,19 +1031,15 @@ export class VeCanvas {
     ctx.translate(ce.x, ce.y);
     ctx.scale(k, k);
     // Dự tiệc: ngồi (hơi thấp xuống), đung đưa theo nhịp hát, bay nốt nhạc ♪ trên đầu khi đang hát
-    const tiec = !!ce.tiec && !!c.tiec?.on && !ce.chet;
-    if (tiec) {
-      const hat = notDangHat(c.tiec!.t) >= 0;
-      ctx.scale(1, 0.86);
-      ctx.rotate(hat ? Math.sin(c.t * 5 + ce.id) * 0.04 : 0);
-    }
+    const tcc = ce.tiec ? c.tiecCua(ce) : undefined;
+    const tiec = !!tcc?.on && !ce.chet;
     if (ce.cap === SO_CAP - 1 && !ce.chet) {
       ctx.shadowColor = `rgba(255,${150 + Math.round(60 * Math.sin(c.t * 6))},40,0.95)`;
       ctx.shadowBlur = 18 * ctx.getTransform().a;
     }
     // Hàng của mỗi cấp trong atlas: đổi khung = cấp * số cột + khung
     this.sprite(ctx, SP_CELL, ce.cap * SP_CELL.cot + c.cellKhung(ce), ce.lat, false);
-    if (tiec && notDangHat(c.tiec!.t) >= 0) {
+    if (tiec && notDangHat(tcc!.t) >= 0) {
       ctx.shadowBlur = 0;
       ctx.font = `bold 9px ${FONT}`;
       ctx.textAlign = 'center';
@@ -1055,9 +1052,8 @@ export class VeCanvas {
   }
 
   // Bánh sinh nhật giữa vòng Cell: sprite 8 khung lửa lặp, quầng sáng cam, lời bài hát hiện phía trên
-  private veBanh(ctx: CanvasRenderingContext2D, c: Game): void {
-    const tc = c.tiec;
-    if (!tc) return;
+  private veBanh(ctx: CanvasRenderingContext2D, c: Game, tc: Tiec): void {
+    const BANH_TO = tc.to;
     ctx.save();
     ctx.translate(tc.x, tc.y);
     // Quầng sáng dưới đáy
@@ -1080,13 +1076,14 @@ export class VeCanvas {
     const dong = tc.on ? loiDangHat(tc.t) : -1;
     if (dong >= 0) {
       const text = `🎵 ${LOI[dong]} 🎵`;
-      ctx.font = `bold 34px ${FONT}`;
+      ctx.font = `bold ${Math.round(34 * Math.max(1, BANH_TO / 0.6))}px ${FONT}`;
       ctx.textAlign = 'center';
       const w = ctx.measureText(text).width + 50;
-      const y = 70;
+      const y = 25 + 75 * BANH_TO;
       ctx.fillStyle = 'rgba(20,10,0,0.55)';
       ctx.beginPath();
-      ctx.roundRect(-w / 2, y - 36, w, 54, 18);
+      const hf = 34 * Math.max(1, BANH_TO / 0.6);
+      ctx.roundRect(-w / 2, y - hf * 1.05, w, hf * 1.6, 18);
       ctx.fill();
       ctx.lineWidth = 4;
       ctx.strokeStyle = 'rgba(255,200,90,0.9)';
