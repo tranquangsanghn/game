@@ -637,6 +637,14 @@ export class VeCanvas {
     ctx.strokeText(`${con}`, 0, 2);
     ctx.fillStyle = mau;
     ctx.fillText(`${con}`, 0, 2);
+    // Lời nhắc người còn sống
+    const loi = `Bạn sống được ${c.CUU_THOI_GIAN}s thì đồng đội sẽ sống lại`;
+    ctx.font = `800 26px ${FONT}`;
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+    ctx.strokeText(loi, 0, -58);
+    ctx.fillStyle = '#ffd23f';
+    ctx.fillText(loi, 0, -58);
     ctx.restore();
   }
 

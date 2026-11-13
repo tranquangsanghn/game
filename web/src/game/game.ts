@@ -2494,7 +2494,7 @@ export class Game {
         if (c.cho === 0 && !s.het) {
           this.vet.push({ id: this.id++, x: s.x, y: s.y - 40, t: 0, loai: 'no' });
           this.vet.push({ id: this.id++, x: c.x, y: c.y - 40, t: 0, loai: 'no' });
-          this.chu.push({ id: this.id++, x: c.x, y: c.y - 230, text: `Sống sót ${CUU_THOI_GIAN}s để cứu!`, mau: '#9be7ff', t: 0 });
+          this.chu.push({ id: this.id++, x: c.x, y: c.y - 230, text: `Bạn sống được ${CUU_THOI_GIAN}s thì đồng đội sẽ sống lại`, mau: '#9be7ff', t: 0 });
         }
         conLai.push(c);
         continue;
