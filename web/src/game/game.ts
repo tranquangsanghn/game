@@ -1026,7 +1026,8 @@ export class Game {
   private anGaSocola(): void {
     for (const g of this.ga) {
       if (g.chet || (g.socola ?? 0) <= 0) continue;
-      if (g.loai === 'boss') { this.anTuongSocola(g); continue; }
+      // Vua gà (gà mẹ gốc) không ăn được, chỉ ăn tướng gà (gà mẹ phụ) và gà con
+      if (g.loai === 'boss') { if (!g.goc) this.anTuongSocola(g); continue; }
       const p = this.nguoi.findIndex((m) => !m.het && !m.nv.laMay && Math.hypot(m.x - g.x, m.y - g.y) < VP_BAN_KINH);
       if (p < 0) continue;
       this.anSocola(this.nguoi[p]);
@@ -1044,7 +1045,7 @@ export class Game {
     }
   }
 
-  // Gà mẹ (gốc hoặc phụ) đang hoá socola: nhân vật chạm vào là ăn luôn, nhận 30% máu hiện có và 30% sức mạnh của nó; gà mẹ chết như bị hạ
+  // Tướng gà (gà mẹ phụ) đang hoá socola: nhân vật chạm vào là ăn luôn, nhận 30% máu hiện có và 30% sức mạnh của nó; gà mẹ chết như bị hạ
   private anTuongSocola(g: Ga): void {
     const bk = AN_TUONG_BAN_KINH * (g.to ?? 1);
     const p = this.nguoi.findIndex((m) => !m.het && !m.vang && !m.nv.laMay && Math.hypot(m.x - g.x, m.y - g.y) < bk);
@@ -1055,7 +1056,7 @@ export class Game {
     this.hoiMau(n, mau);
     n.suc = Math.round((n.suc + suc) * 100) / 100;
     this.am.phat('anTao');
-    this.chu.push({ id: this.id++, x: n.x, y: n.y - 280, text: `🍫 ĂN GÀ MẸ! +${mau} ❤ SỨC MẠNH x${n.suc}`, mau: '#c98a4b', t: 0 });
+    this.chu.push({ id: this.id++, x: n.x, y: n.y - 280, text: `🍫 ĂN TƯỚNG GÀ! +${mau} ❤ SỨC MẠNH x${n.suc}`, mau: '#c98a4b', t: 0 });
     g.hp = 0;
     this.trungTuong(g, p);
   }
