@@ -686,14 +686,14 @@ export class Game {
     this.capNhatHieuUng(dt, dtE);
   }
 
-  // Quả táo: hết hạn thì biến mất, nhân vật chạm vào thì nhặt (đỏ: còn thiếu máu · xanh: còn thiếu mana)
+  // Quả táo: hết hạn thì biến mất, nhân vật chạm vào thì nhặt (chạm là nhặt, kể cả khi đã đầy máu / mana)
   private capNhatVatPham(dt: number): void {
     const conLai: VatPham[] = [];
     for (const v of this.vatPham) {
       v.t += dt;
       if (v.t >= VP_TON_TAI) continue;
       const xanh = v.loai === 'xanh';
-      const n = this.nguoi.find((m) => !m.het && !m.nv.laMay && (xanh ? this.thieuMana(m) : m.hp < HP_NV) && Math.hypot(m.x - v.x, m.y - v.y) < VP_BAN_KINH);
+      const n = this.nguoi.find((m) => !m.het && !m.nv.laMay && Math.hypot(m.x - v.x, m.y - v.y) < VP_BAN_KINH);
       if (n) {
         if (xanh) {
           this.hoiDayMana(n);
@@ -701,7 +701,7 @@ export class Game {
         } else {
           const hoi = Math.min(VP_HOI, HP_NV - n.hp);
           n.hp += hoi;
-          this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${hoi} ❤`, mau: '#35d96a', t: 0 });
+          this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: hoi > 0 ? `+${hoi} ❤` : 'Đầy máu', mau: '#35d96a', t: 0 });
         }
         this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
         continue;
@@ -715,10 +715,6 @@ export class Game {
     const v = { x, y };
     giuTrongMap(v, LE_VP);
     this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: Math.random() < 0.5 ? 'do' : 'xanh' });
-  }
-
-  private thieuMana(n: NguoiChoi): boolean {
-    return n.mana.some((m, g) => m < MANA_TOI_DA[g]) || n.khoaMana.some((k) => k > 0) || n.bayNl < BAY_NL_TOI_DA || n.bayKhoa > 0;
   }
 
   // Táo xanh: đầy mana mọi nhóm đòn (mở khoá luôn) và thể lực bay
