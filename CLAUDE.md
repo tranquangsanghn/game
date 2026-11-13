@@ -125,3 +125,7 @@
   - Vàng: mọi đòn trúng gà mẹ đều "MISS" (tính trượt, ngắt combo).
   - Đỏ: nhân vật trong `DOT_BAN_KINH` quanh gà mẹ bị đốt `DOT_SAT` sát thương gốc / giây (nhịp `DOT_NHIP`), không né được, cộng dồn với mổ; mây miễn nhiễm.
 - Hồi sinh tối đa `TUONG_HOI_SINH` = 3 lần (tổng 4 mạng, mỗi mạng 100 máu). Mỗi lần hồi sinh, sát thương mọi đòn của gà mẹ tăng cộng dồn `TUONG_TANG_SAT` = 0,5 (hệ số 1 → 1,5 → 2 → 2,5, `heSoLan()`), tỉ lệ né cộng thêm `TUONG_TANG_NE` = 15 điểm % (50 → 65 → 80%, tối đa `NE_TOI_DA` = 80%, `neGa()`), và đẻ thêm 1 trứng mỗi lần (5 → 6 → 7 → 8, `TRUNG_THEM`). Hạ lần cuối thì không hồi sinh nữa. Chỉ hồi sinh khi đã chết, sau đúng `CHO_TUONG` giây kể từ lúc chết (đồng hồ đặt lại lúc chết). Mỗi lần xuất hiện / hồi sinh, gà mẹ đẻ lượt trứng đầu ngay, chờ `TRUNG_NO` cho trứng nở xong rồi mới được dùng Lao / Bay (`daDe`, `choChieu`).
+
+# Nguyên tắc cây đổ
+
+- Cây (`trangTri` loại 0) bị đổ khi đòn / chưởng của Mabu, Zinbu bay qua trong `CAY_DO_KINH` = 70 quanh gốc (chưởng ×1,4): `danDoCay()` quét đoạn bay mỗi khung hình nên bay tới đâu cây đổ tới đó. Cây đổ (`doLuc`, `huongDo`) quay 90° quanh gốc trong 0,45s rồi nằm luôn, được lưu trong `cayDo` của ván lưu. Chỉ để đẹp, không ảnh hưởng gà.

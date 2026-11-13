@@ -53,7 +53,9 @@ type VatXep =
   | { loai: 'td'; y: number; td: TrangTri };
 
 /** Vật trang trí nền cỏ (cây, bụi, đá): chỉ để đẹp, không cản đường. loai là chỉ số trong TRANG_TRI_SPRITE (ve-canvas.ts) */
-export interface TrangTri { x: number; y: number; loai: number; lat: boolean }
+export interface TrangTri { x: number; y: number; loai: number; lat: boolean; /** thời điểm (`t` của game) bị đánh đổ; chỉ cây (loai 0), chưa đổ thì không có */ doLuc?: number; /** hướng đổ: 1 = sang phải, -1 = sang trái */ huongDo?: number }
+/** Bán kính (quanh gốc cây) mà đòn / chưởng quét qua thì cây đổ */
+const CAY_DO_KINH = 70;
 
 
 export const PHIEN_BAN_LUU = 1;
@@ -62,6 +64,8 @@ export interface TrangThaiLuu {
   phienBan: number; tGame: number; t: number; chamDen: number; id: number;
   henTuong: number; henVatPham: number; soLanTuong: number; lanTuong: number;
   ga: Ga[]; trungDe: TrungGa[]; vatPham: VatPham[];
+  /** Cây đã đổ: [chỉ số trong trangTri, thời điểm đổ, hướng đổ] */
+  cayDo?: [number, number, number][];
   nguoi: (Omit<NguoiChoi, 'nv' | 'nham' | 'ngam' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
 }
 
@@ -549,6 +553,7 @@ export class Game {
       tGame: this.tGame, t: this.t, chamDen: this.chamDen, id: this.id,
       henTuong: this.henTuong, henVatPham: this.henVatPham, soLanTuong: this.soLanTuong, lanTuong: this.lanTuong,
       ga: this.ga, trungDe: this.trungDe, vatPham: this.vatPham,
+      cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1]])),
       nguoi: this.nguoi.map((n) => {
         const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
         void nham; void ngam; void cuaCan; void dich;
@@ -565,6 +570,8 @@ export class Game {
     this.tGame = d.tGame; this.t = d.t; this.chamDen = d.chamDen; this.id = d.id;
     this.henTuong = d.henTuong; this.henVatPham = d.henVatPham; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
     this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham;
+    for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; }
+    for (const [i, t, h] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; }
     this.nguoi = d.nguoi.map((o, p) => {
       const { nhom, lat, huong, ...r } = o;
       const n: NguoiChoi = { ...this.taoNguoiChoi()[p], ...r };
@@ -847,11 +854,30 @@ export class Game {
   private capNhatDan(dt: number): void {
     const conLai: Dan[] = [];
     for (const d of this.dan) {
+      const t0 = d.t;
       d.t += dt;
+      this.danDoCay(d, t0);
       if (d.t < d.T) conLai.push(d);
       else this.chamDich(d);
     }
     this.dan = conLai;
+  }
+
+  // Đòn / chưởng bay tới đâu thì cây dọc đường bay đổ tới đó (quét đoạn từ lần cập nhật trước tới giờ)
+  private danDoCay(d: Dan, t0: number): void {
+    const k0 = Math.min(1, t0 / d.T), k1 = Math.min(1, d.t / d.T);
+    const ax = d.x0 + (d.x1 - d.x0) * k0, ay = d.y0 + (d.y1 - d.y0) * k0;
+    const bx = d.x0 + (d.x1 - d.x0) * k1, by = d.y0 + (d.y1 - d.y0) * k1;
+    const ex = bx - ax, ey = by - ay, e2 = ex * ex + ey * ey;
+    const r = CAY_DO_KINH * (d.to ? 1.4 : 1);
+    for (const c of this.trangTri) {
+      if (c.loai !== 0 || c.doLuc !== undefined) continue;
+      const u = e2 > 0 ? kep(((c.x - ax) * ex + (c.y - ay) * ey) / e2, 0, 1) : 0;
+      if (Math.hypot(c.x - (ax + ex * u), c.y - (ay + ey * u)) > r) continue;
+      c.doLuc = this.t;
+      const dx = d.x1 - d.x0;
+      c.huongDo = Math.abs(dx) > 20 ? Math.sign(dx) : c.lat ? -1 : 1;
+    }
   }
 
   private chamDich(d: Dan): void {

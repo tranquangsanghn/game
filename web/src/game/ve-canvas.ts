@@ -1,4 +1,4 @@
-import type { Game, Ga } from './game';
+import type { Game, Ga, TrangTri } from './game';
 import type { KhungSprite } from './sprite';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
@@ -187,7 +187,7 @@ export class VeCanvas {
     ctx.imageSmoothingEnabled = true;
   }
 
-  private veTrangTri(ctx: CanvasRenderingContext2D, t: { x: number; y: number; loai: number; lat: boolean }): void {
+  private veTrangTri(ctx: CanvasRenderingContext2D, t: TrangTri, now: number): void {
     const img = this.lay(MAP_CO);
     if (!img) return;
     const sp = TRANG_TRI_SPRITE[t.loai];
@@ -195,6 +195,11 @@ export class VeCanvas {
     const h = sp.h * sp.k;
     ctx.save();
     ctx.translate(t.x, t.y);
+    // Cây bị đánh thì đổ quanh gốc (nhanh dần rồi nằm luôn)
+    if (t.doLuc !== undefined) {
+      const k = dongHe((now - t.doLuc) / 0.45);
+      ctx.rotate((t.huongDo ?? 1) * (Math.PI / 2) * k * k);
+    }
     if (t.lat) ctx.scale(-1, 1);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(img, sp.sx, sp.sy, sp.w, sp.h, -w / 2, -h, w, h);
@@ -298,7 +303,7 @@ export class VeCanvas {
     // Gà dưới đất + nhân vật, xếp theo y
     for (const o of c.xep) {
       if (o.loai === 'ga') this.veGa(ctx, c, o.ga);
-      else if (o.loai === 'td') this.veTrangTri(ctx, o.td);
+      else if (o.loai === 'td') this.veTrangTri(ctx, o.td, c.t);
       else this.veNhanVat(ctx, c, o.p);
     }
     for (const g of c.gaBayView) this.veGa(ctx, c, g);
