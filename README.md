@@ -37,6 +37,7 @@ Màn bắt đầu cho chọn chế độ chơi (nhớ lại lần sau):
 - **Chuột phải**: chạy tới chỗ bấm (xa thì bay)
 - **Chuột trái**: ra đòn tại chỗ chuột trỏ
 - **Bấm vào chiêu** ở thanh đen hai bên: đổi nhóm đòn (Đấm / Chiêu đặc biệt / Đá / Biến mây)
+- **Phím 1 / 2 / 3 / 4**: chọn chiêu thứ 1 / 2 / 3 / 4 (từ dưới lên trên) của nhân vật đang dùng chuột
 - **Tab**: chuyển chuột sang nhân vật kia (Mabu ↔ Zinbu)
 
 **🎮 Tay cầm** (Gamepad API, mapping "standard" kiểu PS). Tay cầm thứ nhất điều khiển Mabu (thanh đen bên trái), tay cầm thứ hai điều khiển Zinbu (bên phải). Nối tay cầm rồi bấm một nút bất kỳ để trình duyệt nhận ra nó:

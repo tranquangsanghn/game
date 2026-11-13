@@ -185,7 +185,7 @@ export class GiaoDien {
       const ten = (i === 0 ? MABU : ZINBU).ten;
       const mo = chuot
         ? i === 0
-          ? `<h3>1P ${ten} · chuột</h3><p><b>Chuột phải</b>: chạy tới (xa thì bay)<br><b>Chuột trái</b>: ra đòn<br><b>Bấm vào chiêu</b> ở thanh đen bên trái: đổi nhóm đòn<br><b>Tab</b>: chuyển chuột sang nhân vật kia</p>`
+          ? `<h3>1P ${ten} · chuột</h3><p><b>Chuột phải</b>: chạy tới (xa thì bay)<br><b>Chuột trái</b>: ra đòn<br><b>Bấm vào chiêu</b> ở thanh đen bên trái: đổi nhóm đòn (hoặc phím <b>1 2 3 4</b>)<br><b>Tab</b>: chuyển chuột sang nhân vật kia</p>`
           : `<h3>2P ${ten} · chuột</h3><p>Điều khiển giống Mabu, chiêu thức ở thanh đen bên phải.<br>Chỉ có 1 chuột: bấm <b>Tab</b> để chuyển chuột sang Zinbu</p>`
         : i === 0
           ? `<h3>1P ${ten} · tay cầm 1</h3><p><b>Cần trái</b>: chạy · <b>Cần phải</b>: ngắm (không gạt thì tự ngắm)<br><b>✕ / R2</b>: ra đòn (giữ để đánh liên tục) · <b>○ / L2</b>: bay<br><b>L1 / R1</b>: đổi chiêu · <b>Options</b>: tạm dừng</p>`

@@ -1676,11 +1676,21 @@ export class Game {
   }
 
   // Chỉ có 1 chuột nên Tab chuyển chuột sang nhân vật kia
+  // Phím 1 / 2 / 3 / 4 chọn chiêu thứ 1 / 2 / 3 / 4 (tính từ dưới lên trên, cùng thứ tự nút trên thanh đen) của nhân vật đang dùng chuột
   private phimXuong(e: KeyboardEvent): void {
-    if (this.cheDo !== 'chuot' || e.key !== 'Tab') return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (!e.repeat) this.doiChuot();
+    if (this.cheDo !== 'chuot') return;
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!e.repeat) this.doiChuot();
+      return;
+    }
+    if (this.man !== 'play' || e.repeat || e.ctrlKey || e.altKey || e.metaKey || !/^[1-4]$/.test(e.key)) return;
+    const t = e.target as HTMLElement | null;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+    const n = this.nutBang(this.chuot)[Number(e.key) - 1];
+    if (!n || this.nguoi[this.chuot].het || this.hetMana(this.chuot, n.k)) return;
+    this.nguoi[this.chuot].nv.datNhom(n.k, this.t);
   }
 
   private doiChuot(): void {
