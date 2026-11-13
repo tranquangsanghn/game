@@ -23,7 +23,7 @@ interface Ga {
   // Riêng gà tướng: đếm ngược tới lượt đẻ trứng kế tiếp
   de?: number;
   // Riêng gà tướng: lần hồi sinh (0 = lần đầu), chiêu lao / bay đang dùng, thời gian hồi từng chiêu, màu đang đổi
-  daDe?: boolean; choChieu?: number;
+  daDe?: boolean; choChieu?: number; nghiChung?: number; soHo?: number;
   lan?: number; chieu?: ChieuTuong | null; hoiLao?: number; hoiBay?: number;
   mau?: MauTuong | null; conMau?: number; hoiMau?: number; luotMau?: number; dot?: number;
 }
@@ -94,19 +94,24 @@ const CHAM_GA: Record<string, number> = { hen: 70, rooster: 70, flyer: 70, boss:
 const HOI_DANH_GA: Record<string, number> = { hen: 1.2, rooster: 0.8, flyer: 1.5, boss: 2.5 };
 // Gà tướng hồi sinh tối đa TUONG_HOI_SINH lần; mỗi lần sau sát thương nhân TUONG_TANG_SAT so với lần trước, tỉ lệ né cộng thêm TUONG_TANG_NE (tối đa NE_TOI_DA)
 const TUONG_HOI_SINH = 3;
-const TUONG_TANG_SAT = 1.5;
+const TUONG_TANG_SAT = 0.5;
 const TUONG_TANG_NE = 0.15;
-const NE_TOI_DA = 0.95;
-// Chiêu Lao: tốc độ gấp LAO_HE_SO lần tốc độ đuổi hiện tại, sát thương gấp LAO_SAT, hồi LAO_HOI giây.
-// Chiêu Bay: gấp BAY_HE_SO lần, sát thương gấp BAY_SAT, hồi BAY_HOI giây. Cả hai đi thẳng một đường, trúng mỗi nhân vật một lần, nhân vật vẫn né được.
-const LAO_HE_SO = 5;
+const NE_TOI_DA = 0.8;
+// Sau mỗi lần Lao / Bay gà mẹ lộ sơ hở SO_HO giây: không né được đòn nào. Giữa 2 chiêu bất kỳ (Lao, Bay, đổi màu) nghỉ ít nhất CHIEU_NGHI_CHUNG giây, và các chiêu không chạy cùng lúc.
+const SO_HO = 3;
+const CHIEU_NGHI_CHUNG = 4;
+// Mỗi lần hồi sinh đẻ thêm 1 trứng, loại theo thứ tự này
+const TRUNG_THEM: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'rooster', 'hen'];
+// Chiêu Lao: tốc độ thật TOC_LAO_THAT px/s, sát thương gấp LAO_SAT, hồi LAO_HOI giây.
+// Chiêu Bay: TOC_BAY_THAT px/s, sát thương gấp BAY_SAT, hồi BAY_HOI giây. Cả hai đi thẳng một đường, trúng mỗi nhân vật một lần, nhân vật vẫn né được.
+const TOC_LAO_THAT = 500;
 const LAO_SAT = 2;
 const LAO_HOI = 15;
-const BAY_HE_SO = 8;
+const TOC_BAY_THAT = 700;
 const BAY_SAT = 3;
 const BAY_HOI = 20;
 // Báo hiệu trước khi phóng (giây), nghỉ sau khi xong, quãng đường = khoảng cách tới mục tiêu + CHIEU_QUANG_THEM (tối đa CHIEU_QUANG_TOI_DA), độ cao lúc bay
-const CHIEU_BAO = 0.6;
+const CHIEU_BAO = 1;
 const CHIEU_NGHI = 1;
 const CHIEU_QUANG_THEM = 250;
 const CHIEU_QUANG_TOI_DA = 1400;
@@ -197,7 +202,7 @@ const MAU_GA = { hen: GA_TRANG, rooster: GA_DO, flyer: GA_DEN, boss: GA_TUONG } 
 const MAU_SANG = 'brightness(1.7) saturate(0.6)';
 // Gà tướng: máu, thời gian chờ giữa 2 lần xuất hiện (giây), tốc độ đi
 const CHO_TUONG_DAU = 0;
-const CHO_TUONG = 55;
+const CHO_TUONG = 30;
 const TOC_DO_TUONG = 60;
 // Gà tướng đẻ trứng: mỗi lượt TRUNG_SO quả (2 gà trắng, 2 gà đỏ, 1 gà đen), trứng nở sau TRUNG_NO giây, cách nhau TRUNG_CHO giây.
 // Tổng số gà (kể cả gà tướng) + trứng đang ấp đạt GA_TOI_DA thì không đẻ nữa.
@@ -244,10 +249,10 @@ const leNhanVat = (k: number): Le => ({
 });
 const leCuaGa = (g: { loai: LoaiGa }): Le => (g.loai === 'boss' ? LE_TUONG : g.loai === 'flyer' ? LE_BAY : LE_GA);
 // Hệ số sát thương của gà tướng theo lần hồi sinh; sát thương gốc của mọi con gà
-const heSoLan = (g: Ga) => TUONG_TANG_SAT ** (g.lan ?? 0);
+const heSoLan = (g: Ga) => 1 + TUONG_TANG_SAT * (g.lan ?? 0);
 const satGa = (g: Ga) => SAT_GA[g.loai] * (g.loai === 'boss' ? heSoLan(g) : 1);
 // Tỉ lệ né của gà: gà tướng tăng dần theo lần hồi sinh
-const neGa = (g: Ga) => (g.loai === 'boss' ? Math.min(NE_TOI_DA, NE_GA.boss + TUONG_TANG_NE * (g.lan ?? 0)) : NE_GA[g.loai]);
+const neGa = (g: Ga) => (g.loai === 'boss' ? ((g.soHo ?? 0) > 0 ? 0 : Math.min(NE_TOI_DA, NE_GA.boss + TUONG_TANG_NE * (g.lan ?? 0))) : NE_GA[g.loai]);
 // Kẹp vật vào trong bản đồ; trả về cờ chạm mép theo từng trục để vật tự bật lại
 function giuTrongMap(o: { x: number; y: number }, le: Le) {
   const x = kep(o.x, le.x, MAP - le.x);
@@ -318,6 +323,8 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   tuong: Ga | null = null;
   // Gà tướng còn sống (không lọc theo khung nhìn) cho bảng chiêu ở giữa phía trên
   tuongSong: Ga | null = null;
+  // Vệt đỏ chỉ hướng lúc gà mẹ báo hiệu Lao / Bay (chỉ khi trong khung nhìn)
+  vachView: { x1: number; y1: number; x2: number; y2: number; a: number }[] = [];
   // Lần hồi sinh của gà tướng gần nhất (để bảng vẫn hiện khi chờ hồi sinh)
   lanTuong = 0;
   private soLanTuong = 0;
@@ -800,6 +807,15 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     // Chỉ gà tướng có thanh máu trên đầu; chỉ lấy khi nằm trong khung nhìn
     const t = this.ga.find((g) => g.loai === 'boss' && !g.chet);
     this.tuongSong = t ?? null;
+    this.vachView = [];
+    if (t?.chieu?.pha === 'bao' && this.thay(t.x, t.y)) {
+      const c = t.chieu;
+      const x2 = t.x + c.ux * c.quang;
+      const y2 = t.y + c.uy * c.quang;
+      if ([0, 0.25, 0.5, 0.75, 1].some((k) => trong(t.x + (x2 - t.x) * k, t.y + (y2 - t.y) * k, 450))) {
+        this.vachView = [{ x1: t.x, y1: t.y, x2, y2, a: 0.25 + 0.2 * Math.abs(Math.sin(c.t * 10)) }];
+      }
+    }
     this.tuong = t && this.thay(t.x, t.y) && trong(t.x, t.y, 450) ? t : null;
   }
 
@@ -865,7 +881,8 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   // Gà tướng đẻ một lượt trứng quanh mình, trừ khi tổng số gà đã đủ GA_TOI_DA
   private deTrung(boss: Ga): void {
     if (this.ga.filter((g) => !g.chet).length + this.trungDe.length >= GA_TOI_DA) return;
-    for (const loai of DAN_TRUNG) {
+    const dan = [...DAN_TRUNG, ...TRUNG_THEM.slice(0, boss.lan ?? 0)];
+    for (const loai of dan) {
       this.trungDe.push({
         id: this.id++, loai, t: 0,
         x: kepMap(boss.x + ngauNhien(-110, 110)), y: kepMap(boss.y + ngauNhien(-60, 90)),
@@ -943,12 +960,18 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   private capNhatChieuTuong(g: Ga, dt: number): void {
     g.hoiLao = Math.max(0, (g.hoiLao ?? 0) - dt);
     g.hoiBay = Math.max(0, (g.hoiBay ?? 0) - dt);
+    g.nghiChung = Math.max(0, (g.nghiChung ?? 0) - dt);
+    g.soHo = Math.max(0, (g.soHo ?? 0) - dt);
     if (g.mau) {
       g.conMau = (g.conMau ?? 0) - dt;
-      if (g.conMau <= 0) g.mau = null;
+      if (g.conMau <= 0) {
+        g.mau = null;
+        g.nghiChung = CHIEU_NGHI_CHUNG;
+      }
     }
-    g.hoiMau = (g.hoiMau ?? MAU_CHU_KY) - dt;
-    if (g.hoiMau <= 0) {
+    g.hoiMau = Math.max(0, (g.hoiMau ?? MAU_CHU_KY) - dt);
+    // Màu chỉ bật khi đến lượt, không đang Lao / Bay, không đang đổi màu khác và đã nghỉ đủ; chưa bật được thì chờ
+    if (g.hoiMau <= 0 && !g.mau && !g.chieu && g.daDe && (g.choChieu ?? 0) <= 0 && (g.nghiChung ?? 0) <= 0) {
       g.hoiMau = MAU_CHU_KY;
       g.mau = MAU_TUONG[(g.luotMau ?? 0) % MAU_TUONG.length];
       g.luotMau = (g.luotMau ?? 0) + 1;
@@ -984,11 +1007,14 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     c.pha = 'nghi';
     c.t = 0;
     g.vx = g.vy = 0;
+    // Mệt sau khi lao / bay: lộ sơ hở, không né được đòn nào trong SO_HO giây
+    g.soHo = SO_HO;
+    this.chu.push({ id: this.id++, x: g.x, y: g.y - 360, t: 0, text: '😵 SƠ HỞ!', mau: '#7ee787' });
   }
 
   // Chọn chiêu lao / bay khi thấy mục tiêu đủ xa; bắt đầu từ pha báo hiệu. Trả về true nếu đã bắt đầu.
   private batDauChieu(g: Ga, muc: NguoiChoi, d: number): boolean {
-    if (!g.daDe || (g.choChieu ?? 0) > 0) return false;
+    if (!g.daDe || (g.choChieu ?? 0) > 0 || (g.nghiChung ?? 0) > 0 || g.mau || (g.hoiMau ?? 1) <= 0) return false;
     const sanLao = (g.hoiLao ?? 0) <= 0;
     const sanBay = (g.hoiBay ?? 0) <= 0;
     let loai: 'lao' | 'bay' | null = null;
@@ -1010,7 +1036,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     c.t += dt;
     if (c.pha === 'bao') {
       g.vx = g.vy = 0;
-      if (c.t < CHIEU_BAO) return;
       let muc: NguoiChoi | null = null;
       let gan = Infinity;
       for (const n of this.nguoi) {
@@ -1022,25 +1047,31 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
         g.chieu = null;
         return;
       }
+      // Trong lúc báo hiệu vệt đỏ bám theo mục tiêu; hết báo hiệu thì khoá hướng và phóng
       c.ux = (muc.x - g.x) / (gan || 1);
       c.uy = (muc.y - g.y) / (gan || 1);
       c.quang = Math.min(gan + CHIEU_QUANG_THEM, CHIEU_QUANG_TOI_DA);
+      g.lat = c.ux < 0;
+      if (c.t < CHIEU_BAO) return;
       c.pha = 'chay';
       c.t = 0;
-      g.lat = c.ux < 0;
       return;
     }
     if (c.pha === 'chay') {
-      const v = TOC_DO_TUONG * (1 + this.chang * 0.25) * (c.loai === 'lao' ? LAO_HE_SO : BAY_HE_SO);
-      g.vx = c.ux * v;
-      g.vy = c.uy * v;
-      c.quang -= v * HE_SO_TOC_GA * dt;
+      // Tốc độ thật (px/s); vx, vy tính theo tốc độ gốc nên chia HE_SO_TOC_GA để áp lại ở capNhatGa()
+      const thuc = c.loai === 'lao' ? TOC_LAO_THAT : TOC_BAY_THAT;
+      g.vx = (c.ux * thuc) / HE_SO_TOC_GA;
+      g.vy = (c.uy * thuc) / HE_SO_TOC_GA;
+      c.quang -= thuc * dt;
       this.chamChieu(g, c);
       if (c.quang <= 0) this.nghiChieu(g, c);
       return;
     }
     g.vx = g.vy = 0;
-    if (c.t >= CHIEU_NGHI) g.chieu = null;
+    if (c.t >= CHIEU_NGHI) {
+      g.chieu = null;
+      g.nghiChung = CHIEU_NGHI_CHUNG;
+    }
   }
 
   // Đang lao / bay mà chạm nhân vật thì gây sát thương gấp LAO_SAT / BAY_SAT (mỗi nhân vật một lần mỗi đợt), nhân vật vẫn né được
