@@ -311,7 +311,7 @@ const TAM_CHIEU = 1200;
 const TAM_DANH_XA = Math.max(TAM_DAM_XA, TAM_DA_XA);
 const TAM_NHIN = TAM_DANH_XA * 1.5;
 // Gà tướng nhìn xa gấp 3 lần nhân vật: thấy nhân vật trong tầm này thì đuổi đánh, không thì đi loanh quanh
-const TAM_NHIN_TUONG = TAM_NHIN * 3;
+const TAM_NHIN_TUONG = 1500;
 // Tầm gà con phát hiện và lao vào nhân vật = tầm đánh xa nhất (không đổi theo tầm nhìn)
 const TAM_LAO = TAM_DANH_XA;
 // Gà con ngửi thấy nhân vật trong TAM_NGUI_NV thì đi về phía nhân vật (xu hướng đuổi theo); ngửi thấy táo đỏ trong TAM_NGUI_TAO thì đi tới ăn
