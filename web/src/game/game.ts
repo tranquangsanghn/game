@@ -354,7 +354,9 @@ const CUU_MAU = 100;
 const DUNG_HE_SO = 0.08;
 const RUNG_BIEN = 6;
 const KHOA_KY_LUC = 'chicken-shooting-game.ky-luc';
-const KHOA_CHE_DO = 'chicken-shooting-game.che-do';
+// Nhấn Space SPACE_SO_LAN lần liên tiếp (cách nhau tối đa SPACE_CACH giây) thì đổi chế độ chuột <-> tay cầm
+const SPACE_SO_LAN = 5;
+const SPACE_CACH = 1;
 
 const DIEM: Record<LoaiGa, number> = { hen: 10, rooster: 20, flyer: 30, boss: 500 };
 // Cỡ gà so với gà thường (gà tướng gấp 5 lần)
@@ -590,6 +592,8 @@ export class Game {
   camZ = ZOOM;
   // Chế độ điều khiển (chọn ở màn bắt đầu, nhớ lại lần sau)
   cheDo: CheDo = 'tayCam';
+  private demSpace = 0;
+  private spaceLuc = 0;
   // Chế độ chuột: người chơi mà chuột đang điều khiển (Tab để đổi) và chuột đang nằm trên bảng chiêu thức (không phải trên map)
   chuot = 0;
   /** Lựa chọn ở màn bắt đầu (nhớ để Chơi lại giữ nguyên) */
@@ -739,9 +743,6 @@ export class Game {
     this.cheDo = c;
     this.nguoi.forEach((n) => { n.dich = null; n.cuaCan = false; n.ngam = null; });
     this.trenBang = false;
-    try {
-      localStorage.setItem(KHOA_CHE_DO, c);
-    } catch { /* trình duyệt chặn localStorage */ }
   }
 
   tamDung(): void {
@@ -2633,6 +2634,20 @@ export class Game {
   // Chỉ có 1 chuột nên Tab chuyển chuột sang nhân vật kia
   // Phím 1 / 2 / 3 / 4 chọn chiêu thứ 1 / 2 / 3 / 4 (tính từ dưới lên trên, cùng thứ tự nút trên thanh đen) của nhân vật đang dùng chuột
   private phimXuong(e: KeyboardEvent): void {
+    // Nhấn Space 5 lần liên tiếp (mỗi lần cách nhau < SPACE_CACH giây): chuyển qua lại giữa chế độ chuột và tay cầm, không hỏi
+    if (e.key !== ' ') this.demSpace = 0;
+    else if (!e.repeat) {
+      const now = performance.now();
+      this.demSpace = now - this.spaceLuc <= SPACE_CACH * 1000 ? this.demSpace + 1 : 1;
+      this.spaceLuc = now;
+      if (this.demSpace >= SPACE_SO_LAN) {
+        this.demSpace = 0;
+        e.preventDefault();
+        this.datCheDo(this.cheDo === 'chuot' ? 'tayCam' : 'chuot');
+        this.onManPhu?.();
+        return;
+      }
+    }
     if (this.cheDo !== 'chuot') return;
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -3088,7 +3103,6 @@ export class Game {
   private docKyLuc(): void {
     try {
       this.kyLuc = Number(localStorage.getItem(KHOA_KY_LUC)) || 0;
-      this.cheDo = localStorage.getItem(KHOA_CHE_DO) === 'chuot' ? 'chuot' : 'tayCam';
     } catch {
       this.kyLuc = 0;
     }

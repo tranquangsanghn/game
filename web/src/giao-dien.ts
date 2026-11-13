@@ -109,8 +109,6 @@ export class GiaoDien {
         this.huongDan = null;
         break;
       case 'quay': this.huongDan = null; break;
-      case 'cheChuot': g.datCheDo('chuot'); break;
-      case 'cheTayCam': g.datCheDo('tayCam'); break;
       case 'moi':
         this.thongBao = { text: '', loi: false };
         g.batDau();
@@ -212,8 +210,6 @@ export class GiaoDien {
   /** Màn hướng dẫn sau khi chọn nhân vật: chọn chuột / tay cầm, xem ảnh hướng dẫn rồi vào chơi */
   private htmlHuongDan(): string {
     const tay = this.game.cheDo === 'tayCam';
-    const chon = (act: string, bat: boolean, chu: string) =>
-      `<button type="button" tabindex="-1" class="nut-che ${bat ? 'bat' : ''}" data-act="${act}">${chu}</button>`;
     const noiDung = tay
       ? '<img class="anh-hd" src="assets/game/huong-dan-tay-cam.svg" alt="Hướng dẫn chơi bằng tay cầm">'
       : `<div class="hd-chuot">
@@ -222,7 +218,6 @@ export class GiaoDien {
           <p><b>Bấm nút chiêu</b> trên thanh đen hai bên hoặc phím <b>1 · 2 · 3 · 4</b>: đổi chiêu</p>
           <p><b>Tab</b>: chuyển chuột sang nhân vật kia</p></div>`;
     return `<div class="man-phu man-chon man-hd">
-      <div class="hang-che">${chon('cheChuot', !tay, '🖱 Chuột + Tab')}${chon('cheTayCam', tay, '🎮 Tay cầm')}</div>
       ${noiDung}
       <div class="nhom-nut">
         <button type="button" tabindex="-1" class="nut-phu" data-act="quay">◀ Chọn lại</button>
