@@ -70,7 +70,7 @@ export interface TrungGa {
 interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn +SOCOLA_HOI_MAU máu */
-export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; }
+export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; }
 interface Chu { id: number; x: number; y: number; text: string; mau: string; t: number; }
 interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay: number; vxoay: number; t: number; mau: string; }
 /** chay = cháy nổ (lửa + tia lửa); co = hệ số kích thước */
@@ -202,6 +202,8 @@ const SOCOLA_HOI_MAU = 200;
 // Nhân vật ăn socola: +SOCOLA_NV_MAU máu, +SOCOLA_NV_MANA mana (không giới hạn), rồi tự bắn chưởng lên trời
 const SOCOLA_NV_MAU = 100;
 const SOCOLA_NV_MANA = 100;
+// Socola từ chiêu Biến socola của Zinbu (chưởng nổ): ăn nhận SOCOLA_AN_TI_LE máu của con gà lúc hoá socola, vào cả máu lẫn mana (đòn ăn thường vẫn theo AN_TI_LE)
+const SOCOLA_AN_TI_LE = 0.5;
 // Gà (con, mẹ gốc, mẹ phụ) ăn socola: +SOCOLA_HOI_MAU máu, sức mạnh (nhân sát thương) +SOCOLA_SUC_GA, độ to +SOCOLA_TO_GA mỗi thanh; có trần để không to vô hạn
 const SOCOLA_SUC_GA = 0.5;
 const SOCOLA_TO_GA = 0.25;
@@ -1155,7 +1157,7 @@ export class Game {
       if (n) {
         this.am.phat('anTao');
         if (v.loai === 'socola') {
-          this.anSocola(n);
+          this.anSocola(n, v.luong);
         } else if (xanh) {
           this.hoiDayMana(n);
           this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${VP_MANA} mana`, mau: '#2fa8ff', t: 0 });
@@ -1191,11 +1193,13 @@ export class Game {
   }
 
   // Socola: cộng máu và mana (không giới hạn), mở khoá bay, rồi tự bắn chưởng lên trời
-  private anSocola(n: NguoiChoi): void {
-    this.hoiMau(n, SOCOLA_NV_MAU);
-    this.hoiMana(n, SOCOLA_NV_MANA);
+  private anSocola(n: NguoiChoi, luong?: number): void {
+    const mau = luong ?? SOCOLA_NV_MAU;
+    const mana = luong ?? SOCOLA_NV_MANA;
+    this.hoiMau(n, mau);
+    this.hoiMana(n, mana);
     n.bayKhoa = 0;
-    this.chu.push({ id: this.id++, x: n.x, y: n.y - 250, text: `🍫 +${SOCOLA_NV_MAU} ❤ +${SOCOLA_NV_MANA} mana`, mau: '#c98a4b', t: 0 });
+    this.chu.push({ id: this.id++, x: n.x, y: n.y - 250, text: `🍫 +${mau} ❤ +${mana} mana`, mau: '#c98a4b', t: 0 });
     this.chuongLenTroi(this.nguoi.indexOf(n));
   }
 
@@ -1207,7 +1211,7 @@ export class Game {
       if (g.loai === 'boss') { if (!g.goc) this.anTuongSocola(g); continue; }
       const p = this.nguoi.findIndex((m) => !this.khuat(m) && Math.hypot(m.x - g.x, m.y - g.y) < VP_BAN_KINH);
       if (p < 0) continue;
-      this.anSocola(this.nguoi[p]);
+      this.anSocola(this.nguoi[p], Math.max(1, Math.round(Math.max(0, g.hp) * SOCOLA_AN_TI_LE)));
       const tam = this.tamGa(g);
       g.hp = 0;
       g.chet = true;
@@ -1659,13 +1663,14 @@ export class Game {
     }
     const n = this.nguoi[p];
     const tam = this.tamGa(g);
+    const luong = Math.max(1, Math.round(Math.max(0, g.hp) * SOCOLA_AN_TI_LE));
     g.hp = 0;
     g.chet = true;
     g.tChet = 1;
     this.vet.push({ id: this.id++, x: g.x, y: tam.y, t: 0, loai: 'chay', co: 0.7 });
     const v = { x: g.x, y: g.y };
     giuTrongMap(v, LE_VP);
-    this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'socola' });
+    this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'socola', luong });
     n.combo++;
     n.banTrung++;
     const hs = this.heSo(p);
