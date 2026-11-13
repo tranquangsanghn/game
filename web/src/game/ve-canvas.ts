@@ -271,6 +271,33 @@ export class VeCanvas {
     ctx.lineCap = 'butt';
     ctx.lineJoin = 'miter';
 
+    // Dấu X đỏ nhấp nháy + số giây đếm ngược của trứng đỏ (cuối mũi tên chỉ hướng); 3 giây cuối nháy nhanh hơn
+    for (const x of c.xTrungView) {
+      const nhanh = x.con <= 3 ? 12 : 6;
+      ctx.save();
+      ctx.translate(x.x, x.y - 40);
+      ctx.globalAlpha = dongHe(0.45 + 0.55 * Math.abs(Math.sin(c.t * nhanh)));
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 26;
+      ctx.strokeStyle = '#fff';
+      ctx.beginPath();
+      ctx.moveTo(-50, -50); ctx.lineTo(50, 50); ctx.moveTo(50, -50); ctx.lineTo(-50, 50);
+      ctx.stroke();
+      ctx.lineWidth = 16;
+      ctx.strokeStyle = '#ff2a1f';
+      ctx.stroke();
+      ctx.font = `900 96px ${FONT}`;
+      ctx.textAlign = 'center';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 12;
+      ctx.strokeStyle = '#fff';
+      ctx.strokeText(`${x.con}`, 0, -90);
+      ctx.fillStyle = '#ff2a1f';
+      ctx.fillText(`${x.con}`, 0, -90);
+      ctx.restore();
+    }
+    ctx.lineCap = 'butt';
+
     // Trứng
     for (const e of c.trungView) {
       ctx.save();
@@ -437,8 +464,9 @@ export class VeCanvas {
   }
 
   // Thanh socola: nền nâu, ô vuông, bóng sáng; nảy nhẹ trên đất
-  private veSocola(ctx: CanvasRenderingContext2D, v: { t: number }): void {
+  private veSocola(ctx: CanvasRenderingContext2D, v: { x: number; y: number; t: number }): void {
     ctx.save();
+    ctx.translate(v.x, v.y);
     ctx.globalAlpha = v.t > 37 && (v.t * 6) % 1 < 0.5 ? 0.35 : 1;
     duongElip(ctx, 28, 8);
     ctx.fillStyle = 'rgba(0,0,0,0.22)';
@@ -543,6 +571,18 @@ export class VeCanvas {
     duongElip(ctx, 44 * bong, 12 * bong);
     ctx.fillStyle = `rgba(0,0,0,${0.22 * bong})`;
     ctx.fill();
+    // Thế phòng thủ của gà mẹ: khiên xanh nhấp nháy bao quanh thân (đang né mọi đòn)
+    if (!g.chet && (g.the ?? 0) > 0) {
+      ctx.save();
+      ctx.translate(0, h.dy);
+      duongElip(ctx, 78, 88);
+      ctx.fillStyle = `rgba(90,200,255,${0.14 + 0.1 * Math.abs(Math.sin(c.t * 8))})`;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(170,230,255,0.9)';
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      ctx.restore();
+    }
     // Gà con nở từ trứng đỏ (sức mạnh > 1): quầng đỏ dưới chân
     if (!g.chet && (g.suc ?? 1) > 1) {
       duongElip(ctx, 56 * bong, 17 * bong);
@@ -593,7 +633,7 @@ export class VeCanvas {
     ctx.fillStyle = 'rgba(13,27,18,0.75)';
     ctx.fill();
     tronCD(ctx, -31, -3, Math.min(62, Math.max(0, (62 * g.hp) / c.HP_GA)), 6, 3);
-    ctx.fillStyle = g.goc ? '#ffd23f' : '#ff4d4d';
+    ctx.fillStyle = c.mauThanh(g);
     ctx.fill();
     ctx.restore();
   }
@@ -773,13 +813,13 @@ export class VeCanvas {
 
     ctx.font = `700 18px ${FONT}`;
     ctx.fillStyle = '#ffd27a';
-    ctx.fillText('Gà con', c.GIUA + 150, -42);
-    ctx.fillText(`${c.soGaCon}`, c.GIUA + 150, -20);
+    ctx.fillText('Gà con', c.GIUA + 175, -42);
+    ctx.fillText(`${c.soGaCon}`, c.GIUA + 175, -20);
     // Gà mẹ phụ (nở từ trứng đỏ) còn sống, bên trái avatar
     ctx.save();
     ctx.textAlign = 'end';
-    ctx.fillText('Gà mẹ phụ', c.GIUA - 150, -42);
-    ctx.fillText(`${c.soMePhu}`, c.GIUA - 150, -20);
+    ctx.fillText('Gà mẹ phụ', c.GIUA - 175, -42);
+    ctx.fillText(`${c.soMePhu}`, c.GIUA - 175, -20);
     ctx.restore();
     // Số mạng còn lại: các trái tim ngay dưới avatar gà mẹ (mạng đã mất thì mờ)
     const tong = c.TUONG_HOI_SINH + 1;
@@ -859,6 +899,20 @@ export class VeCanvas {
           ctx.fillStyle = '#ffd23f';
           ctx.fill();
           ctx.stroke();
+          break;
+        case 6:
+          // Gọi gà con: gà con vàng có mỏ cam
+          duongTron(ctx, 7, 0, 3);
+          ctx.fillStyle = '#ffd23f';
+          ctx.fill();
+          ctx.stroke();
+          duongTron(ctx, 4.5, 0, -6);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#ff7a2f';
+          ctx.beginPath();
+          ctx.moveTo(-2, -5); ctx.lineTo(2, -5); ctx.lineTo(0, -2);
+          ctx.fill();
           break;
         default:
           ctx.fillStyle = '#ff6a3c';
