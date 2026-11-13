@@ -2803,7 +2803,10 @@ export class Game {
   // Dùng thẳng nhóm đòn k (chọn chiêu và ra đòn cùng lúc, tự ngắm); chiêu đang hồi / khoá thì bỏ qua
   private dungChieu(p: number, k: number): void {
     const n = this.nguoi[p];
-    if (n.het || n.may.dang || this.hetMana(p, k) || n.nv.sp.nhomDon.length <= k) return;
+    if (n.het || n.may.dang) return;
+    // Chiêu riêng (mây / socola) hết mana hoặc đang hồi thì dùng chiêu kế tiếp còn dùng được: chưởng → đá
+    if (k === NHOM_MAY && this.hetMana(p, k)) k = [2, 1].find((j) => !this.hetMana(p, j)) ?? 1;
+    if (this.hetMana(p, k) || n.nv.sp.nhomDon.length <= k) return;
     if (n.nv.nhom !== k) n.nv.datNhom(k, this.t);
     const m = this.diemHuong(p);
     this.ban(p, kepMap(m.x), kepMap(m.y));

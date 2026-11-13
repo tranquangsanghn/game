@@ -205,3 +205,4 @@
 
 - Mana vào ván `MANA_BAN_DAU` = 200. Ăn máu (táo, socola, hạ gà mẹ) và ăn mana (táo xanh, socola, đòn trúng) cộng không giới hạn (không còn trần `HP_NV` / `MANA_TOI_DA` khi cộng, không còn khiên từ máu thừa); `HP_NV` / `MANA_TOI_DA` chỉ còn là mốc đầy bình, bình vẽ theo `max(mốc, giá trị hiện có)`. Tự hồi vẫn chỉ tới `HP_HOI_TOI_DA` / `MANA_HOI_TOI_DA`.
 - Cần trái gạt nhẹ (dưới `VUNG_BAY_CAN`) thì chạy bộ theo hướng gạt (không còn đứng yên); gạt mạnh mà hết mana / đang khoá bay thì vẫn chạy, không đứng.
+- Tay cầm: chiêu riêng (○ / cần phải: Biến mây / socola) hết mana hoặc đang hồi thì tự dùng chưởng, hết mana chưởng thì dùng đá (`dungChieu()`), không còn bấm mà không có tác dụng. Mây đang chạy vẫn không ra đòn khác.
