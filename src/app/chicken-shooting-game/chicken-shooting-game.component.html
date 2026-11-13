@@ -144,6 +144,52 @@
     </g>
     }
 
+    <!-- Bảng chiêu của gà tướng: bán nguyệt úp ở giữa phía trên, chỉ để xem. Avatar animation ở giữa, 6 chiêu xếp vòng cung phía dưới.
+         Chiêu đang dùng sáng; Lao / Bay / màu có vòng tiến độ (hồi chiêu hoặc thời gian còn lại) -->
+    @let tg = tuongSong;
+    <g pointer-events="none">
+      <circle [attr.cx]="GIUA" cy="0" [attr.r]="R_BANG" fill="#000" />
+      <g [attr.transform]="'translate(' + GIUA + ',5)'" [attr.opacity]="tg ? 1 : 0.25">
+        <svg x="-55" y="0" width="110" height="110" viewBox="-55 -100 110 110">
+          <g [style.filter]="tg ? locGa(tg) : null">
+            <g cgSprite [sp]="SP_TUONG" [khung]="tg ? gaKhung(tg) : 8" [lat]="tg ? tg.lat : false" [muot]="true"></g>
+          </g>
+        </svg>
+      </g>
+      <text [attr.x]="GIUA" y="140" text-anchor="middle" fill="#ffd27a" font-size="15" font-weight="700">Gà mẹ · hồi sinh {{ lanTuong }}/{{ TUONG_HOI_SINH }}</text>
+      @for (b of bangTuong(); track b.k) {
+      <g [attr.transform]="'translate(' + b.x + ',' + b.y + ')'" [attr.opacity]="b.op" [attr.filter]="b.dung ? 'url(#cg-sang)' : null">
+        <circle [attr.r]="R_NUT" [attr.fill]="b.k === 3 ? '#15151c' : b.k === 4 ? '#7a5d00' : b.k === 5 ? '#7a1d10' : '#0d1b12'" [attr.stroke]="b.dung ? '#ffb347' : '#555'" stroke-width="4" />
+        @if (b.k >= 1) {
+        <circle [attr.r]="R_NUT + 6" fill="none" stroke="#ffb347" stroke-width="3" transform="rotate(-90)"
+          [attr.stroke-dasharray]="(CHU_VI_NUT * b.tien) + ' ' + CHU_VI_NUT" />
+        }
+        <g transform="scale(1.35)" fill="#fff" stroke="#0d1b12" stroke-width="1.2" stroke-linejoin="round">
+          @switch (b.k) {
+          @case (0) {
+          <path d="M-9,-6 L9,0 L-9,6 Z" fill="#ffb347" /><path d="M-9,8 h18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" />
+          }
+          @case (1) {
+          <path d="M-12,-8 L-2,0 L-12,8 M-2,-8 L8,0 L-2,8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+          }
+          @case (2) {
+          <path d="M-10,4 Q-6,-10 8,-8 Q2,-2 6,6 Q-2,2 -10,4 Z" />
+          }
+          @case (3) {
+          <circle r="8" fill="#1a1a22" stroke="#c77dff" stroke-width="2" />
+          }
+          @case (4) {
+          <circle r="8" fill="#ffd23f" />
+          }
+          @default {
+          <path d="M0,-10 Q9,-2 6,5 Q4,10 0,10 Q-6,10 -6,3 Q-6,-2 -2,-4 Q-2,-8 0,-10 Z" fill="#ff6a3c" />
+          }
+          }
+        </g>
+      </g>
+      }
+    </g>
+
     @if (man === 'play' || man === 'pause') {
     @let nTet = tetDo;
     @if (nTet > 0.7) {
@@ -204,8 +250,12 @@
   <ng-template #veGa let-g>
     <svg:g [attr.transform]="gaTransform(g)" [attr.opacity]="g.chet ? 1 - g.tChet / (g.loai === 'boss' ? 2 : 1) : 1">
       <ellipse cx="0" cy="0" [attr.rx]="44 * bongGa(g)" [attr.ry]="12 * bongGa(g)" fill="#000" [attr.opacity]="0.22 * bongGa(g)" />
+      @if (g.loai === 'boss' && g.mau === 'do' && !g.chet) {
+      <ellipse cx="0" cy="0" [attr.rx]="R_DOT" [attr.ry]="R_DOT" fill="#ff4a1c" [attr.fill-opacity]="0.16 + 0.08 * (1 + 0)" stroke="#ff7a3c" stroke-width="3"
+        stroke-opacity="0.7" vector-effect="non-scaling-stroke" />
+      }
       <g [attr.transform]="gaThan(g)">
-        <g transform="translate(0,40)" [style.filter]="g.nhay > 0 ? MAU_SANG : null">
+        <g transform="translate(0,40)" [style.filter]="locGa(g)">
           <g cgSprite [sp]="gaSprite(g)" [khung]="gaKhung(g)" [lat]="g.lat" [muot]="true"></g>
         </g>
       </g>

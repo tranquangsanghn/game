@@ -23,7 +23,7 @@ Chỉ chơi bằng chuột; cả Mabu (bảng chiêu góc dưới trái) và Zin
 Sprite gà lấy từ `tools/ga-goc.png`; chạy `python3 tools/tao-atlas-ga.py` để sinh lại các atlas trong `public/assets/game/` (cần Pillow + numpy).
 
 - **Gà trắng** (10đ): đi bộ · **Gà đỏ** (20đ): đi nhanh, nhảy · **Gà đen** (30đ): bay và thả trứng
-- **Gà tướng** (500đ): to gấp 5 lần, đủ 3 màu (đầu trắng, cánh đỏ, thân đen), 14 máu; xuất hiện sau ~25 giây rồi cứ ~55 giây một lần. Hạ được thì cả đội được cộng thêm 1 mạng
+- **Gà tướng / gà mẹ** (500đ): to gấp 5 lần, 100 máu, đẻ trứng ra gà con. Có chiêu Lao (nhanh gấp 5, sát thương gấp 2, 15s/lần) và Bay (nhanh gấp 8, sát thương gấp 3, 20s/lần), cứ 20s lại đổi màu 5s: đen (phản đòn), vàng (miễn đòn), đỏ (đốt cháy xung quanh). Bảng chiêu của gà mẹ ở giữa phía trên màn hình. Hồi sinh tối đa 3 lần, mỗi lần sát thương ×1,5 và né thêm 15%. Hạ được thì cả đội hồi máu
 
 Kỷ lục lưu trong `localStorage` của trình duyệt.
 
