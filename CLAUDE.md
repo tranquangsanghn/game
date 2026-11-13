@@ -51,6 +51,7 @@
 - Không vật nào được ra khỏi bản đồ: nhân vật, gà, gà bay, gà tướng, quái sau này… đều bị kẹp lại, sprite phải nằm trọn trong map.
 - Kẹp bằng hàm `giuTrongMap(vật, lề)` với lề theo loại vật (`LE_NV`, `LE_GA`, `LE_BAY`, `LE_TUONG`, `LE_VP`, trứng `LE_TRUNG` / `LE_TRUNG_DB`; gà vừa nở cũng kẹp theo `leCuaGa()`); lề trên lớn hơn lề dưới vì sprite vẽ phía trên toạ độ chân. Vật di chuyển tự động thì bật lại khi chạm mép.
 - Thêm loại vật mới thì khai báo lề riêng và gọi `giuTrongMap` ngay từ đầu, kể cả điểm đích di chuyển / bay tới.
+- Tường gạch bao quanh bản đồ: dải dày `TUONG` = 320 ở cả 4 mép, nằm trong 0..`MAP` (`game.ts`). `giuTrongMap()` và `kepMap()` cộng thêm `TUONG` nên không vật nào đi vào tường; cây / bụi không mọc trong `TUONG` + 150 tính từ mép. Vẽ bằng `veTuong()` trong `ve-canvas.ts` (ngay sau nền cỏ, trước mọi vật) từ sprite `web/public/assets/game/tuong_gach.png` (phóng `TL_TUONG` = 5): mặt trên lát gạch, tường trên có mặt đứng hướng vào map, mép trong tường trái / phải / dưới có viền gạch sáng. Camera vẫn kẹp theo `MAP` nên ra sát mép thấy tường.
 
 # Nguyên tắc thanh máu
 

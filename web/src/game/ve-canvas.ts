@@ -70,10 +70,17 @@ const TRANG_TRI_SPRITE = [
 /** 6 ô cỏ chính (gốc 32px) trong tileset; phóng gấp TL lần */
 const O_CO = [[448, 32], [480, 32], [512, 32], [448, 64], [480, 64], [512, 64]];
 const TL = 2;
+/** Tường gạch bao quanh map (tuong_gach.png, 160×256): mặt tường có viền sáng trên, gạch không viền, viền gạch sáng; phóng gấp TL_TUONG */
+const TUONG_GACH = 'assets/game/tuong_gach.png';
+const TG_MAT = { sx: 16, sy: 138, w: 48, h: 38 };
+const TG_GACH = { sx: 16, sy: 141, w: 48, h: 35 };
+const TG_VIEN = { sx: 16, sy: 10, w: 48, h: 6 };
+const TL_TUONG = 5;
 const CO_LAP = 16; // pattern 16×16 ô ngẫu nhiên rồi lặp: một fillRect, không lộ đường nối
 
 export class VeCanvas {
   private mauCo: CanvasPattern | null = null;
+  private mauTuong: { mat: CanvasPattern; gach: CanvasPattern; vienNgang: CanvasPattern; vienDoc: CanvasPattern } | null = null;
   private anh = new Map<string, HTMLImageElement>();
   // Atlas đã nhuộm sẵn theo bộ lọc màu (nháy sáng, đen, vàng, đỏ…): nhuộm cả atlas MỘT lần rồi dùng lại.
   // Không dùng ctx.filter lúc vẽ từng sprite vì rất chậm (mỗi sprite vài ms).
@@ -213,6 +220,72 @@ export class VeCanvas {
     ctx.imageSmoothingEnabled = true;
   }
 
+  /** Mẫu lặp của tường gạch, dựng một lần từ tuong_gach.png (phóng TL_TUONG, giữ nét pixel) */
+  private taoMauTuong(ctx: CanvasRenderingContext2D): void {
+    const img = this.lay(TUONG_GACH);
+    if (!img) return;
+    const cat = (o: { sx: number; sy: number; w: number; h: number }, xoay = false) => {
+      const cv = document.createElement('canvas');
+      const w = o.w * TL_TUONG, h = o.h * TL_TUONG;
+      cv.width = xoay ? h : w;
+      cv.height = xoay ? w : h;
+      const x = cv.getContext('2d')!;
+      x.imageSmoothingEnabled = false;
+      // Ảnh gạch có điểm trong suốt ở kẽ: lót màu vữa tối để không lộ cỏ
+      x.fillStyle = '#2a0b08';
+      x.fillRect(0, 0, cv.width, cv.height);
+      if (xoay) { x.translate(h, 0); x.rotate(Math.PI / 2); }
+      x.drawImage(img, o.sx, o.sy, o.w, o.h, 0, 0, w, h);
+      return ctx.createPattern(cv, 'repeat')!;
+    };
+    this.mauTuong = { mat: cat(TG_MAT), gach: cat(TG_GACH), vienNgang: cat(TG_VIEN), vienDoc: cat(TG_VIEN, true) };
+  }
+
+  /** Tường gạch bao quanh map (dải dày c.TUONG trong 0..MAP): mặt trên bằng gạch, tường trên có mặt đứng hướng vào map, mép trong có viền sáng */
+  private veTuong(ctx: CanvasRenderingContext2D, c: Game): void {
+    if (!this.mauTuong) this.taoMauTuong(ctx);
+    const m = this.mauTuong;
+    const T = c.TUONG, M = c.MAP;
+    const MAT_H = TG_MAT.h * TL_TUONG;
+    const VIEN = TG_VIEN.h * TL_TUONG;
+    // Mẫu lặp bám gốc toạ độ hiện tại: dời gốc tới góc từng dải để gạch khớp mép
+    const to = (p: CanvasPattern | string, x: number, y: number, w: number, h: number) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = p;
+      ctx.fillRect(0, 0, w, h);
+      ctx.restore();
+    };
+    ctx.imageSmoothingEnabled = false;
+    if (!m) {
+      ctx.fillStyle = '#8a2e22';
+      ctx.fillRect(0, 0, M, T); ctx.fillRect(0, M - T, M, T); ctx.fillRect(0, 0, T, M); ctx.fillRect(M - T, 0, T, M);
+      ctx.imageSmoothingEnabled = true;
+      return;
+    }
+    // Mặt trên của tường (4 dải)
+    to(m.gach, 0, 0, M, T - MAT_H);
+    to(m.gach, 0, 0, T, M);
+    to(m.gach, M - T, 0, T, M);
+    to(m.gach, 0, M - T, M, T);
+    // Bóng tối nhẹ cho mặt trên để tách với mặt đứng
+    ctx.fillStyle = 'rgba(30,0,0,0.28)';
+    ctx.fillRect(0, 0, M, T - MAT_H); ctx.fillRect(0, T - MAT_H, T, M - T + MAT_H); ctx.fillRect(M - T, T - MAT_H, T, M - T + MAT_H); ctx.fillRect(T, M - T, M - 2 * T, T);
+    // Mặt đứng của tường trên (nhìn từ trong map)
+    to(m.mat, T, T - MAT_H, M - 2 * T, MAT_H);
+    // Viền sáng ở mép trong của tường trái / phải / dưới
+    to(m.vienDoc, T - VIEN, T - MAT_H, VIEN, M - 2 * T + MAT_H + VIEN);
+    to(m.vienDoc, M - T, T - MAT_H, VIEN, M - 2 * T + MAT_H + VIEN);
+    to(m.vienNgang, T - VIEN, M - T, M - 2 * T + 2 * VIEN, VIEN);
+    // Bóng đổ của tường trên xuống nền cỏ
+    const g = ctx.createLinearGradient(0, T, 0, T + 50);
+    g.addColorStop(0, 'rgba(0,0,0,0.35)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(T, T, M - 2 * T, 50);
+    ctx.imageSmoothingEnabled = true;
+  }
+
   private veTrangTri(ctx: CanvasRenderingContext2D, t: TrangTri, now: number): void {
     const img = this.lay(MAP_CO);
     if (!img) return;
@@ -235,6 +308,7 @@ export class VeCanvas {
 
   private veTheGioi(ctx: CanvasRenderingContext2D, c: Game): void {
     this.veNen(ctx, c);
+    this.veTuong(ctx, c);
 
     for (const v of c.vetView) {
       const k = v.t / (v.loai === 'chay' ? 0.7 : 0.45);

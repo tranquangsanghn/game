@@ -142,6 +142,8 @@ const W_TOI_DA = 2800;
 const BAR = 80;
 const H = 900;
 const MAP = 6400;
+// Tường gạch bao quanh bản đồ: dải dày TUONG ở cả 4 mép (nằm trong 0..MAP). Không vật nào đi vào tường (giuTrongMap, kepMap).
+const TUONG = 320;
 // Hai bảng chiêu thức khoét vào map ở hai góc dưới (hình bán nguyệt nền đen, tâm nằm trên mép dưới): Mabu bên trái, Zinbu bên phải. Map vẫn chiếm cả màn hình.
 const R_BANG = 225;
 const TAM_VIEW_Y = 520;
@@ -473,8 +475,8 @@ const TEN_DON: Record<string, string> = {
 const ngauNhien = (a: number, b: number) => a + Math.random() * (b - a);
 const kep = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const dongHe01 = (v: number) => kep(v, 0, 1);
-// Sát mép bản đồ là dừng hẳn; ngoài mép là vùng đen
-const kepMap = (v: number) => kep(v, 0, MAP);
+// Sát tường gạch quanh bản đồ là dừng hẳn
+const kepMap = (v: number) => kep(v, TUONG, MAP - TUONG);
 
 /** Rải cây / bụi / đá theo lưới có nhiễu, hạt giống cố định nên mỗi ván cùng một map; chừa vùng xuất phát ở giữa */
 function taoTrangTri(): TrangTri[] {
@@ -497,6 +499,8 @@ function taoTrangTri(): TrangTri[] {
       const loai = k < 0.35 ? 0 : k < 0.65 ? 1 : k < 0.85 ? 2 : 3;
       const lat = r() < 0.5;
       // Để trống quanh 2 quả cầu trốn (bỏ sau khi đã rút số ngẫu nhiên để phần còn lại của map không đổi)
+      // Không mọc sát / trong tường gạch quanh map
+      if (Math.min(x, y, MAP - x, MAP - y) < TUONG + 150) continue;
       if (CAU_VI_TRI.some(([dx, dy]) => Math.hypot(x - MAP / 2 - dx, y - MAP / 2 - dy) < 500)) continue;
       // Một phần cây là cây to (chọn theo toạ độ, không dùng r() để map không đổi)
       kq.push({ x, y, loai, lat, to: loai === 0 && Math.floor(x * 7 + y * 13) % 4 === 0 });
@@ -548,8 +552,8 @@ const hoiLaoCua = (g: Ga) => (g.kieuPhu === 0 ? LAO_HOI_CHUYEN : LAO_HOI);
 const hoiBayCua = (g: Ga) => (g.kieuPhu === 1 ? BAY_HOI_CHUYEN : BAY_HOI);
 // Kẹp vật vào trong bản đồ; trả về cờ chạm mép theo từng trục để vật tự bật lại
 function giuTrongMap(o: { x: number; y: number }, le: Le) {
-  const x = kep(o.x, le.x, MAP - le.x);
-  const y = kep(o.y, le.tren, MAP - le.duoi);
+  const x = kep(o.x, TUONG + le.x, MAP - TUONG - le.x);
+  const y = kep(o.y, TUONG + le.tren, MAP - TUONG - le.duoi);
   const r = { cx: x !== o.x, cy: y !== o.y };
   o.x = x;
   o.y = y;
@@ -598,6 +602,7 @@ export class Game {
     return this.W / 2;
   }
   readonly MAP = MAP;
+  readonly TUONG = TUONG;
   readonly MAU_LONG = MAU_LONG;
   readonly MAU_SANG = MAU_SANG;
   readonly HP_GA = HP_GA;
@@ -743,7 +748,7 @@ export class Game {
         }
       };
       this.ctx = this.canvasEl.getContext('2d');
-      this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png', SP_CAU.atlas);
+      this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas);
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG, LOC_SOCOLA, LOC_SOCOLA_HONG]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO, LOC_SOCOLA, ...LOC_PHU]);
       vua();
@@ -1879,7 +1884,7 @@ export class Game {
       }
     } else {
       // Hồi sinh: ở điểm xa nhất so với Mabu / Zinbu lúc hồi sinh (lớn nhất khoảng cách tới nhân vật gần nhất), dò lưới trên map
-      const LE = 400;
+      const LE = 400 + TUONG;
       const BUOC = 24;
       let tot = -1;
       for (let i = 0; i <= BUOC; i++) {
