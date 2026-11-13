@@ -148,9 +148,9 @@
           <g cgSprite [sp]="ng.nv.sp" [khung]="ng.nv.khung" [lat]="ng.nv.lat"></g>
         </svg>
       </g>
-      <text [attr.x]="xt" [attr.y]="yMauNv(p)" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">❤ {{ hpNv(p) }}/{{ HP_NV }}</text>
-      <rect [attr.x]="xt - 40" [attr.y]="yMauNv(p) + 12" width="80" height="10" rx="5" fill="#16241b" />
-      <rect [attr.x]="xt - 38" [attr.y]="yMauNv(p) + 14" [attr.width]="76 * mauNv(p)" height="6" rx="3" fill="#35d96a" />
+      <text [attr.x]="xt" [attr.y]="yMauNv(p)" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">❤ {{ hpNv(p) }}/{{ HP_NV }}</text>
+      <rect [attr.x]="xt - 30" [attr.y]="yMauNv(p) + 10" width="60" height="10" rx="5" fill="#16241b" />
+      <rect [attr.x]="xt - 28" [attr.y]="yMauNv(p) + 12" [attr.width]="56 * mauNv(p)" height="6" rx="3" fill="#35d96a" />
       @for (b of nutBang(p); track b.k) {
       @let dung = ng.nv.nhom === b.k;
       @let het = hetMana(p, b.k);
