@@ -28,8 +28,8 @@ export interface Ga {
   mau?: MauTuong | null; conMau?: number; hoiMau?: number; luotMau?: number; dot?: number;
   // Gà mẹ GỐC (đánh dấu khác biệt): chỉ con này đẻ trứng, chỉ sống sót chứ không đi đánh; gà mẹ phụ (nở từ trứng đỏ) mới đi đánh. deDb = đếm ngược tới quả trứng đỏ kế tiếp
   goc?: boolean;
-  // Vua gà (gà mẹ gốc) dưới TRON_MAU máu: quãng chạy trốn nhanh còn lại (px thật) và hướng; daTron = đã dùng lần trốn chạy duy nhất của mạng này
-  tron?: number; tronX?: number; tronY?: number; daTron?: boolean;
+  // Vua gà (gà mẹ gốc) dưới TRON_MAU máu: quãng chạy trốn nhanh còn lại (px thật) và hướng; daTron = số lần đã dùng trốn chạy nhanh (tối đa TRON_LAN)
+  tron?: number; tronX?: number; tronY?: number; daTron?: number;
   // Gà mẹ đang bị biến thành socola: số giây còn lại (đứng yên, không né, không đánh)
   socola?: number; comboSoc?: boolean;
   // Gà con nở từ trứng đỏ: sức mạnh (nhân máu và sát thương) và độ to (nhân kích thước)
@@ -236,6 +236,9 @@ const TRON_MAU = 0.2;
 // Vua gà (gà mẹ gốc) tự hồi HOI_MAU_VUA máu / giây, tới máu tối đa (hpToiDa) (đang hoá socola thì không hồi)
 const HOI_MAU_VUA = 2;
 const TRON_TOC = 4;
+// Vua gà không hồi sinh nên được trốn chạy nhanh TRON_LAN lần; trong lúc chạy thì bất tử; lần sau chỉ dùng khi nhân vật áp sát trong TRON_GAN
+const TRON_LAN = 2;
+const TRON_GAN = 600;
 const GOI_HOI = 30;
 const GOI_DAN: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'rooster', 'flyer'];
 const GOI_HIEN = 1.2;
@@ -2123,9 +2126,9 @@ export class Game {
     const ux = (g.x - muc.x) / d;
     const uy = (g.y - muc.y) / d;
     let toc = TOC_TRON;
-    if (!g.daTron) {
-      // Lần chạy trốn nhanh duy nhất của mạng này: khoá hướng ra xa nhân vật gần nhất
-      g.daTron = true;
+    if ((g.daTron ?? 0) < TRON_LAN && (!g.daTron || gan < TRON_GAN)) {
+      // Trốn chạy nhanh (tối đa TRON_LAN lần): khoá hướng ra xa nhân vật gần nhất, bất tử trong lúc chạy
+      g.daTron = (g.daTron ?? 0) + 1;
       g.tron = TRON_QUANG;
       g.tronX = ux;
       g.tronY = uy;
@@ -2647,6 +2650,12 @@ export class Game {
   private trungGa(g: Ga, p: number, sat: number, kieu?: number): boolean {
     // Sức mạnh nhân vật (ăn gà mẹ socola) nhân sát thương mọi đòn
     sat *= this.nguoi[p]?.suc ?? 1;
+    // Vua gà đang chạy trốn nhanh thì bất tử: mọi đòn đều vô hiệu
+    if (g.loai === 'boss' && g.goc && (g.tron ?? 0) > 0) {
+      const t = this.tamGa(g);
+      this.chu.push({ id: this.id++, x: t.x + ngauNhien(-40, 40), y: t.y - 80, text: 'BẤT TỬ!', mau: '#ffd23f', t: 0 });
+      return false;
+    }
     if (g.loai === 'boss' && g.mau) {
       const n = this.nguoi[p];
       const t = this.tamGa(g);
