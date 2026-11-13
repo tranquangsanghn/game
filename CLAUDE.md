@@ -235,7 +235,7 @@
 
 # Nguyên tắc âm thanh
 
-- Âm thanh nằm trong `web/public/assets/am-thanh/`, phát qua `AmThanh` (`web/src/game/am-thanh.ts`, `this.am` trong `Game`): `phat('dam' | 'da' | 'chuong' | 'anTao' | 'deTrung' | 'meChet' | 'nvChet' | 'ngoc')`, nhạc nền lặp (`nhacNen()`) chỉ chạy khi đang chơi (`man === 'play'`), tạm dừng / kết thúc thì dừng. Đấm / Đá / chưởng (kể cả socola) phát trong `ban()`, ăn táo / socola trong `capNhatVatPham()`, gà mẹ đẻ trứng trong `deTrung()`, gà mẹ chết (gốc hoặc phụ) và nhân vật gục. Trình duyệt chỉ cho phát sau lần bấm / nhấn phím đầu tiên (nhạc nền tự thử lại). Thêm âm mới thì thêm vào `FILE` / `AM_LUONG`.
+- Âm thanh nằm trong `web/public/assets/am-thanh/`, phát qua `AmThanh` (`web/src/game/am-thanh.ts`, `this.am` trong `Game`): `phat('dam' | 'da' | 'chuong' | 'anTao' | 'deTrung' | 'meChet' | 'nvChet' | 'ngoc')`, nhạc nền lặp (`nhacNen()`) chỉ chạy khi đang chơi (`man === 'play'`), tạm dừng / kết thúc thì dừng. Đấm / Đá / chưởng (kể cả socola) phát trong `ban()`, ăn táo / socola trong `capNhatVatPham()`, gà mẹ đẻ trứng trong `deTrung()`, gà mẹ chết (gốc hoặc phụ) và nhân vật gục. Trình duyệt chỉ cho phát sau lần bấm / nhấn phím đầu tiên (nhạc nền tự thử lại). Thêm âm mới thì thêm vào `FILE` / `AM_LUONG`. Máy bay nổ (`noMb()`) phát tiếng nổ tổng hợp riêng `AmThanh.noMayBay()` (Web Audio, không file), không dùng chung `meChet` (tiếng gà).
 
 # Ghi chú mới nhất (ghi đè các mục trên)
 

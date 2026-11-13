@@ -60,6 +60,43 @@ export class AmThanh {
     a.play().catch(() => { /* chưa được phép phát tiếng */ });
   }
 
+  /** Tiếng nổ máy bay (tổng hợp bằng Web Audio, không cần file): nhiễu trắng lọc thấp tắt dần + tiếng "bùm" trầm */
+  noMayBay(): void {
+    if (this.tat || typeof AudioContext === 'undefined') return;
+    if (!this.ac) this.ac = new AudioContext();
+    const ac = this.ac;
+    if (ac.state === 'suspended') { ac.resume().catch(() => { /* chờ lần bấm đầu tiên */ }); return; }
+    const now = ac.currentTime;
+    const dai = 1.1;
+    const out = ac.createGain();
+    out.gain.setValueAtTime(0.9, now);
+    out.gain.exponentialRampToValueAtTime(0.0001, now + dai);
+    out.connect(ac.destination);
+    const nhieu = ac.createBuffer(1, Math.floor(ac.sampleRate * dai), ac.sampleRate);
+    const d = nhieu.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ac.createBufferSource();
+    src.buffer = nhieu;
+    const loc = ac.createBiquadFilter();
+    loc.type = 'lowpass';
+    loc.frequency.setValueAtTime(2400, now);
+    loc.frequency.exponentialRampToValueAtTime(120, now + dai);
+    src.connect(loc);
+    loc.connect(out);
+    src.start(now);
+    const bum = ac.createOscillator();
+    const bumG = ac.createGain();
+    bum.type = 'sine';
+    bum.frequency.setValueAtTime(110, now);
+    bum.frequency.exponentialRampToValueAtTime(30, now + 0.5);
+    bumG.gain.setValueAtTime(1, now);
+    bumG.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+    bum.connect(bumG);
+    bumG.connect(out);
+    bum.start(now);
+    bum.stop(now + 0.65);
+  }
+
   /** Bật / dừng nhạc nền theo trạng thái ván (gọi mỗi khung hình đều được, chỉ đổi khi khác trạng thái) */
   nhacNen(bat: boolean): void {
     this.muonNhac = bat;

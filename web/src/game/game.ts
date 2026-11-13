@@ -3399,7 +3399,7 @@ export class Game {
     const c = this.tamMb();
     const dat = trongVuon(m.x, m.y) || doSau(m.x, m.y) > 0;
     for (let i = 0; i < 3; i++) this.vet.push({ id: this.id++, x: c.x + ngauNhien(-60, 60), y: c.y + ngauNhien(-40, 40), t: 0, loai: 'chay', co: 1.4 + i * 0.3 });
-    this.am.phat('meChet');
+    this.am.noMayBay();
     this.rungMan(0.5, 14);
     this.dungKhung(0.12);
     m.pha = 'no';
