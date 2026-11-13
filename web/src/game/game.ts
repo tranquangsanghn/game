@@ -2733,14 +2733,14 @@ export class Game {
     for (const g of dungTayCam ? ds : []) {
       if (this.man === 'start' || this.man === 'over') {
         if (this.man === 'start') {
-          // Chỉ tay cầm 1 (người chơi 1) điều khiển màn này
-          if (g.index !== ds[0]!.index) continue;
-          // Màn chọn chế độ: chữ thập / cần trái trái-phải đổi thẻ, ✕ hoặc Options xác nhận, ○ quay lại
-          const cx = g.axes[0] ?? 0;
-          const canMoi = Math.abs(cx) > 0.6 ? Math.sign(cx) : 0;
-          const sang = (moi(g, 15) ? 1 : 0) - (moi(g, 14) ? 1 : 0) || (canMoi && canMoi !== this.menuCanCu ? canMoi : 0);
-          this.menuCanCu = canMoi;
-          if (sang) this.menuChon = Math.max(0, Math.min(2, this.menuChon + sang));
+          // Chọn thẻ (trái / phải) chỉ tay cầm 1 (người chơi 1); ✕ / ○ xác nhận thì tay cầm nào cũng được (kể cả màn hướng dẫn)
+          if (g.index === ds[0]!.index) {
+            const cx = g.axes[0] ?? 0;
+            const canMoi = Math.abs(cx) > 0.6 ? Math.sign(cx) : 0;
+            const sang = (moi(g, 15) ? 1 : 0) - (moi(g, 14) ? 1 : 0) || (canMoi && canMoi !== this.menuCanCu ? canMoi : 0);
+            this.menuCanCu = canMoi;
+            if (sang) this.menuChon = Math.max(0, Math.min(2, this.menuChon + sang));
+          }
           if (moi(g, 0) || moi(g, 9)) this.onNutBatDau();
           else if (moi(g, 1)) this.onNutQuay();
         } else {

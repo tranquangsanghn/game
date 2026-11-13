@@ -211,4 +211,4 @@
 
 - Màn kết thúc (tay cầm): chơi lại phải bấm ✕ rồi ○ (B) (`choiLaiChoB`); Options / ✕ đơn lẻ không còn chơi lại ngay.
 
-- Màn chọn chế độ 1 / 2 người (tay cầm): chỉ tay cầm 1 điều khiển, chữ thập / cần trái trái-phải chọn thẻ, bấm ✕ rồi ○ (B) mới xác nhận vào màn hướng dẫn (`daBamX` trong `giao-dien.ts`).
+- Màn chọn chế độ 1 / 2 người (tay cầm): chỉ tay cầm 1 được chọn thẻ, chữ thập / cần trái trái-phải chọn thẻ, bấm ✕ rồi ○ (B) (tay cầm nào cũng được) mới xác nhận vào màn hướng dẫn (`daBamX` trong `giao-dien.ts`).
