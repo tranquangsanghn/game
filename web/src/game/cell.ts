@@ -48,6 +48,8 @@ export interface Cell {
   dx: number; dy: number; doi: number;
   choDanh: number; danh: number; nhay: number; chamMay?: number;
   chet: boolean; tChet: number;
+  /** đang ngồi dự tiệc sinh nhật (xem tiec.ts) và đếm ngược tới lần bắn chưởng vào bánh kế tiếp */
+  tiec?: boolean; banTiec?: number;
 }
 
 /** Cấp Cell của đảo `i`: đảo 0 (lớn nhất) cấp 4, đảo 1..4 cấp 0..3 */

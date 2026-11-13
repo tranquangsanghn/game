@@ -26,7 +26,7 @@ const MEO: { a: [number, number, number]; p: [number, number, number] }[] = [
   { a: [0.09, 0.05, 0.03], p: [0.1, 1.7, 3.3] },
   { a: [0.07, 0.06, 0.025], p: [3.5, 0.6, 1.9] },
 ];
-const DAO: Dao[] = MEO.map((m, i) => {
+export const DAO: Dao[] = MEO.map((m, i) => {
   const r = i === 0 ? R_LON : R_THUONG;
   const d = NUA_CHEO + CACH_VUON + r * 1.2;
   const g = Math.PI / 2 + (i * 2 * Math.PI) / 5; // đảo 0 ở dưới vườn, rồi xoay vòng 72°

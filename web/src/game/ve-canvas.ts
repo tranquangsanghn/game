@@ -1,6 +1,7 @@
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
 import { capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, SO_CAP, SP_CELL, type Cell } from './cell';
+import { BANH_FPS, BANH_KHUNG, BANH_TO, loiDangHat, LOI, notDangHat, SP_BANH, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { bamDiem, doSau, doSauVuon, nhieu, TG } from './ban-do';
 
@@ -624,11 +625,32 @@ export class VeCanvas {
       else if (o.loai === 'cuu') this.veCuu(ctx, c, o.cu);
       else if (o.loai === 'cau') this.veCau(ctx, c, o.cau);
       else if (o.loai === 'cell') this.veCell(ctx, c, o.ce);
+      else if (o.loai === 'banh') this.veBanh(ctx, c);
       else if (o.loai === 'mb') this.veMayBay(ctx, c);
       else this.veNhanVat(ctx, c, o.p);
     }
     for (const g of c.gaBayView) this.veGa(ctx, c, g);
     this.veMbDem(ctx, c);
+
+    // Chưởng của Cell bắn vào bánh sinh nhật (quả cầu ki xanh lá có đuôi)
+    for (const q of c.chuongTiecView) {
+      const k = q.t / TIEC_CHUONG_T;
+      const x = q.x0 + (q.x1 - q.x0) * k, y = q.y0 + (q.y1 - q.y0) * k;
+      const x2 = q.x0 + (q.x1 - q.x0) * Math.max(0, k - 0.3), y2 = q.y0 + (q.y1 - q.y0) * Math.max(0, k - 0.3);
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(150,255,110,0.55)';
+      ctx.lineWidth = 26;
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      this.sang(ctx, '#7dff5a');
+      duongTron(ctx, 24, x, y);
+      ctx.fillStyle = '#e9ffd6';
+      ctx.fill();
+      ctx.restore();
+    }
 
     for (let p = 0; p < c.nguoi.length; p++) this.veThanhTrenDau(ctx, c, p);
     for (const g of c.tuongView) this.veMauTuong(ctx, c, g);
@@ -1007,12 +1029,72 @@ export class VeCanvas {
     ctx.globalAlpha = ce.chet ? Math.max(0, 1 - ce.tChet / CELL_CHET_T) : 1;
     ctx.translate(ce.x, ce.y);
     ctx.scale(k, k);
+    // Dự tiệc: ngồi (hơi thấp xuống), đung đưa theo nhịp hát, bay nốt nhạc ♪ trên đầu khi đang hát
+    const tiec = !!ce.tiec && !!c.tiec?.on && !ce.chet;
+    if (tiec) {
+      const hat = notDangHat(c.tiec!.t) >= 0;
+      ctx.scale(1, 0.86);
+      ctx.rotate(hat ? Math.sin(c.t * 5 + ce.id) * 0.04 : 0);
+    }
     if (ce.cap === SO_CAP - 1 && !ce.chet) {
       ctx.shadowColor = `rgba(255,${150 + Math.round(60 * Math.sin(c.t * 6))},40,0.95)`;
       ctx.shadowBlur = 18 * ctx.getTransform().a;
     }
     // Hàng của mỗi cấp trong atlas: đổi khung = cấp * số cột + khung
     this.sprite(ctx, SP_CELL, ce.cap * SP_CELL.cot + c.cellKhung(ce), ce.lat, false);
+    if (tiec && notDangHat(c.tiec!.t) >= 0) {
+      ctx.shadowBlur = 0;
+      ctx.font = `bold 9px ${FONT}`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#fff3b0';
+      const ph = c.t * 2 + ce.id * 0.7;
+      ctx.globalAlpha = 0.6 + 0.4 * Math.abs(Math.sin(ph * 1.5));
+      ctx.fillText(ce.id % 2 ? '♪' : '♫', Math.sin(ph) * 6, -64 - 4 * Math.abs(Math.sin(ph)));
+    }
+    ctx.restore();
+  }
+
+  // Bánh sinh nhật giữa vòng Cell: sprite 8 khung lửa lặp, quầng sáng cam, lời bài hát hiện phía trên
+  private veBanh(ctx: CanvasRenderingContext2D, c: Game): void {
+    const tc = c.tiec;
+    if (!tc) return;
+    ctx.save();
+    ctx.translate(tc.x, tc.y);
+    // Quầng sáng dưới đáy
+    ctx.save();
+    ctx.scale(1, 0.35);
+    const R = 330 * BANH_TO;
+    const q = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+    q.addColorStop(0, `rgba(255,150,40,${0.35 + 0.1 * Math.sin(c.t * 9)})`);
+    q.addColorStop(1, 'rgba(255,120,20,0)');
+    ctx.fillStyle = q;
+    ctx.beginPath();
+    ctx.arc(0, 0, R, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+    ctx.save();
+    ctx.scale(BANH_TO, BANH_TO);
+    this.sprite(ctx, SP_BANH, Math.floor(c.t * BANH_FPS) % BANH_KHUNG, false, true);
+    ctx.restore();
+    // Lời bài hát (chỉ khi tiệc còn)
+    const dong = tc.on ? loiDangHat(tc.t) : -1;
+    if (dong >= 0) {
+      const text = `🎵 ${LOI[dong]} 🎵`;
+      ctx.font = `bold 46px ${FONT}`;
+      ctx.textAlign = 'center';
+      const w = ctx.measureText(text).width + 50;
+      const y = 110;
+      ctx.fillStyle = 'rgba(20,10,0,0.55)';
+      ctx.beginPath();
+      ctx.roundRect(-w / 2, y - 48, w, 72, 24);
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = 'rgba(255,200,90,0.9)';
+      ctx.stroke();
+      ctx.fillStyle = '#fff3b0';
+      this.sang(ctx, '#ffb347');
+      ctx.fillText(text, 0, y);
+    }
     ctx.restore();
   }
 
