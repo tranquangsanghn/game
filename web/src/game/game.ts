@@ -2905,7 +2905,8 @@ export class Game {
     if (n.nv.khoa || n.bay || n.het) return;
     const o = this.nguoi[1 - p];
     const le = leNhanVat(n.nv.heSoTo);
-    let dich = {
+    // Dây buộc chỉ áp khi người kia có mặt (chơi 1 người thì không bị giữ quanh nhân vật vắng mặt)
+    let dich = o.vang ? { x, y } : {
       x: kep(x, o.x - MAX_DX, o.x + MAX_DX),
       y: kep(y, o.y - MAX_DY, o.y + MAX_DY),
     };
