@@ -90,7 +90,7 @@ type VatXep =
   | { loai: 'td'; y: number; td: TrangTri }
   | { loai: 'cuu'; y: number; cu: Cuu };
 
-/** Cứu đồng đội: nhân vật còn sống phủ mây (Mabu cứu Zinbu) hoặc socola (Zinbu cứu Mabu) lên người ngã; đứng trong CUU_BAN_KINH đủ CUU_THOI_GIAN giây thì người ngã hồi sinh */
+/** Cứu đồng đội: nhân vật còn sống phủ mây (Mabu cứu Zinbu) hoặc socola (Zinbu cứu Mabu) lên người ngã; sống sót CUU_THOI_GIAN giây (mây / socola bám theo, nối bằng dây) thì người ngã hồi sinh */
 export interface Cuu { p: number; kieu: 'may' | 'socola'; x: number; y: number; cho: number; t: number; tach: number; }
 
 /** Vật trang trí nền cỏ (cây, bụi, đá): chỉ để đẹp, không cản đường. loai là chỉ số trong TRANG_TRI_SPRITE (ve-canvas.ts) */
@@ -344,9 +344,11 @@ const DEN_NHAO_THEM = 200;
 const DEN_NGHI = 1.2;
 const HEN_VAY = 55;
 const HEN_DAN = 700;
-// Cứu đồng đội: người còn sống phủ mây (Mabu) / socola (Zinbu) lên người ngã sau CUU_CHO giây, đứng trong CUU_BAN_KINH đủ CUU_THOI_GIAN giây thì người ngã hồi sinh với CUU_MAU máu
-const CUU_THOI_GIAN = 10;
-const CUU_BAN_KINH = 500;
+// Cứu đồng đội: người còn sống phủ mây (Mabu) / socola (Zinbu) lên người ngã sau CUU_CHO giây, sống sót CUU_THOI_GIAN giây (mây / socola bám theo, nối bằng dây) thì người ngã hồi sinh với CUU_MAU máu
+const CUU_THOI_GIAN = 15;
+// Khoảng cách bám: mây / socola trôi theo người cứu tới khi còn cách chừng này (nối bằng sợi dây)
+const CUU_BAM = 170;
+const CUU_TOC_BAM = 900;
 const CUU_CHO = 1.5;
 const CUU_TACH = 1;
 const CUU_MAU = 100;
@@ -2480,7 +2482,7 @@ export class Game {
     this.cuu.push({ p, kieu: p === 1 ? 'may' : 'socola', x: n.x, y: n.y, cho: CUU_CHO, t: 0, tach: 0 });
   }
 
-  // Đếm giờ cứu: sau CUU_CHO giây thì mây / socola xuất hiện (tách ra từ người cứu), người cứu đứng trong CUU_BAN_KINH thì đếm CUU_THOI_GIAN, đủ thì hồi sinh
+  // Đếm giờ cứu: sau CUU_CHO giây thì mây / socola xuất hiện (tách ra từ người cứu), mây / socola bám theo người cứu (nối bằng dây), đếm ngược CUU_THOI_GIAN giây khi người cứu còn sống, hết giờ thì hồi sinh
   private capNhatCuu(dt: number): void {
     const conLai: Cuu[] = [];
     for (const c of this.cuu) {
@@ -2492,13 +2494,27 @@ export class Game {
         if (c.cho === 0 && !s.het) {
           this.vet.push({ id: this.id++, x: s.x, y: s.y - 40, t: 0, loai: 'no' });
           this.vet.push({ id: this.id++, x: c.x, y: c.y - 40, t: 0, loai: 'no' });
-          this.chu.push({ id: this.id++, x: c.x, y: c.y - 230, text: `Đứng gần ${CUU_THOI_GIAN}s để cứu!`, mau: '#9be7ff', t: 0 });
+          this.chu.push({ id: this.id++, x: c.x, y: c.y - 230, text: `Sống sót ${CUU_THOI_GIAN}s để cứu!`, mau: '#9be7ff', t: 0 });
         }
         conLai.push(c);
         continue;
       }
       c.tach = Math.min(1, c.tach + dt / CUU_TACH);
-      if (!s.het && !s.vang && Math.hypot(s.x - c.x, s.y - c.y) <= CUU_BAN_KINH) c.t += dt;
+      if (!s.het && !s.vang) {
+        c.t += dt;
+        // Bám theo người còn sống: trôi tới điểm cách CUU_BAM, đứng cùng phía với lúc đầu
+        const dx = c.x - s.x;
+        const dy = c.y - s.y;
+        const d = Math.hypot(dx, dy) || 1;
+        if (d > CUU_BAM) {
+          const b = Math.min(d - CUU_BAM, Math.max(CUU_TOC_BAM * dt, (d - CUU_BAM) * Math.min(1, dt * 6)));
+          c.x -= (dx / d) * b;
+          c.y -= (dy / d) * b;
+          giuTrongMap(c, leNhanVat(n.nv.heSoTo));
+        }
+        n.x = c.x;
+        n.y = c.y;
+      }
       if (c.t < CUU_THOI_GIAN) {
         conLai.push(c);
         continue;
@@ -2524,15 +2540,8 @@ export class Game {
     return this.cuu.some((c) => c.p === p && c.cho <= 0);
   }
 
-  /** Người cứu đang đứng đủ gần để đếm giờ cứu */
-  cuuGan(c: Cuu): boolean {
-    const s = this.nguoi[1 - c.p];
-    return !s.het && !s.vang && Math.hypot(s.x - c.x, s.y - c.y) <= CUU_BAN_KINH;
-  }
-
   readonly COMBO_GIAM_HOI = COMBO_GIAM_HOI;
   readonly CUU_THOI_GIAN = CUU_THOI_GIAN;
-  readonly CUU_BAN_KINH = CUU_BAN_KINH;
 
   private congDiem(p: number, diem: number, x: number, y: number, text: string): void {
     this.nguoi[p].diem += diem;

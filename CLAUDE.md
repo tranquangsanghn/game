@@ -188,7 +188,7 @@
 # Nguyên tắc cứu đồng đội
 
 - Một nhân vật ngã mà người kia còn sống thì bắt đầu cứu (`batDauCuu()` → `cuu` / `cuuView`, `Cuu` lưu trong ván lưu): **Mabu cứu Zinbu bằng mây** (mây tách ra từ Mabu, phủ lên Zinbu), **Zinbu cứu Mabu bằng một cục socola to**. Sau `CUU_CHO` = 1,5s (cho animation ngã chạy) thân người ngã được thay bằng mây / socola (`dangCuu()`, vẽ `veCuu()`, xếp theo y trong `xep`).
-- Người cứu đứng trong `CUU_BAN_KINH` = 500 quanh mây / socola đủ `CUU_THOI_GIAN` = 10s (chỉ đếm khi đang đứng trong vòng; ra khỏi vòng thì tạm dừng, hiện "LẠI GẦN ĐỂ CỨU!") thì người ngã hồi sinh tại chỗ với `CUU_MAU` = 100 máu (`capNhatCuu()`, `NhanVat.hoiSinh()`). Người cứu ngã thì ngừng đếm; cả hai cùng ngã vẫn là thua. Gà không đụng tới mây / socola cứu người.
+- Mây / socola không còn vòng tròn: sau `CUU_CHO` nó bám theo người còn sống (cách `CUU_BAM` = 170, `capNhatCuu()`), nối với người đó bằng sợi dây đỏ nét đứt như dây buộc khi 2 người đi xa nhau, đếm ngược `CUU_THOI_GIAN` = 15s (số to trên đầu) khi người cứu còn sống; hết 15s thì người ngã hồi sinh tại chỗ với `CUU_MAU` = 100 máu (`capNhatCuu()`, `NhanVat.hoiSinh()`). Người cứu ngã thì ngừng đếm; cả hai cùng ngã vẫn là thua. Gà không đụng tới mây / socola cứu người.
 - Nhân vật đã ngã (`het`) không điều khiển, không ra đòn, không bay (kể cả chế độ chuột, `ban()` / `datDichThe()`).
 
 # Nguyên tắc cảm giác đánh
