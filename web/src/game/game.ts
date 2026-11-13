@@ -21,6 +21,8 @@ export interface Ga {
   mo?: number; kieuMo?: number;
   // Riêng gà tướng: đếm ngược tới lượt đẻ trứng kế tiếp
   de?: number;
+  /** số lượt trứng đã đẻ trong lần xuất hiện này (lượt 2 đẻ sau TRUNG_CHO_DAU giây) */
+  dePhat?: number;
   // Riêng gà tướng: lần hồi sinh (0 = lần đầu), chiêu lao / bay đang dùng, thời gian hồi từng chiêu, màu đang đổi
   daDe?: boolean; choChieu?: number; nghiChung?: number; soHo?: number;
   lan?: number; chieu?: ChieuTuong | null; hoiLao?: number; hoiBay?: number;
@@ -397,6 +399,9 @@ const TOC_DO_TUONG = 60;
 const DAN_TRUNG: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'flyer'];
 const TRUNG_NO = 2;
 const TRUNG_CHO = 15;
+// Mỗi lần xuất hiện / hồi sinh: lượt trứng thứ 2 đẻ ngay sau TRUNG_CHO_DAU giây (thay vì TRUNG_CHO) để 10 quả đầu tiên ra trong 5s;
+// lượt này trứng đỏ lượt 1 còn đang ấp nên quả thứ 5 là trứng thường bù vào
+const TRUNG_CHO_DAU = 5;
 const GA_TOI_DA = 20;
 // Trứng đỏ đặc biệt (do gà mẹ GỐC đẻ: quả thứ 5 của mỗi lượt trứng, cứ TRUNG_CHO giây, không tính vào GA_TOI_DA): to gấp TRUNG_DB_TO lần quả thường, gà mẹ gốc canh quanh nó (TRUNG_DB_BAO_VE).
 // Cứ TRUNG_DB_NHIP giây nở một gà con mạnh dần (GA_DB_SUC: sức mạnh nhân máu / sát thương, GA_DB_TO: độ to): 2s gà con thường, 4s x2 to gấp đôi, 6s x3, 8s x4; hết TRUNG_DB_NO giây thì nở ra một gà mẹ phụ (đi đánh thay gà mẹ gốc, không giới hạn số lượng).
@@ -1234,8 +1239,10 @@ export class Game {
             this.chu.push({ id: this.id++, x: g.x, y: g.y - 400, text: '🔥 GIAI ĐOẠN 2!', mau: '#ff6a3c', t: 0 });
           }
           if ((g.de ?? 0) <= 0) {
-            g.de = g.gd2 ? TRUNG_CHO * GD2_DE : TRUNG_CHO;
-            this.deTrung(g);
+            // Lượt thứ 2 của mỗi lần xuất hiện (dePhat = 1): đẻ bù trứng thường nếu trứng đỏ còn ấp
+            this.deTrung(g, g.dePhat === 1);
+            g.dePhat = (g.dePhat ?? 0) + 1;
+            g.de = g.dePhat === 1 ? TRUNG_CHO_DAU : g.gd2 ? TRUNG_CHO * GD2_DE : TRUNG_CHO;
             // Mỗi lần xuất hiện / hồi sinh: đẻ lượt đầu rồi chờ trứng nở xong mới được dùng chiêu màu
             if (!g.daDe) {
               g.daDe = true;
@@ -1757,10 +1764,13 @@ export class Game {
   }
 
   // Gà tướng đẻ một lượt trứng quanh mình, trừ khi tổng số gà đã đủ GA_TOI_DA
-  private deTrung(boss: Ga): void {
+  private deTrung(boss: Ga, bu = false): void {
     this.am.phat('deTrung');
+    const coDb = this.trungDe.some((e) => e.db && e.me === boss.id);
     if (this.demGaThuong() < GA_TOI_DA) {
       const dan = [...DAN_TRUNG, ...TRUNG_THEM.slice(0, boss.lan ?? 0)];
+      // Lượt nhanh đầu tiên: trứng đỏ cũ còn ấp thì quả thứ 5 thành trứng thường (đủ 10 quả trong 5s)
+      if (bu && coDb) dan.push(DAN_TRUNG[Math.floor(Math.random() * DAN_TRUNG.length)]);
       for (const loai of dan) {
         this.trungDe.push({
           id: this.id++, loai, t: 0,
