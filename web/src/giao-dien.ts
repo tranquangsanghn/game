@@ -84,7 +84,10 @@ export class GiaoDien {
     // Tay cầm bấm ✕ / Options ở màn bắt đầu: mở hướng dẫn, bấm lần nữa mới vào chơi
     this.game.onNutBatDau = () => {
       if (this.huongDan) void this.lam(this.buocMucTieu ? 'vao' : 'muc');
-      else void this.lam(this.game.cheNguoi);
+      else void this.lam((['mabu', 'zinbu', 'ca2'] as const)[this.game.menuChon]!);
+    };
+    this.game.onNutQuay = () => {
+      if (this.huongDan) void this.lam('quay');
     };
     this.game.onKetThuc = (kq) => void this.ketThuc(kq);
   }
@@ -217,7 +220,7 @@ export class GiaoDien {
 
   private htmlBatDau(): string {
     const the = (act: string, mau: string, anh: string, chu: string) =>
-      `<button type="button" tabindex="-1" class="the-chon" data-act="${act}" style="--mau:${mau}"><span class="the-anh">${anh}</span><span class="the-chu">${chu}</span></button>`;
+      `<button type="button" tabindex="-1" class="the-chon${this.game.cheDo === 'tayCam' && ['mabu', 'zinbu', 'ca2'][this.game.menuChon] === act ? ' dang-chon' : ''}" data-act="${act}" style="--mau:${mau}"><span class="the-anh">${anh}</span><span class="the-chu">${chu}</span></button>`;
     return `<div class="man-phu man-chon"><div class="hang-the">
       ${the('mabu', '#ec4899', this.anhNv(0, 3.4), '1 người chơi')}
       ${the('zinbu', '#facc15', this.anhNv(1, 3.4), '1 người chơi')}

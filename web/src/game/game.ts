@@ -508,6 +508,11 @@ export class Game {
   onManPhu: () => void = () => {};
   /** Tay cầm bấm nút bắt đầu ở màn bắt đầu (giao diện quyết định mở hướng dẫn hay vào chơi) */
   onNutBatDau: () => void = () => {};
+  /** Tay cầm bấm ○ ở màn bắt đầu / hướng dẫn: quay lại bước trước */
+  onNutQuay: () => void = () => {};
+  /** Thẻ đang chọn ở màn chọn chế độ (0 Mabu · 1 Zinbu · 2 hai người), chữ thập / cần trái trái-phải để chọn */
+  menuChon = 2;
+  private menuCanCu = 0;
   /** Gọi khi ván kết thúc (để lưu điểm lên máy chủ) */
   onKetThuc: (kq: KetQua) => void = () => {};
   private khungEl!: HTMLDivElement;
@@ -2703,7 +2708,16 @@ export class Game {
     // Nút chung cho cả hai tay cầm: bắt đầu / chơi lại / tạm dừng
     for (const g of dungTayCam ? ds : []) {
       if (this.man === 'start' || this.man === 'over') {
-        if (moi(g, 0) || moi(g, 9)) this.man === 'start' ? this.onNutBatDau() : this.batDau();
+        if (this.man === 'start') {
+          // Màn chọn chế độ: chữ thập / cần trái trái-phải đổi thẻ, ✕ hoặc Options xác nhận, ○ quay lại
+          const cx = g.axes[0] ?? 0;
+          const canMoi = Math.abs(cx) > 0.6 ? Math.sign(cx) : 0;
+          const sang = (moi(g, 15) ? 1 : 0) - (moi(g, 14) ? 1 : 0) || (canMoi && canMoi !== this.menuCanCu ? canMoi : 0);
+          this.menuCanCu = canMoi;
+          if (sang) this.menuChon = Math.max(0, Math.min(2, this.menuChon + sang));
+          if (moi(g, 0) || moi(g, 9)) this.onNutBatDau();
+          else if (moi(g, 1)) this.onNutQuay();
+        } else if (moi(g, 0) || moi(g, 9)) this.batDau();
       } else if (moi(g, 9)) this.tamDung();
       else if (moi(g, 8) && ds.length === 1 && this.man === 'play') this.doiTayCam();
     }
