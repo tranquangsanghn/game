@@ -1080,13 +1080,13 @@ export class VeCanvas {
     const dong = tc.on ? loiDangHat(tc.t) : -1;
     if (dong >= 0) {
       const text = `🎵 ${LOI[dong]} 🎵`;
-      ctx.font = `bold 46px ${FONT}`;
+      ctx.font = `bold 34px ${FONT}`;
       ctx.textAlign = 'center';
       const w = ctx.measureText(text).width + 50;
-      const y = 110;
+      const y = 70;
       ctx.fillStyle = 'rgba(20,10,0,0.55)';
       ctx.beginPath();
-      ctx.roundRect(-w / 2, y - 48, w, 72, 24);
+      ctx.roundRect(-w / 2, y - 36, w, 54, 18);
       ctx.fill();
       ctx.lineWidth = 4;
       ctx.strokeStyle = 'rgba(255,200,90,0.9)';

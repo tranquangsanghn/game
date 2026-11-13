@@ -21,8 +21,8 @@ export const CELL_TOC = [70, 85, 100, 120, 150];
 /** Số giây giữa 2 đòn */
 export const CELL_HOI = [1.4, 1.3, 1.2, 1.1, 1.0];
 /** Độ to (nhân kích thước sprite) */
-// Nhân MỘT lần so với cỡ gốc (3,4 · 3,7 · 4,0 · 4,3 · 5,2): đảo 1–3 (cấp 0–2) gấp 3 (10,2 · 11,1 · 12,0), đảo 4 (cấp 3, 10 con) gấp 2 = 8,6, đảo 0 (cấp 4) gấp 4 (20,8)
-export const CELL_TO = [10.2, 11.1, 12.0, 8.6, 20.8];
+// Cỡ gốc (3,4 · 3,7 · 4,0 · 4,3 · 5,2), mọi cấp nhân 1
+export const CELL_TO = [3.4, 3.7, 4.0, 4.3, 5.2];
 /** Tỉ lệ phóng thật của sprite (độ to × 0,9) */
 export const cellK = (cap: number) => CELL_TO[cap]! * 0.9;
 /** Điểm khi hạ */

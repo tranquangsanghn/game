@@ -10,12 +10,12 @@ import { daoCua, doSau, DAO } from './ban-do';
 export const SP_BANH: KhungSprite = { atlas: 'assets/game/banh_sinh_nhat.png', atlasW: 1024, atlasH: 1024, w: 256, h: 512, cot: 4, neoX: 128, neoY: 500 };
 export const BANH_KHUNG = 8;
 /** Độ to của bánh (nhân kích thước khung) và số khung lửa mỗi giây */
-export const BANH_TO = 1.15;
+export const BANH_TO = 0.6;
 export const BANH_FPS = 9;
 /** Bán kính vòng tròn Cell quanh bánh */
-export const TIEC_BK = 560;
+export const TIEC_BK = 280;
 /** Cell đang tiệc chỉ ngửi thấy nhân vật trong tầm này (nhỏ hơn bình thường: đang mải hát) */
-export const TIEC_NGUI = 520;
+export const TIEC_NGUI = 450;
 /** Mỗi Cell bắn chưởng vào bánh cách nhau (giây), chưởng bay `TIEC_CHUONG_T` giây */
 export const TIEC_BAN_MIN = 1.1;
 export const TIEC_BAN_MAX = 2.4;
