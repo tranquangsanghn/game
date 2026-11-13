@@ -23,6 +23,7 @@ interface Ga {
   // Riêng gà tướng: đếm ngược tới lượt đẻ trứng kế tiếp
   de?: number;
   // Riêng gà tướng: lần hồi sinh (0 = lần đầu), chiêu lao / bay đang dùng, thời gian hồi từng chiêu, màu đang đổi
+  daDe?: boolean; choChieu?: number;
   lan?: number; chieu?: ChieuTuong | null; hoiLao?: number; hoiBay?: number;
   mau?: MauTuong | null; conMau?: number; hoiMau?: number; luotMau?: number; dot?: number;
 }
@@ -599,13 +600,19 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       g.mo = Math.max(0, (g.mo ?? 0) - dt);
       if (g.loai === 'boss') {
         this.capNhatChieuTuong(g, dt);
-        this.dieuTuong(g, dt);
         // Đang lao / bay thì không đẻ trứng
         if (!g.chieu) g.de = (g.de ?? 0) - dt;
         if ((g.de ?? 0) <= 0) {
           g.de = TRUNG_CHO;
           this.deTrung(g);
+          // Mỗi lần xuất hiện / hồi sinh: đẻ lượt đầu rồi chờ trứng nở xong mới được dùng chiêu Lao / Bay
+          if (!g.daDe) {
+            g.daDe = true;
+            g.choChieu = TRUNG_NO;
+          }
         }
+        g.choChieu = Math.max(0, (g.choChieu ?? 0) - dt);
+        this.dieuTuong(g, dt);
       }
       else if (this.gaLao(g, dt)) {
         // đang lao vào nhân vật trong tầm
@@ -981,6 +988,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   // Chọn chiêu lao / bay khi thấy mục tiêu đủ xa; bắt đầu từ pha báo hiệu. Trả về true nếu đã bắt đầu.
   private batDauChieu(g: Ga, muc: NguoiChoi, d: number): boolean {
+    if (!g.daDe || (g.choChieu ?? 0) > 0) return false;
     const sanLao = (g.hoiLao ?? 0) <= 0;
     const sanBay = (g.hoiBay ?? 0) <= 0;
     let loai: 'lao' | 'bay' | null = null;
@@ -1323,6 +1331,8 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     g.hp = 0;
     g.chet = true;
     g.h0 = 0;
+    // Chỉ hồi sinh sau khi chết, chờ đủ CHO_TUONG giây kể từ lúc chết
+    this.henTuong = CHO_TUONG;
     rai(40);
     this.rung = Math.max(this.rung, 0.6);
     this.congDiem(p, DIEM.boss * hs, tam.x, tam.y - 110, `+${DIEM.boss * hs} HẠ GÀ TƯỚNG!`);
