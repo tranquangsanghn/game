@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(15, 23, 42, 0.65);
+  background: #000;
   animation: hienRa 0.25s ease-out;
 }
 
@@ -16,13 +16,11 @@
 
 .khung {
   position: relative;
-  /* Khung 16:9 lớn nhất nằm gọn trong 90% chiều rộng và 90% chiều cao trang, không còn viền thừa hai bên */
-  width: min(90vw, 90vh * 16 / 9);
-  aspect-ratio: 16 / 9;
-  border-radius: 16px;
+  /* Khung chiếm cả cửa sổ; chiều rộng khung nhìn trong svg theo tỉ lệ cửa sổ nên map tràn sát hai bên */
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
   background: #1d2b3a;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
   outline: none;
   user-select: none;
   touch-action: none;

@@ -17,7 +17,7 @@
 
 # Nguyên tắc bố cục & chọn chiêu
 
-- Ngoại lệ do người dùng yêu cầu: có thêm bảng chiêu của gà mẹ ở giữa phía trên (xem mục "Nguyên tắc gà mẹ").
+- Ngoại lệ do người dùng yêu cầu: có thêm thanh đen phía trên map chứa chiêu của gà mẹ (xem mục "Nguyên tắc gà mẹ"). Khung game chiếm cả cửa sổ, chiều rộng khung nhìn `W` tự theo tỉ lệ cửa sổ (`ResizeObserver`) nên map tràn sát hai bên, không có dải đen hai bên; `H` cố định.
 - Map chiếm cả màn hình. Hai bảng chiêu thức khoét vào map ở 2 góc dưới (hình quạt (1/4 hình tròn) nền đen bán kính `R_BANG`, tâm nằm đúng ở góc dưới màn hình): Mabu trái, Zinbu phải. Không thu nhỏ map vì bảng.
 - Giữa mỗi bảng là animation hiện tại của nhân vật (cùng `khung` / `lat` với trên map), không phải ảnh tĩnh. Chiêu thức xếp vòng cung phía trên (`nutBang()`, `tamBang()`), không có chữ.
 - Chiêu đang dùng sáng + phát sáng, chiêu khác mờ, hết mana / đang khoá / Mây đang chạy hoặc hồi (`hetMana()`) thì mờ hẳn và không chọn được.
@@ -104,7 +104,7 @@
 
 # Nguyên tắc gà mẹ (gà tướng): chiêu thức, hồi sinh
 
-- Bảng chiêu của gà mẹ (`bangTuong()`, `tuongSong`) ở giữa phía trên, hình bán nguyệt úp nền đen, thu nhỏ còn 1/3 (`HE_BANG_TUONG`, bán kính `R_BANG` / 3), tâm ở mép trên giữa màn hình; chỉ để xem, không bấm được; chuột trên bảng thì không ra đòn (`tronBang()`). Giữa là animation gà mẹ (kèm màu đang đổi), dòng "hồi sinh n/3", 6 chiêu xếp vòng vòng cung: Mổ + đá · Lao · Bay · Đen · Vàng · Đỏ. Chiêu đang dùng sáng + phát sáng; Lao / Bay / màu có vòng tiến độ (hồi chiêu hoặc thời gian còn lại).
+- Chiêu của gà mẹ (`bangTuong()`, `tuongSong`) nằm trên thanh đen `BAR` phía trên map (toạ độ y âm, giữa trên), 6 chiêu xếp ngang: Mổ + đá · Lao · Bay · Đen · Vàng · Đỏ, kèm chữ "Gà mẹ · hồi sinh n/3"; chỉ để xem, không bấm được. Chiêu đang dùng sáng + phát sáng; Lao / Bay / màu có vòng tiến độ (hồi chiêu hoặc thời gian còn lại). Nửa vòng tròn đen dưới thanh (bán kính `R_TUONG` = `R_BANG` / 3, tâm ở mép trên map giữa màn hình) ch�ỉ có hình con gà (animation, kèm màu đang đổi). Chuột trên thanh hoặc nửa vòng tròn thì không ra đòn (`tronBang()`).
 - Mổ + đá: sát thương và tốc độ như cũ (80 · 2,5s), luân phiên animation mổ / đá (`kieuMo`).
 - Lao (`LAO_HE_SO` = 5, `LAO_SAT` = 2, `LAO_HOI` = 15s) và Bay (`BAY_HE_SO` = 8, `BAY_SAT` = 3, `BAY_HOI` = 20s): khi thấy nhân vật xa hơn `CHIEU_TOI_THIEU` (xa hơn `CHIEU_XA` thì ưu tiên Bay), gà mẹ báo hiệu `CHIEU_BAO` (nháy sáng, đứng yên), khoá mục tiêu rồi chạy / bay một đường thẳng, không đổi hướng, tốc độ = hệ số × tốc độ đuổi hiện tại (đã nhân `HE_SO_TOC_GA`). Chạm nhân vật thì gây sát thương gốc × hệ số, mỗi nhân vật một lần mỗi đợt, nhân vật vẫn né được (`NE_NV`). Hết quãng (`CHIEU_QUANG_THEM`, tối đa `CHIEU_QUANG_TOI_DA`) hoặc chạm mép map thì nghỉ `CHIEU_NGHI`. Đang lao / bay thì không mổ, không đẻ trứng.
 - Ba chiêu đổi màu tự xoay vòng đen → vàng → đỏ, cứ `MAU_CHU_KY` = 20s kích hoạt một màu, kéo dài `MAU_KEO_DAI` = 5s (`capNhatChieuTuong()`):

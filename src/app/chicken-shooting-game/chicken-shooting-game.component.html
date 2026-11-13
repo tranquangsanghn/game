@@ -1,5 +1,5 @@
 <div class="khung" #khung tabindex="-1" [class.dang-choi]="man === 'play'" [class.tren-bang]="trenBang">
-  <svg #manHinh [attr.viewBox]="'0 0 ' + W + ' ' + H" preserveAspectRatio="xMidYMid meet">
+  <svg #manHinh [attr.viewBox]="'0 ' + (-BAR) + ' ' + W + ' ' + (H + BAR)" preserveAspectRatio="xMidYMid meet">
     <defs>
       <filter id="cg-sang" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="5" result="b" />
@@ -10,10 +10,11 @@
       </filter>
     </defs>
 
-    <rect x="0" y="0" [attr.width]="W" [attr.height]="H" fill="#000" />
+    <clipPath id="cg-map"><rect x="0" y="0" [attr.width]="W" [attr.height]="H" /></clipPath>
+    <rect x="0" [attr.y]="-BAR" [attr.width]="W" [attr.height]="H + BAR" fill="#000" />
 
-    <!-- Một camera chung bám trung điểm 2 nhân vật, zoom ra khi họ xa nhau -->
-    <g>
+    <!-- Một camera chung bám trung điểm 2 nhân vật, zoom ra khi họ xa nhau; chỉ vẽ trong map (thanh đen phía trên chứa chiêu gà mẹ) -->
+    <g clip-path="url(#cg-map)">
       <g [attr.transform]="viewTransform()">
         <rect x="0" y="0" [attr.width]="MAP" [attr.height]="MAP" fill="#c9d8bf" />
 
@@ -144,21 +145,22 @@
     </g>
     }
 
-    <!-- Bảng chiêu của gà tướng: bán nguyệt úp ở giữa phía trên, chỉ để xem. Avatar animation ở giữa, 6 chiêu xếp vòng cung phía dưới.
-         Chiêu đang dùng sáng; Lao / Bay / màu có vòng tiến độ (hồi chiêu hoặc thời gian còn lại) -->
+    <!-- Gà mẹ: thanh đen phía trên map chứa 6 chiêu (Mổ+đá · Lao · Bay · Đen · Vàng · Đỏ), chỉ để xem. Chiêu đang dùng sáng;
+         Lao / Bay / màu có vòng tiến độ. Nửa vòng tròn đen ở giữa mép trên map chỉ có hình con gà. -->
     @let tg = tuongSong;
-    <g pointer-events="none" [attr.transform]="'translate(' + GIUA + ',0) scale(' + HE_BANG_TUONG + ') translate(' + (-GIUA) + ',0)'">
-      <circle [attr.cx]="GIUA" cy="0" [attr.r]="R_BANG" fill="#000" />
-      <g [attr.transform]="'translate(' + GIUA + ',5)'" [attr.opacity]="tg ? 1 : 0.25">
-        <svg x="-55" y="0" width="110" height="110" viewBox="-55 -100 110 110">
+    <g pointer-events="none">
+      <circle [attr.cx]="GIUA" cy="0" [attr.r]="R_TUONG" fill="#000" />
+      <g [attr.transform]="'translate(' + GIUA + ',2)'" [attr.opacity]="tg ? 1 : 0.25">
+        <svg x="-35" y="0" width="70" height="70" viewBox="-55 -100 110 110">
           <g [style.filter]="tg ? locGa(tg) : null">
             <g cgSprite [sp]="SP_TUONG" [khung]="tg ? gaKhung(tg) : 8" [lat]="tg ? tg.lat : false" [muot]="true"></g>
           </g>
         </svg>
       </g>
-      <text [attr.x]="GIUA" y="140" text-anchor="middle" fill="#ffd27a" font-size="15" font-weight="700">Gà mẹ · hồi sinh {{ lanTuong }}/{{ TUONG_HOI_SINH }}</text>
+      <text [attr.x]="GIUA + 215" y="-42" fill="#ffd27a" font-size="18" font-weight="700">Gà mẹ</text>
+      <text [attr.x]="GIUA + 215" y="-20" fill="#ffd27a" font-size="18" font-weight="700">hồi sinh {{ lanTuong }}/{{ TUONG_HOI_SINH }}</text>
       @for (b of bangTuong(); track b.k) {
-      <g [attr.transform]="'translate(' + b.x + ',' + b.y + ')'" [attr.opacity]="b.op" [attr.filter]="b.dung ? 'url(#cg-sang)' : null">
+      <g [attr.transform]="'translate(' + b.x + ',' + b.y + ') scale(0.8)'" [attr.opacity]="b.op" [attr.filter]="b.dung ? 'url(#cg-sang)' : null">
         <circle [attr.r]="R_NUT" [attr.fill]="b.k === 3 ? '#15151c' : b.k === 4 ? '#7a5d00' : b.k === 5 ? '#7a1d10' : '#0d1b12'" [attr.stroke]="b.dung ? '#ffb347' : '#555'" stroke-width="4" />
         @if (b.k >= 1) {
         <circle [attr.r]="R_NUT + 6" fill="none" stroke="#ffb347" stroke-width="3" transform="rotate(-90)"

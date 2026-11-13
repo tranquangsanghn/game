@@ -51,9 +51,12 @@ type VatXep =
   | { loai: 'ga'; y: number; ga: Ga }
   | { loai: 'nv'; y: number; p: number };
 
-const W = 1600;
+// Chiều rộng khung nhìn (đơn vị khung) thay đổi theo tỉ lệ cửa sổ để map tràn hai bên; H cố định. Phía trên map có thanh đen cao BAR chứa các chiêu của gà mẹ (toạ độ y âm).
+const W_MAC_DINH = 1600;
+const W_TOI_THIEU = 1100;
+const W_TOI_DA = 2800;
+const BAR = 80;
 const H = 900;
-const GIUA = W / 2;
 const MAP = 6400;
 // Hai bảng chiêu thức khoét vào map ở hai góc dưới (hình bán nguyệt nền đen, tâm nằm trên mép dưới): Mabu bên trái, Zinbu bên phải. Map vẫn chiếm cả màn hình.
 const R_BANG = 225;
@@ -276,11 +279,15 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   private zone = inject(NgZone);
   private laTrinhDuyet = isPlatformBrowser(inject(PLATFORM_ID));
 
-  readonly W = W;
+  W = W_MAC_DINH;
+  readonly BAR = BAR;
+  readonly R_TUONG = R_BANG * HE_BANG_TUONG;
   readonly R_BANG = R_BANG;
   readonly R_NUT = R_NUT;
   readonly H = H;
-  readonly GIUA = GIUA;
+  get GIUA(): number {
+    return this.W / 2;
+  }
   readonly MAP = MAP;
   readonly MAU_LONG = MAU_LONG;
   readonly MAU_SANG = MAU_SANG;
@@ -357,6 +364,15 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
     this.zone.runOutsideAngular(() => {
       const svg = this.svgRef.nativeElement;
+      // Khung chiếm cả cửa sổ: chiều rộng khung nhìn theo tỉ lệ cửa sổ nên map tràn sát hai bên, không còn dải đen
+      const vua = () => {
+        const kt = this.khungRef.nativeElement.getBoundingClientRect();
+        if (kt.width > 0 && kt.height > 0) this.W = kep(Math.round(((H + BAR) * kt.width) / kt.height), W_TOI_THIEU, W_TOI_DA);
+      };
+      vua();
+      const quanSat = new ResizeObserver(vua);
+      quanSat.observe(this.khungRef.nativeElement);
+      this.goLangNghe.push(() => quanSat.disconnect());
       const nghe = <K extends keyof WindowEventMap>(el: Window | SVGSVGElement, ten: K, fn: (e: any) => void, capture = false) => {
         el.addEventListener(ten, fn, capture);
         this.goLangNghe.push(() => el.removeEventListener(ten, fn, capture));
@@ -745,12 +761,12 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     this.camZ += (tz - this.camZ) * kz;
     // Camera không ra khỏi bản đồ: chạm mép map thì mép đó nằm đúng mép màn hình, không lộ vùng đen
     const zc = this.camZ;
-    this.camX = kep(this.camX, W / 2 / zc, MAP - W / 2 / zc);
+    this.camX = kep(this.camX, this.W / 2 / zc, MAP - this.W / 2 / zc);
     this.camY = kep(this.camY, TAM_VIEW_Y / zc, MAP - (H - TAM_VIEW_Y) / zc);
 
     const z = this.camZ;
     const trong = (x: number, y: number, le: number) =>
-      Math.abs(x - this.camX) < W / 2 / z + le && y - this.camY > -TAM_VIEW_Y / z - le && y - this.camY < (H - TAM_VIEW_Y) / z + le;
+      Math.abs(x - this.camX) < this.W / 2 / z + le && y - this.camY > -TAM_VIEW_Y / z - le && y - this.camY < (H - TAM_VIEW_Y) / z + le;
     this.trungView = this.trungDe.filter((e) => this.thay(e.x, e.y) && trong(e.x, e.y, 100));
     this.huongView = this.huongToiTuong(trong);
     this.nhinNguon = [
@@ -814,13 +830,13 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   // Vị trí nhân vật trên màn hình (toạ độ khung W×H)
   viTriManHinh(p: number) {
     const n = this.nguoi[p];
-    return { x: W / 2 + (n.x - this.camX) * this.camZ, y: TAM_VIEW_Y + (n.y - this.camY) * this.camZ };
+    return { x: this.W / 2 + (n.x - this.camX) * this.camZ, y: TAM_VIEW_Y + (n.y - this.camY) * this.camZ };
   }
 
   // Mũi tên ở mép màn hình chỉ hướng nhân vật khi họ ra ngoài khung nhìn
   muiTen(p: number) {
     const v = this.viTriManHinh(p);
-    const x = kep(v.x, 70, W - 70);
+    const x = kep(v.x, 70, this.W - 70);
     const y = kep(v.y, 130, H - 70);
     if (x === v.x && y === v.y) return null;
     return { x, y, goc: (Math.atan2(v.y - y, v.x - x) * 180) / Math.PI };
@@ -1176,12 +1192,12 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   // Vị trí các nút chiêu thức xếp hình vòng cung phía trên biểu tượng nhân vật (Mabu bảng trái, Zinbu bảng phải)
   tamBang(p: number) {
-    return { x: p === 0 ? 75 : W - 75, y: H - 65 };
+    return { x: p === 0 ? 75 : this.W - 75, y: H - 65 };
   }
 
   // Tâm hình tròn của bảng nằm đúng ở góc dưới màn hình (Mabu góc trái, Zinbu góc phải): x của góc
   gocBang(p: number): number {
-    return p === 0 ? 0 : W;
+    return p === 0 ? 0 : this.W;
   }
 
   nutBang(p: number): { k: number; x: number; y: number }[] {
@@ -1197,7 +1213,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   // Chuột có nằm trong vùng khoét của một bảng chiêu thức không
   private tronBang(x: number, y: number): boolean {
     // Bảng gà tướng ở giữa phía trên cũng không ra đòn / di chuyển khi chuột nằm trên đó
-    return Math.hypot(x - GIUA, y) <= R_BANG * HE_BANG_TUONG || [0, 1].some((p) => {
+    return y < 0 || Math.hypot(x - this.GIUA, y) <= R_BANG * HE_BANG_TUONG || [0, 1].some((p) => {
       return Math.hypot(x - this.gocBang(p), y - H) <= R_BANG;
     });
   }
@@ -1448,7 +1464,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private gocView() {
-    return { x: W / 2 - this.camX * this.camZ, y: TAM_VIEW_Y - this.camY * this.camZ };
+    return { x: this.W / 2 - this.camX * this.camZ, y: TAM_VIEW_Y - this.camY * this.camZ };
   }
 
   private manHinhRaThe(x: number, y: number) {
@@ -1556,7 +1572,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   bangTuong(): { k: number; x: number; y: number; dung: boolean; tien: number; op: number }[] {
     const g = this.tuongSong;
     return [0, 1, 2, 3, 4, 5].map((k) => {
-      const a = (162 - k * 28.8) * (Math.PI / 180);
       let dung = false;
       let tien = 0;
       let san = false;
@@ -1576,7 +1591,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
           san = dung || tien > 0;
         }
       }
-      return { k, x: GIUA + Math.cos(a) * R_CUNG, y: Math.sin(a) * R_CUNG, dung, tien: kep(tien, 0, 1), op: !g ? 0.15 : dung ? 1 : san ? 0.55 : 0.25 };
+      return { k, x: this.GIUA + (k - 2.5) * 66, y: -BAR / 2, dung, tien: kep(tien, 0, 1), op: !g ? 0.15 : dung ? 1 : san ? 0.55 : 0.25 };
     });
   }
 
@@ -1669,7 +1684,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   private taoNguoiChoi(): NguoiChoi[] {
     return [0, 1].map((p) => ({
       ten: p === 0 ? MABU.ten : ZINBU.ten, mau: p === 0 ? '#e84393' : '#8e44ad',
-      hp: HP_NV, het: false, diem: 0, combo: 0, tamX: GIUA, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
+      hp: HP_NV, het: false, diem: 0, combo: 0, tamX: W_MAC_DINH / 2, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
       x: MAP / 2 + (p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
       mana: MANA_TOI_DA.map((m) => m), khoaMana: [0, 0, 0], hoiMana: [0, 0, 0], nv: this.taoNhanVat(p), bay: null,
       nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, may: { dang: false, con: 0, hoi: 0 },
