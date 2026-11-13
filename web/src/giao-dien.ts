@@ -311,7 +311,7 @@ export class GiaoDien {
       <p>Điểm đội: <b>${g.tongDiem}</b> · Kỷ lục: <b>${g.kyLuc}</b>${g.kyLucMoi ? '<span class="ky-luc-moi">Kỷ lục mới!</span>' : ''}</p>
       ${top}
       <div class="nhom-nut">
-        <button type="button" tabindex="-1" class="nut-chinh" data-act="moi">${g.cheDo === 'tayCam' ? 'Chơi lại (✕)' : 'Chơi lại'}</button>
+        <button type="button" tabindex="-1" class="nut-chinh" data-act="moi">${g.cheDo === 'tayCam' ? (g.choiLaiChoB ? 'Chơi lại: bấm ○ (B)' : 'Chơi lại: bấm ✕ rồi ○ (B)') : 'Chơi lại'}</button>
         <button type="button" tabindex="-1" class="nut-phu" data-act="dong">Đóng</button>
       </div>
     </div></div>`;

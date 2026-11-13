@@ -519,6 +519,8 @@ export class Game {
   onNutQuay: () => void = () => {};
   /** Thẻ đang chọn ở màn chọn chế độ (0 Mabu · 1 Zinbu · 2 hai người), chữ thập / cần trái trái-phải để chọn */
   menuChon = 2;
+  /** Màn kết thúc: đã bấm ✕, đang chờ bấm ○ (B) để chơi lại */
+  choiLaiChoB = false;
   private menuCanCu = 0;
   /** Gọi khi ván kết thúc (để lưu điểm lên máy chủ) */
   onKetThuc: (kq: KetQua) => void = () => {};
@@ -727,6 +729,7 @@ export class Game {
 
   /** Bắt đầu ván: 'mabu' / 'zinbu' = chơi 1 nhân vật, 'ca2' = chơi cả hai */
   batDau(che: 'mabu' | 'zinbu' | 'ca2' = this.cheNguoi): void {
+    this.choiLaiChoB = false;
     this.cheNguoi = che;
     this.nguoi = this.taoNguoiChoi();
     this.chonNguoiDau();
@@ -2738,7 +2741,11 @@ export class Game {
           if (sang) this.menuChon = Math.max(0, Math.min(2, this.menuChon + sang));
           if (moi(g, 0) || moi(g, 9)) this.onNutBatDau();
           else if (moi(g, 1)) this.onNutQuay();
-        } else if (moi(g, 0) || moi(g, 9)) this.batDau();
+        } else {
+          // Màn kết thúc: bấm ✕ trước rồi bấm ○ (B) mới chơi lại, tránh lỡ tay chơi lại ngay
+          if (moi(g, 0)) this.choiLaiChoB = true;
+          else if (moi(g, 1) && this.choiLaiChoB) { this.choiLaiChoB = false; this.batDau(); }
+        }
       } else if (moi(g, 9)) this.tamDung();
       else if (moi(g, 8) && ds.length === 1 && this.man === 'play') this.doiTayCam();
     }
