@@ -60,6 +60,8 @@ export interface TrungGa {
   id: number; x: number; y: number; t: number; loai: 'hen' | 'rooster' | 'flyer';
   /** Trứng đỏ đặc biệt: to gấp TRUNG_DB_TO lần, gà mẹ gốc canh quanh nó; cứ 2s nở một gà con mạnh dần, tới 10s nở ra một gà mẹ phụ */
   db?: boolean; no?: number; me?: number;
+  /** thời gian ấp trứng đỏ (giây), chốt lúc đẻ theo số tướng gà đang sống (apTrungDb) */
+  ap?: number;
 }
 /** soc = chưởng biến socola của Zinbu · troi = chưởng tự bắn lên trời (chỉ để đẹp, không gây sát thương) */
 interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
@@ -399,10 +401,14 @@ const TRUNG_NO = 2;
 const TRUNG_CHO = 15;
 const GA_TOI_DA = 20;
 // Trứng đỏ đặc biệt (do gà mẹ GỐC đẻ: quả thứ 5 của mỗi lượt trứng, cứ TRUNG_CHO giây, không tính vào GA_TOI_DA): to gấp TRUNG_DB_TO lần quả thường, gà mẹ gốc canh quanh nó (TRUNG_DB_BAO_VE).
-// Cứ TRUNG_DB_NHIP giây nở một gà con mạnh dần (GA_DB_SUC: sức mạnh nhân máu / sát thương, GA_DB_TO: độ to): 2s gà con thường, 4s x2 to gấp đôi, 6s x3, 8s x4; hết TRUNG_DB_NO giây thì nở ra một gà mẹ phụ (đi đánh thay gà mẹ gốc, không giới hạn số lượng).
+// Trong thời gian ấp (apTrungDb) nở đều 4 gà con mạnh dần (GA_DB_SUC: sức mạnh nhân máu / sát thương, GA_DB_TO: độ to): gà con thường, x2 to gấp đôi, x3, x4; hết thời gian ấp thì nở ra một gà mẹ phụ (đi đánh thay gà mẹ gốc, không giới hạn số lượng).
 const TRUNG_DB_TO = 5;
-const TRUNG_DB_NHIP = 2;
 const TRUNG_DB_NO = 10;
+// Thời gian ấp trứng đỏ (tới lúc nở tướng gà) và thời gian giữa 2 lượt đẻ, theo số tướng gà (gà mẹ phụ) đang sống lúc đẻ:
+// ≤ 5 con: ấp 5s · 6–10 con: ấp 10s · từ 11 con: ấp 15s. ≤ 10 con: đẻ 10s một lượt · từ 11 con: 15s một lượt.
+// 4 gà con của trứng đỏ nở đều trong lúc ấp (nhịp = thời gian ấp / 5).
+const apTrungDb = (soPhu: number): number => (soPhu <= 5 ? 5 : soPhu <= 10 ? 10 : 15);
+const choDeTrung = (soPhu: number): number => (soPhu <= 10 ? 10 : TRUNG_CHO);
 const TRUNG_DB_BAO_VE = 450;
 const GA_DB_SUC = [1, 2, 3, 4];
 const GA_DB_TO = [1, 2, 2.5, 3];
@@ -1234,7 +1240,7 @@ export class Game {
             this.chu.push({ id: this.id++, x: g.x, y: g.y - 400, text: '🔥 GIAI ĐOẠN 2!', mau: '#ff6a3c', t: 0 });
           }
           if ((g.de ?? 0) <= 0) {
-            g.de = g.gd2 ? TRUNG_CHO * GD2_DE : TRUNG_CHO;
+            g.de = choDeTrung(this.soMePhu) * (g.gd2 ? GD2_DE : 1);
             this.deTrung(g);
             // Mỗi lần xuất hiện / hồi sinh: đẻ lượt đầu rồi chờ trứng nở xong mới được dùng chiêu màu
             if (!g.daDe) {
@@ -1608,7 +1614,7 @@ export class Game {
       const xa = d > HUONG_TOI_DA + 150;
       const x = xa ? n.x + ux * (HUONG_TOI_DA + 150) : trung.x;
       const y = xa ? n.y + uy * (HUONG_TOI_DA + 150) : trung.y;
-      if (trong(x, y, 150)) this.xTrungView.push({ x, y, con: Math.max(0, Math.ceil(TRUNG_DB_NO - trung.t)) });
+      if (trong(x, y, 150)) this.xTrungView.push({ x, y, con: Math.max(0, Math.ceil((trung.ap ?? TRUNG_DB_NO) - trung.t)) });
     }
     return kq;
   }
@@ -1778,11 +1784,12 @@ export class Game {
     for (const e of this.trungDe) {
       e.t += dt;
       if (e.db) {
-        // Trứng đỏ: cứ TRUNG_DB_NHIP giây nở một gà con mạnh dần, hết TRUNG_DB_NO giây thì nở ra gà mẹ phụ
-        const nhip = Math.min(GA_DB_SUC.length, Math.floor(e.t / TRUNG_DB_NHIP));
+        // Trứng đỏ: nở 4 gà con mạnh dần đều trong thời gian ấp (e.ap), hết thời gian ấp thì nở ra gà mẹ phụ
+        const ap = e.ap ?? TRUNG_DB_NO;
+        const nhip = Math.min(GA_DB_SUC.length, Math.floor(e.t / (ap / (GA_DB_SUC.length + 1))));
         for (let k = e.no ?? 0; k < nhip; k++) this.nuaGaDb(e, k);
         e.no = Math.max(e.no ?? 0, nhip);
-        if (e.t < TRUNG_DB_NO) conLai.push(e);
+        if (e.t < ap) conLai.push(e);
         else this.sinhMePhu(e);
         continue;
       }
@@ -1877,7 +1884,7 @@ export class Game {
     if (this.trungDe.some((e) => e.db && e.me === boss.id)) return;
     const x = kepMap(boss.x + ngauNhien(-140, 140));
     const y = kepMap(boss.y + ngauNhien(40, 150));
-    this.trungDe.push({ id: this.id++, loai: 'hen', t: 0, x, y, db: true, no: 0, me: boss.id });
+    this.trungDe.push({ id: this.id++, loai: 'hen', t: 0, x, y, db: true, no: 0, me: boss.id, ap: apTrungDb(this.soMePhu) });
     this.chu.push({ id: this.id++, x: boss.x, y: boss.y - 360, text: '🥚 TRỨNG ĐỎ!', mau: '#ff4d4d', t: 0 });
   }
 
