@@ -57,7 +57,9 @@ type VatXep =
 /** Vật trang trí nền cỏ (cây, bụi, đá): chỉ để đẹp, không cản đường. loai là chỉ số trong TRANG_TRI_SPRITE (ve-canvas.ts) */
 export interface TrangTri { x: number; y: number; loai: number; lat: boolean; /** thời điểm (`t` của game) bị đánh đổ; chỉ cây (loai 0), chưa đổ thì không có */ doLuc?: number; /** hướng đổ: 1 = sang phải, -1 = sang trái */ huongDo?: number }
 /** Bán kính (quanh gốc cây) mà đòn / chưởng quét qua thì cây đổ */
-const CAY_DO_KINH = 70;
+const CAY_DO_KINH = 90;
+/** Chiều cao thân cây tính từ gốc: đòn trúng trong khoảng này phía trên gốc là trúng cây */
+const CAY_DO_CAO = 220;
 
 
 export const PHIEN_BAN_LUU = 1;
@@ -880,14 +882,19 @@ export class Game {
     const ax = d.x0 + (d.x1 - d.x0) * k0, ay = d.y0 + (d.y1 - d.y0) * k0;
     const bx = d.x0 + (d.x1 - d.x0) * k1, by = d.y0 + (d.y1 - d.y0) * k1;
     const ex = bx - ax, ey = by - ay, e2 = ex * ex + ey * ey;
+    // Thân cây cao (vẽ phía trên gốc) nên đánh vào thân / tán cũng đổ: hộp quanh thân, rộng CAY_DO_KINH, từ CAY_DO_CAO phía trên gốc xuống dưới gốc một chút. Lấy mẫu dọc đường bay để không bỏ sót.
     const r = CAY_DO_KINH * (d.to ? 1.4 : 1);
+    const buoc = Math.max(1, Math.ceil(Math.sqrt(e2) / 30));
     for (const c of this.trangTri) {
       if (c.loai !== 0 || c.doLuc !== undefined) continue;
-      const u = e2 > 0 ? kep(((c.x - ax) * ex + (c.y - ay) * ey) / e2, 0, 1) : 0;
-      if (Math.hypot(c.x - (ax + ex * u), c.y - (ay + ey * u)) > r) continue;
-      c.doLuc = this.t;
-      const dx = d.x1 - d.x0;
-      c.huongDo = Math.abs(dx) > 20 ? Math.sign(dx) : c.lat ? -1 : 1;
+      for (let i = 0; i <= buoc; i++) {
+        const px = ax + (ex * i) / buoc, py = ay + (ey * i) / buoc;
+        if (Math.abs(px - c.x) > r || py < c.y - CAY_DO_CAO || py > c.y + 40) continue;
+        c.doLuc = this.t;
+        const dx = d.x1 - d.x0;
+        c.huongDo = Math.abs(dx) > 20 ? Math.sign(dx) : c.lat ? -1 : 1;
+        break;
+      }
     }
   }
 

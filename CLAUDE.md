@@ -128,7 +128,7 @@
 
 # Nguyên tắc cây đổ
 
-- Cây (`trangTri` loại 0) bị đổ khi đòn / chưởng của Mabu, Zinbu bay qua trong `CAY_DO_KINH` = 70 quanh gốc (chưởng ×1,4): `danDoCay()` quét đoạn bay mỗi khung hình nên bay tới đâu cây đổ tới đó. Cây đổ (`doLuc`, `huongDo`) quay 90° quanh gốc trong 0,45s rồi nằm luôn, được lưu trong `cayDo` của ván lưu. Chỉ để đẹp, không ảnh hưởng gà.
+- Cây (`trangTri` loại 0) bị đổ khi đòn / chưởng của Mabu, Zinbu bay qua trong hộp quanh thân: rộng `CAY_DO_KINH` = 90 mỗi bên (chưởng ×1,4), cao `CAY_DO_CAO` = 220 phía trên gốc (đánh vào thân / tán cũng đổ): `danDoCay()` quét đoạn bay mỗi khung hình nên bay tới đâu cây đổ tới đó. Cây đổ (`doLuc`, `huongDo`) quay 90° quanh gốc trong 0,45s rồi nằm luôn, được lưu trong `cayDo` của ván lưu. Chỉ để đẹp, không ảnh hưởng gà.
 
 # Nguyên tắc thể lực bay
 
