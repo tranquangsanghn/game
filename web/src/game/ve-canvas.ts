@@ -995,7 +995,7 @@ export class VeCanvas {
       ctx.fillText('👑', t.x, t.y - 28);
       ctx.restore();
       // Ngọc rồng 1 sao đính trên vương miện
-      this.veNgoc(ctx, c.SP_NGOC, t.x, t.y - 88, c.tGame, 0.16);
+      this.veNgoc(ctx, c.SP_NGOC, t.x, t.y - 94, c.tGame, 0.24);
     }
   }
 
