@@ -44,9 +44,9 @@ export interface NguoiChoi {
   hoiChieu: number; chumDen: number; banTrung: number; banTruot: number;
   x: number; y: number; dich: { x: number; y: number } | null; dangDi: boolean;
   hp: number; het: boolean;
-  mana: number[]; khoaMana: number[]; hoiMana: number[]; nv: NhanVat; bay: ChuyenBay | null;
-  /** Thể lực bay (giây bay còn lại) và thời gian còn khoá sau mỗi lần bay */
-  bayNl: number; bayKhoa: number;
+  nv: NhanVat; bay: ChuyenBay | null;
+  /** Mana (một con số, không có trần) chỉ dùng để bay; bayKhoa = giây còn khoá sau mỗi lần bay */
+  mana: number; bayKhoa: number;
   nhin: { x: number; y: number }; nham: { x: number; y: number } | null; ngam: { x: number; y: number } | null; cuaCan: boolean;
   may: { dang: boolean; con: number; hoi: number };
 }
@@ -63,7 +63,7 @@ const CAY_DO_KINH = 90;
 const CAY_DO_CAO = 220;
 
 
-export const PHIEN_BAN_LUU = 1;
+export const PHIEN_BAN_LUU = 2;
 /** Dữ liệu một ván đã lưu: các trường tuỳ ý của game, máy chủ chỉ lưu nguyên khối JSON */
 export interface TrangThaiLuu {
   phienBan: number; tGame: number; t: number; chamDen: number; id: number;
@@ -167,20 +167,15 @@ const TOC_DO_DI = 460;
 const TOC_DO_BAY = 900;
 const BAY_KHI_XA = 450;
 const BAY_TOI_DA = 1200;
-// Thể lực bay riêng: đầy = BAY_NL_TOI_DA giây bay, hao theo thời gian bay, hồi BAY_NL_HOI giây-bay mỗi giây; mỗi lần bay xong khoá BAY_KHOA giây mới bay tiếp; còn dưới BAY_NL_TOI_THIEU thì không bay
-const BAY_NL_TOI_DA = 2;
-const BAY_NL_HOI = 0.2 / 3;
-const BAY_NL_TOI_THIEU = 0.3;
+// Mana là một con số (không có trần), chỉ dùng để bay: bắt đầu MANA_BAN_DAU, bay tốn MANA_BAY mỗi giây bay, tự hồi MANA_HOI mỗi giây khi không bay (chỉ hồi tới MANA_HOI_TOI_DA rồi thôi, táo xanh có thể đẩy cao hơn); còn dưới MANA_TOI_THIEU thì không bay. Mỗi lần bay xong khoá BAY_KHOA giây mới bay tiếp. Đấm / Đá / Chiêu đặc biệt không tốn mana, chỉ có thời gian hồi (`hoiChieu` trong ban()).
+const MANA_BAN_DAU = 100;
+const MANA_HOI_TOI_DA = 100;
+const MANA_HOI = 2;
+const MANA_BAY = 50;
+const MANA_TOI_THIEU = 15;
 const BAY_KHOA = 5;
 const VUNG_CHET_CAN = 0.25; // cần analog gạt dưới mức này coi như nằm yên
 const TOC_DO_DAN = 2400;
-// Mana theo nhóm đòn (0 Đấm · 1 Đá · 2 Chiêu đặc biệt). Đấm không bao giờ hết; 0 nghĩa là vô hạn.
-const MANA_TOI_DA = [0, 10, 5];
-// Hết sạch mana thì khoá KHOA_MANA giây rồi mới bắt đầu hồi; sau đó cứ HOI_MANA giây hồi 1 lần đánh (hồi cả khi chưa hết sạch)
-const KHOA_MANA = 30;
-const HOI_MANA = 6;
-// Màu quả cầu mana theo nhóm đòn đang dùng: Đấm xanh · Đá cam · Chiêu đặc biệt đỏ
-const MAU_MANA = ['#3aa0ff', '#ff9a3c', '#ff2b2b', '#a855f7'];
 // Chiêu Biến mây (riêng Mabu, nhóm đòn 3): mây to gấp 2, quét trúng mọi con gà nó đi qua. Hiệu lực MAY_THOI_GIAN giây, sau đó chờ MAY_HOI giây mới dùng lại.
 // Mana của chiêu này màu tím: khi mây đang chạy là thời gian còn lại, khi chờ là tiến độ hồi.
 const NHOM_MAY = 3;
@@ -727,23 +722,19 @@ export class Game {
     this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: Math.random() < 0.5 ? 'do' : 'xanh' });
   }
 
-  // Táo xanh: cộng thêm VP_HOI% mana tối đa cho mọi nhóm đòn và thể lực bay (cộng dồn, không có trần), mở khoá luôn
+  // Táo xanh: cộng VP_HOI mana (cộng dồn, không có trần) và mở khoá bay
   private hoiDayMana(n: NguoiChoi): void {
-    n.mana = n.mana.map((m, g) => m + (MANA_TOI_DA[g] * VP_HOI) / 100);
-    n.khoaMana = n.khoaMana.map(() => 0);
-    n.hoiMana = n.hoiMana.map(() => 0);
-    n.bayNl += (BAY_NL_TOI_DA * VP_HOI) / 100;
+    n.mana += VP_HOI;
     n.bayKhoa = 0;
   }
 
   private dieuKhien(dt: number): void {
     this.nguoi.forEach((n, p) => {
       n.hoiChieu = Math.max(0, n.hoiChieu - dt);
-      this.hoiMana(n, dt);
       this.capNhatMay(n, dt);
       n.bayKhoa = Math.max(0, n.bayKhoa - dt);
-      if (n.bay) n.bayNl = Math.max(0, n.bayNl - dt);
-      else if (n.bayNl < BAY_NL_TOI_DA) n.bayNl = Math.min(BAY_NL_TOI_DA, n.bayNl + BAY_NL_HOI * dt);
+      if (n.bay) n.mana = Math.max(0, n.mana - MANA_BAY * dt);
+      else if (n.mana < MANA_HOI_TOI_DA) n.mana = Math.min(MANA_HOI_TOI_DA, n.mana + MANA_HOI * dt);
 
       // Tâm ngắm cập nhật mỗi khung hình: cần ngắm phải đang gạt thì ngắm theo hướng gạt, không thì tự ngắm; ẩn khi đã ngã hoặc đang là mây
       const m = this.diemNham(p);
@@ -1371,22 +1362,6 @@ export class Game {
 
   // ─── Bắn & tính điểm ───
 
-  // Hồi mana: hết sạch thì khoá rồi mới hồi; mỗi HOI_MANA giây được thêm 1 lần đánh
-  private hoiMana(n: NguoiChoi, dt: number): void {
-    for (const g of [1, 2]) {
-      if (n.khoaMana[g] > 0) {
-        n.khoaMana[g] = Math.max(0, n.khoaMana[g] - dt);
-        n.hoiMana[g] = 0;
-      } else if (n.mana[g] < MANA_TOI_DA[g]) {
-        n.hoiMana[g] += dt;
-        if (n.hoiMana[g] >= HOI_MANA) {
-          n.hoiMana[g] -= HOI_MANA;
-          n.mana[g]++;
-        }
-      }
-    }
-  }
-
   // Biến mây: đếm giờ hiệu lực, hết thì biến lại và bắt đầu chờ hồi
   private capNhatMay(n: NguoiChoi, dt: number): void {
     const m = n.may;
@@ -1437,16 +1412,8 @@ export class Game {
       return;
     }
     if (n.may.dang) return;
-    if (nhom > 0 && (n.khoaMana[nhom] > 0 || n.mana[nhom] < 1)) return;
     // Thời gian hồi giữa 2 đòn theo nhóm (không phụ thuộc độ dài animation)
     n.hoiChieu = (chieu ? 0.8 : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
-    if (nhom > 0) {
-      n.mana[nhom]--;
-      if (n.mana[nhom] < 1) {
-        n.khoaMana[nhom] = KHOA_MANA;
-        n.hoiMana[nhom] = 0;
-      }
-    }
     if (!n.dangDi) {
       n.nv.lat = x < n.x;
       n.nv.huong = 'ngang';
@@ -1494,12 +1461,12 @@ export class Game {
     return H - 50 - (this.dsBieuTuong(p).length - 1) * 70 - 62;
   }
 
-  // Chiêu hết mana (đang khoá / chưa hồi) hoặc Mây đang chạy / đang hồi: không dùng được
+  // Chỉ Mây có lúc không dùng được (đang chạy / đang hồi); Đấm, Đá, Chiêu đặc biệt chỉ có thời gian hồi giữa 2 đòn
   hetMana(p: number, k: number): boolean {
     const n = this.nguoi[p];
     if (k === 0) return false;
     if (k === NHOM_MAY) return n.may.dang || n.may.hoi > 0;
-    return n.khoaMana[k] > 0 || n.mana[k] < 1;
+    return false;
   }
 
   tenNhom(p: number): string {
@@ -1867,12 +1834,17 @@ export class Game {
   // Chỉ xa thì bay theo vòng cung, gần thì chạy
   /** Bay được khi không bị khoá và còn đủ thể lực */
   coTheBay(n: NguoiChoi): boolean {
-    return n.bayKhoa <= 0 && n.bayNl >= BAY_NL_TOI_THIEU;
+    return n.bayKhoa <= 0 && n.mana >= MANA_TOI_THIEU;
   }
 
-  /** 0..1: thể lực bay còn lại (thanh nhỏ trên đầu nhân vật) */
+  /** Mana hiện có (số hiển thị giữa bình mana) */
+  manaNv(p: number): number {
+    return Math.floor(this.nguoi[p].mana);
+  }
+
+  /** 0..1: độ đầy của bình mana (tối đa 1, mana vượt MANA_HOI_TOI_DA vẫn vẽ đầy) */
   nlBay(p: number): number {
-    return Math.min(1, this.nguoi[p].bayNl / BAY_NL_TOI_DA);
+    return Math.min(1, this.nguoi[p].mana / MANA_HOI_TOI_DA);
   }
 
   private datDichThe(p: number, x: number, y: number): void {
@@ -1897,7 +1869,7 @@ export class Game {
       return;
     }
     // Thể lực không đủ bay hết quãng thì bay ngắn lại đúng bằng quãng thể lực cho phép
-    const toiDa = n.bayNl * TOC_DO_BAY;
+    const toiDa = (n.mana / MANA_BAY) * TOC_DO_BAY;
     if (d > toiDa) {
       dich = { x: n.x + ((dich.x - n.x) / d) * toiDa, y: n.y + ((dich.y - n.y) / d) * toiDa };
       d = toiDa;
@@ -1966,26 +1938,6 @@ export class Game {
 
   mauNv(p: number): number {
     return Math.min(1, Math.max(0, this.nguoi[p].hp) / HP_NV);
-  }
-
-  // 0..1: mana còn lại của nhóm đòn đang dùng (Đấm luôn đầy)
-  nangLuong(p: number): number {
-    const n = this.nguoi[p];
-    const g = n.nv.nhom;
-    if (g === NHOM_MAY) return n.may.dang ? n.may.con / MAY_THOI_GIAN : 1 - n.may.hoi / MAY_HOI;
-    return g === 0 ? 1 : Math.min(1, n.mana[g] / MANA_TOI_DA[g]);
-  }
-
-  // 0..1: mana / thời gian của một nhóm đòn bất kỳ (vòng tiến độ trên nút chiêu thức)
-  manaNhom(p: number, k: number): number {
-    const n = this.nguoi[p];
-    if (k === NHOM_MAY) return n.may.dang ? n.may.con / MAY_THOI_GIAN : 1 - n.may.hoi / MAY_HOI;
-    return k === 0 ? 1 : Math.min(1, n.mana[k] / MANA_TOI_DA[k]);
-  }
-
-  // Quả cầu mana chỉ có một, đổi màu theo nhóm đòn đang dùng
-  mauMana(p: number): string {
-    return MAU_MANA[this.nguoi[p].nv.nhom];
   }
 
   // Vị trí điểm neo (chân) của sprite nhân vật trên map và hệ số phóng
@@ -2110,7 +2062,7 @@ export class Game {
       ten: p === 0 ? MABU.ten : ZINBU.ten, mau: p === 0 ? '#e84393' : '#8e44ad',
       hp: HP_NV, het: false, diem: 0, combo: 0, tamX: W_MAC_DINH / 2, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
       x: MAP / 2 + (p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
-      mana: MANA_TOI_DA.map((m) => m), khoaMana: [0, 0, 0], hoiMana: [0, 0, 0], nv: this.taoNhanVat(p), bay: null, bayNl: BAY_NL_TOI_DA, bayKhoa: 0,
+      nv: this.taoNhanVat(p), bay: null, mana: MANA_BAN_DAU, bayKhoa: 0,
       nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, ngam: null, cuaCan: false, may: { dang: false, con: 0, hoi: 0 },
     }));
   }

@@ -459,7 +459,7 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  // Thanh máu (số tròn) và quả cầu mana nhỏ trên đầu nhân vật; dạng mây thì không có
+  // Thanh máu trên đầu nhân vật; dạng mây thì không có
   private veThanhTrenDau(ctx: CanvasRenderingContext2D, c: Game, p: number): void {
     const n = c.nguoi[p];
     if (n.nv.laMay) return;
@@ -473,23 +473,6 @@ export class VeCanvas {
     tronCD(ctx, -31, -3, 62 * c.mauNv(p), 6, 3);
     ctx.fillStyle = '#35d96a';
     ctx.fill();
-    ctx.translate(48, 0);
-    duongTron(ctx, 13.3);
-    ctx.fillStyle = 'rgba(13,27,18,0.75)';
-    ctx.fill();
-    const nl = dongHe(c.nangLuong(p));
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(-10.7, 10.7 - 21.4 * nl, 21.4, 21.4);
-    ctx.clip();
-    duongTron(ctx, 10.7);
-    ctx.fillStyle = c.mauMana(p);
-    ctx.fill();
-    ctx.restore();
-    duongTron(ctx, 10.7);
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.lineWidth = 1.7;
-    ctx.stroke();
     ctx.restore();
   }
 
@@ -531,7 +514,7 @@ export class VeCanvas {
     this.sprite(ctx, ng.nv.sp, ng.nv.khung, ng.nv.lat, false);
     ctx.restore();
 
-    // Hai bình cầu xếp dọc ngay trên nút trên cùng: trên = máu (xanh lá, số máu nằm giữa bình), dưới = thể lực bay (xanh lơ, xám khi đang khoá sau lần bay)
+    // Hai bình cầu xếp dọc ngay trên nút trên cùng: trên = máu (xanh lá, số máu nằm giữa bình), dưới = mana (xanh lơ, số mana nằm giữa bình, xám khi đang khoá bay sau lần bay)
     const ym = c.yMauNv(p);
     this.veBinh(ctx, xt, ym - 28, dongHe(c.mauNv(p)), '#35d96a', ng.het);
     this.veBinh(ctx, xt, ym + 14, dongHe(c.nlBay(p)), ng.bayKhoa > 0 ? '#8a9a94' : '#4fd8ff', ng.het);
@@ -543,9 +526,11 @@ export class VeCanvas {
     ctx.lineJoin = 'round';
     ctx.lineWidth = 4;
     ctx.strokeStyle = 'rgba(0,0,0,0.75)';
-    ctx.strokeText(`${c.hpNv(p)}`, xt, ym - 28);
     ctx.fillStyle = '#fff';
-    ctx.fillText(`${c.hpNv(p)}`, xt, ym - 28);
+    for (const [v, y] of [[c.hpNv(p), ym - 28], [c.manaNv(p), ym + 14]] as [number, number][]) {
+      ctx.strokeText(`${v}`, xt, y);
+      ctx.fillText(`${v}`, xt, y);
+    }
     ctx.restore();
 
     // Các chiêu xếp dọc từ dưới lên: đang dùng sáng + phát sáng, hết mana thì mờ hẳn

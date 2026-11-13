@@ -28,20 +28,20 @@
 
 - Ngoại lệ do người dùng yêu cầu: có thêm thanh đen phía trên map chứa chiêu của gà mẹ (xem mục "Nguyên tắc gà mẹ"). Khung game chiếm cả cửa sổ, chiều rộng khung nhìn `W` tự theo tỉ lệ cửa sổ (`ResizeObserver`) nên map tràn sát hai bên, không có dải đen hai bên; `H` cố định.
 - Bố cục: khung game chiếm cả cửa sổ. Map nằm giữa; phía trên có thanh đen ngang `BAR` (chiêu gà mẹ), hai bên có 2 thanh đen dọc rộng `SIDE` (Mabu trái, Zinbu phải). Toạ độ map vẫn là x 0..`W`, y 0..`H`; thanh đen nằm ở toạ độ âm / lớn hơn `W` (viewBox `-SIDE -BAR`). `W` tự theo tỉ lệ cửa sổ.
-- Trên mỗi thanh bên (không có tên nhân vật): các chiêu thức xếp dọc từ dưới lên trên, nút đầu (Đấm) sát đáy (`nutBang()`, `xThanh()`); máu và thể lực bay là hai bình cầu kiểu mana xếp dọc (trên: máu xanh lá, số máu nằm giữa bình; dưới: thể lực bay xanh lơ; không còn thanh) nằm ngay phía trên nút trên cùng (`yMauNv()`). Nửa vòng tròn đen bán kính `R_NV` (= 2/3 `R_BANG`) nằm đúng ở góc dưới map như cũ, tâm ở góc dưới (`tamNv()`), chỉ có animation hiện tại của nhân vật (cùng `khung` / `lat` với trên map). Không thu nhỏ map vì bảng.
-- Chiêu đang dùng sáng + phát sáng, chiêu khác mờ, hết mana / đang khoá / Mây đang chạy hoặc hồi (`hetMana()`) thì mờ hẳn và không chọn được.
-- Đổi chiêu: chế độ tay cầm bằng L1 / R1 (`chuyenChieu()` → `NhanVat.datNhom`), chế độ chuột bằng cách bấm vào nút chiêu trên thanh đen (`chonNut()`) hoặc phím 1–4 (`phimXuong()`); chiêu hết mana / đang khoá thì không chọn được ở cả hai chế độ. Không có con lăn.
+- Trên mỗi thanh bên (không có tên nhân vật): các chiêu thức xếp dọc từ dưới lên trên, nút đầu (Đấm) sát đáy (`nutBang()`, `xThanh()`); máu và mana là hai bình cầu xếp dọc (trên: máu xanh lá; dưới: mana xanh lơ, xám khi đang khoá bay; số máu / số mana nằm giữa bình; không còn thanh) nằm ngay phía trên nút trên cùng (`yMauNv()`). Nửa vòng tròn đen bán kính `R_NV` (= 2/3 `R_BANG`) nằm đúng ở góc dưới map như cũ, tâm ở góc dưới (`tamNv()`), chỉ có animation hiện tại của nhân vật (cùng `khung` / `lat` với trên map). Không thu nhỏ map vì bảng.
+- Chiêu đang dùng sáng + phát sáng, chiêu khác mờ, chỉ Mây đang chạy hoặc hồi (`hetMana()`) thì mờ hẳn và không chọn được (Đấm, Đá, Chiêu đặc biệt không tốn mana, chỉ có thời gian hồi).
+- Đổi chiêu: chế độ tay cầm bằng L1 / R1 (`chuyenChieu()` → `NhanVat.datNhom`), chế độ chuột bằng cách bấm vào nút chiêu trên thanh đen (`chonNut()`) hoặc phím 1–4 (`phimXuong()`); Mây đang chạy / hồi thì không chọn được ở cả hai chế độ. Không có con lăn.
 
 # Nguyên tắc điều khiển
 
 - Màn bắt đầu cho chọn chế độ chơi (`cheDo`: `'chuot'` hoặc `'tayCam'`, nút chọn ở màn bắt đầu, `datCheDo()`, nhớ lại trong `localStorage`; mặc định chuột). Chỉ chế độ đang chọn nhận điều khiển; chế độ kia bị bỏ qua hoàn toàn (kể cả nút bắt đầu / tạm dừng của tay cầm). Màn bắt đầu và README hướng dẫn cả hai chế độ.
 - Chế độ tay cầm (Gamepad API, mapping "standard" kiểu PS, `docTayCam()` đọc mỗi khung hình): tay cầm 1 → Mabu, tay cầm 2 → Zinbu. Cần trái chạy, cần phải ngắm (không gạt thì tự ngắm `diemNham()`), ✕ / R2 ra đòn, ○ / L2 bay, L1 / R1 đổi chiêu (`chuyenChieu()`), Options bắt đầu / tạm dừng, Share (Select) đổi nhân vật khi chỉ có 1 tay cầm (`doiTayCam()`). Tay cầm không phải mapping "standard" dùng tạm chỉ số nút / cần như standard (cần phải lấy trục 2 và 5 nếu có ≥ 6 trục); màn bắt đầu hiện nút vừa bấm để dò.
 - Chế độ chuột (chỉ có 1 chuột nên điều khiển 1 nhân vật tại một thời điểm, `chuot`): chuột phải chạy tới điểm bấm (xa thì bay, `datDich()`), chuột trái ra đòn tại điểm chuột (`bamChuot()`), bấm vào nút chiêu ở thanh đen để đổi chiêu, **Tab** chuyển chuột sang nhân vật kia (`doiChuot()`), menu chuột phải của trình duyệt bị chặn. Tâm ngắm vẽ theo chuột (`tamX` / `tamY`), ẩn khi chuột nằm trên bảng chiêu thức (`trenBang`); nhân vật đang dùng chuột không có tâm tự ngắm. Toạ độ chuột đổi qua `phepChieu()` (dùng chung với vẽ canvas).
-- Thêm điều khiển mới thì gắn vào đúng chế độ của nó; không thêm phím tắt ngoài Tab và phím 1 / 2 / 3 / 4 (chọn chiêu thứ n từ dưới lên của nhân vật đang dùng chuột, `phimXuong()`; chiêu hết mana / khoá thì không chọn được). Chuột chỉ để bấm nút trên các màn bắt đầu / tạm dừng / kết thúc ở chế độ tay cầm.
+- Thêm điều khiển mới thì gắn vào đúng chế độ của nó; không thêm phím tắt ngoài Tab và phím 1 / 2 / 3 / 4 (chọn chiêu thứ n từ dưới lên của nhân vật đang dùng chuột, `phimXuong()`; Mây đang chạy / hồi thì không chọn được). Chuột chỉ để bấm nút trên các màn bắt đầu / tạm dừng / kết thúc ở chế độ tay cầm.
 
 # Nguyên tắc giữ nguyên bố cục khi đổi map / màn
 
-- Bố cục hiện tại là chuẩn, cố định: 2 thanh đen hai bên với chiêu thức, máu và nửa vòng tròn nhân vật (kích thước, vị trí, hàng nút, chân dung animation nhân vật), thanh đen trên của gà mẹ, cách chọn chiêu bằng click, thanh máu / mana, camera, tâm ngắm, mọi nguyên tắc ghi trong file này.
+- Bố cục hiện tại là chuẩn, cố định: 2 thanh đen hai bên với chiêu thức, máu và nửa vòng tròn nhân vật (kích thước, vị trí, hàng nút, chân dung animation nhân vật), thanh đen trên của gà mẹ, cách chọn chiêu bằng click, bình máu / mana, camera, tâm ngắm, mọi nguyên tắc ghi trong file này.
 - Sang map khác, màn khác thì chỉ thay phần map (nền, kích thước `MAP`, vật cản, quái của màn đó). Không đổi bố cục giao diện, vị trí các thành phần, hay các nguyên tắc ở trên; chỉ đổi khi người dùng yêu cầu rõ ràng.
 
 # Nguyên tắc biên bản đồ
@@ -72,18 +72,18 @@
   - Gà tướng: 80 · 2,5s (nhận 40)
 - Nhân vật dạng mây không nhận sát thương. Nhân vật hết máu thì ngã và không điều khiển được; cả hai cùng hết máu thì thua (`ketThuc()`).
 - Quái chỉ chết khi máu về 0 (chết thì mới tính điểm). Đòn trúng mà chưa chết thì gà nháy sáng. Hạ gà tướng không còn thưởng mạng; thay vào đó hồi `HOI_MAU_TUONG` = 60 máu (không trần) cho mỗi nhân vật còn sống.
-- Vật phẩm là quả táo (`vatPham` → `vatPhamView`), chỉ rơi từ cây đổ: mỗi cây đổ có `TAO_ROI` = 30% rơi 1 quả, đỏ hoặc xanh ngẫu nhiên 50/50 (không rơi theo thời gian, không rơi từ gà). Máu và mana không có trần: táo đỏ cộng `VP_HOI` = 100 máu, táo xanh cộng 100% mana tối đa của mọi nhóm đòn (Đá +10, Chiêu +5 lần đánh) và thể lực bay (+2 giây), mở khoá luôn (`hoiDayMana()`); cộng dồn mãi, bình mana / máu chỉ vẽ đầy tối đa. Tự hồi mana / thể lực chỉ chạy khi đang dưới mức tối đa gốc. Nhân vật (không phải mây, chưa gục) đi vào bán kính `VP_BAN_KINH` là nhặt ngay. Gà (mọi loại, kể cả gà mẹ) đi qua trong `VP_GA_BAN_KINH` thì mổ ăn táo đỏ, hồi 100 máu không trần (táo xanh gà không ăn); gà không làm cây đổ. Không ai nhặt sau `VP_TON_TAI` = 45s thì biến mất (nhấp nháy 8s cuối). Không bị sương mù.
+- Vật phẩm là quả táo (`vatPham` → `vatPhamView`), chỉ rơi từ cây đổ: mỗi cây đổ có `TAO_ROI` = 30% rơi 1 quả, đỏ hoặc xanh ngẫu nhiên 50/50 (không rơi theo thời gian, không rơi từ gà). Máu và mana không có trần: táo đỏ cộng `VP_HOI` = 100 máu, táo xanh cộng 100 mana và mở khoá bay (`hoiDayMana()`); cộng dồn mãi, bình chỉ vẽ đầy tối đa (số giữa bình là giá trị thật). Nhân vật (không phải mây, chưa gục) đi vào bán kính `VP_BAN_KINH` là nhặt ngay. Gà (mọi loại, kể cả gà mẹ) đi qua trong `VP_GA_BAN_KINH` thì mổ ăn táo đỏ, hồi 100 máu không trần (táo xanh gà không ăn); gà không làm cây đổ. Không ai nhặt sau `VP_TON_TAI` = 45s thì biến mất (nhấp nháy 8s cuối). Không bị sương mù.
 
 # Nguyên tắc mana
 
-- Mana tính riêng từng nhóm đòn (`MANA_TOI_DA`, `KHOA_MANA`, `HOI_MANA`): Đấm vô hạn · Đá 10 · Chiêu đặc biệt 5. Hết sạch thì khoá 30s rồi hồi mỗi 6s được 1 lần đánh.
-- Chỉ có một quả cầu mana trên đầu nhân vật, đổi màu theo nhóm đang dùng (`MAU_MANA`): Đấm xanh, Đá cam, Chiêu đặc biệt đỏ. Thứ tự biểu tượng dưới chân: Đấm → Chiêu đặc biệt → Đá.
+- Mana là một con số `mana` (không có trần), chỉ dùng để bay (`MANA_BAN_DAU` = 100, xem mục thể lực bay). Đấm, Đá, Chiêu đặc biệt không tốn mana, chỉ có thời gian hồi giữa 2 đòn (xem mục tốc độ đánh). Không còn mana theo nhóm đòn, không khoá 30s, không có quả cầu mana trên đầu nhân vật; mana chỉ hiện ở bình trên thanh đen hai bên.
+- Thứ tự biểu tượng dưới chân: Đấm → Chiêu đặc biệt → Đá.
 
 # Nguyên tắc chiêu Biến mây
 
 - Riêng Mabu (nhóm đòn 3, `NHOM_MAY`), Jinbu/Zinbu không có. Bấm để biến thành mây to gấp 2 trong `MAY_THOI_GIAN` = 7s, sau đó chờ `MAY_HOI` = 40s mới dùng lại.
-- Dạng mây: không có thanh máu, quả cầu mana, vòng sáng hay hàng biểu tượng nhóm đòn, không ra đòn khác, không bay (chỉ trôi, nhanh hơn). Mọi con gà chạm vùng mây (`mayQuet`) đều dính đòn `SAT_MAY` (250); gà tướng chỉ dính một lần mỗi `MAY_NHIP` giây. Đang là mây thì không nhận sát thương.
-- Mana chiêu này màu tím (`MAU_MANA[3]`): lúc mây chạy là thời gian còn lại, lúc chờ là tiến độ hồi. Biểu tượng là hình đám mây, đứng cuối cùng bên phải trong hàng biểu tượng.
+- Dạng mây: không có thanh máu, vòng sáng hay hàng biểu tượng nhóm đòn, không ra đòn khác, không bay (chỉ trôi, nhanh hơn). Mọi con gà chạm vùng mây (`mayQuet`) đều dính đòn `SAT_MAY` (250); gà tướng chỉ dính một lần mỗi `MAY_NHIP` giây. Đang là mây thì không nhận sát thương.
+- Biểu tượng Mây là hình đám mây, đứng cuối cùng bên phải trong hàng biểu tượng.
 - Mây to hơn nên dùng lề bản đồ riêng `LE_MAY` (nội suy theo `heSoTo` lúc biến hình), render lọc với lề rộng hơn.
 
 # Nguyên tắc tốc độ đánh
@@ -130,6 +130,6 @@
 
 - Cây (`trangTri` loại 0) bị đổ khi đòn / chưởng của Mabu, Zinbu bay qua trong hộp quanh thân: rộng `CAY_DO_KINH` = 90 mỗi bên (chưởng ×1,4), cao `CAY_DO_CAO` = 220 phía trên gốc (đánh vào thân / tán cũng đổ): `danDoCay()` quét đoạn bay mỗi khung hình nên bay tới đâu cây đổ tới đó. Cây đổ (`doLuc`, `huongDo`) quay 90° quanh gốc trong 0,45s rồi nằm luôn, được lưu trong `cayDo` của ván lưu. Chỉ để đẹp, không ảnh hưởng gà. Cây đã rơi táo thì biến mất ngay (`mat`, không vẽ nữa, chỉ còn quả táo).
 
-# Nguyên tắc thể lực bay
+# Nguyên tắc mana & bay
 
-- Bay có thanh thể lực riêng (`bayNl`, vẽ bình cầu xanh lơ trên thanh đen hai bên, dưới bình máu (không vẽ trên đầu nhân vật), `nlBay()`), không dùng mana của nhóm đòn. Đầy = `BAY_NL_TOI_DA` = 2 giây bay, hao theo thời gian đang bay, hồi `BAY_NL_HOI` = 0,2 / 3 ≈ 0,067 mỗi giây khi không bay (đầy lại sau ~30s). Mỗi lần bay xong khoá `BAY_KHOA` = 5s (`bayKhoa`, thanh xám) mới bay tiếp được; còn dưới `BAY_NL_TOI_THIEU` = 0,3 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); thể lực không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn.
+- Bay tốn mana (`mana`, số không có trần, bình xanh lơ có số giữa bình ở thanh đen hai bên, dưới bình máu, không vẽ trên đầu nhân vật; `manaNv()`, `nlBay()`). Bắt đầu `MANA_BAN_DAU` = 100; bay tốn `MANA_BAY` = 50 mỗi giây bay; tự hồi `MANA_HOI` = 2 mỗi giây khi không bay nhưng chỉ tới `MANA_HOI_TOI_DA` = 100 rồi thôi (táo xanh có thể đẩy cao hơn, không bị trừ xuống). Mỗi lần bay xong khoá `BAY_KHOA` = 5s (`bayKhoa`, bình xám) mới bay tiếp được; còn dưới `MANA_TOI_THIEU` = 15 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); mana không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn. Đổi cấu trúc trạng thái nên `PHIEN_BAN_LUU` = 2 (ván lưu cũ không tải được).
