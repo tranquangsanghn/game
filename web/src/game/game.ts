@@ -194,7 +194,7 @@ const TROI_THOI_GIAN = 0.8;
 // Quái chạm nhân vật thì đánh: sát thương gốc, bán kính chạm (chân với chân), thời gian chờ giữa 2 lần đánh (tốc độ đánh)
 const SAT_GA: Record<string, number> = { hen: 32, rooster: 48, flyer: 60, boss: 80 };
 const CHAM_GA: Record<string, number> = { hen: 70, rooster: 70, flyer: 70, boss: 220 };
-const HOI_DANH_GA: Record<string, number> = { hen: 1.2, rooster: 0.8, flyer: 1.5, boss: 2.5 };
+const HOI_DANH_GA: Record<string, number> = { hen: 1.2, rooster: 0.8, flyer: 1.5, boss: 2 };
 // Gà tướng hồi sinh tối đa TUONG_HOI_SINH lần; mỗi lần sau sát thương nhân TUONG_TANG_SAT so với lần trước, tỉ lệ né cộng thêm TUONG_TANG_NE (tối đa NE_TOI_DA)
 const TUONG_HOI_SINH = 2;
 const TUONG_TANG_SAT = 0.5;
@@ -213,8 +213,8 @@ const MAU_PHU = ['#3fa7ff', '#ffd23f', '#b46bff', '#ff6bd6', '#ff3b30'];
 // Nhuộm cả thân theo màu của con đó, chỉ giữ đầu trắng, mỏ và chân (tiền tố "tint:" được ve-canvas.ts nhận ra)
 const LOC_PHU = MAU_PHU.map((m) => `tint:${m}`);
 // Hồi chiêu riêng của kiểu chuyên: kiểu Lao hồi 8s, kiểu Bay hồi 12s (gà mẹ khác theo LAO_HOI / BAY_HOI)
-const LAO_HOI_CHUYEN = 8;
-const BAY_HOI_CHUYEN = 12;
+const LAO_HOI_CHUYEN = 6;
+const BAY_HOI_CHUYEN = 9;
 const MAU_CHU_KY_CHUYEN = 12;
 // Sau mỗi lần Lao / Bay gà mẹ lộ sơ hở SO_HO giây: không né được đòn nào. Giữa 2 chiêu bất kỳ (Lao, Bay, đổi màu) nghỉ ít nhất CHIEU_NGHI_CHUNG giây, và các chiêu không chạy cùng lúc.
 const SO_HO = 3;
@@ -225,10 +225,10 @@ const TRUNG_THEM: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'rooster', 'hen'];
 // Chiêu Bay: TOC_BAY_THAT px/s, sát thương gấp BAY_SAT, hồi BAY_HOI giây. Cả hai đi thẳng một đường, trúng mỗi nhân vật một lần, nhân vật vẫn né được.
 const TOC_LAO_THAT = 500;
 const LAO_SAT = 2;
-const LAO_HOI = 15;
+const LAO_HOI = 12;
 const TOC_BAY_THAT = 700;
 const BAY_SAT = 3;
-const BAY_HOI = 20;
+const BAY_HOI = 15;
 // Báo hiệu trước khi phóng (giây), nghỉ sau khi xong, quãng đường = khoảng cách tới mục tiêu + CHIEU_QUANG_THEM (tối đa CHIEU_QUANG_TOI_DA), độ cao lúc bay
 const CHIEU_BAO = 1;
 const CHIEU_NGHI = 1;
@@ -388,7 +388,7 @@ const LOC_VANG = 'sepia(1) saturate(5) hue-rotate(-12deg) brightness(1.25)';
 const LOC_DO = 'sepia(1) saturate(7) hue-rotate(-52deg) brightness(1.05)';
 // Gà tướng: máu, thời gian chờ giữa 2 lần xuất hiện (giây), tốc độ đi
 const CHO_TUONG_DAU = 0;
-const CHO_TUONG = 30;
+const CHO_TUONG = 10;
 const TOC_DO_TUONG = 60;
 // Gà tướng đẻ trứng: mỗi lượt 4 quả thường (2 gà trắng, 1 gà đỏ, 1 gà đen, DAN_TRUNG) rồi quả thứ 5 là trứng đỏ đặc biệt, trứng nở sau TRUNG_NO giây, cách nhau TRUNG_CHO giây.
 // Tổng số gà (kể cả gà tướng) + trứng đang ấp đạt GA_TOI_DA thì không đẻ nữa.
@@ -1745,13 +1745,28 @@ export class Game {
     const co = this.nguoi.filter((n) => !n.vang);
     const mx = co.reduce((t, n) => t + n.x, 0) / co.length;
     const my = co.reduce((t, n) => t + n.y, 0) / co.length;
-    // Xuất hiện ở chỗ ngẫu nhiên trên map, cách cả hai nhân vật ít nhất 2000
     let x = MAP / 2;
     let y = MAP / 2;
-    for (let i = 0; i < 30; i++) {
-      x = ngauNhien(600, MAP - 600);
-      y = ngauNhien(600, MAP - 600);
-      if (co.every((n) => Math.hypot(n.x - x, n.y - y) >= 2000)) break;
+    if (lan === 0) {
+      // Lần đầu: xuất hiện ở chỗ ngẫu nhiên trên map, cách cả hai nhân vật ít nhất 2000
+      for (let i = 0; i < 30; i++) {
+        x = ngauNhien(600, MAP - 600);
+        y = ngauNhien(600, MAP - 600);
+        if (co.every((n) => Math.hypot(n.x - x, n.y - y) >= 2000)) break;
+      }
+    } else {
+      // Hồi sinh: ở điểm xa nhất so với Mabu / Zinbu lúc hồi sinh (lớn nhất khoảng cách tới nhân vật gần nhất), dò lưới trên map
+      const LE = 400;
+      const BUOC = 24;
+      let tot = -1;
+      for (let i = 0; i <= BUOC; i++) {
+        for (let j = 0; j <= BUOC; j++) {
+          const cx = LE + ((MAP - 2 * LE) * i) / BUOC;
+          const cy = LE + ((MAP - 2 * LE) * j) / BUOC;
+          const d = Math.min(...co.map((n) => Math.hypot(n.x - cx, n.y - cy)));
+          if (d > tot) { tot = d; x = cx; y = cy; }
+        }
+      }
     }
     this.ga.push(this.taoTuong(x, y, x > mx, lan, true));
     const chuTuong = lan === 0 ? '🐔 GÀ TƯỚNG XUẤT HIỆN!' : `🐔 GÀ TƯỚNG HỒI SINH LẦN ${lan}!`;
