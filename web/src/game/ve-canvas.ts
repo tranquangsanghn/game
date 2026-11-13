@@ -1,8 +1,8 @@
-import type { Tiec } from './tiec';
+import type { ChuongTiec, Tiec } from './tiec';
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
 import { capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, SO_CAP, SP_CELL, type Cell } from './cell';
-import { BANH_FPS, BANH_KHUNG, loiDangHat, LOI, notDangHat, SP_BANH, TIEC_CHUONG_T } from './tiec';
+import { BANH_FPS, BANH_KHUNG, loiDangHat, LOI, notDangHat, SP_BANH, SP_CELL_TIEC, CHUONG_TIEC, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { bamDiem, doSau, doSauVuon, nhieu, TG } from './ban-do';
 
@@ -633,25 +633,8 @@ export class VeCanvas {
     for (const g of c.gaBayView) this.veGa(ctx, c, g);
     this.veMbDem(ctx, c);
 
-    // Chưởng của Cell bắn vào bánh sinh nhật (quả cầu ki xanh lá có đuôi)
-    for (const q of c.chuongTiecView) {
-      const k = q.t / TIEC_CHUONG_T;
-      const x = q.x0 + (q.x1 - q.x0) * k, y = q.y0 + (q.y1 - q.y0) * k;
-      const x2 = q.x0 + (q.x1 - q.x0) * Math.max(0, k - 0.3), y2 = q.y0 + (q.y1 - q.y0) * Math.max(0, k - 0.3);
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = 'rgba(150,255,110,0.55)';
-      ctx.lineWidth = 26;
-      ctx.beginPath();
-      ctx.moveTo(x2, y2);
-      ctx.lineTo(x, y);
-      ctx.stroke();
-      this.sang(ctx, '#7dff5a');
-      duongTron(ctx, 24, x, y);
-      ctx.fillStyle = '#e9ffd6';
-      ctx.fill();
-      ctx.restore();
-    }
+    // Kamehameha của Cell bắn vào bánh sinh nhật
+    for (const q of c.chuongTiecView) this.veChuongTiec(ctx, q);
 
     for (let p = 0; p < c.nguoi.length; p++) this.veThanhTrenDau(ctx, c, p);
     for (const g of c.tuongView) this.veMauTuong(ctx, c, g);
@@ -1023,6 +1006,31 @@ export class VeCanvas {
     ctx.restore();
   }
 
+  // Kamehameha xanh bắn từ tay Cell vào bánh: quả gốc ở tay, thân ống kéo dài, đầu bay tới bánh (ảnh cell_chuong.png cắt 3 khúc)
+  private veChuongTiec(ctx: CanvasRenderingContext2D, q: ChuongTiec): void {
+    const img = this.nguon(CHUONG_TIEC.atlas, null);
+    if (!img) return;
+    const f = (img instanceof HTMLImageElement ? img.naturalWidth : (img as HTMLCanvasElement).width) / CHUONG_TIEC.w;
+    const { w, h, bw, nk0, nk1, hx } = CHUONG_TIEC;
+    const s = q.k * 0.5;
+    const dx = q.x1 - q.x0, dy = q.y1 - q.y0;
+    const D = Math.hypot(dx, dy) / s;
+    const e = Math.min(1, q.t / TIEC_CHUONG_T);
+    const hw = w - hx;
+    const dau = Math.max(bw * 0.6, bw * 0.6 + (D - hw - bw * 0.6) * e);
+    ctx.save();
+    ctx.translate(q.x0, q.y0);
+    ctx.rotate(Math.atan2(dy, dx));
+    ctx.scale(s, s);
+    ctx.imageSmoothingEnabled = false;
+    this.sang(ctx, '#7fc4ff');
+    const ve = (sx: number, sw: number, dxx: number, dw: number) => ctx.drawImage(img, sx * f, 0, sw * f, h * f, dxx, -h / 2, dw, h);
+    ve(nk0, nk1 - nk0, bw * 0.5, Math.max(0, dau - bw * 0.5 + 2));
+    ve(0, bw, 0, bw);
+    ve(hx, hw, dau, hw);
+    ctx.restore();
+  }
+
   // Cell: sprite pixel art (không làm mịn), neo ở chân, quay mặt về phía nhân vật; cấp 4 phát sáng đỏ cam; xác mờ dần
   private veCell(ctx: CanvasRenderingContext2D, c: Game, ce: Cell): void {
     const k = cellK(ce.cap);
@@ -1038,7 +1046,13 @@ export class VeCanvas {
       ctx.shadowBlur = 18 * ctx.getTransform().a;
     }
     // Hàng của mỗi cấp trong atlas: đổi khung = cấp * số cột + khung
-    this.sprite(ctx, SP_CELL, ce.cap * SP_CELL.cot + c.cellKhung(ce), ce.lat, false);
+    // Đang vận nội công / phóng chưởng vào bánh: dùng atlas riêng (gồng, hào quang, phóng); hào quang đập nhẹ, thân rung khi gồng
+    const kt = c.cellTiecKhung(ce);
+    if (kt !== null) {
+      if (kt < 3) ctx.scale(1 + 0.04 * Math.sin(c.t * 30), 1 + 0.04 * Math.sin(c.t * 30));
+      else if (kt === 3) ctx.translate(Math.sin(c.t * 70) * 0.8, 0);
+      this.sprite(ctx, SP_CELL_TIEC, ce.cap * SP_CELL_TIEC.cot + kt, ce.lat, false);
+    } else this.sprite(ctx, SP_CELL, ce.cap * SP_CELL.cot + c.cellKhung(ce), ce.lat, false);
     if (tiec && notDangHat(tcc!.t) >= 0) {
       ctx.shadowBlur = 0;
       ctx.font = `bold 9px ${FONT}`;

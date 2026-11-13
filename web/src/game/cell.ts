@@ -52,6 +52,8 @@ export interface Cell {
   tiec?: boolean; banTiec?: number;
   /** đảo của tiệc đang dự và góc hiện tại trên vòng quanh bánh */
   dao?: number; goc?: number;
+  /** giây đã trôi trong chu trình gồng → hào quang → phóng chưởng vào bánh (chưa vào chu trình thì không có) */
+  nap?: number;
 }
 
 /** Cấp Cell của đảo `i`: đảo 0 (lớn nhất) cấp 4, đảo 1..4 cấp 0..3 */

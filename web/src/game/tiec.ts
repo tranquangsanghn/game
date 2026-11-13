@@ -17,9 +17,21 @@ export const TIEC_BK = 280;
 /** Cell đang tiệc chỉ ngửi thấy nhân vật trong tầm này (nhỏ hơn bình thường: đang mải hát) */
 export const TIEC_NGUI = 450;
 /** Mỗi Cell bắn chưởng vào bánh cách nhau (giây), chưởng bay `TIEC_CHUONG_T` giây */
-export const TIEC_BAN_MIN = 1.1;
-export const TIEC_BAN_MAX = 2.4;
-export const TIEC_CHUONG_T = 0.55;
+export const TIEC_BAN_MIN = 2;
+export const TIEC_BAN_MAX = 5;
+/** Chưởng (kamehameha) bay tới bánh trong `TIEC_CHUONG_T` giây */
+export const TIEC_CHUONG_T = 0.7;
+/** Chu trình bắn của Cell dự tiệc (giây): gồng (tư thế hai tay ở hông) → vận nội công (hào quang vàng bùng lên) → phóng chưởng (đứng yên phóng) */
+export const TIEC_GONG = 0.35;
+export const TIEC_AURA = 0.9;
+export const TIEC_PHONG = 0.7;
+/** Atlas gồng / hào quang / phóng chưởng của từng cấp (hàng = cấp): cột 0–2 hào quang, 3 gồng, 4 phóng; tách bằng tools/tao-atlas-cell-tiec.py */
+export const SP_CELL_TIEC: KhungSprite = { atlas: 'assets/game/cell_tiec.png', atlasW: 400, atlasH: 320, w: 80, h: 64, cot: 5, neoX: 40, neoY: 60 };
+/** Chùm kamehameha xanh: ảnh 107×43 gồm quả gốc [0, bw), thân ống (dải [nk0, nk1) kéo dài), đầu [hx, w) */
+export const CHUONG_TIEC = { atlas: 'assets/game/cell_chuong.png', w: 107, h: 43, bw: 38, nk0: 44, nk1: 58, hx: 62 };
+/** Tay Cell cách giữa thân (nhân độ to) và cao hơn chân (nhân độ to) lúc phóng chưởng */
+export const TIEC_TAY_X = 16;
+export const TIEC_TAY_Y = 17;
 
 export interface Tiec {
   dao: number; x: number; y: number; on: boolean; t: number;
@@ -27,7 +39,7 @@ export interface Tiec {
   to: number; bk: number;
 }
 /** Chưởng đang bay từ Cell tới bánh (chỉ để đẹp, không lưu ván) */
-export interface ChuongTiec { id: number; x0: number; y0: number; x1: number; y1: number; t: number }
+export interface ChuongTiec { id: number; x0: number; y0: number; x1: number; y1: number; t: number; k: number }
 
 // ─── Bài hát ───
 export const TEMPO = 0.5; // giây mỗi nhịp
