@@ -261,7 +261,7 @@ const BAY_KHI_XA = 450;
 const BAY_TOI_DA = 1200;
 // Mana: bắt đầu MANA_BAN_DAU, trần MANA_TOI_DA. Dùng để bay (MANA_BAY mỗi giây bay), bắn Chiêu đặc biệt (MANA_CHUONG mỗi chưởng) và Biến mây / socola (MANA_DAC_BIET).
 // Đấm / Đá trúng thì hồi MANA_DAM. Tự hồi MANA_HOI mỗi giây khi không bay (chỉ hồi tới MANA_HOI_TOI_DA rồi thôi, táo xanh / đòn trúng có thể đẩy cao hơn tới trần); còn dưới MANA_TOI_THIEU thì không bay. Mỗi lần bay xong khoá BAY_KHOA giây mới bay tiếp.
-const MANA_BAN_DAU = 100;
+const MANA_BAN_DAU = 200;
 const MANA_TOI_DA = 200;
 const MANA_HOI_TOI_DA = 100;
 const MANA_DAM = 5;
@@ -1026,18 +1026,12 @@ export class Game {
   }
 
   private hoiMana(n: NguoiChoi, luong: number): void {
-    n.mana = Math.min(MANA_TOI_DA, n.mana + luong);
+    n.mana += luong;
   }
 
-  // Hồi máu có trần HP_NV; phần vượt trần thành khiên tạm (tối đa KHIEN_TOI_DA, đếm lại KHIEN_THOI_GIAN giây)
+  // Hồi máu không giới hạn (ăn táo / socola / hạ gà mẹ cộng thẳng vào máu, không còn trần hay khiên)
   private hoiMau(n: NguoiChoi, luong: number): void {
-    const truoc = n.hp;
-    n.hp = Math.min(HP_NV, n.hp + luong);
-    const thua = luong - (n.hp - truoc);
-    if (thua > 0) {
-      n.khien = Math.min(KHIEN_TOI_DA, n.khien + thua);
-      n.khienCon = KHIEN_THOI_GIAN;
-    }
+    n.hp += luong;
   }
 
   private dieuKhien(dt: number): void {
@@ -2854,7 +2848,7 @@ export class Game {
 
   /** 0..1: độ đầy của bình mana (so với trần MANA_TOI_DA) */
   nlBay(p: number): number {
-    return Math.min(1, this.nguoi[p].mana / MANA_TOI_DA);
+    return Math.min(1, this.nguoi[p].mana / Math.max(MANA_TOI_DA, this.nguoi[p].mana));
   }
 
   private datDichThe(p: number, x: number, y: number): void {
@@ -2947,7 +2941,7 @@ export class Game {
   }
 
   mauNv(p: number): number {
-    return Math.min(1, Math.max(0, this.nguoi[p].hp) / HP_NV);
+    return Math.min(1, Math.max(0, this.nguoi[p].hp) / Math.max(HP_NV, this.nguoi[p].hp));
   }
 
   /** Số mạng còn lại của gà mẹ (tổng TUONG_HOI_SINH + 1 mạng; đang chờ hồi sinh thì mạng vừa chết không tính) */
