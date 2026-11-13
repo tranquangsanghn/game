@@ -451,8 +451,6 @@ export class VeCanvas {
       x.putImageData(d, 0, 0);
       this.tongSa = cv;
     }
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(this.tongSa, TG.x0, TG.y0, RX, RY);
     // Vùng thế giới đang thấy (theo phép camera), lấn thêm một chút cho rung màn hình
     const cam = c.gocCamera();
     const x0 = -cam.x / cam.k - 40, x1 = (c.W - cam.x) / cam.k + 40;
@@ -463,7 +461,9 @@ export class VeCanvas {
     const j0 = Math.floor((y0 - TG.y0) / MANH), j1 = Math.floor((y1 - TG.y0) / MANH);
     // Mảnh cần dựng: trong khung nhìn (ưu tiên, gần tâm trước) rồi vòng một mảnh bên ngoài (dựng trước cho chỗ sắp bay tới)
     const cho: { khoa: string; mi: number; mj: number; uu: number }[] = [];
+    const ve: { m: HTMLCanvasElement; ox: number; oy: number }[] = [];
     const muon = new Set<string>();
+    let thieu = false; // có mảnh trong khung nhìn chưa dựng xong: cần lớp lót để không lộ nền đen
     for (let mj = Math.max(0, j0 - 1); mj <= Math.min(sy - 1, j1 + 1); mj++) {
       for (let mi = Math.max(0, i0 - 1); mi <= Math.min(sx - 1, i1 + 1); mi++) {
         const ox = TG.x0 + mi * MANH, oy = TG.y0 + mj * MANH;
@@ -475,14 +475,19 @@ export class VeCanvas {
         if (m) {
           this.manhSa.delete(khoa);
           this.manhSa.set(khoa, m);
-          // Chồng mép 1 đơn vị để không lộ đường nối giữa các mảnh
-          if (thay) ctx.drawImage(m, ox, oy, MANH + 1, MANH + 1);
+          if (thay) ve.push({ m, ox, oy });
         } else if (this.vanCat) {
           muon.add(khoa);
+          if (thay) thieu = true;
           cho.push({ khoa, mi, mj, uu: (thay ? 0 : 1e9) + Math.hypot(ox + MANH / 2 - cx, oy + MANH / 2 - cy) });
-        }
+        } else if (thay) thieu = true;
       }
     }
+    // Mỗi lần phủ kín màn hình có làm mịn rất tốn: chỉ vẽ ảnh lót (thô) khi còn mảnh chưa dựng xong, bình thường chỉ vẽ các mảnh
+    ctx.imageSmoothingEnabled = true;
+    if (thieu) ctx.drawImage(this.tongSa, TG.x0, TG.y0, RX, RY);
+    // Chồng mép 1 đơn vị để không lộ đường nối giữa các mảnh
+    for (const v of ve) ctx.drawImage(v.m, v.ox, v.oy, MANH + 1, MANH + 1);
     // Bỏ phần dựng dở của mảnh không còn cần (giải phóng bộ nhớ)
     for (const k of this.viecManh.keys()) if (!muon.has(k)) this.viecManh.delete(k);
     if (!cho.length) return;
