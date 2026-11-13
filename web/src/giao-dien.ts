@@ -1,5 +1,6 @@
 import { Game } from './game/game';
 import { MABU, ZINBU } from './game/nhan-vat-du-lieu';
+import { GA_TUONG, KHUNG_DUNG } from './game/ga-du-lieu';
 import { BanLuu, DiemCao, bangDiem, guiDiem, layLuu, luuGame, nhoTen, tenDaNho, xoaLuu } from './may-chu';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -205,6 +206,15 @@ export class GiaoDien {
     return `<span class="anh-nv" style="width:${(x1 - x0) * tiLe}px;height:${(y1 - y0) * tiLe}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * tiLe}px ${sp.atlasH * tiLe}px;background-position:-${gx * tiLe}px -${gy * tiLe}px"></span>`;
   }
 
+  /** Ảnh vua gà (gà tướng, khung đứng đầu tiên, không chạy animation) cho màn mục tiêu */
+  private anhVuaGa(tiLe: number): string {
+    const sp = GA_TUONG;
+    const k = KHUNG_DUNG[0]!;
+    const gx = (k % sp.cot) * sp.w;
+    const gy = Math.floor(k / sp.cot) * sp.h;
+    return `<span class="anh-nv" style="image-rendering:auto;width:${sp.w * tiLe}px;height:${sp.h * tiLe}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * tiLe}px ${sp.atlasH * tiLe}px;background-position:-${gx * tiLe}px -${gy * tiLe}px"></span>`;
+  }
+
   private htmlBatDau(): string {
     const the = (act: string, mau: string, anh: string, chu: string) =>
       `<button type="button" tabindex="-1" class="the-chon" data-act="${act}" style="--mau:${mau}"><span class="the-anh">${anh}</span><span class="the-chu">${chu}</span></button>`;
@@ -237,6 +247,7 @@ export class GiaoDien {
   private htmlMucTieu(): string {
     const tay = this.game.cheDo === 'tayCam';
     return `<div class="man-phu man-chon man-hd">
+      ${this.anhVuaGa(2.6)}
       <p class="muc-tieu">Bạn phải tiêu diệt vua gà để thắng game</p>
       <div class="nhom-nut">
         <button type="button" tabindex="-1" class="nut-phu" data-act="quay">◀ Quay lại</button>
