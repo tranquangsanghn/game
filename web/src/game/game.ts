@@ -682,6 +682,8 @@ export class Game {
   readonly EP_GA = EP_GA;
 
   man: ManChoi = 'start';
+  /** Chỗ vua gà xuất hiện lần đầu (chốt lúc vào ván để nhân vật xuất phát ở góc xa nhất) */
+  private viTriVua: { x: number; y: number } | null = null;
   nguoi: NguoiChoi[] = this.taoNguoiChoi();
   ga: Ga[] = [];
   /** Gà con đã hoá socola đang bị kéo về nhân vật để ăn (không còn trong this.ga, không chạy AI) */
@@ -873,8 +875,14 @@ export class Game {
     if (this.banDo === 'sa') chuanBiSaMac();
     this.trangTri = this.banDo === 'sa' ? [...taoTrangTri(), ...taoTrangTriSa()] : taoTrangTri();
     this.nguoi = this.taoNguoiChoi();
-    // Đảo sa mạc: nhân vật xuất phát giữa đảo lớn nhất (vườn gà ở giữa không vào được)
-    if (this.banDo === 'sa') this.nguoi.forEach((n) => { n.x += XUAT_PHAT.x - MAP / 2; n.y += XUAT_PHAT.y - MAP / 2; });
+    // Nhân vật xuất phát ở góc vườn gà xa vua gà nhất: chốt chỗ vua gà xuất hiện trước, rồi chọn góc xa nó nhất
+    this.viTriVua = { x: ngauNhien(600, MAP - 600), y: ngauNhien(600, MAP - 600) };
+    const le = TUONG + 320;
+    const goc = [[le, le], [MAP - le, le], [le, MAP - le], [MAP - le, MAP - le]] as const;
+    const [gx, gy] = goc.reduce((a, b) => (Math.hypot(b[0] - this.viTriVua!.x, b[1] - this.viTriVua!.y) > Math.hypot(a[0] - this.viTriVua!.x, a[1] - this.viTriVua!.y) ? b : a));
+    const vao = gx < MAP / 2 ? 1 : -1;
+    const xuong = gy < MAP / 2 ? 1 : -1;
+    this.nguoi.forEach((n, p) => { n.x = gx + (this.cheNguoi === 'ca2' ? (p === 0 ? 0 : 170 * vao) : 0); n.y = gy + (this.cheNguoi === 'ca2' ? (p === 0 ? 0 : 60 * xuong) : 0); });
     this.chonNguoiDau();
     this.ga = [];
     this.keoGa = [];
@@ -1965,7 +1973,11 @@ export class Game {
     const my = co.reduce((t, n) => t + n.y, 0) / co.length;
     let x = MAP / 2;
     let y = MAP / 2;
-    if (lan === 0) {
+    if (lan === 0 && this.viTriVua) {
+      // Lần đầu: ở chỗ đã chốt lúc vào ván (xa góc nhân vật xuất phát nhất)
+      x = this.viTriVua.x;
+      y = this.viTriVua.y;
+    } else if (lan === 0) {
       // Lần đầu: xuất hiện ở chỗ ngẫu nhiên trên map, cách cả hai nhân vật ít nhất 2000
       for (let i = 0; i < 30; i++) {
         x = ngauNhien(600, MAP - 600);
