@@ -25,6 +25,8 @@ export class GiaoDien {
   private veLanCuoi = '';
   /** Đang ở màn hướng dẫn (sau khi chọn nhân vật, trước khi vào game) */
   private huongDan: 'mabu' | 'zinbu' | 'ca2' | null = null;
+  /** Bước cuối sau màn hướng dẫn: màn mục tiêu (diệt vua gà), bấm Vào chơi mới bắt đầu */
+  private buocMucTieu = false;
 
   // Trạng thái nói chuyện với máy chủ
   private ten = tenDaNho();
@@ -80,7 +82,7 @@ export class GiaoDien {
     this.game.onManPhu = () => this.veManPhu();
     // Tay cầm bấm ✕ / Options ở màn bắt đầu: mở hướng dẫn, bấm lần nữa mới vào chơi
     this.game.onNutBatDau = () => {
-      if (this.huongDan) void this.lam('vao');
+      if (this.huongDan) void this.lam(this.buocMucTieu ? 'vao' : 'muc');
       else void this.lam(this.game.cheNguoi);
     };
     this.game.onKetThuc = (kq) => void this.ketThuc(kq);
@@ -103,12 +105,18 @@ export class GiaoDien {
         // Chọn nhân vật xong thì sang màn hướng dẫn, bấm Vào chơi mới bắt đầu
         this.thongBao = { text: '', loi: false };
         this.huongDan = act;
+        this.buocMucTieu = false;
         break;
+      case 'muc': this.buocMucTieu = true; break;
       case 'vao':
         if (this.huongDan) g.batDau(this.huongDan);
         this.huongDan = null;
+        this.buocMucTieu = false;
         break;
-      case 'quay': this.huongDan = null; break;
+      case 'quay':
+        if (this.buocMucTieu) this.buocMucTieu = false;
+        else this.huongDan = null;
+        break;
       case 'moi':
         this.thongBao = { text: '', loi: false };
         g.batDau();
@@ -178,7 +186,7 @@ export class GiaoDien {
     this.khung.classList.toggle('tren-bang', g.trenBang && g.cheDo === 'chuot');
     this.nutDung.style.display = g.man === 'play' ? '' : 'none';
 
-    const html = g.man === 'start' ? (this.huongDan ? this.htmlHuongDan() : this.htmlBatDau()) : g.man === 'pause' ? this.htmlTamDung() : g.man === 'over' ? this.htmlKetThuc() : '';
+    const html = g.man === 'start' ? (this.huongDan ? (this.buocMucTieu ? this.htmlMucTieu() : this.htmlHuongDan()) : this.htmlBatDau()) : g.man === 'pause' ? this.htmlTamDung() : g.man === 'over' ? this.htmlKetThuc() : '';
     if (!ep && html === this.veLanCuoi) return;
     this.veLanCuoi = html;
     this.phu.innerHTML = html;
@@ -221,6 +229,17 @@ export class GiaoDien {
       ${noiDung}
       <div class="nhom-nut">
         <button type="button" tabindex="-1" class="nut-phu" data-act="quay">◀ Chọn lại</button>
+        <button type="button" tabindex="-1" class="nut-chinh" data-act="muc">${tay ? 'Tiếp (✕)' : 'Tiếp'}</button>
+      </div></div>`;
+  }
+
+  /** Màn mục tiêu, sau màn hướng dẫn: nói rõ điều kiện thắng rồi bấm Vào chơi */
+  private htmlMucTieu(): string {
+    const tay = this.game.cheDo === 'tayCam';
+    return `<div class="man-phu man-chon man-hd">
+      <p class="muc-tieu">Bạn phải tiêu diệt vua gà để thắng game</p>
+      <div class="nhom-nut">
+        <button type="button" tabindex="-1" class="nut-phu" data-act="quay">◀ Quay lại</button>
         <button type="button" tabindex="-1" class="nut-chinh" data-act="vao">${tay ? 'Vào chơi (✕)' : 'Vào chơi'}</button>
       </div></div>`;
   }

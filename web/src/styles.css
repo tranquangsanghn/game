@@ -262,3 +262,5 @@ kbd {
 .hd-chuot { color: #fff; font-size: 18px; line-height: 1.6; text-align: left; }
 .hd-chuot p { margin: 4px 0; }
 .man-hd .nhom-nut { margin-top: 0; }
+
+.muc-tieu { color: #fff; font-size: 32px; font-weight: 800; text-align: center; margin: 0 24px 24px; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
