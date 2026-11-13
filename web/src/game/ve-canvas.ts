@@ -154,7 +154,7 @@ export class VeCanvas {
       ctx.globalAlpha = 1;
     }
 
-    for (const p of [0, 1]) this.veThanhBen(ctx, c, p);
+    for (const p of [0, 1]) if (!c.nguoi[p].vang) this.veThanhBen(ctx, c, p);
     this.veThanhTuong(ctx, c);
     if (c.man === 'play' || c.man === 'pause') this.veHud(ctx, c);
   }
@@ -462,7 +462,7 @@ export class VeCanvas {
   // Thanh máu trên đầu nhân vật; dạng mây thì không có
   private veThanhTrenDau(ctx: CanvasRenderingContext2D, c: Game, p: number): void {
     const n = c.nguoi[p];
-    if (n.nv.laMay) return;
+    if (n.vang || n.nv.laMay) return;
     const t = c.thanhTrenDau(p);
     ctx.save();
     ctx.translate(t.x, t.y);
@@ -768,6 +768,7 @@ export class VeCanvas {
     }
     ctx.textAlign = 'start';
     for (const p of [0, 1]) {
+      if (c.nguoi[p].vang) continue;
       const mt = c.muiTen(p);
       if (!mt) continue;
       ctx.save();

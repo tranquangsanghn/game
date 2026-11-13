@@ -88,8 +88,12 @@ export class GiaoDien {
   private async lam(act: string): Promise<void> {
     const g = this.game;
     switch (act) {
-      case 'chuot': g.datCheDo('chuot'); break;
-      case 'tayCam': g.datCheDo('tayCam'); break;
+      case 'mabu':
+      case 'zinbu':
+      case 'ca2':
+        this.thongBao = { text: '', loi: false };
+        g.batDau(act);
+        break;
       case 'moi':
         this.thongBao = { text: '', loi: false };
         g.batDau();
@@ -167,51 +171,25 @@ export class GiaoDien {
     if (cho) cho.replaceWith(this.oTen);
   }
 
-  private chanDung(i: number): string {
-    const nv = this.game.nguoi[i].nv;
-    const sp = nv.sp;
-    const s = 0.9;
-    // Khung cố định (không chạy animation) để HTML màn phủ không bị dựng lại mỗi khung hình, nếu không nút bấm sẽ mất giữa lúc nhấn và nhả
+  /** Ảnh nhân vật (khung đứng yên đầu tiên của animation idle, cắt sát hình) để hiện trên thẻ chọn */
+  private anhNv(i: number, tiLe: number): string {
+    const sp = i === 0 ? MABU : ZINBU;
+    const [x0, y0, x1, y1] = i === 0 ? [54, 22, 89, 83] : [29, 24, 66, 70];
     const k = sp.anim['idle'].f[0];
-    const x = (k % sp.cot) * sp.w * s;
-    const y = Math.floor(k / sp.cot) * sp.h * s;
-    return `<div class="chan-dung" style="width:${sp.w * s}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * s}px ${sp.atlasH * s}px;background-position:-${x}px -${y}px;height:${sp.h * s}px;margin-top:10px"></div>`;
+    const gx = (k % sp.cot) * sp.w + x0;
+    const gy = Math.floor(k / sp.cot) * sp.h + y0;
+    // Khung cố định (không chạy animation) để HTML màn phủ không bị dựng lại mỗi khung hình, nếu không nút bấm sẽ mất giữa lúc nhấn và nhả
+    return `<span class="anh-nv" style="width:${(x1 - x0) * tiLe}px;height:${(y1 - y0) * tiLe}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * tiLe}px ${sp.atlasH * tiLe}px;background-position:-${gx * tiLe}px -${gy * tiLe}px"></span>`;
   }
 
   private htmlBatDau(): string {
-    const g = this.game;
-    const chuot = g.cheDo === 'chuot';
-    const the = (i: number) => {
-      const ten = (i === 0 ? MABU : ZINBU).ten;
-      const mo = chuot
-        ? i === 0
-          ? `<h3>1P ${ten} · chuột</h3><p><b>Chuột phải</b>: chạy tới (xa thì bay)<br><b>Chuột trái</b>: ra đòn<br><b>Bấm vào chiêu</b> ở thanh đen bên trái: đổi nhóm đòn (hoặc phím <b>1 2 3 4</b>)<br><b>Tab</b>: chuyển chuột sang nhân vật kia</p>`
-          : `<h3>2P ${ten} · chuột</h3><p>Điều khiển giống Mabu, chiêu thức ở thanh đen bên phải.<br>Chỉ có 1 chuột: bấm <b>Tab</b> để chuyển chuột sang Zinbu</p>`
-        : i === 0
-          ? `<h3>1P ${ten} · tay cầm 1</h3><p><b>Cần trái</b>: chạy · <b>Cần phải</b>: ngắm (không gạt thì tự ngắm)<br><b>✕ / R2</b>: ra đòn (giữ để đánh liên tục) · <b>○ / L2</b>: bay<br><b>L1 / R1</b>: đổi chiêu · <b>Options</b>: tạm dừng</p>`
-          : `<h3>2P ${ten} · tay cầm 2</h3><p>Điều khiển giống Mabu.<br>Chỉ có 1 tay cầm: bấm <b>Share</b> (Select) để chuyển tay cầm sang Zinbu</p>`;
-      return `<div class="the ${i === 0 ? 'teo' : 'ty'}">${this.chanDung(i)}${mo}</div>`;
-    };
-    const tay = chuot ? '' : `<p class="phu">${
-      g.tayCamTen.length
-        ? `🎮 Đã nối ${g.tayCamTen.length} tay cầm: ${esc(g.tayCamTen.join(' · '))}${g.tayCamNut ? ' · vừa bấm ' + esc(String(g.tayCamNut)) : ''}`
-        : '🎮 Chưa thấy tay cầm: nối tay cầm rồi bấm một nút bất kỳ trên nó'}</p>`;
-    return `<div class="man-phu"><div class="hop">
-      <h1>🐉 Dragon Ball</h1>
-      <div class="chon-che-do" role="group" aria-label="Chế độ chơi">
-        <button type="button" tabindex="-1" class="che-do ${chuot ? 'chon' : ''}" data-act="chuot">🖱️ Chuột + Tab</button>
-        <button type="button" tabindex="-1" class="che-do ${chuot ? '' : 'chon'}" data-act="tayCam">🎮 Tay cầm</button>
-      </div>
-      <div class="o-ten"><label>Tên người chơi:</label><span id="cho-ten"></span></div>
-      ${this.htmlLuu()}
-      <div class="hai-cot">${the(0)}${the(1)}</div>
-      ${tay}
-      <div class="nhom-nut">
-        ${this.luu ? '<button type="button" tabindex="-1" class="nut-chinh" data-act="tiep">▶ Chơi tiếp ván đã lưu</button>' : ''}
-        <button type="button" tabindex="-1" class="${this.luu ? 'nut-phu' : 'nut-chinh'}" data-act="moi">${this.luu ? 'Ván mới' : chuot ? 'Bắt đầu' : 'Bắt đầu (✕ / Options)'}</button>
-      </div>
-      ${this.htmlThongBao()}
-    </div></div>`;
+    const the = (act: string, mau: string, anh: string, chu: string) =>
+      `<button type="button" tabindex="-1" class="the-chon" data-act="${act}" style="--mau:${mau}"><span class="the-anh">${anh}</span><span class="the-chu">${chu}</span></button>`;
+    return `<div class="man-phu man-chon"><div class="hang-the">
+      ${the('mabu', '#ec4899', this.anhNv(0, 3.4), '1 người chơi')}
+      ${the('zinbu', '#facc15', this.anhNv(1, 3.4), '1 người chơi')}
+      ${the('ca2', '#38bdf8', this.anhNv(0, 2.4) + this.anhNv(1, 2.4), '2 người chơi')}
+    </div>${this.luu ? '<button type="button" tabindex="-1" class="nut-phu" data-act="tiep" style="margin-top:20px">▶ Chơi tiếp ván đã lưu</button>' : ''}${this.htmlThongBao()}</div>`;
   }
 
   private htmlLuu(): string {
@@ -243,18 +221,20 @@ export class GiaoDien {
 
   private htmlKetThuc(): string {
     const g = this.game;
-    const diemHai = [0, 1].map((i) => {
+    const diemHai = [0, 1].filter((i) => !g.nguoi[i].vang).map((i) => {
       const n = g.nguoi[i];
       return `<div class="the ${i === 0 ? 'teo' : 'ty'} ${g.nguoiThang === i ? 'thang' : ''}">
         <h3>${g.nguoiThang === i ? '👑 ' : ''}${esc(n.ten)}</h3><div class="so-lon">${n.diem}</div>
         <p class="phu">Trúng ${n.banTrung} · Trượt ${n.banTruot} · Chính xác ${g.doChinhXac(i)}%</p></div>`;
     }).join('');
-    const mvp = g.nguoiThang === -1
+    const mvp = g.soNguoi < 2
+      ? ''
+      : g.nguoiThang === -1
       ? 'Hai nhân vật bằng điểm nhau 🤝'
       : `👑 ${esc(g.nguoi[g.nguoiThang].ten)} ghi nhiều điểm nhất`;
     const kl = g.nguoiThangTran
-      ? `🏆 <b>Mabu và Zinbu thắng!</b> Gà mẹ và toàn bộ gà con đã bị hạ.<br>${mvp}`
-      : `🐔 <b>Quái vật thắng!</b> Cả hai nhân vật đã gục.<br>${mvp}`;
+      ? `🏆 <b>${g.soNguoi < 2 ? esc(g.nguoi.find((n) => !n.vang)!.ten) : 'Mabu và Zinbu'} thắng!</b> Gà mẹ và toàn bộ gà con đã bị hạ.${mvp ? '<br>' + mvp : ''}`
+      : `🐔 <b>Quái vật thắng!</b> ${g.soNguoi < 2 ? 'Nhân vật đã gục.' : 'Cả hai nhân vật đã gục.'}${mvp ? '<br>' + mvp : ''}`;
     const top = this.bang && this.bang.length
       ? `<table class="xep-hang"><caption class="phu">Bảng điểm cao nhất</caption>${this.bang.map((d, i) => `<tr><td>${i + 1}.</td><td>${esc(d.nguoiChoi)}</td><td><b>${d.diem}</b></td><td class="phu">${phut(d.thoiGian)}</td></tr>`).join('')}</table>`
       : '';

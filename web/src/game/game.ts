@@ -44,6 +44,8 @@ export interface NguoiChoi {
   hoiChieu: number; chumDen: number; banTrung: number; banTruot: number;
   x: number; y: number; dich: { x: number; y: number } | null; dangDi: boolean;
   hp: number; het: boolean;
+  /** Chế độ 1 người chơi: nhân vật không tham gia (không vẽ, không điều khiển, coi như đã gục) */
+  vang?: boolean;
   nv: NhanVat; bay: ChuyenBay | null;
   /** Mana (một con số, không có trần) chỉ dùng để bay; bayKhoa = giây còn khoá sau mỗi lần bay */
   mana: number; bayKhoa: number;
@@ -417,6 +419,8 @@ export class Game {
   cheDo: CheDo = 'chuot';
   // Chế độ chuột: người chơi mà chuột đang điều khiển (Tab để đổi) và chuột đang nằm trên bảng chiêu thức (không phải trên map)
   chuot = 0;
+  /** Lựa chọn ở màn bắt đầu (nhớ để Chơi lại giữ nguyên) */
+  cheNguoi: 'mabu' | 'zinbu' | 'ca2' = 'ca2';
   trenBang = false;
   // Chỉ có 1 tay cầm thì nó điều khiển nhân vật này (nút Share / Select để đổi); có 2 tay cầm thì mỗi tay một nhân vật
   tayCam = 0;
@@ -510,8 +514,23 @@ export class Game {
 
   // ─── Điều khiển màn chơi ───
 
-  batDau(): void {
+  /** Số nhân vật đang tham gia (1 hoặc 2) */
+  get soNguoi(): number {
+    return this.nguoi.filter((n) => !n.vang).length;
+  }
+
+  /** Chuột / tay cầm bắt đầu ở nhân vật có mặt đầu tiên */
+  private chonNguoiDau(): void {
+    const p = this.nguoi.findIndex((n) => !n.vang);
+    this.chuot = p < 0 ? 0 : p;
+    this.tayCam = this.chuot;
+  }
+
+  /** Bắt đầu ván: 'mabu' / 'zinbu' = chơi 1 nhân vật, 'ca2' = chơi cả hai */
+  batDau(che: 'mabu' | 'zinbu' | 'ca2' = this.cheNguoi): void {
+    this.cheNguoi = che;
     this.nguoi = this.taoNguoiChoi();
+    this.chonNguoiDau();
     this.ga = [];
     this.dan = [];
     this.vet = [];
@@ -586,6 +605,8 @@ export class Game {
       else if (n.may.dang) n.nv.vaoMay();
       return n;
     });
+    this.cheNguoi = this.nguoi[0].vang ? 'zinbu' : this.nguoi[1].vang ? 'mabu' : 'ca2';
+    this.chonNguoiDau();
     this.capNhatView(0, true);
     this.man = 'pause';
   }
@@ -621,6 +642,7 @@ export class Game {
 
   get nguoiThang(): number {
     const [a, b] = this.nguoi;
+    if (a.vang || b.vang) return -1;
     return a.diem === b.diem ? -1 : a.diem > b.diem ? 0 : 1;
   }
 
@@ -747,6 +769,7 @@ export class Game {
 
   private dieuKhien(dt: number): void {
     this.nguoi.forEach((n, p) => {
+      if (n.vang) return;
       n.hoiChieu = Math.max(0, n.hoiChieu - dt);
       this.capNhatMay(n, dt);
       n.bayKhoa = Math.max(0, n.bayKhoa - dt);
@@ -1018,7 +1041,10 @@ export class Game {
 
   // Camera chung: bám trung điểm 2 nhân vật, zoom ra khi họ xa nhau; rồi lọc vật trong khung nhìn
   private capNhatView(dt: number, ngay = false): void {
-    const [a, b] = this.nguoi;
+    const [a0, b0] = this.nguoi;
+    // Chơi 1 người: camera chỉ bám nhân vật có mặt (coi như hai điểm trùng nhau)
+    const a = a0.vang ? b0 : a0;
+    const b = b0.vang ? a0 : b0;
     const tx = (a.x + b.x) / 2;
     const ty = (a.y + b.y) / 2;
     const dx = Math.abs(a.x - b.x);
@@ -1049,7 +1075,7 @@ export class Game {
       if (g.loai === 'flyer' || !this.thay(g.x, g.y) || !trong(g.x, g.y, g.loai === 'boss' ? 450 : 80)) continue;
       xep.push({ loai: 'ga', y: g.y, ga: g });
     }
-    this.nguoi.forEach((n, i) => { if (trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
+    this.nguoi.forEach((n, i) => { if (!n.vang && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
     for (const t of this.trangTri) if (!t.mat && trong(t.x, t.y, 400)) xep.push({ loai: 'td', y: t.y, td: t });
     xep.sort((a, b) => a.y - b.y);
     this.xep = xep;
@@ -1085,6 +1111,7 @@ export class Game {
   // Dây buộc: 2 nhân vật không xa nhau quá mức camera chứa nổi. Người vừa di chuyển nhiều hơn là người bị chặn lại.
   private rangBuoc(truoc: { x: number; y: number }[]): void {
     const [a, b] = this.nguoi;
+    if (a.vang || b.vang) return;
     const ma = Math.hypot(a.x - truoc[0].x, a.y - truoc[0].y);
     const mb = Math.hypot(b.x - truoc[1].x, b.y - truoc[1].y);
     const sa = ma + mb > 0.01 ? ma / (ma + mb) : 0.5;
@@ -1105,6 +1132,7 @@ export class Game {
   // Mức căng của dây buộc: 0 là sát nhau, 1 là chạm giới hạn
   get tetDo(): number {
     const [a, b] = this.nguoi;
+    if (a.vang || b.vang) return 0;
     return Math.max(Math.abs(a.x - b.x) / MAX_DX, Math.abs(a.y - b.y) / MAX_DY);
   }
 
@@ -1173,15 +1201,16 @@ export class Game {
   private sinhTuong(): void {
     const lan = this.soLanTuong++;
     this.lanTuong = lan;
-    const mx = (this.nguoi[0].x + this.nguoi[1].x) / 2;
-    const my = (this.nguoi[0].y + this.nguoi[1].y) / 2;
+    const co = this.nguoi.filter((n) => !n.vang);
+    const mx = co.reduce((t, n) => t + n.x, 0) / co.length;
+    const my = co.reduce((t, n) => t + n.y, 0) / co.length;
     // Xuất hiện ở chỗ ngẫu nhiên trên map, cách cả hai nhân vật ít nhất 2000
     let x = MAP / 2;
     let y = MAP / 2;
     for (let i = 0; i < 30; i++) {
       x = ngauNhien(600, MAP - 600);
       y = ngauNhien(600, MAP - 600);
-      if (this.nguoi.every((n) => Math.hypot(n.x - x, n.y - y) >= 2000)) break;
+      if (co.every((n) => Math.hypot(n.x - x, n.y - y) >= 2000)) break;
     }
     this.ga.push({
       id: this.id++, loai: 'boss', x, y, h: 0, h0: 0, vx: 0, vy: 0, phase: 0, doiHuong: 0,
@@ -1747,6 +1776,7 @@ export class Game {
   }
 
   private doiChuot(): void {
+    if (this.soNguoi < 2) return;
     const cu = this.nguoi[this.chuot];
     this.chuot = 1 - this.chuot;
     const moi = this.nguoi[this.chuot];
@@ -1786,7 +1816,7 @@ export class Game {
     }
 
     // Tay cầm nào điều khiển nhân vật nào
-    const gan: (Gamepad | undefined)[] = !dungTayCam ? [undefined, undefined] : ds.length >= 2 ? [ds[0], ds[1]] : this.tayCam === 0 ? [ds[0], undefined] : [undefined, ds[0]];
+    const gan: (Gamepad | undefined)[] = !dungTayCam ? [undefined, undefined] : ds.length >= 2 && this.soNguoi === 2 ? [ds[0], ds[1]] : this.tayCam === 0 ? [ds[0], undefined] : [undefined, ds[0]];
     for (const p of [0, 1]) {
       const n = this.nguoi[p];
       const g = gan[p];
@@ -1841,6 +1871,7 @@ export class Game {
   }
 
   private doiTayCam(): void {
+    if (this.soNguoi < 2) return;
     this.nguoi[this.tayCam].dich = null;
     this.nguoi[this.tayCam].cuaCan = false;
     this.tayCam = 1 - this.tayCam;
@@ -2092,10 +2123,13 @@ export class Game {
   // ─── Khởi tạo ───
 
   private taoNguoiChoi(): NguoiChoi[] {
+    const mot = this.cheNguoi !== 'ca2';
+    const co = this.cheNguoi === 'zinbu' ? 1 : 0;
     return [0, 1].map((p) => ({
+      vang: mot && p !== co,
       ten: p === 0 ? MABU.ten : ZINBU.ten, mau: p === 0 ? '#e84393' : '#8e44ad',
-      hp: HP_NV, het: false, diem: 0, combo: 0, tamX: W_MAC_DINH / 2, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
-      x: MAP / 2 + (p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
+      hp: mot && p !== co ? 0 : HP_NV, het: mot && p !== co, diem: 0, combo: 0, tamX: W_MAC_DINH / 2, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
+      x: MAP / 2 + (mot ? 0 : p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
       nv: this.taoNhanVat(p), bay: null, mana: MANA_BAN_DAU, bayKhoa: 0,
       nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, ngam: null, cuaCan: false, may: { dang: false, con: 0, hoi: 0 },
     }));
