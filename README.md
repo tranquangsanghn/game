@@ -14,7 +14,8 @@ Cần: Node 20+, Java 17+, Maven, MySQL 8 (đang chạy). Cấu trúc: `web/` (g
    cd server
    DB_USER=root DB_PASS=matkhau mvn spring-boot:run
    ```
-   Đổi cấu hình bằng biến môi trường: `DB_URL` (mặc định `jdbc:mysql://localhost:3306/dragonball?createDatabaseIfNotExist=true...`), `DB_USER` (mặc định `root`), `DB_PASS` (mặc định rỗng), `PORT`, `CORS_ORIGINS`.
+   Muốn khỏi gõ mật khẩu mỗi lần: tạo file `server/application.properties` (đã nằm trong `.gitignore`) chứa `spring.datasource.username=...` và `spring.datasource.password=...`.
+   Hoặc đổi cấu hình bằng biến môi trường: `DB_URL` (mặc định `jdbc:mysql://localhost:3306/dragonball?createDatabaseIfNotExist=true...`), `DB_USER` (mặc định `root`), `DB_PASS` (mặc định rỗng), `PORT`, `CORS_ORIGINS`.
 2. **Giao diện** (cổng 5173, tự chuyển `/api` sang máy chủ):
    ```bash
    cd web
