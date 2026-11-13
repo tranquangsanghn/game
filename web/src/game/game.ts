@@ -122,7 +122,9 @@ const SP_MB: KhungSprite = { atlas: 'assets/game/may_bay.png', atlasW: 1024, atl
 const MB_TO = 1.25;
 /** Tâm thân máy bay cao hơn điểm đậu (chân) bấy nhiêu px; thêm MB_NANG × z khi đã lên không */
 const MB_CENTRO = 105;
-const MB_NANG = 150;
+const MB_NANG = 480;
+/** Khi máy bay đã lên không: camera thu nhỏ bấy nhiêu lần (nhân với z) và dịch lên theo độ cao để máy bay ở giữa màn */
+const MB_ZOOM = 0.62;
 /** Bán kính lên máy bay (đi vào là lên) và bán kính trúng chưởng */
 const MB_BK = 170;
 const MB_TRUNG_BK = 150;
@@ -1888,10 +1890,12 @@ export class Game {
     const a = a0.vang ? b0 : a0;
     const b = b0.vang ? a0 : b0;
     const tx = (a.x + b.x) / 2;
-    const ty = (a.y + b.y) / 2;
+    // Máy bay bay cao: camera lùi ra (thấy xa hơn, vật dưới đất nhỏ đi) và nâng lên theo độ cao
+    const zb = this.mayBay.pha === 'bay' || this.mayBay.pha === 'trung' || this.mayBay.pha === 'cat' ? this.mayBay.z : 0;
+    const ty = (a.y + b.y) / 2 - MB_NANG * zb * 0.5;
     const dx = Math.abs(a.x - b.x);
     const dy = Math.abs(a.y - b.y);
-    const tz = kep(Math.min(ZOOM, dx > 1 ? VUNG_X / dx : ZOOM, dy > 1 ? VUNG_Y / dy : ZOOM), ZOOM_MIN, ZOOM);
+    const tz = kep(Math.min(ZOOM, dx > 1 ? VUNG_X / dx : ZOOM, dy > 1 ? VUNG_Y / dy : ZOOM), ZOOM_MIN, ZOOM) * (1 - (1 - MB_ZOOM) * zb);
     const kv = ngay ? 1 : 1 - Math.exp(-dt * 6);
     const kz = ngay ? 1 : 1 - Math.exp(-dt * 3);
     this.camX += (tx - this.camX) * kv;
