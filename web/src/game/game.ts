@@ -2721,11 +2721,21 @@ export class Game {
     g.hp = 0;
     g.chet = true;
     g.h0 = g.h;
-    for (let i = 0; i < 9; i++) {
-      this.long.push({
-        id: this.id++, x: tam.x, y: tam.y, vx: ngauNhien(-220, 220), vy: ngauNhien(-260, 40),
-        xoay: ngauNhien(0, 360), vxoay: ngauNhien(-400, 400), t: 0, mau: MAU_LONG[g.loai],
-      });
+    // Zinbu yếu hơn: mọi đòn thường (Đấm, Đá, chưởng) hạ gà con thì gà thành thanh socola, ăn nhận AN_TI_LE (2%) máu tối đa của gà
+    if (p === 1 && kieu !== undefined) {
+      const v = { x: g.x, y: g.y };
+      giuTrongMap(v, LE_VP);
+      const luong = Math.max(1, Math.round(HP_GA * (g.suc ?? 1) * AN_TI_LE));
+      this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'socola', luong });
+      this.vet.push({ id: this.id++, x: g.x, y: tam.y, t: 0, loai: 'chay', co: 0.7 });
+      this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 60, text: '🍫 HOÁ SOCOLA!', mau: '#c98a4b', t: 0 });
+    } else {
+      for (let i = 0; i < 9; i++) {
+        this.long.push({
+          id: this.id++, x: tam.x, y: tam.y, vx: ngauNhien(-220, 220), vy: ngauNhien(-260, 40),
+          xoay: ngauNhien(0, 360), vxoay: ngauNhien(-400, 400), t: 0, mau: MAU_LONG[g.loai],
+        });
+      }
     }
     n.combo++;
     n.banTrung++;

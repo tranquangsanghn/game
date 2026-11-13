@@ -258,3 +258,5 @@
 - Máu vua gà (gà mẹ gốc) lúc xuất hiện là `HP_VUA` = 600 (ghi đè các mục máu 100 / 200 của vua gà ở trên); ăn socola / táo vẫn cộng máu không giới hạn như thường, tự hồi chỉ tới 600.
 
 - Socola từ chiêu **Biến socola** của Zinbu (chưởng nổ, `noSocola()`): ăn nhận `SOCOLA_AN_TI_LE` = 50% máu của con gà lúc hoá socola (`VatPham.luong`, tối thiểu 1), vào **cả máu lẫn mana**, thay cho +100 / +100 cũ (thanh socola cũ thiếu `luong` vẫn nhận 100 / 100). Gà nở từ trứng đỏ đang hoá socola (`anGaSocola()`) cũng nhận 50% máu hiện có của nó. Đòn ăn thường (Mabu bắn chưởng, Zinbu quất râu, `AN_TI_LE` = 2%) giữ nguyên.
+
+- Zinbu yếu hơn nên **mọi đòn thường của Zinbu** (Đấm, Đá, chưởng; `trungGa()` có `kieu`, `p === 1`) hạ chết gà con (không phải gà mẹ) thì gà biến thành thanh socola thay vì rơi lông; ăn nhận `AN_TI_LE` = 2% máu tối đa của gà (`HP_GA × suc`, tối thiểu 1) vào cả máu lẫn mana. Chiêu đặc biệt **Biến socola** vẫn như mục trước (50% máu của gà). Đòn ăn quất râu của Zinbu giữ nguyên. Mabu không đổi.
