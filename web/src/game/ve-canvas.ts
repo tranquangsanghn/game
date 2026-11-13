@@ -469,7 +469,11 @@ export class VeCanvas {
 
   private veTheGioi(ctx: CanvasRenderingContext2D, c: Game): void {
     // Đảo sa mạc: biển + vòng đảo cát, vườn gà (map cỏ có tường) nằm giữa biển
-    if (c.banDoVan === 'sa') this.veNenSa(ctx, c);
+    // Khung nhìn nằm trọn trong vườn gà (nền cỏ che hết) thì khỏi vẽ biển / cát bên dưới
+    const cam = c.gocCamera();
+    const trongVuon =
+      -cam.x / cam.k - 40 >= 0 && -cam.y / cam.k - 40 >= 0 && (c.W - cam.x) / cam.k + 40 <= c.MAP && (c.H - cam.y) / cam.k + 40 <= c.MAP;
+    if (c.banDoVan === 'sa' && !trongVuon) this.veNenSa(ctx, c);
     this.veNen(ctx, c);
     this.veTuong(ctx, c);
 
