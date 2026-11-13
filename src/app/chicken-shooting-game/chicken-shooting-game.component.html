@@ -157,10 +157,10 @@
           </g>
         </svg>
       </g>
-      <text [attr.x]="GIUA + 215" y="-42" fill="#ffd27a" font-size="18" font-weight="700">Gà mẹ</text>
-      <text [attr.x]="GIUA + 215" y="-20" fill="#ffd27a" font-size="18" font-weight="700">hồi sinh {{ lanTuong }}/{{ TUONG_HOI_SINH }}</text>
+      <text [attr.x]="GIUA + 150" y="-42" fill="#ffd27a" font-size="18" font-weight="700">Gà mẹ</text>
+      <text [attr.x]="GIUA + 150" y="-20" fill="#ffd27a" font-size="18" font-weight="700">hồi sinh {{ lanTuong }}/{{ TUONG_HOI_SINH }}</text>
       @for (b of bangTuong(); track b.k) {
-      <g [attr.transform]="'translate(' + b.x + ',' + b.y + ') scale(0.8)'" [attr.opacity]="b.op" [attr.filter]="b.dung ? 'url(#cg-sang)' : null">
+      <g [attr.transform]="'translate(' + b.x + ',' + b.y + ') scale(0.5333)'" [attr.opacity]="b.op" [attr.filter]="b.dung ? 'url(#cg-sang)' : null">
         <circle [attr.r]="R_NUT" [attr.fill]="b.k === 3 ? '#15151c' : b.k === 4 ? '#7a5d00' : b.k === 5 ? '#7a1d10' : '#0d1b12'" [attr.stroke]="b.dung ? '#ffb347' : '#555'" stroke-width="4" />
         @if (b.k >= 1) {
         <circle [attr.r]="R_NUT + 6" fill="none" stroke="#ffb347" stroke-width="3" transform="rotate(-90)"

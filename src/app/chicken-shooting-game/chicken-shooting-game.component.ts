@@ -1591,7 +1591,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
           san = dung || tien > 0;
         }
       }
-      return { k, x: this.GIUA + (k - 2.5) * 66, y: -BAR / 2, dung, tien: kep(tien, 0, 1), op: !g ? 0.15 : dung ? 1 : san ? 0.55 : 0.25 };
+      return { k, x: this.GIUA + (k - 2.5) * 44, y: -BAR / 2, dung, tien: kep(tien, 0, 1), op: !g ? 0.15 : dung ? 1 : san ? 0.55 : 0.25 };
     });
   }
 
