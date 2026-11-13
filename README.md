@@ -48,7 +48,7 @@ Khi người chơi bấm Đóng, game gửi `postMessage('chicken-shooting-game:
 
 ## Cấu trúc
 
-- `src/app/chicken-shooting-game/` — toàn bộ game (component, sprite, dữ liệu nhân vật)
+- `src/app/chicken-shooting-game/` — toàn bộ game: component (logic), `ve-canvas.ts` (vẽ bằng Canvas 2D), sprite, dữ liệu nhân vật
 - `public/assets/game/` — ảnh sprite atlas Mabu, Zinbu và các loại gà
 - `tools/` — ảnh gà gốc và script tô màu / ghép atlas
 - `src/app/app.ts` — vỏ app: mở game, xử lý nút Đóng

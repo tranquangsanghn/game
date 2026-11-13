@@ -2,8 +2,9 @@ import {
   AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef,
   EventEmitter, NgZone, OnDestroy, Output, PLATFORM_ID, ViewChild, inject
 } from '@angular/core';
-import { NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import { KhungSprite, SpriteComponent } from './sprite.component';
+import { VeCanvas } from './ve-canvas';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
@@ -13,7 +14,7 @@ type ManChoi = 'start' | 'play' | 'pause' | 'over';
 // boss = gà tướng (to gấp 5 lần, đủ 3 màu, nhiều máu)
 type LoaiGa = 'hen' | 'rooster' | 'flyer' | 'boss';
 
-interface Ga {
+export interface Ga {
   id: number; loai: LoaiGa; x: number; y: number; h: number; h0: number;
   vx: number; vy: number; phase: number; doiHuong: number;
   chet: boolean; tChet: number;
@@ -214,6 +215,11 @@ const MAU_LONG: Record<LoaiGa, string> = { hen: '#fff6d5', rooster: '#ce3024', f
 const MAU_LONG_TUONG = ['#fff6d5', '#ce3024', '#40404e'];
 const MAU_GA = { hen: GA_TRANG, rooster: GA_DO, flyer: GA_DEN, boss: GA_TUONG } satisfies Record<LoaiGa, KhungSprite>;
 const MAU_SANG = 'brightness(1.7) saturate(0.6)';
+// Bộ lọc màu của gà tướng: nháy sáng báo hiệu Lao / Bay, rồi 3 màu đen / vàng / đỏ (vẽ bằng atlas nhuộm sẵn, xem ve-canvas.ts)
+const LOC_BAO = 'brightness(2.2) saturate(0.5)';
+const LOC_DEN = 'brightness(0.22) contrast(1.3)';
+const LOC_VANG = 'sepia(1) saturate(5) hue-rotate(-12deg) brightness(1.25)';
+const LOC_DO = 'sepia(1) saturate(7) hue-rotate(-52deg) brightness(1.05)';
 // Gà tướng: máu, thời gian chờ giữa 2 lần xuất hiện (giây), tốc độ đi
 const CHO_TUONG_DAU = 0;
 const CHO_TUONG = 30;
@@ -286,7 +292,7 @@ function tronMau(a: number[], b: number[], k: number) {
 @Component({
   selector: 'app-chicken-shooting-game',
   standalone: true,
-  imports: [SpriteComponent, NgTemplateOutlet],
+  imports: [SpriteComponent],
   templateUrl: './chicken-shooting-game.component.html',
   styleUrl: './chicken-shooting-game.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -294,7 +300,7 @@ function tronMau(a: number[], b: number[], k: number) {
 export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   @Output() dong = new EventEmitter<void>();
   @ViewChild('khung') khungRef!: ElementRef<HTMLDivElement>;
-  @ViewChild('manHinh') svgRef!: ElementRef<SVGSVGElement>;
+  @ViewChild('manHinh') canvasRef!: ElementRef<HTMLCanvasElement>;
 
   private cdr = inject(ChangeDetectorRef);
   private zone = inject(NgZone);
@@ -323,8 +329,9 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   readonly R_CUNG = R_CUNG;
   // Chu vi vòng tiến độ quanh nút chiêu của gà tướng
   readonly CHU_VI_NUT = 2 * Math.PI * (R_NUT + 6);
-  // Bán kính vòng đốt cháy trong toạ độ cục bộ của sprite gà tướng
-  readonly R_DOT = DOT_BAN_KINH / (S_GA * TL_GA.boss);
+  // Bán kính vòng đốt cháy quanh gà tướng (đơn vị bản đồ); vòng dẹt theo EP_GA
+  readonly R_DOT_THE_GIOI = DOT_BAN_KINH;
+  readonly EP_GA = EP_GA;
 
   man: ManChoi = 'start';
   nguoi: NguoiChoi[] = this.taoNguoiChoi();
@@ -378,6 +385,13 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   mauHoangHon = 'rgb(255,220,140)';
   doHoangHon = 0;
 
+  // Canvas 2D: bộ vẽ (ve-canvas.ts), ngữ cảnh vẽ và kích thước hiển thị
+  private ve = new VeCanvas();
+  private ctx: CanvasRenderingContext2D | null = null;
+  private cssW = 0;
+  private cssH = 0;
+  private dpr = 1;
+  private manDaVe: ManChoi | null = null;
   private id = 1;
   private rafId = 0;
   private lanCuoi = 0;
@@ -399,7 +413,22 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       const vua = () => {
         const kt = this.khungRef.nativeElement.getBoundingClientRect();
         if (kt.width > 0 && kt.height > 0) this.W = kep(Math.round(((H + BAR) * kt.width) / kt.height - 2 * SIDE), W_TOI_THIEU, W_TOI_DA);
+        // Canvas theo kích thước khung và độ phân giải màn hình (tối đa 2× cho nhẹ)
+        this.cssW = kt.width;
+        this.cssH = kt.height;
+        this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const cv = this.canvasRef.nativeElement;
+        const pw = Math.max(1, Math.round(kt.width * this.dpr));
+        const ph = Math.max(1, Math.round(kt.height * this.dpr));
+        if (cv.width !== pw || cv.height !== ph) {
+          cv.width = pw;
+          cv.height = ph;
+        }
       };
+      this.ctx = this.canvasRef.nativeElement.getContext('2d');
+      this.ve.napTruoc(MABU.atlas, ZINBU.atlas);
+      for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG]);
+      this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO]);
       vua();
       const quanSat = new ResizeObserver(vua);
       quanSat.observe(this.khungRef.nativeElement);
@@ -501,7 +530,10 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       else this.nguoi.forEach((n) => this.capNhatNhanVat(n, dt));
       this.capNhatView(dt);
     }
-    this.cdr.detectChanges();
+    if (this.ctx) this.ve.ve(this.ctx, this, this.cssW, this.cssH, this.dpr);
+    // Màn chơi chỉ vẽ canvas; phần HTML (màn bắt đầu / tạm dừng / kết thúc, nút) chỉ cập nhật khi cần
+    if (this.man !== 'play' || this.manDaVe !== this.man) this.cdr.detectChanges();
+    this.manDaVe = this.man;
     this.rafId = requestAnimationFrame(this.vongLap);
   };
 
@@ -1624,28 +1656,23 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
 
   // ─── Hỗ trợ vẽ ───
 
-  viewTransform(): string {
+  // Camera đã kẹp trong map: gốc toạ độ thế giới trên màn hình (cộng rung khi nổ / trúng đòn) và mức zoom
+  gocCamera(): { x: number; y: number; k: number } {
     const o = this.gocView();
     const rx = this.rung > 0 ? ngauNhien(-6, 6) : 0;
-    return `translate(${(o.x + rx).toFixed(1)},${o.y.toFixed(1)}) scale(${this.camZ.toFixed(4)})`;
+    return { x: o.x + rx, y: o.y, k: this.camZ };
   }
 
-  // Thanh máu (máu chung của đội) và quả cầu năng lượng (đạn) nhỏ trên đầu nhân vật
-  thanhTrenDau(p: number): string {
+  // Thanh máu và quả cầu mana nhỏ trên đầu nhân vật (toạ độ thế giới của điểm giữa thanh)
+  thanhTrenDau(p: number): { x: number; y: number } {
     const n = this.nguoi[p];
-    return `translate(${n.x.toFixed(1)},${(n.y - (n.nv.cao - n.nv.nhun) * S_NV - (p === 0 ? 195 : 150)).toFixed(1)})`;
+    return { x: n.x, y: n.y - (n.nv.cao - n.nv.nhun) * S_NV - (p === 0 ? 195 : 150) };
   }
 
   // Thanh máu trên đầu gà tướng (to hơn của nhân vật vì gà tướng cao gấp nhiều lần)
-  thanhTuong(g: Ga): string {
+  thanhTuong(g: Ga): { x: number; y: number } {
     // Gà mẹ đang bay (g.h) thì thanh máu nâng theo, vẫn nằm trên đầu
-    return `translate(${g.x.toFixed(1)},${(g.y - 310 - g.h * EP_GA).toFixed(1)}) scale(3)`;
-  }
-
-  // Biểu tượng nhóm đòn nằm ngay dưới chân nhân vật
-  duoiChan(p: number): string {
-    const n = this.nguoi[p];
-    return `translate(${n.x.toFixed(1)},${(n.y + 38).toFixed(1)})`;
+    return { x: g.x, y: g.y - 310 - g.h * EP_GA };
   }
 
   hpNv(p: number): number {
@@ -1676,9 +1703,10 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     return MAU_MANA[this.nguoi[p].nv.nhom];
   }
 
-  nvTransform(p: number): string {
+  // Vị trí điểm neo (chân) của sprite nhân vật trên map và hệ số phóng
+  nvViTri(p: number): { x: number; y: number; k: number } {
     const n = this.nguoi[p];
-    return `translate(${n.x.toFixed(1)},${(n.y - (n.nv.cao - n.nv.nhun) * S_NV).toFixed(1)}) scale(${S_NV * n.nv.heSoTo})`;
+    return { x: n.x, y: n.y - (n.nv.cao - n.nv.nhun) * S_NV, k: S_NV * n.nv.heSoTo };
   }
 
   // Bảng chiêu của gà tướng (giữa phía trên, hình bán nguyệt úp): 0 Mổ + đá · 1 Lao · 2 Bay · 3 Đen · 4 Vàng · 5 Đỏ.
@@ -1712,10 +1740,10 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   // Bộ lọc màu của gà: nháy sáng khi trúng đòn, báo hiệu trước khi lao / bay, đổi màu đen / vàng / đỏ
   locGa(g: Ga): string | null {
     if (g.loai === 'boss') {
-      if (g.chieu?.pha === 'bao' && Math.floor(g.chieu.t * 14) % 2 === 0) return 'brightness(2.2) saturate(0.5)';
-      if (g.mau === 'den') return 'brightness(0.22) contrast(1.3)';
-      if (g.mau === 'vang') return 'sepia(1) saturate(5) hue-rotate(-12deg) brightness(1.25)';
-      if (g.mau === 'do') return 'sepia(1) saturate(7) hue-rotate(-52deg) brightness(1.05)';
+      if (g.chieu?.pha === 'bao' && Math.floor(g.chieu.t * 14) % 2 === 0) return LOC_BAO;
+      if (g.mau === 'den') return LOC_DEN;
+      if (g.mau === 'vang') return LOC_VANG;
+      if (g.mau === 'do') return LOC_DO;
     }
     return g.nhay > 0 ? MAU_SANG : null;
   }
@@ -1735,13 +1763,10 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     return { x: g.x, y: g.y - (CHAN_GA * TL_GA[g.loai] * S_GA + g.h) * EP_GA };
   }
 
-  gaTransform(g: Ga): string {
+  // Hình dạng vẽ của gà: vị trí chân, hệ số phóng ngang / dọc (dọc bị ép dẹt EP_GA), độ dời dy lên tâm thân và góc xoay (độ) quanh tâm thân
+  // (mổ, đá, ngã, chúi khi Lao); sprite vẽ lùi xuống tới chân.
+  gaHinh(g: Ga): { x: number; y: number; kx: number; ky: number; dy: number; xoay: number } {
     const k = S_GA * TL_GA[g.loai];
-    return `translate(${g.x.toFixed(1)},${g.y.toFixed(1)}) scale(${k},${k * EP_GA})`;
-  }
-
-  // Gốc tọa độ ở tâm thân (để xoay khi ngã); sprite vẽ lùi xuống tới chân bằng gaSprite()
-  gaThan(g: Ga): string {
     let xoay = g.chet && g.loai !== 'boss' ? g.tChet * 540 : 0;
     const bay = g.h / (S_GA * TL_GA[g.loai]);
     let nang = 0;
@@ -1756,7 +1781,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     }
     // Chiêu Lao: chúi người về phía trước
     if (g.chieu && g.chieu.loai === 'lao' && g.chieu.pha === 'chay') xoay += (g.lat ? -1 : 1) * 14;
-    return `translate(0,${(-CHAN_GA - bay - nang).toFixed(1)}) rotate(${xoay.toFixed(0)})`;
+    return { x: g.x, y: g.y, kx: k, ky: k * EP_GA, dy: -CHAN_GA - bay - nang, xoay };
   }
 
   gaSprite(g: Ga): KhungSprite {

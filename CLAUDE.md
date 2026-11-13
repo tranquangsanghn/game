@@ -7,8 +7,11 @@
 # Nguyên tắc render
 
 - Chỉ render những vật nằm trong khung nhìn của camera (cộng một lề nhỏ đủ che kích thước vật). Vật ngoài khung vẫn tồn tại và chạy logic bình thường, chỉ không được đưa vào danh sách vẽ.
-- Việc lọc làm một chỗ, trong `capNhatView()` (hàm `trong(x, y, lề)`): kết quả lưu vào các mảng `*View` / `xep`, template chỉ lặp trên các mảng đó, không lặp trên mảng gốc.
+- Việc lọc làm một chỗ, trong `capNhatView()` (hàm `trong(x, y, lề)`): kết quả lưu vào các mảng `*View` / `xep`, bộ vẽ chỉ lặp trên các mảng đó, không lặp trên mảng gốc.
 - Thêm loại vật mới (đạn, hiệu ứng, chữ bay, vật phẩm, quái…) thì phải lọc theo nguyên tắc này ngay từ đầu.
+- Game vẽ bằng Canvas 2D (không dùng SVG): toàn bộ phần vẽ nằm trong `ve-canvas.ts` (`VeCanvas.ve()`), gọi mỗi khung hình từ `vongLap()`; logic game, AI, tay cầm nằm ở component và không đụng tới canvas. Component chỉ cung cấp dữ liệu / số để vẽ (`gocCamera()`, `nvViTri()`, `gaHinh()`, `thanhTrenDau()`…), `ve-canvas.ts` không đổi trạng thái game. Thêm vật mới: thêm hàm vẽ trong `ve-canvas.ts` và gọi trong `veTheGioi()` (hoặc thanh đen / HUD). HTML của component chỉ còn `<canvas>`, nút Đóng / Tạm dừng và các màn phủ (bắt đầu, tạm dừng, kết thúc).
+- Hiệu năng canvas: không dùng `ctx.filter` lúc vẽ từng sprite (rất chậm, mỗi sprite vài ms). Sprite cần đổi màu (nháy sáng, đen / vàng / đỏ của gà mẹ) thì dùng atlas nhuộm sẵn (`VeCanvas.nhuomTruoc()` / `nguon()`: nhuộm cả atlas một lần rồi dùng lại); thêm bộ lọc màu mới thì khai báo hằng `LOC_*` trong component và nhuộm sẵn ở `ngAfterViewInit()`. Phát sáng dùng `shadowBlur` (`sang()`). Canvas theo `devicePixelRatio` (tối đa 2×).
+- Sprite nạp qua `KhungSprite` (atlas, kích thước khung, điểm neo); ảnh tự nạp và nhớ lại, file PNG có thể lớn hơn kích thước logic (tự đổi tỉ lệ). Nhân vật / gà / màn mới chỉ cần khai báo dữ liệu sprite, không cần viết lại bộ vẽ.
 
 # Nguyên tắc camera
 
