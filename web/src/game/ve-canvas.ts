@@ -2,7 +2,7 @@ import type { ChuongTiec, Tiec } from './tiec';
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
 import { capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, SO_CAP, SP_CELL, type Cell } from './cell';
-import { BANH_FPS, BANH_KHUNG, loiDangHat, LOI, notDangHat, SP_BANH, SP_CELL_TIEC, CHUONG_TIEC, TIEC_CHUONG_T } from './tiec';
+import { BANH_FPS, BANH_KHUNG, loiDangHat, LOI, notDangHat, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { bamDiem, doSau, doSauVuon, nhieu, TG } from './ban-do';
 
@@ -1008,11 +1008,12 @@ export class VeCanvas {
 
   // Kamehameha xanh bắn từ tay Cell vào bánh: quả gốc ở tay, thân ống kéo dài, đầu bay tới bánh (ảnh cell_chuong.png cắt 3 khúc)
   private veChuongTiec(ctx: CanvasRenderingContext2D, q: ChuongTiec): void {
-    const img = this.nguon(CHUONG_TIEC.atlas, null);
+    const l = CHUONG_LOAI[q.loai] ?? CHUONG_LOAI[0];
+    const img = this.nguon(l.atlas, null);
     if (!img) return;
-    const f = (img instanceof HTMLImageElement ? img.naturalWidth : (img as HTMLCanvasElement).width) / CHUONG_TIEC.w;
-    const { w, h, bw, nk0, nk1, hx } = CHUONG_TIEC;
-    const s = q.k * 0.5;
+    const f = (img instanceof HTMLImageElement ? img.naturalWidth : (img as HTMLCanvasElement).width) / l.w;
+    const { w, h, bw, nk0, nk1, hx } = l;
+    const s = q.k * l.ti;
     const dx = q.x1 - q.x0, dy = q.y1 - q.y0;
     const D = Math.hypot(dx, dy) / s;
     const e = Math.min(1, q.t / TIEC_CHUONG_T);
@@ -1049,8 +1050,12 @@ export class VeCanvas {
     // Đang vận nội công / phóng chưởng vào bánh: dùng atlas riêng (gồng, hào quang, phóng); hào quang đập nhẹ, thân rung khi gồng
     const kt = c.cellTiecKhung(ce);
     if (kt !== null) {
-      if (kt < 3) ctx.scale(1 + 0.04 * Math.sin(c.t * 30), 1 + 0.04 * Math.sin(c.t * 30));
-      else if (kt === 3) ctx.translate(Math.sin(c.t * 70) * 0.8, 0);
+      if ((TIEC_KHUNG.hao as readonly number[]).includes(kt)) ctx.scale(1 + 0.04 * Math.sin(c.t * 30), 1 + 0.04 * Math.sin(c.t * 30));
+      else if (kt === TIEC_KHUNG.bien) {
+        // Biến hình: gió xanh nháy ngang / dọc quanh người, thân rung
+        this.sprite(ctx, SP_CELL_TIEC, ce.cap * SP_CELL_TIEC.cot + (Math.floor(c.t * 16) % 2 ? TIEC_KHUNG.gioNgang : TIEC_KHUNG.gioDoc), ce.lat, false);
+        ctx.translate(Math.sin(c.t * 80) * 1.2, 0);
+      }
       this.sprite(ctx, SP_CELL_TIEC, ce.cap * SP_CELL_TIEC.cot + kt, ce.lat, false);
     } else this.sprite(ctx, SP_CELL, ce.cap * SP_CELL.cot + c.cellKhung(ce), ce.lat, false);
     if (tiec && notDangHat(tcc!.t) >= 0) {

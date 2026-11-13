@@ -21,17 +21,22 @@ export const TIEC_BAN_MIN = 2;
 export const TIEC_BAN_MAX = 5;
 /** Chưởng (kamehameha) bay tới bánh trong `TIEC_CHUONG_T` giây */
 export const TIEC_CHUONG_T = 0.7;
-/** Chu trình bắn của Cell dự tiệc (giây): gồng (tư thế hai tay ở hông) → vận nội công (hào quang vàng bùng lên) → phóng chưởng (đứng yên phóng) */
-export const TIEC_GONG = 0.35;
+/** Chu trình của Cell dự tiệc (giây), lặp liên tục: biến hình (người méo + gió xanh) → vận nội công (hào quang bùng lên) → phóng một trong 3 loại chưởng (ngẫu nhiên) → biến hình… */
+export const TIEC_BIEN = 0.6;
 export const TIEC_AURA = 0.9;
 export const TIEC_PHONG = 0.7;
-/** Atlas gồng / hào quang / phóng chưởng của từng cấp (hàng = cấp): cột 0–2 hào quang, 3 gồng, 4 phóng; tách bằng tools/tao-atlas-cell-tiec.py */
-export const SP_CELL_TIEC: KhungSprite = { atlas: 'assets/game/cell_tiec.png', atlasW: 400, atlasH: 320, w: 80, h: 64, cot: 5, neoX: 40, neoY: 60 };
-/** Chùm kamehameha xanh: ảnh 107×43 gồm quả gốc [0, bw), thân ống (dải [nk0, nk1) kéo dài), đầu [hx, w) */
-export const CHUONG_TIEC = { atlas: 'assets/game/cell_chuong.png', w: 107, h: 43, bw: 38, nk0: 44, nk1: 58, hx: 62 };
-/** Tay Cell cách giữa thân (nhân độ to) và cao hơn chân (nhân độ to) lúc phóng chưởng */
-export const TIEC_TAY_X = 16;
-export const TIEC_TAY_Y = 17;
+/** Atlas của từng cấp (hàng = cấp): cột 0–2 hào quang · 3 gồng (không dùng) · 4 / 5 / 6 phóng chưởng xanh / vàng / tím · 7 biến hình · 8 / 9 gió ngang / dọc; tách bằng tools/tao-atlas-cell-tiec.py */
+export const SP_CELL_TIEC: KhungSprite = { atlas: 'assets/game/cell_tiec.png', atlasW: 800, atlasH: 320, w: 80, h: 64, cot: 10, neoX: 40, neoY: 60 };
+export const TIEC_KHUNG = { hao: [0, 1, 2], bien: 7, gioNgang: 8, gioDoc: 9, phong: [4, 5, 6] } as const;
+/**
+ * 3 loại chưởng (xanh kamehameha, vàng, tím): ảnh gồm quả gốc [0, bw), thân ống (dải [nk0, nk1) kéo dài), đầu [hx, w).
+ * ti: tỉ lệ vẽ so với độ to Cell (chưởng vàng / tím mảnh nên vẽ to hơn). tayX / tayY: tay Cell cách giữa thân và cao hơn chân bao nhiêu (nhân độ to) lúc phóng.
+ */
+export const CHUONG_LOAI = [
+  { atlas: 'assets/game/cell_chuong.png', w: 107, h: 43, bw: 38, nk0: 44, nk1: 58, hx: 62, tayX: 16, tayY: 22, ti: 0.5 },
+  { atlas: 'assets/game/cell_chuong_vang.png', w: 63, h: 42, bw: 11, nk0: 14, nk1: 40, hx: 47, tayX: 17, tayY: 23, ti: 1.1 },
+  { atlas: 'assets/game/cell_chuong_tim.png', w: 114, h: 44, bw: 12, nk0: 22, nk1: 100, hx: 104, tayX: 20, tayY: 25, ti: 1 },
+] as const;
 
 export interface Tiec {
   dao: number; x: number; y: number; on: boolean; t: number;
@@ -39,7 +44,7 @@ export interface Tiec {
   to: number; bk: number;
 }
 /** Chưởng đang bay từ Cell tới bánh (chỉ để đẹp, không lưu ván) */
-export interface ChuongTiec { id: number; x0: number; y0: number; x1: number; y1: number; t: number; k: number }
+export interface ChuongTiec { id: number; x0: number; y0: number; x1: number; y1: number; t: number; k: number; loai: number }
 
 // ─── Bài hát ───
 export const TEMPO = 0.5; // giây mỗi nhịp

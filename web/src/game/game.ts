@@ -5,7 +5,7 @@ import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { chuanBiSaMac, daoCua, doSau, trongVuon, veDat, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, CELL_XICH, SP_CELL, taoCell, type Cell } from './cell';
-import { taoTiec, CHUONG_TIEC, TIEC_GONG, TIEC_AURA, TIEC_PHONG, TIEC_TAY_X, TIEC_TAY_Y, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_MAX, TIEC_BAN_MIN, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
+import { taoTiec, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_MAX, TIEC_BAN_MIN, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
@@ -883,7 +883,7 @@ export class Game {
         }
       };
       this.ctx = this.canvasEl.getContext('2d');
-      this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas, SP_CELL.atlas, SP_CELL_TIEC.atlas, CHUONG_TIEC.atlas);
+      this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas, SP_CELL.atlas, SP_CELL_TIEC.atlas, ...CHUONG_LOAI.map((l) => l.atlas));
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG, LOC_SOCOLA, LOC_SOCOLA_HONG]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO, LOC_SOCOLA, ...LOC_PHU]);
       vua();
@@ -3105,7 +3105,7 @@ export class Game {
     this.chu.push({ id: this.id++, x: tc.x, y: tc.y - 420 * tc.to / 0.6, text: '🎂 TIỆC TAN RỒI!', mau: '#ffd166', t: 0 });
   }
 
-  /** Một Cell dự tiệc: đi vòng tròn quanh bánh; cứ vài giây dừng lại gồng, vận nội công (hào quang) rồi phóng kamehameha vào bánh */
+  /** Một Cell dự tiệc: đi vòng quanh bánh cho tới lượt, rồi lặp mãi: biến hình → vận nội công (hào quang) → phóng một loại chưởng ngẫu nhiên vào bánh */
   private cellTiec(c: Cell, tc: Tiec, dt: number): void {
     const k = cellK(c.cap);
     c.lat = tc.x < c.x;
@@ -3116,34 +3116,32 @@ export class Game {
       c.chay = true;
       c.lat = Math.sin(c.goc) > 0;
       c.banTiec = (c.banTiec ?? 0) - dt;
-      if (c.banTiec <= 0) c.nap = 0;
+      if (c.banTiec <= 0) { c.nap = 0; c.loaiChuong = Math.floor(Math.random() * CHUONG_LOAI.length); }
       return;
     }
-    // Đứng yên làm chu trình bắn; phóng đúng lúc hết vận nội công
     const truoc = c.nap;
     c.nap += dt;
     c.chay = false;
-    const luc = TIEC_GONG + TIEC_AURA;
+    const luc = TIEC_BIEN + TIEC_AURA;
     if (truoc < luc && c.nap >= luc) {
+      const l = CHUONG_LOAI[c.loaiChuong ?? 0]!;
+      const hx = c.x + (c.lat ? -1 : 1) * l.tayX * k, hy = c.y - l.tayY * k;
       this.chuongTiec.push({
-        id: this.id++, k,
-        x0: c.x + (c.lat ? -1 : 1) * TIEC_TAY_X * k, y0: c.y - TIEC_TAY_Y * k,
+        id: this.id++, k, loai: c.loaiChuong ?? 0,
+        x0: hx, y0: hy,
         x1: tc.x + ngauNhien(-50, 50) * tc.to / 0.6, y1: tc.y - 150 * tc.to + ngauNhien(-60, 60) * tc.to / 0.6, t: 0,
       });
-      this.vet.push({ id: this.id++, x: c.x + (c.lat ? -1 : 1) * TIEC_TAY_X * k, y: c.y - TIEC_TAY_Y * k, t: 0, loai: 'chay', co: 0.25 + 0.05 * k });
+      this.vet.push({ id: this.id++, x: hx, y: hy, t: 0, loai: 'chay', co: 0.25 + 0.05 * k });
     }
-    if (c.nap >= luc + TIEC_PHONG) {
-      c.nap = undefined;
-      c.banTiec = TIEC_BAN_MIN + Math.random() * (TIEC_BAN_MAX - TIEC_BAN_MIN);
-    }
+    if (c.nap >= luc + TIEC_PHONG) { c.nap = 0; c.loaiChuong = Math.floor(Math.random() * CHUONG_LOAI.length); }
   }
 
-  /** Khung trong hàng của cấp Cell ở atlas gồng / hào quang / phóng (`SP_CELL_TIEC`): 0–2 hào quang, 3 gồng, 4 phóng; null nếu không trong chu trình */
+  /** Khung trong hàng của cấp Cell ở atlas `SP_CELL_TIEC`: biến hình · hào quang (xoay 3 khung) · phóng theo loại chưởng; null nếu không trong chu trình */
   cellTiecKhung(c: Cell): number | null {
     if (c.nap === undefined || c.chet) return null;
-    if (c.nap < TIEC_GONG) return 3;
-    if (c.nap < TIEC_GONG + TIEC_AURA) return Math.floor(c.nap * 14) % 3;
-    return 4;
+    if (c.nap < TIEC_BIEN) return TIEC_KHUNG.bien;
+    if (c.nap < TIEC_BIEN + TIEC_AURA) return TIEC_KHUNG.hao[Math.floor(c.nap * 14) % 3]!;
+    return TIEC_KHUNG.phong[c.loaiChuong ?? 0]!;
   }
 
   /** Chưởng của tiệc bay tới bánh thì nổ; tiếng hát (của tiệc gần nhất) to dần khi nhân vật lại gần bánh */
