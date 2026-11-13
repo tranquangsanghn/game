@@ -13,7 +13,7 @@ const FILE: Record<TenAm, string> = {
 };
 const DUONG_DAN = 'assets/am-thanh/';
 const AM_LUONG: Record<TenAm, number> = { dam: 0.7, da: 0.7, chuong: 0.7, anTao: 0.8, deTrung: 0.6, meChet: 0.9, nvChet: 0.9 };
-const AM_LUONG_NHAC = 0.35;
+const AM_LUONG_NHAC = 0.12;
 const GIAN_CACH = 0.06; // giây: cùng một tiếng không phát lại dày hơn mức này
 const TOI_DA_CHONG = 4; // số bản phát chồng tối đa của một tiếng
 
