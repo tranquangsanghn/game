@@ -429,6 +429,8 @@ export class Game {
   onDong: () => void = () => {};
   /** Gọi khi màn chơi / dữ liệu đổi và cần vẽ lại phần HTML phủ (màn bắt đầu, tạm dừng, kết thúc) */
   onManPhu: () => void = () => {};
+  /** Tay cầm bấm nút bắt đầu ở màn bắt đầu (giao diện quyết định mở hướng dẫn hay vào chơi) */
+  onNutBatDau: () => void = () => {};
   /** Gọi khi ván kết thúc (để lưu điểm lên máy chủ) */
   onKetThuc: (kq: KetQua) => void = () => {};
   private khungEl!: HTMLDivElement;
@@ -2303,7 +2305,7 @@ export class Game {
     // Nút chung cho cả hai tay cầm: bắt đầu / chơi lại / tạm dừng
     for (const g of dungTayCam ? ds : []) {
       if (this.man === 'start' || this.man === 'over') {
-        if (moi(g, 0) || moi(g, 9)) this.batDau();
+        if (moi(g, 0) || moi(g, 9)) this.man === 'start' ? this.onNutBatDau() : this.batDau();
       } else if (moi(g, 9)) this.tamDung();
       else if (moi(g, 8) && ds.length === 1 && this.man === 'play') this.doiTayCam();
     }

@@ -50,6 +50,8 @@ Màn bắt đầu cho chọn chế độ chơi (nhớ lại lần sau):
 - **Options**: bắt đầu / tạm dừng / tiếp tục · **✕** ở màn bắt đầu / kết thúc: chơi lại
 - **Share (Select)**: khi chỉ có 1 tay cầm, chuyển tay cầm sang nhân vật kia
 
+Chọn nhân vật xong sẽ vào màn hướng dẫn (ảnh `web/public/assets/game/huong-dan-tay-cam.svg`): chọn Chuột + Tab hoặc Tay cầm, xem cách dùng Đấm / Đá / Chiêu đặc biệt / chiêu riêng rồi bấm Vào chơi (✕).
+
 Màn bắt đầu (chế độ tay cầm) hiện tên các tay cầm đã nối và nút vừa bấm (để dò tay cầm lạ có gửi đúng chỉ số nút không).
 
 **Biến socola (chỉ Zinbu)**: chiêu quất râu quét rộng. Gà con dính thì chết luôn và thành thanh socola, Mabu / Zinbu chạm vào là ăn được: +200 máu và +200 mana. Gà mẹ dính thì chịu sát thương rồi hoá socola 5 giây (đứng yên, không né); lúc đó nếu Mabu đang ở dạng mây quét trúng thì gà mẹ luôn mất 30% máu mỗi nhịp, từ 30% trở xuống thì chết luôn. Hồi chiêu 6 giây.

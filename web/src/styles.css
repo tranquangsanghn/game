@@ -255,3 +255,13 @@ kbd {
 .the-anh { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 8px; padding-bottom: 14px; }
 .anh-nv { display: block; background-repeat: no-repeat; image-rendering: pixelated; }
 .the-chu { font-size: 24px; font-weight: 700; }
+
+/* Màn hướng dẫn (sau khi chọn nhân vật) */
+.man-hd { gap: 10px; padding: 12px; box-sizing: border-box; }
+.hang-che { display: flex; gap: 12px; }
+.nut-che { padding: 8px 22px; border: 2px solid rgba(255, 255, 255, 0.35); border-radius: 999px; background: transparent; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; }
+.nut-che.bat { background: #38bdf8; border-color: #38bdf8; color: #0b1020; }
+.anh-hd { max-width: 100%; max-height: calc(100% - 120px); min-height: 0; object-fit: contain; }
+.hd-chuot { color: #fff; font-size: 18px; line-height: 1.6; text-align: left; }
+.hd-chuot p { margin: 4px 0; }
+.man-hd .nhom-nut { margin-top: 0; }
