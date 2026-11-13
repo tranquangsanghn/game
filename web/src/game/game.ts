@@ -606,6 +606,19 @@ export class Game {
     return this.nguoi[0].diem + this.nguoi[1].diem;
   }
 
+  /** Kết quả ván: true = Mabu và Zinbu thắng (diệt hết gà), false = quái vật thắng (cả hai cùng gục). Chỉ có nghĩa ở màn kết thúc. */
+  nguoiThangTran = false;
+
+  /** Tổng số gà con còn sống (trắng, đỏ, đen; không tính gà mẹ) */
+  get soGaCon(): number {
+    return this.ga.filter((g) => g.loai !== 'boss' && !g.chet).length;
+  }
+
+  // Thắng khi gà mẹ đã dùng hết mạng (đã hồi sinh đủ lần và chết) và không còn gà con nào, kể cả trứng chưa nở
+  private kiemTraThang(): void {
+    if (this.soLanTuong > TUONG_HOI_SINH && !this.ga.some((g) => !g.chet) && !this.trungDe.length) this.ketThuc(true);
+  }
+
   get nguoiThang(): number {
     const [a, b] = this.nguoi;
     return a.diem === b.diem ? -1 : a.diem > b.diem ? 0 : 1;
@@ -683,6 +696,7 @@ export class Game {
     this.capNhatDan(dt);
     this.capNhatVatPham(dt);
     this.capNhatHieuUng(dt, dtE);
+    if (this.man === 'play') this.kiemTraThang();
   }
 
   // Quả táo: hết hạn thì biến mất, nhân vật chạm vào thì nhặt (chạm là nhặt, kể cả khi đã đầy máu / mana)
@@ -1614,7 +1628,7 @@ export class Game {
     n.bay = null;
     n.nv.tuKhi(false);
     n.nv.nga();
-    if (this.nguoi.every((m) => m.het)) this.ketThuc();
+    if (this.nguoi.every((m) => m.het)) this.ketThuc(false);
   }
 
   private congDiem(p: number, diem: number, x: number, y: number, text: string): void {
@@ -1622,7 +1636,9 @@ export class Game {
     this.chu.push({ id: this.id++, x, y, text, mau: this.nguoi[p].mau, t: 0 });
   }
 
-  private ketThuc(): void {
+  // nguoiThang: true = hai nhân vật diệt hết gà mẹ và gà con; false = cả hai nhân vật cùng gục, quái vật thắng
+  private ketThuc(nguoiThang: boolean): void {
+    this.nguoiThangTran = nguoiThang;
     this.man = 'over';
     this.nguoi.forEach((n) => {
       n.dich = null;

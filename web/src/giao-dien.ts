@@ -249,14 +249,17 @@ export class GiaoDien {
         <h3>${g.nguoiThang === i ? '👑 ' : ''}${esc(n.ten)}</h3><div class="so-lon">${n.diem}</div>
         <p class="phu">Trúng ${n.banTrung} · Trượt ${n.banTruot} · Chính xác ${g.doChinhXac(i)}%</p></div>`;
     }).join('');
-    const kl = g.nguoiThang === -1
-      ? 'Hòa nhau! Cả hai cùng là chiến binh mạnh nhất 🤝'
-      : `👑 ${esc(g.nguoi[g.nguoiThang].ten)} là <b>Chiến binh Dragon Ball</b>!`;
+    const mvp = g.nguoiThang === -1
+      ? 'Hai nhân vật bằng điểm nhau 🤝'
+      : `👑 ${esc(g.nguoi[g.nguoiThang].ten)} ghi nhiều điểm nhất`;
+    const kl = g.nguoiThangTran
+      ? `🏆 <b>Mabu và Zinbu thắng!</b> Gà mẹ và toàn bộ gà con đã bị hạ.<br>${mvp}`
+      : `🐔 <b>Quái vật thắng!</b> Cả hai nhân vật đã gục.<br>${mvp}`;
     const top = this.bang && this.bang.length
       ? `<table class="xep-hang"><caption class="phu">Bảng điểm cao nhất</caption>${this.bang.map((d, i) => `<tr><td>${i + 1}.</td><td>${esc(d.nguoiChoi)}</td><td><b>${d.diem}</b></td><td class="phu">${phut(d.thoiGian)}</td></tr>`).join('')}</table>`
       : '';
     return `<div class="man-phu"><div class="hop">
-      <h1>Hết máu rồi! 💥</h1>
+      <h1>${g.nguoiThangTran ? 'Chiến thắng! 🏆' : 'Quái vật thắng! 💥'}</h1>
       <div class="hai-cot">${diemHai}</div>
       <p class="ket-luan">${kl}</p>
       <p>Điểm đội: <b>${g.tongDiem}</b> · Kỷ lục: <b>${g.kyLuc}</b>${g.kyLucMoi ? '<span class="ky-luc-moi">Kỷ lục mới!</span>' : ''}</p>

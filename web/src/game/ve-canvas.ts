@@ -647,7 +647,8 @@ export class VeCanvas {
 
     ctx.font = `700 18px ${FONT}`;
     ctx.fillStyle = '#ffd27a';
-    ctx.fillText('Gà mẹ', c.GIUA + 150, -42);
+    ctx.fillText('Gà con', c.GIUA + 150, -42);
+    ctx.fillText(`${c.soGaCon}`, c.GIUA + 150, -20);
     // Số mạng còn lại: các trái tim ngay dưới avatar gà mẹ (mạng đã mất thì mờ)
     const tong = c.TUONG_HOI_SINH + 1;
     const con = c.mangTuong();

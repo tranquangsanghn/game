@@ -116,7 +116,7 @@
 
 # Nguyên tắc gà mẹ (gà tướng): chiêu thức, hồi sinh
 
-- Chiêu của gà mẹ (`bangTuong()`, `tuongSong`) nằm trên thanh đen `BAR` phía trên map (toạ độ y âm, giữa trên), 6 chiêu xếp ngang: Mổ + đá · Lao · Bay · Đen · Vàng · Đỏ, kèm chữ "Gà mẹ" và số mạng còn lại là các trái tim ❤ ngay dưới avatar gà mẹ (`mangTuong()`, tổng 4 mạng, mạng đã mất thì mờ); chỉ để xem, không bấm được. Chiêu đang dùng sáng + phát sáng; Lao / Bay / màu có vòng tiến độ (hồi chiêu hoặc thời gian còn lại). Nửa vòng tròn đen dưới thanh (bán kính `R_TUONG` = `R_BANG` / 3, tâm ở mép trên map giữa màn hình) chỉ có hình con gà (animation, kèm màu đang đổi). 
+- Chiêu của gà mẹ (`bangTuong()`, `tuongSong`) nằm trên thanh đen `BAR` phía trên map (toạ độ y âm, giữa trên), 6 chiêu xếp ngang: Mổ + đá · Lao · Bay · Đen · Vàng · Đỏ, kèm chữ "Gà con" và tổng số gà con còn sống (`soGaCon`, không tính gà mẹ) ở bên phải avatar, cùng số mạng còn lại là các trái tim ❤ ngay dưới avatar gà mẹ (`mangTuong()`, tổng 4 mạng, mạng đã mất thì mờ); chỉ để xem, không bấm được. Chiêu đang dùng sáng + phát sáng; Lao / Bay / màu có vòng tiến độ (hồi chiêu hoặc thời gian còn lại). Nửa vòng tròn đen dưới thanh (bán kính `R_TUONG` = `R_BANG` / 3, tâm ở mép trên map giữa màn hình) chỉ có hình con gà (animation, kèm màu đang đổi). 
 - Mổ + đá: sát thương và tốc độ như cũ (80 · 2,5s), luân phiên animation mổ / đá (`kieuMo`).
 - Lao (`TOC_LAO_THAT` = 500 px/s, `LAO_SAT` = 2, `LAO_HOI` = 15s) và Bay (`TOC_BAY_THAT` = 700 px/s, `BAY_SAT` = 3, `BAY_HOI` = 20s): khi thấy nhân vật xa hơn `CHIEU_TOI_THIEU` (xa hơn `CHIEU_XA` thì ưu tiên Bay), gà mẹ báo hiệu `CHIEU_BAO` = 1s (nháy sáng, đứng yên, vệt đỏ trên mặt đất bám theo mục tiêu — `vachView`), hết báo hiệu thì khoá hướng rồi chạy / bay một đường thẳng, không đổi hướng. Chạm nhân vật thì gây sát thương gốc × hệ số, mỗi nhân vật một lần mỗi đợt, nhân vật vẫn né được (`NE_NV`). Hết quãng (`CHIEU_QUANG_THEM`, tối đa `CHIEU_QUANG_TOI_DA`) hoặc chạm mép map thì nghỉ `CHIEU_NGHI`, rồi lộ sơ hở `SO_HO` = 3s (không né được đòn nào, hiện chữ "SƠ HỞ!"). Đang lao / bay thì không mổ, không đẻ trứng.
 - Các chiêu không chồng nhau: giữa 2 chiêu bất kỳ (Lao, Bay, đổi màu) nghỉ ít nhất `CHIEU_NGHI_CHUNG` = 4s (`nghiChung`); màu chỉ bật khi không đang Lao / Bay và đang chờ thì Lao / Bay nhường (`capNhatChieuTuong()`, `batDauChieu()`).
@@ -133,3 +133,9 @@
 # Nguyên tắc mana & bay
 
 - Bay tốn mana (`mana`, số không có trần, bình xanh lơ có số giữa bình ở thanh đen hai bên, dưới bình máu, không vẽ trên đầu nhân vật; `manaNv()`, `nlBay()`). Bắt đầu `MANA_BAN_DAU` = 100; bay tốn `MANA_BAY` = 50 mỗi giây bay; tự hồi `MANA_HOI` = 2 mỗi giây khi không bay nhưng chỉ tới `MANA_HOI_TOI_DA` = 100 rồi thôi (táo xanh có thể đẩy cao hơn, không bị trừ xuống). Mỗi lần bay xong khoá `BAY_KHOA` = 5s (`bayKhoa`, bình xám) mới bay tiếp được; còn dưới `MANA_TOI_THIEU` = 15 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); mana không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn. Đổi cấu trúc trạng thái nên `PHIEN_BAN_LUU` = 2 (ván lưu cũ không tải được).
+
+# Nguyên tắc thắng / thua
+
+- Nhân vật thắng (`kiemTraThang()` → `ketThuc(true)`, `nguoiThangTran` = true): gà mẹ đã dùng hết mạng (đã sinh đủ `TUONG_HOI_SINH` + 1 lần và đã chết), không còn gà con nào sống và không còn trứng chưa nở, tức diệt hết gà mẹ và gà con. Màn kết thúc hiện "Chiến thắng!".
+- Quái vật thắng (`ketThuc(false)`): cả hai nhân vật cùng hết máu. Màn kết thúc hiện "Quái vật thắng!".
+- Cả hai trường hợp đều ghi điểm / kỷ lục như cũ; điểm chỉ dùng để chọn nhân vật ghi nhiều điểm nhất (MVP) ở màn kết thúc, không quyết định thắng thua.
