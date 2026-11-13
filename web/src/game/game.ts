@@ -236,9 +236,8 @@ const TRON_MAU = 0.2;
 // Vua gà (gà mẹ gốc) tự hồi HOI_MAU_VUA máu / giây, tới máu tối đa (hpToiDa) (đang hoá socola thì không hồi)
 const HOI_MAU_VUA = 2;
 const TRON_TOC = 4;
-// Vua gà không hồi sinh nên được trốn chạy nhanh TRON_LAN lần; trong lúc chạy thì bất tử; lần sau chỉ dùng khi nhân vật áp sát trong TRON_GAN
+// Vua gà không hồi sinh nên được trốn chạy nhanh TRON_LAN lần; trong lúc chạy thì bất tử; mỗi lần đều khi máu dưới TRON_MAU và còn bị đuổi
 const TRON_LAN = 2;
-const TRON_GAN = 600;
 const GOI_HOI = 30;
 const GOI_DAN: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'rooster', 'flyer'];
 const GOI_HIEN = 1.2;
@@ -2126,7 +2125,7 @@ export class Game {
     const ux = (g.x - muc.x) / d;
     const uy = (g.y - muc.y) / d;
     let toc = TOC_TRON;
-    if ((g.daTron ?? 0) < TRON_LAN && (!g.daTron || gan < TRON_GAN)) {
+    if ((g.daTron ?? 0) < TRON_LAN) {
       // Trốn chạy nhanh (tối đa TRON_LAN lần): khoá hướng ra xa nhân vật gần nhất, bất tử trong lúc chạy
       g.daTron = (g.daTron ?? 0) + 1;
       g.tron = TRON_QUANG;
