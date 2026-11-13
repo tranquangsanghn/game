@@ -220,7 +220,7 @@ const HOI_DANH_GA: Record<string, number> = { hen: 1.2, rooster: 0.8, flyer: 1.5
 // Gà tướng hồi sinh tối đa TUONG_HOI_SINH lần; mỗi lần hồi sinh hệ số sát thương cộng thêm TUONG_TANG_SAT (1 → 1,5 → 2)
 const TUONG_HOI_SINH = 0;
 // Vua gà (gà mẹ gốc) có HP_VUA máu, không hồi sinh; vương miện đính ngọc rồng 1 sao, rơi xuống đất khi nó chết
-const HP_VUA = 200;
+const HP_VUA = 600;
 const NGOC_BAN_KINH = 110;
 const SP_NGOC: KhungSprite = { atlas: 'assets/game/ngoc_rong.png', atlasW: 1792, atlasH: 256, w: 256, h: 256, cot: 7, neoX: 128, neoY: 128 };
 const TUONG_TANG_SAT = 0.5;
