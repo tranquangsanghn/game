@@ -98,6 +98,10 @@ const SA_CAT = SA + 'cat.png';
 /** Nền cát / biển vẽ sẵn theo mảnh MANH × MANH đơn vị bản đồ, độ phân giải 1/MANH_TL; dựng dần từng hàng, mỗi khung tối đa MANH_NGAN_SACH ms */
 const MANH = 800;
 const MANH_TL = 3;
+/** Mảnh dựng thêm viền MANH_PAD điểm ảnh chứa đúng nội dung của mảnh bên cạnh (cùng lưới điểm ảnh toàn thế giới): vẽ chồng lên nhau thì giống hệt, không lộ đường nối */
+const MANH_PAD = 2;
+const MANH_N = Math.ceil(MANH / MANH_TL);
+const MANH_O = MANH / MANH_N;
 /** Thời gian tối đa mỗi khung dành cho việc dựng mảnh (ms): mảnh dựng dần từng hàng điểm ảnh qua nhiều khung, không khựng */
 const MANH_NGAN_SACH = 4;
 /** Số mảnh giữ lại tối đa (thế giới rất rộng): quá thì bỏ mảnh lâu không thấy nhất */
@@ -411,7 +415,7 @@ export class VeCanvas {
   /** Dựng dở một mảnh nền sa mạc (MANH đơn vị bản đồ, độ phân giải 1/MANH_TL) tới khi hết hạn mức thời gian; xong thì trả canvas */
   private dungManhSa(mi: number, mj: number, han: number): HTMLCanvasElement | null {
     const khoa = `${mi},${mj}`;
-    const n = Math.ceil(MANH / MANH_TL), o = MANH / n;
+    const n = MANH_N + 2 * MANH_PAD, o = MANH_O;
     let v = this.viecManh.get(khoa);
     if (!v) {
       const cv = document.createElement('canvas');
@@ -422,7 +426,7 @@ export class VeCanvas {
     while (v.hang < n && performance.now() < han) {
       const py = v.hang++;
       for (let px = 0; px < n; px++) {
-        this.mauSa(v.d.data, (py * n + px) * 4, TG.x0 + mi * MANH + (px + 0.5) * o, TG.y0 + mj * MANH + (py + 0.5) * o, true);
+        this.mauSa(v.d.data, (py * n + px) * 4, TG.x0 + mi * MANH + (px - MANH_PAD + 0.5) * o, TG.y0 + mj * MANH + (py - MANH_PAD + 0.5) * o, true);
       }
     }
     if (v.hang < n) return null;
@@ -469,7 +473,6 @@ export class VeCanvas {
     const cho: { khoa: string; mi: number; mj: number; uu: number }[] = [];
     const ve: { m: HTMLCanvasElement; ox: number; oy: number }[] = [];
     const muon = new Set<string>();
-    let thieu = false; // có mảnh trong khung nhìn chưa dựng xong: cần lớp lót để không lộ nền đen
     for (let mj = Math.max(0, j0 - 1); mj <= Math.min(sy - 1, j1 + 1); mj++) {
       for (let mi = Math.max(0, i0 - 1); mi <= Math.min(sx - 1, i1 + 1); mi++) {
         const ox = TG.x0 + mi * MANH, oy = TG.y0 + mj * MANH;
@@ -484,16 +487,16 @@ export class VeCanvas {
           if (thay) ve.push({ m, ox, oy });
         } else if (this.vanCat) {
           muon.add(khoa);
-          if (thay) thieu = true;
           cho.push({ khoa, mi, mj, uu: (thay ? 0 : 1e9) + Math.hypot(ox + MANH / 2 - cx, oy + MANH / 2 - cy) });
-        } else if (thay) thieu = true;
+        }
       }
     }
-    // Mỗi lần phủ kín màn hình có làm mịn rất tốn: chỉ vẽ ảnh lót (thô) khi còn mảnh chưa dựng xong, bình thường chỉ vẽ các mảnh
     ctx.imageSmoothingEnabled = true;
-    if (thieu) ctx.drawImage(this.tongSa, TG.x0, TG.y0, RX, RY);
-    // Chồng mép 1 đơn vị để không lộ đường nối giữa các mảnh
-    for (const v of ve) ctx.drawImage(v.m, v.ox, v.oy, MANH + 1, MANH + 1);
+    // Canvas nền độ phân giải thấp nên vẽ ảnh lót luôn (rẻ): che đường nối giữa các mảnh (mép khử răng cưa lộ nền trong suốt)
+    ctx.drawImage(this.tongSa, TG.x0, TG.y0, RX, RY);
+    // Mảnh có viền MANH_PAD điểm ảnh: vẽ lấn ra ngoài mảnh đúng bằng viền, phần chồng giữa hai mảnh giống hệt nhau
+    const vien = MANH_PAD * MANH_O;
+    for (const v of ve) ctx.drawImage(v.m, v.ox - vien, v.oy - vien, MANH + 2 * vien, MANH + 2 * vien);
     // Bỏ phần dựng dở của mảnh không còn cần (giải phóng bộ nhớ)
     for (const k of this.viecManh.keys()) if (!muon.has(k)) this.viecManh.delete(k);
     if (!cho.length) return;
