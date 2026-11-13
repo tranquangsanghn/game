@@ -160,6 +160,8 @@ export interface TrangThaiLuu {
   cauTron?: CauTron[];
   /** Máy bay (thiếu = ván lưu cũ, tạo mới ở chỗ ban đầu) */
   mayBay?: MayBay;
+  /** Vườn gà ngủ / tổ trứng chờ vua gà (thiếu = vườn đang hoạt động bình thường) */
+  vuon?: { ngu: boolean; to: { x: number; y: number } | null; toDe: number; daNoPhu: number; choVua: boolean };
   /** Bản đồ của ván (thiếu = ván lưu cũ, đồng cỏ) */
   banDo?: LoaiBanDo;
   /** Cây đã đổ: [chỉ số trong trangTri, thời điểm đổ, hướng đổ] */
@@ -458,6 +460,8 @@ const LOC_DO = 'sepia(1) saturate(7) hue-rotate(-52deg) brightness(1.05)';
 // Gà tướng: máu, thời gian chờ giữa 2 lần xuất hiện (giây), tốc độ đi
 const CHO_TUONG_DAU = 0;
 const CHO_TUONG = 10;
+/** Số gà mẹ phụ phải nở (sau khi máy bay quay lại vườn) thì vua gà mới xuất hiện lại */
+const ME_PHU_HIEN_VUA = 5;
 const TOC_DO_TUONG = 60;
 // Gà mẹ gốc đẻ trứng: mỗi lượt 4 quả thường (2 gà trắng, 1 gà đỏ, 1 gà đen, DAN_TRUNG; +1 mỗi lần hồi sinh) rồi quả thứ 5 là trứng đỏ đặc biệt; trứng thường nở sau TRUNG_NO giây; khoảng cách giữa 2 lượt theo choDeTrung().
 const DAN_TRUNG: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'flyer'];
@@ -763,6 +767,12 @@ export class Game {
   // Lần hồi sinh của gà tướng gần nhất (để bảng vẫn hiện khi chờ hồi sinh)
   lanTuong = 0;
   private soLanTuong = 0;
+  // Vườn gà ngủ khi máy bay bay ra ngoài vườn (không gà, không trứng); khi máy bay về thì tổ trứng ẩn đẻ / ấp đủ ME_PHU_HIEN_VUA gà mẹ phụ rồi vua gà mới xuất hiện
+  private vuonNgu = false;
+  private toTrung: { x: number; y: number } | null = null;
+  private toDe = 0;
+  private daNoPhu = 0;
+  private choVua = false;
   // Số gà mẹ phụ đã sinh trong ván (quyết định kiểu chuyên và màu của con kế tiếp)
   private demPhu = 0;
   /** Dấu X đỏ đếm ngược của trứng đỏ (cuối mũi tên chỉ hướng); chỉ lấy khi nằm trong khung nhìn */
@@ -940,6 +950,11 @@ export class Game {
     this.dungHinh = 0;
     this.henTuong = CHO_TUONG_DAU;
     this.soLanTuong = 0;
+    this.vuonNgu = false;
+    this.toTrung = null;
+    this.toDe = 0;
+    this.daNoPhu = 0;
+    this.choVua = false;
     this.lanTuong = 0;
     this.demPhu = 0;
     this.kyLucMoi = false;
@@ -971,6 +986,7 @@ export class Game {
       tGame: this.tGame, t: this.t, chamDen: this.chamDen, id: this.id,
       henTuong: this.henTuong, soLanTuong: this.soLanTuong, lanTuong: this.lanTuong,
       ga: this.ga, trungDe: this.trungDe, vatPham: this.vatPham, ngocNhat: this.ngocNhat, cuu: this.cuu, cauTron: this.cauTron, mayBay: this.mayBay,
+      vuon: { ngu: this.vuonNgu, to: this.toTrung, toDe: this.toDe, daNoPhu: this.daNoPhu, choVua: this.choVua },
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       nguoi: this.nguoi.map((n) => {
         const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
@@ -990,6 +1006,7 @@ export class Game {
     this.henTuong = d.henTuong; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
     this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham; this.ngocNhat = d.ngocNhat ?? []; this.ngocBay = []; this.cuu = d.cuu ?? [];
     this.cauTron = d.cauTron?.length ? d.cauTron.map((q, i) => ({ ...q, cua: q.cua ?? i })) : taoCauTron();
+    if (d.vuon) { this.vuonNgu = d.vuon.ngu; this.toTrung = d.vuon.to; this.toDe = d.vuon.toDe; this.daNoPhu = d.vuon.daNoPhu; this.choVua = d.vuon.choVua; }
     if (d.mayBay) this.mayBay = { ...taoMayBay(d.mayBay.x, d.mayBay.y), ...d.mayBay };
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
@@ -1104,9 +1121,11 @@ export class Game {
     this.rung = Math.max(0, this.rung - dt);
     if (this.rung === 0) this.rungBien = RUNG_BIEN;
 
+    this.capNhatVuon(dtE);
     this.capNhatTrungGa(dt);
     this.henTuong -= dtE;
-    if (this.henTuong <= 0) {
+    if (this.vuonNgu || this.choVua) this.henTuong = Math.max(this.henTuong, 0.1);
+    else if (this.henTuong <= 0) {
       if (this.ga.some((g) => g.goc && !g.chet)) this.henTuong = 10;
       else if (this.soLanTuong <= TUONG_HOI_SINH) {
         this.sinhTuong();
@@ -1965,8 +1984,53 @@ export class Game {
     return { x: kepX(n.x + Math.cos(goc) * r), y: kepY(n.y + Math.sin(goc) * r) };
   }
 
+  // Máy bay ra khỏi vườn gà → vườn ngủ (gà, trứng biến mất, không hoạt động). Máy bay về → tổ trứng ẩn đẻ / ấp đủ ME_PHU_HIEN_VUA gà mẹ phụ thì vua gà mới xuất hiện lại (nếu vua gà chưa bị hạ)
+  private capNhatVuon(dtE: number): void {
+    const ngoai = !trongVuon(this.mayBay.x, this.mayBay.y);
+    if (ngoai && !this.vuonNgu) {
+      this.vuonNgu = true;
+      // Vua gà còn sống (hoặc chưa xuất hiện) thì sẽ xuất hiện lại như mới; đã bị hạ thì không bao giờ có lại
+      if (this.ga.some((g) => g.goc && !g.chet) || this.soLanTuong <= TUONG_HOI_SINH) this.soLanTuong = 0;
+      this.viTriVua = null;
+      this.ga = [];
+      this.keoGa = [];
+      this.trungDe = [];
+      this.toTrung = null;
+      this.choVua = false;
+      this.daNoPhu = 0;
+      return;
+    }
+    if (!ngoai && this.vuonNgu) {
+      this.vuonNgu = false;
+      if (this.soLanTuong <= TUONG_HOI_SINH) {
+        const co = this.nguoi.filter((n) => !n.vang);
+        let x = MAP / 2, y = MAP / 2;
+        for (let i = 0; i < 30; i++) {
+          x = ngauNhien(900, MAP - 900);
+          y = ngauNhien(900, MAP - 900);
+          if (co.every((n) => Math.hypot(n.x - x, n.y - y) >= 1500)) break;
+        }
+        this.toTrung = { x, y };
+        this.toDe = 0;
+        this.daNoPhu = 0;
+        this.choVua = true;
+      }
+    }
+    if (this.vuonNgu || !this.toTrung) return;
+    this.toDe -= dtE;
+    if (this.toDe <= 0) {
+      this.toDe = choDeTrung(this.soMePhu);
+      this.deTrung({ id: -1, x: this.toTrung.x, y: this.toTrung.y });
+    }
+    if (this.daNoPhu >= ME_PHU_HIEN_VUA) {
+      this.toTrung = null;
+      this.choVua = false;
+      this.henTuong = 0;
+    }
+  }
+
   // Gà tướng đẻ một lượt trứng quanh mình
-  private deTrung(boss: Ga): void {
+  private deTrung(boss: { id: number; x: number; y: number }): void {
     this.am.phat('deTrung');
     for (const loai of DAN_TRUNG) {
       const v = { x: boss.x + ngauNhien(-110, 110), y: boss.y + ngauNhien(-60, 90) };
@@ -2085,7 +2149,7 @@ export class Game {
   }
 
   // Gà mẹ gốc đẻ một quả trứng đỏ đặc biệt; mỗi lần chỉ có một quả đang ấp của gà mẹ này
-  private deTrungDb(boss: Ga): void {
+  private deTrungDb(boss: { id: number; x: number; y: number }): void {
     if (this.trungDe.some((e) => e.db && e.me === boss.id)) return;
     const v = { x: boss.x + ngauNhien(-140, 140), y: boss.y + ngauNhien(40, 150) };
     giuTrongMap(v, LE_TRUNG_DB, false, 'vuon');
@@ -2117,6 +2181,7 @@ export class Game {
     const g = this.taoTuong(e.x, e.y, Math.random() < 0.5, false, this.demPhu++ % KIEU_PHU);
     giuTrongMap(g, LE_TUONG, false, 'vuon');
     this.ga.push(g);
+    this.daNoPhu++;
     this.vet.push({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'chay', co: 2 });
     this.chu.push({ id: this.id++, x: g.x, y: g.y - 360, text: '🐔 GÀ MẸ MỚI RA ĐỜI!', mau: '#ff9f1a', t: 0 });
     this.rung = Math.max(this.rung, 0.3);
