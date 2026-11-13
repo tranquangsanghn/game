@@ -574,20 +574,6 @@ export class VeCanvas {
     ctx.scale(t.k, t.k);
     this.sprite(ctx, n.nv.sp, n.nv.khung, n.nv.lat, false);
     ctx.restore();
-    // Khiên tạm (máu vượt trần): quầng xanh nhấp nháy bao quanh thân, mờ dần khi sắp hết
-    if (n.khien > 0 && !n.het) {
-      ctx.save();
-      ctx.translate(n.x, t.y - 30);
-      const a = dongHe(n.khienCon / 1.5) * (0.5 + 0.5 * Math.abs(Math.sin(c.t * 6)));
-      const r = 95 * n.nv.heSoTo;
-      duongElip(ctx, r * 0.8, r);
-      ctx.fillStyle = `rgba(90,200,255,${0.1 + 0.12 * a})`;
-      ctx.fill();
-      ctx.strokeStyle = `rgba(170,230,255,${0.4 + 0.5 * a})`;
-      ctx.lineWidth = 5;
-      ctx.stroke();
-      ctx.restore();
-    }
   }
 
   // Cứu đồng đội: người ngã được phủ mây (Mabu cứu Zinbu) hoặc một cục socola to (Zinbu cứu Mabu). Nối người còn sống bằng sợi dây, có số giây đếm ngược
@@ -721,11 +707,10 @@ export class VeCanvas {
     ctx.fillStyle = '#35d96a';
     ctx.fill();
     ctx.restore();
-    // Combo đang chạy (từ 3 đòn) và khiên tạm; combo đủ cao thì chưởng hồi nhanh (⚡)
+    // Combo đang chạy (từ 3 đòn); combo đủ cao thì chưởng hồi nhanh (⚡)
     if (n.het) return;
     const dong: string[] = [];
     if (n.combo >= 3) dong.push(`COMBO ${n.combo}${n.combo >= c.COMBO_GIAM_HOI ? ' ⚡' : ''}`);
-    if (n.khien > 0) dong.push(`🛡 ${Math.ceil(n.khien)}`);
     if (!dong.length) return;
     ctx.save();
     ctx.font = `800 26px ${FONT}`;
@@ -736,7 +721,7 @@ export class VeCanvas {
       const y = t.y - 22 - i * 30;
       ctx.strokeStyle = 'rgba(0,0,0,0.75)';
       ctx.strokeText(d, t.x, y);
-      ctx.fillStyle = d.startsWith('🛡') ? '#9be7ff' : '#ffb347';
+      ctx.fillStyle = '#ffb347';
       ctx.fillText(d, t.x, y);
     });
     ctx.restore();

@@ -52,14 +52,14 @@ Chọn nhân vật xong sẽ vào màn hướng dẫn (ảnh `web/public/assets/
 
 Màn bắt đầu (chế độ tay cầm) hiện tên các tay cầm đã nối và nút vừa bấm (để dò tay cầm lạ có gửi đúng chỉ số nút không).
 
-**Biến socola (chỉ Zinbu)**: chiêu quất râu quét rộng. Gà con dính thì chết luôn và thành thanh socola, Mabu / Zinbu chạm vào là ăn được: +200 máu và +200 mana. Gà mẹ dính thì chịu sát thương rồi hoá socola 5 giây (đứng yên, không né); lúc đó nếu Mabu đang ở dạng mây quét trúng thì gà mẹ luôn mất 30% máu mỗi nhịp, từ 30% trở xuống thì chết luôn. Hồi chiêu 6 giây.
+**Biến socola (chỉ Zinbu)**: ném chưởng socola nổ diện rộng (tốn 40 mana). Gà con dính thì chết luôn và thành thanh socola, Mabu / Zinbu chạm vào là ăn được: +100 máu và +100 mana. Gà mẹ dính thì chịu sát thương rồi hoá socola 5 giây (đứng yên, không né); lúc đó nếu Mabu đang ở dạng mây quét trúng thì gà mẹ mất 30% máu (một lần mỗi lần hoá socola), từ 30% trở xuống thì chết luôn. Tướng gà đang hoá socola thì Mabu / Zinbu chạm vào là ăn luôn (vua gà thì không ăn được). Hồi chiêu 3 giây; trong lúc hồi Zinbu vẫn đấm / đá / chưởng bình thường.
 
-**Biến mây (chỉ Mabu)**: chọn nút đám mây (mana tím) trên bảng chiêu rồi ra đòn. Mabu biến thành đám mây to gấp 2 trong 7 giây, không còn thanh máu / mana, mọi con gà mây quét qua đều trúng đòn. Sau đó phải chờ 25 giây mới dùng lại.
+**Biến mây (chỉ Mabu)**: chọn nút đám mây trên bảng chiêu rồi ra đòn (tốn 40 mana). Mabu biến thành đám mây to gấp 2 trong 7 giây, không nhận sát thương, mọi con gà mây quét qua đều trúng đòn. Sau đó phải chờ 25 giây mới dùng lại.
 
 ## Máu, mana và chiêu (cân bằng mới)
 
-- **Máu**: vào ván 100, trần 200. Máu vượt trần (táo đỏ +100, socola +100, hạ gà mẹ +60) thành **khiên tạm** 5 giây (tối đa 100). Không bị thương 5 giây thì tự hồi 2 máu/giây tới 100.
-- **Mana**: vào ván 100, trần 200. Bay tốn 15/giây, **chưởng tốn 30**, **Biến mây / socola tốn 40**. **Đấm / Đá trúng hồi 5 mana** (đánh gần để gom mana, xả chưởng khi gà đông). Táo xanh +30 mana.
+- **Máu**: vào ván 150. Ăn máu (táo đỏ +100, socola +100, hạ vua gà +60) cộng không giới hạn (bình máu đầy ở mốc 300). Không bị thương 5 giây thì tự hồi 2 máu/giây tới 150.
+- **Mana**: vào ván 200, cộng không giới hạn (bình đầy ở mốc 200), tự hồi 2/giây tới 100. Bay tốn 15/giây, **chưởng tốn 30**, **Biến mây / socola tốn 40**. **Đấm / Đá trúng hồi 5 mana** (đánh gần để gom mana, xả chưởng khi gà đông). Táo xanh +30 mana.
 - **Đá** hất lùi và làm choáng gà con 0,7s; **chưởng** xuyên qua mọi gà trên đường bay rồi nổ; combo 10+ thì chưởng hồi nhanh gấp đôi (hiện COMBO trên đầu nhân vật).
 - **Cứu đồng đội**: một người ngã mà người kia còn sống thì Mabu phủ **mây** lên Zinbu / Zinbu phủ **cục socola** lên Mabu; mây / socola bám theo người còn sống (nối bằng dây), đếm ngược 15 giây, người cứu sống sót đủ 15s thì người ngã hồi sinh (100 máu).
 - **Gà mẹ**: ngoài thế phòng thủ giảm 40% sát thương (mỗi đòn tối đa 60); lúc **sơ hở** sau Lao / Bay nhận ×2 ("CƠ HỘI x2!"). Gà mẹ gốc dưới 50% máu vào **giai đoạn 2**, đẻ trứng nhanh hơn.
@@ -70,12 +70,12 @@ Màn bắt đầu (chế độ tay cầm) hiện tên các tay cầm đã nối 
 Sprite gà lấy từ `tools/ga-goc.png`; chạy `python3 tools/tao-atlas-ga.py` để sinh lại các atlas trong `public/assets/game/` (cần Pillow + numpy).
 
 - **Gà trắng** (10đ): đi bộ · **Gà đỏ** (20đ): đi nhanh, nhảy · **Gà đen** (30đ): bay và thả trứng
-- **Gà tướng / gà mẹ** (500đ): to gấp 5 lần, 100 máu, đẻ trứng ra gà con. Có chiêu Lao (500 px/s, sát thương ×2, 12s/lần) và Bay (700 px/s, sát thương ×3, 15s/lần) kèm vệt đỏ báo hiệu, rồi lộ sơ hở 3s; cứ 20s lại đổi màu 5s: đen (phản đòn), vàng (miễn đòn), đỏ (đốt cháy xung quanh). Chiêu của gà mẹ nằm trên thanh đen phía trên màn hình. Hồi sinh tối đa 3 lần, mỗi lần sát thương +50%, né thêm 15% và đẻ thêm 1 trứng. Hạ được thì cả đội hồi 60 máu
+- **Gà tướng / gà mẹ** (500đ): to gấp 5 lần, đẻ trứng ra gà con. Có chiêu Lao (500 px/s, sát thương ×2, 12s/lần) và Bay (700 px/s, sát thương ×3, 15s/lần) kèm vệt đỏ báo hiệu, rồi lộ sơ hở 3s; cứ 20s lại đổi màu 5s: đen (phản đòn), vàng (miễn đòn), đỏ (đốt cháy xung quanh). Chiêu của gà mẹ nằm trên thanh đen phía trên màn hình. Có 3 mạng (hồi sinh tối đa 2 lần), mỗi lần sát thương +50%, thế phòng thủ dài thêm 0,5s và đẻ thêm 1 trứng. Hạ được vua gà thì cả đội hồi 60 máu
 - **Gà mẹ gốc** (có vương miện): chỉ chạy trốn và đẻ trứng. Máu 100, mỗi lần hồi sinh thêm 100 (100 → 200 → 300), tự hồi 2 máu mỗi giây tới đầy. Dưới 20% máu thì bỏ canh trứng, chỉ lo chạy trốn, và mỗi mạng có 1 lần **trốn chạy** nhanh gấp 4 lần, xa gấp 2 lần quãng bay của Zinbu. Mỗi lượt (10 giây một lượt khi có tối đa 10 tướng gà đang sống, từ 11 con trở lên thì 15 giây) đẻ 4 trứng thường rồi quả thứ 5 là **trứng đỏ** to gấp 5 lần, gà mẹ canh quanh nó; trứng đỏ ấp 5 giây (tối đa 5 tướng gà), 10 giây (6–10 con) hoặc 15 giây (từ 11 con), trong lúc ấp nở đều 4 gà con mạnh dần (thường → x2 → x3 → x4, to dần), hết thời gian ấp thì nở ra một **gà mẹ phụ** đi đánh nhân vật thay gà mẹ gốc (không giới hạn số lượng). Muốn thắng phải diệt hết gà mẹ gốc (3 mạng), gà mẹ phụ, gà con và trứng
 - **Thế phòng thủ**: gà mẹ không né ngẫu nhiên nữa; cứ 6 giây vào thế 2 giây (có khiên xanh) né mọi đòn, ngoài thế thì đánh trúng được. **Gọi gà con**: máu dưới 40% thì gọi gà con ra bảo vệ (hồi 30s). Gà mẹ phụ chuyên mỗi con một kiểu (chỉ Lao / chỉ Bay / chỉ màu đen / vàng / đỏ), mỗi con một màu
 - Trứng đỏ: mũi tên chỉ hướng chỉ về phía trứng, cuối mũi tên là dấu X đỏ nhấp nháy đếm ngược tới lúc nở
 - Chưởng cháy nổ tự bắn lên trời khi ăn socola hoặc hạ được gà mẹ
-- **Vật phẩm máu** (trái tim): thỉnh thoảng xuất hiện trên map hoặc do gà rơi, Mabu / Zinbu đi vào để nhặt, hồi 50 máu
+- **Táo**: chỉ rơi từ cây bị đánh đổ (30% một quả; cây to chắc chắn rơi 2 táo đỏ + 2 táo xanh). Táo đỏ +100 máu, táo xanh +30 mana. Gà đi qua cũng mổ ăn táo đỏ
 
 Kỷ lục lưu trong `localStorage` của trình duyệt.
 

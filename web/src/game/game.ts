@@ -68,7 +68,7 @@ export interface TrungGa {
 /** soc = chưởng biến socola của Zinbu · troi = chưởng tự bắn lên trời (chỉ để đẹp, không gây sát thương) */
 interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
-/** socola = gà con bị biến thành socola, ăn được +200 máu +200 mana */
+/** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn +SOCOLA_HOI_MAU máu */
 export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola'; }
 interface Chu { id: number; x: number; y: number; text: string; mau: string; t: number; }
 interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay: number; vxoay: number; t: number; mau: string; }
@@ -83,10 +83,12 @@ export interface NguoiChoi {
   /** Chế độ 1 người chơi: nhân vật không tham gia (không vẽ, không điều khiển, coi như đã gục) */
   vang?: boolean;
   nv: NhanVat; bay: ChuyenBay | null;
-  /** Mana (một con số, không có trần) chỉ dùng để bay; bayKhoa = giây còn khoá sau mỗi lần bay */
+  /** Mana (cộng không giới hạn; dùng cho bay, chưởng, Biến mây / socola); bayKhoa = giây còn khoá sau mỗi lần bay */
   mana: number; bayKhoa: number;
-  /** Khiên tạm: máu vượt trần chuyển thành khiên (hấp thụ sát thương trước máu), mất sau khienCon giây; thuongLuc = tGame lúc bị thương gần nhất (để hồi máu tự nhiên) */
-  khien: number; khienCon: number; thuongLuc: number;
+  /** thuongLuc = tGame lúc bị thương gần nhất (để hồi máu tự nhiên) */
+  thuongLuc: number;
+  /** Giây còn hồi của chiêu Biến socola (riêng Zinbu), tách khỏi hoiChieu để không khoá Đấm / Đá / chưởng */
+  hoiSoc: number;
   nhin: { x: number; y: number }; nham: { x: number; y: number } | null; ngam: { x: number; y: number } | null; cuaCan: boolean;
   may: { dang: boolean; con: number; hoi: number };
   /** Sức mạnh: hệ số nhân sát thương mọi đòn đánh gà (mặc định 1; ăn gà mẹ socola được cộng thêm) */
@@ -150,16 +152,14 @@ const S_GA = 0.9;
 // Gà cũng bị ép dẹt theo chiều đứng như nhân vật khi nhìn từ trên cao
 const EP_GA = 0.72;
 const THOI_GIAN_HOANG_HON = 90;
-// Máu: nhân vật và quái đều khởi đầu 100, khác nhau ở sát thương gây ra và tỉ lệ giảm sát thương khi nhận
-// HP_NV là TRẦN máu của nhân vật; vào ván chỉ có HP_KHOI_DAU. Máu vượt trần (táo, socola, hạ gà mẹ) chuyển thành khiên tạm (tối đa KHIEN_TOI_DA, mất sau KHIEN_THOI_GIAN giây).
+// Máu: nhân vật vào ván HP_KHOI_DAU, quái HP_GA; khác nhau ở sát thương gây ra và tỉ lệ giảm sát thương khi nhận
+// HP_NV chỉ là mốc đầy bình máu (bình vẽ theo max(HP_NV, máu hiện có)); ăn máu (táo, socola, hạ gà mẹ) cộng không giới hạn.
 // Không bị thương HP_HOI_CHO giây thì tự hồi HP_HOI máu mỗi giây, nhưng chỉ hồi tới HP_HOI_TOI_DA.
 const HP_NV = 300;
 const HP_KHOI_DAU = 150;
 const HP_HOI = 2;
 const HP_HOI_CHO = 5;
 const HP_HOI_TOI_DA = 150;
-const KHIEN_TOI_DA = 100;
-const KHIEN_THOI_GIAN = 5;
 const HP_GA = 100;
 const GIAM_NV = 0.5;
 // Gà mẹ giảm 40% sát thương ngoài thế phòng thủ; mỗi đòn nhận tối đa TUONG_NHAN_TOI_DA (trước khi nhân đôi); lúc sơ hở sát thương nhận ×SO_HO_NHAN
@@ -169,21 +169,22 @@ const SO_HO_NHAN = 2;
 // Gà mẹ gốc dưới GD2_MAU máu vào giai đoạn 2: đẻ trứng nhanh hơn (chu kỳ nhân GD2_DE)
 const GD2_MAU = 0.5;
 const GD2_DE = 0.6;
-// Xác suất né đòn (tự động, ngẫu nhiên mỗi đòn trúng): nhân vật 25%, gà mẹ (gà tướng) 50%, gà con 0%
+// Xác suất né đòn ngẫu nhiên: nhân vật 25%, gà con 0%; gà mẹ không né ngẫu nhiên mà né 100% trong thế phòng thủ (neGa)
 const NE_NV = 0.25;
 const NE_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0 };
 // Sát thương nhân vật gây ra: [Mabu, Zinbu] theo nhóm đòn 0 Đấm · 1 Đá · 2 Chiêu đặc biệt; mây (riêng Mabu)
 const SAT_THUONG = [[50, 50], [70, 100], [130, 190]];
 const SAT_MAY = 250;
-// Chiêu Biến socola (riêng Zinbu, nhóm đòn 3): chưởng bay tới điểm chuột (tối đa TAM_SOCOLA), nổ bán kính BAN_KINH_SOCOLA. Gà con dính thì chết luôn và thành socola; gà mẹ dính sát thương SAT_SOCOLA (như chiêu đặc biệt cũ) rồi hoá socola SOCOLA_THOI_GIAN giây (đứng yên, không né). Hồi SOCOLA_HOI giây.
+// Chiêu Biến socola (riêng Zinbu, nhóm đòn 3): chưởng bay tới điểm chuột (tối đa TAM_SOCOLA), nổ bán kính BAN_KINH_SOCOLA. Gà con dính thì chết luôn và thành socola; gà mẹ dính sát thương SAT_SOCOLA rồi hoá socola SOCOLA_THOI_GIAN giây (đứng yên, không né).
+// Hồi SOCOLA_HOI giây (đồng hồ riêng hoiSoc, không khoá các đòn khác); tốn MANA_DAC_BIET.
 const SAT_SOCOLA = 150;
 const TAM_SOCOLA = 700;
 const BAN_KINH_SOCOLA = 260;
 const SOCOLA_THOI_GIAN = 5;
 const SOCOLA_HOI = 3;
-// Ăn socola (nhân vật chạm vào): cộng máu và mana (không có trần), rồi tự bắn chưởng lên trời
+// Gà ăn socola: +SOCOLA_HOI_MAU máu
 const SOCOLA_HOI_MAU = 200;
-// Nhân vật ăn socola: hồi ít hơn gà vì có trần (phần vượt trần thành khiên)
+// Nhân vật ăn socola: +SOCOLA_NV_MAU máu, +SOCOLA_NV_MANA mana (không giới hạn), rồi tự bắn chưởng lên trời
 const SOCOLA_NV_MAU = 100;
 const SOCOLA_NV_MANA = 100;
 // Gà (con, mẹ gốc, mẹ phụ) ăn socola: +SOCOLA_HOI_MAU máu, sức mạnh (nhân sát thương) +SOCOLA_SUC_GA, độ to +SOCOLA_TO_GA mỗi thanh; có trần để không to vô hạn
@@ -201,10 +202,10 @@ const TROI_THOI_GIAN = 0.8;
 const SAT_GA: Record<string, number> = { hen: 32, rooster: 48, flyer: 60, boss: 80 };
 const CHAM_GA: Record<string, number> = { hen: 70, rooster: 70, flyer: 70, boss: 220 };
 const HOI_DANH_GA: Record<string, number> = { hen: 1.2, rooster: 0.8, flyer: 1.5, boss: 2 };
-// Gà tướng hồi sinh tối đa TUONG_HOI_SINH lần; mỗi lần sau sát thương nhân TUONG_TANG_SAT so với lần trước, tỉ lệ né cộng thêm TUONG_TANG_NE (tối đa NE_TOI_DA)
+// Gà tướng hồi sinh tối đa TUONG_HOI_SINH lần; mỗi lần hồi sinh hệ số sát thương cộng thêm TUONG_TANG_SAT (1 → 1,5 → 2)
 const TUONG_HOI_SINH = 2;
 const TUONG_TANG_SAT = 0.5;
-// Gà mẹ không còn né ngẫu nhiên: cứ THE_CHU_KY giây vào "thế phòng thủ" THE_KEO_DAI giây (cộng THE_TANG mỗi lần hồi sinh), trong thế né 100% mọi đòn (hiện chữ "NÉ!", có khiên sáng), ngoài thế thì không né đòn nào
+// Gà mẹ không còn né ngẫu nhiên: cứ THE_CHU_KY giây vào "thế phòng thủ" THE_KEO_DAI giây (cộng THE_TANG mỗi lần hồi sinh), trong thế né 100% mọi đòn (hiện chữ "NÉ!", có quầng xanh bao quanh), ngoài thế thì không né đòn nào
 const THE_CHU_KY = 6;
 const THE_KEO_DAI = 2;
 const THE_TANG = 0.5;
@@ -219,12 +220,12 @@ const TRON_TOC = 4;
 const GOI_HOI = 30;
 const GOI_DAN: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'rooster', 'flyer'];
 const GOI_HIEN = 1.2;
-// Gà mẹ phụ chuyên một kiểu (xoay vòng theo thứ tự sinh), mỗi kiểu một màu riêng (hue-rotate trên atlas, nhuộm sẵn) và màu thanh máu
+// Gà mẹ phụ chuyên một kiểu (xoay vòng theo thứ tự sinh), mỗi kiểu một màu riêng (nhuộm cả thân trên atlas, nhuộm sẵn) và màu thanh máu
 const KIEU_PHU = 5;
 const MAU_PHU = ['#3fa7ff', '#ffd23f', '#b46bff', '#ff6bd6', '#ff3b30'];
 // Nhuộm cả thân theo màu của con đó, chỉ giữ đầu trắng, mỏ và chân (tiền tố "tint:" được ve-canvas.ts nhận ra)
 const LOC_PHU = MAU_PHU.map((m) => `tint:${m}`);
-// Hồi chiêu riêng của kiểu chuyên: kiểu Lao hồi 8s, kiểu Bay hồi 12s (gà mẹ khác theo LAO_HOI / BAY_HOI)
+// Hồi chiêu riêng của kiểu chuyên: kiểu Lao hồi 6s, kiểu Bay hồi 9s, kiểu một màu chu kỳ 12s (gà mẹ khác theo LAO_HOI / BAY_HOI / MAU_CHU_KY)
 const LAO_HOI_CHUYEN = 6;
 const BAY_HOI_CHUYEN = 9;
 const MAU_CHU_KY_CHUYEN = 12;
@@ -262,11 +263,11 @@ const DOT_NHIP = 0.5;
 const MO_THOI_GIAN = 0.35;
 // Hạ được gà tướng thì mỗi nhân vật còn sống hồi chừng này máu
 const HOI_MAU_TUONG = 60;
-// Quả táo: mỗi lần cây đổ có TAO_ROI = 30% rơi 1 quả, đỏ / xanh ngẫu nhiên (50/50). Táo đỏ hồi VP_HOI máu (cộng dồn, tối đa HP_NV), táo xanh hồi VP_HOI mana (VP_HOI = đầy: mọi nhóm đòn và thể lực bay).
-// Nhân vật (không phải mây, chưa gục, còn thiếu máu / mana tương ứng) đi vào bán kính VP_BAN_KINH thì nhặt; không ai nhặt sau VP_TON_TAI giây thì biến mất.
+// Quả táo: mỗi lần cây đổ có TAO_ROI = 30% rơi 1 quả (cây to chắc chắn rơi 4 quả), đỏ / xanh ngẫu nhiên (50/50). Táo đỏ +VP_HOI máu, táo xanh +VP_MANA mana và mở khoá bay (không giới hạn).
+// Nhân vật (không phải mây, chưa gục) đi vào bán kính VP_BAN_KINH thì nhặt; không ai nhặt sau VP_TON_TAI giây thì biến mất.
 const TAO_ROI = 0.3;
 const VP_HOI = 100;
-// Táo xanh hồi VP_MANA mana (có trần MANA_TOI_DA)
+// Táo xanh hồi VP_MANA mana
 const VP_MANA = 30;
 const VP_BAN_KINH = 90;
 /** Gà mẹ đang hoá socola: nhân vật chạm vào (trong bán kính này × độ to) là ăn, nhận ĂN_TUONG_TI_LE máu hiện có và sức mạnh của nó */
@@ -281,8 +282,8 @@ const TOC_DO_DI = 460;
 const TOC_DO_BAY = 900;
 const BAY_KHI_XA = 450;
 const BAY_TOI_DA = 1200;
-// Mana: bắt đầu MANA_BAN_DAU, trần MANA_TOI_DA. Dùng để bay (MANA_BAY mỗi giây bay), bắn Chiêu đặc biệt (MANA_CHUONG mỗi chưởng) và Biến mây / socola (MANA_DAC_BIET).
-// Đấm / Đá trúng thì hồi MANA_DAM. Tự hồi MANA_HOI mỗi giây khi không bay (chỉ hồi tới MANA_HOI_TOI_DA rồi thôi, táo xanh / đòn trúng có thể đẩy cao hơn tới trần); còn dưới MANA_TOI_THIEU thì không bay. Mỗi lần bay xong khoá BAY_KHOA giây mới bay tiếp.
+// Mana: bắt đầu MANA_BAN_DAU; MANA_TOI_DA chỉ là mốc đầy bình (bình vẽ theo max(mốc, mana hiện có)). Dùng để bay (MANA_BAY mỗi giây bay), bắn Chiêu đặc biệt (MANA_CHUONG mỗi chưởng) và Biến mây / socola (MANA_DAC_BIET).
+// Đấm / Đá trúng thì hồi MANA_DAM. Tự hồi MANA_HOI mỗi giây khi không bay (chỉ tới MANA_HOI_TOI_DA; táo xanh / socola / đòn trúng cộng không giới hạn); còn dưới MANA_TOI_THIEU thì không bay. Mỗi lần bay xong khoá BAY_KHOA giây mới bay tiếp.
 const MANA_BAN_DAU = 200;
 const MANA_TOI_DA = 200;
 const MANA_HOI_TOI_DA = 100;
@@ -299,7 +300,7 @@ const TRON_QUANG = 2 * BAY_CAN;
 const VUNG_CHET_CAN = 0.25; // cần analog gạt dưới mức này coi như nằm yên
 const TOC_DO_DAN = 2400;
 // Chiêu Biến mây (riêng Mabu, nhóm đòn 3): mây to gấp 2, quét trúng mọi con gà nó đi qua. Hiệu lực MAY_THOI_GIAN giây, sau đó chờ MAY_HOI giây mới dùng lại.
-// Mana của chiêu này màu tím: khi mây đang chạy là thời gian còn lại, khi chờ là tiến độ hồi.
+// Tốn MANA_DAC_BIET; đang chạy / đang hồi thì nút chiêu mờ hẳn (hetMana).
 const NHOM_MAY = 3;
 // Bảng chiêu thức: bán kính cung và bán kính mỗi nút
 const R_CUNG = 185;
@@ -315,7 +316,7 @@ const MAY_RY = 150;
 // Thân mây nằm cao hơn toạ độ chân nên tâm vùng quét nâng lên chừng này
 const MAY_NANG = 90;
 const MAY_NHAN_TUONG = { x: 150, y: 70 };
-// Gà tướng nhiều máu: mây chỉ trừ 1 máu mỗi MAY_NHIP giây
+// Gà tướng: mây chỉ trúng một lần mỗi MAY_NHIP giây
 const MAY_NHIP = 0.5;
 // Tầm đánh (đơn vị bản đồ). Đấm/Đá chọn ngẫu nhiên đòn gần hoặc đòn xa, đòn xa đánh được xa hơn.
 // 
@@ -403,8 +404,8 @@ const LOC_DO = 'sepia(1) saturate(7) hue-rotate(-52deg) brightness(1.05)';
 const CHO_TUONG_DAU = 0;
 const CHO_TUONG = 10;
 const TOC_DO_TUONG = 60;
-// Gà tướng đẻ trứng: mỗi lượt 4 quả thường (2 gà trắng, 1 gà đỏ, 1 gà đen, DAN_TRUNG) rồi quả thứ 5 là trứng đỏ đặc biệt, trứng nở sau TRUNG_NO giây, cách nhau TRUNG_CHO giây.
-// Tổng số gà (kể cả gà tướng) + trứng đang ấp đạt GA_TOI_DA thì không đẻ nữa.
+// Gà mẹ gốc đẻ trứng: mỗi lượt 4 quả thường (2 gà trắng, 1 gà đỏ, 1 gà đen, DAN_TRUNG; +1 mỗi lần hồi sinh) rồi quả thứ 5 là trứng đỏ đặc biệt; trứng thường nở sau TRUNG_NO giây; khoảng cách giữa 2 lượt theo choDeTrung().
+// Số gà thường (demGaThuong, không tính gà mẹ phụ và gà / trứng của trứng đỏ) + trứng thường đang ấp đạt GA_TOI_DA thì không đẻ trứng thường nữa.
 const DAN_TRUNG: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'flyer'];
 const TRUNG_NO = 2;
 const TRUNG_CHO = 15;
@@ -489,6 +490,9 @@ const LE_NV: Le = { x: 80, tren: 230, duoi: 75 };
 const LE_GA: Le = { x: 50, tren: 90, duoi: 10 };
 const LE_BAY: Le = { x: 70, tren: 150, duoi: 60 };
 const LE_VP: Le = { x: 60, tren: 60, duoi: 20 };
+// Trứng thường (cao ~45) và trứng đỏ (to gấp TRUNG_DB_TO, có vầng sáng)
+const LE_TRUNG: Le = { x: 30, tren: 50, duoi: 10 };
+const LE_TRUNG_DB: Le = { x: 200, tren: 300, duoi: 40 };
 const LE_TUONG: Le = { x: 220, tren: 330, duoi: 20 };
 // Mabu dạng mây to gấp 2 nên lề rộng hơn; k = hệ số phóng to (1 → 2) để lề đổi mượt lúc biến hình
 const LE_MAY: Le = { x: 380, tren: 200, duoi: 45 };
@@ -512,7 +516,7 @@ const hpToiDa = (g: Ga) => (g.goc ? HP_GA * (1 + (g.lan ?? 0)) : HP_GA * (g.db ?
 // Hệ số sát thương của gà tướng theo lần hồi sinh; sát thương gốc của mọi con gà
 const heSoLan = (g: Ga) => 1 + TUONG_TANG_SAT * (g.lan ?? 0);
 const satGa = (g: Ga) => SAT_GA[g.loai] * (g.loai === 'boss' ? heSoLan(g) : 1) * (g.suc ?? 1);
-// Tỉ lệ né của gà: gà tướng tăng dần theo lần hồi sinh
+// Tỉ lệ né của gà: gà mẹ né 100% khi đang trong thế phòng thủ (trừ lúc sơ hở / hoá socola), ngoài thế 0%; gà con theo NE_GA
 const neGa = (g: Ga) => (g.loai === 'boss' ? ((g.the ?? 0) > 0 && (g.soHo ?? 0) <= 0 && (g.socola ?? 0) <= 0 ? 1 : 0) : NE_GA[g.loai]);
 // Chiêu nào gà mẹ dùng được: gà mẹ gốc chỉ có ba màu; gà mẹ phụ theo kiểu chuyên (0 Lao · 1 Bay · 2-4 một màu cố định)
 const duocLao = (g: Ga) => !g.goc && (g.kieuPhu === undefined || g.kieuPhu === 0);
@@ -640,7 +644,7 @@ export class Game {
   camX = MAP / 2;
   camY = MAP / 2;
   camZ = ZOOM;
-  // Chế độ điều khiển (chọn ở màn bắt đầu, nhớ lại lần sau)
+  // Chế độ điều khiển: mặc định tay cầm mỗi lần mở game (không nhớ lại); Space ×5 để đổi
   cheDo: CheDo = 'tayCam';
   private demSpace = 0;
   private spaceLuc = 0;
@@ -1042,7 +1046,7 @@ export class Game {
     this.vatPham = conLai;
   }
 
-  // Socola: hồi máu và mana (có trần, máu thừa thành khiên), mở khoá bay, rồi tự bắn chưởng lên trời
+  // Socola: cộng máu và mana (không giới hạn), mở khoá bay, rồi tự bắn chưởng lên trời
   private anSocola(n: NguoiChoi): void {
     this.hoiMau(n, SOCOLA_NV_MAU);
     this.hoiMana(n, SOCOLA_NV_MANA);
@@ -1096,7 +1100,7 @@ export class Game {
     this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai });
   }
 
-  // Táo xanh: cộng VP_MANA mana (tối đa MANA_TOI_DA) và mở khoá bay
+  // Táo xanh: cộng VP_MANA mana và mở khoá bay
   private hoiDayMana(n: NguoiChoi): void {
     this.hoiMana(n, VP_MANA);
     n.bayKhoa = 0;
@@ -1117,9 +1121,8 @@ export class Game {
       n.hoiChieu = Math.max(0, n.hoiChieu - dt);
       this.capNhatMay(n, dt);
       n.bayKhoa = Math.max(0, n.bayKhoa - dt);
-      // Khiên tạm hết hạn; không bị thương một lúc thì tự hồi máu chậm (chỉ tới HP_HOI_TOI_DA)
-      n.khienCon = Math.max(0, n.khienCon - dt);
-      if (n.khienCon <= 0) n.khien = 0;
+      n.hoiSoc = Math.max(0, n.hoiSoc - dt);
+      // Không bị thương một lúc thì tự hồi máu chậm (chỉ tới HP_HOI_TOI_DA)
       if (!n.het && n.hp < HP_HOI_TOI_DA && this.tGame - n.thuongLuc >= HP_HOI_CHO) n.hp = Math.min(HP_HOI_TOI_DA, n.hp + HP_HOI * dt);
       if (n.bay) n.mana = Math.max(0, n.mana - MANA_BAY * dt);
       else if (n.mana < MANA_HOI_TOI_DA) n.mana = Math.min(MANA_HOI_TOI_DA, n.mana + MANA_HOI * dt);
@@ -1785,10 +1788,9 @@ export class Game {
     if (this.demGaThuong() < GA_TOI_DA) {
       const dan = [...DAN_TRUNG, ...TRUNG_THEM.slice(0, boss.lan ?? 0)];
       for (const loai of dan) {
-        this.trungDe.push({
-          id: this.id++, loai, t: 0,
-          x: kepMap(boss.x + ngauNhien(-110, 110)), y: kepMap(boss.y + ngauNhien(-60, 90)),
-        });
+        const v = { x: boss.x + ngauNhien(-110, 110), y: boss.y + ngauNhien(-60, 90) };
+        giuTrongMap(v, LE_TRUNG);
+        this.trungDe.push({ id: this.id++, loai, t: 0, x: v.x, y: v.y });
       }
     }
     // Quả thứ 5 của mỗi lượt là trứng đỏ đặc biệt (không tính vào GA_TOI_DA)
@@ -1817,12 +1819,14 @@ export class Game {
       const bay = e.loai === 'flyer';
       const huong = ngauNhien(0, Math.PI * 2);
       const v = bay ? ngauNhien(110, 130) : 0;
-      this.ga.push({
+      const g: Ga = {
         id: this.id++, loai: e.loai, x: e.x, y: e.y, h: 0, h0: bay ? ngauNhien(200, 300) : 0,
         vx: Math.cos(huong) * v, vy: Math.sin(huong) * v, phase: Math.random() * 6, doiHuong: 0,
         chet: false, tChet: 0, lat: Math.cos(huong) < 0, hp: HP_GA, nhay: 0,
-      });
-      this.vet.push({ id: this.id++, x: e.x, y: e.y, t: 0, loai: 'bui' });
+      };
+      giuTrongMap(g, leCuaGa(g));
+      this.ga.push(g);
+      this.vet.push({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'bui' });
     }
     this.trungDe = conLai;
   }
@@ -1899,8 +1903,9 @@ export class Game {
   // Gà mẹ gốc đẻ một quả trứng đỏ đặc biệt (không tính vào GA_TOI_DA); mỗi lần chỉ có một quả đang ấp của gà mẹ này
   private deTrungDb(boss: Ga): void {
     if (this.trungDe.some((e) => e.db && e.me === boss.id)) return;
-    const x = kepMap(boss.x + ngauNhien(-140, 140));
-    const y = kepMap(boss.y + ngauNhien(40, 150));
+    const v = { x: boss.x + ngauNhien(-140, 140), y: boss.y + ngauNhien(40, 150) };
+    giuTrongMap(v, LE_TRUNG_DB);
+    const { x, y } = v;
     this.trungDe.push({ id: this.id++, loai: 'hen', t: 0, x, y, db: true, no: 0, me: boss.id, ap: apTrungDb(this.soMePhu) });
     this.chu.push({ id: this.id++, x: boss.x, y: boss.y - 360, text: '🥚 TRỨNG ĐỎ!', mau: '#ff4d4d', t: 0 });
   }
@@ -2043,8 +2048,7 @@ export class Game {
     }
   }
 
-  // Gà tướng: đi về phía người gần nhất, tới gần thì dừng lại
-  // Gà thường: có nhân vật trong tầm ngửi (TAM_NGUI_NV) thì đuổi theo nhân vật gần nhất; táo đỏ trong tầm ngửi thì đi ăn. Trả về true nếu đang lao.
+  // Gà con: có nhân vật trong tầm ngửi (TAM_NGUI_NV) thì đuổi theo nhân vật gần nhất; táo đỏ trong tầm ngửi thì đi ăn. Trả về true nếu đang lao.
   private gaLao(g: Ga, dt: number): boolean {
     let muc: { x: number; y: number } | null = null;
     let gan = TAM_NGUI_NV;
@@ -2401,7 +2405,7 @@ export class Game {
     this.trungTuong(g, p);
   }
 
-  // Nhóm Đấm: 1 viên, không tốn mana · Đá: 2 viên tản · Chiêu đặc biệt: 1 quả cầu nổ diện rộng. Đá và chiêu tốn 1 mana mỗi lần.
+  // Nhóm Đấm: 1 viên · Đá: 2 viên tản (cả hai miễn phí, trúng thì hồi mana) · Chiêu đặc biệt: 1 chưởng xuyên rồi nổ (MANA_CHUONG) · nhóm 3: Biến mây / socola (MANA_DAC_BIET).
   private ban(p: number, x: number, y: number): void {
     const n = this.nguoi[p];
     if (n.hoiChieu > 0 || n.nv.khoa || n.het) return;
@@ -2418,11 +2422,15 @@ export class Game {
       return;
     }
     if (n.may.dang) return;
+    // Biến socola đang hồi: không ra chiêu (các đòn khác vẫn dùng bình thường)
+    if (soc && n.hoiSoc > 0) return;
     if (n.mana < phi) return this.thieuMana(n);
     n.mana -= phi;
-    // Thời gian hồi giữa 2 đòn theo nhóm (không phụ thuộc độ dài animation); combo cao thì chưởng hồi nhanh hơn
+    if (soc) n.hoiSoc = SOCOLA_HOI;
+    // Thời gian hồi giữa 2 đòn theo nhóm (không phụ thuộc độ dài animation); combo cao thì chưởng hồi nhanh hơn.
+    // Socola chỉ chặn đòn kế tiếp 0,5s (đủ cho animation); hồi chiêu socola nằm ở hoiSoc
     const giamHoi = nhom === 2 && n.combo >= COMBO_GIAM_HOI ? COMBO_HOI_CHUONG : 1;
-    n.hoiChieu = soc ? SOCOLA_HOI : (chieu ? 0.5 * giamHoi : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
+    n.hoiChieu = soc ? 0.5 : (chieu ? 0.5 * giamHoi : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
     if (!n.dangDi) {
       n.nv.lat = x < n.x;
       n.nv.huong = 'ngang';
@@ -2473,11 +2481,11 @@ export class Game {
     return H - 50 - (this.dsBieuTuong(p).length - 1) * 70 - 62;
   }
 
-  // Đấm, Đá luôn dùng được; Chiêu đặc biệt cần MANA_CHUONG, Biến mây / socola cần MANA_DAC_BIET (Mây còn mờ khi đang chạy / đang hồi)
+  // Đấm, Đá luôn dùng được; Chiêu đặc biệt cần MANA_CHUONG, Biến mây / socola cần MANA_DAC_BIET (Mây còn mờ khi đang chạy / đang hồi, socola mờ khi đang hồi)
   hetMana(p: number, k: number): boolean {
     const n = this.nguoi[p];
     if (k === 2) return n.mana < MANA_CHUONG;
-    if (k === NHOM_MAY) return n.mana < MANA_DAC_BIET || (!!n.nv.sp.nhomDon[k]?.may && (n.may.dang || n.may.hoi > 0));
+    if (k === NHOM_MAY) return n.mana < MANA_DAC_BIET || (n.nv.sp.nhomDon[k]?.may ? n.may.dang || n.may.hoi > 0 : n.hoiSoc > 0);
     return false;
   }
 
@@ -2644,16 +2652,9 @@ export class Game {
       this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: 'NÉ!', mau: '#9be7ff', t: 0 });
       return;
     }
-    let nhan = Math.round(sat * (1 - GIAM_NV));
+    const nhan = Math.round(sat * (1 - GIAM_NV));
     n.thuongLuc = this.tGame;
     this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `-${nhan}`, mau: mauChu, t: 0 });
-    // Khiên tạm hấp thụ sát thương trước máu
-    if (n.khien > 0) {
-      const hap = Math.min(n.khien, nhan);
-      n.khien -= hap;
-      nhan -= hap;
-      if (nhan <= 0) return;
-    }
     n.hp = Math.max(0, n.hp - nhan);
     this.rung = Math.max(this.rung, 0.15);
     this.rungTayCam(this.nguoi.indexOf(n), n.hp <= 0 ? 600 : 180, n.hp <= 0 ? 1 : 0.6);
@@ -2665,7 +2666,6 @@ export class Game {
     n.bay = null;
     n.nv.tuKhi(false);
     n.nv.nga();
-    n.khien = 0;
     if (this.nguoi.every((m) => m.het)) this.ketThuc(false);
     else this.batDauCuu(n);
   }
@@ -2718,7 +2718,6 @@ export class Game {
       // Hồi sinh tại chỗ
       n.het = false;
       n.hp = CUU_MAU;
-      n.khien = 0;
       n.thuongLuc = this.tGame;
       n.x = c.x;
       n.y = c.y;
@@ -3070,7 +3069,7 @@ export class Game {
     return Math.floor(this.nguoi[p].mana);
   }
 
-  /** 0..1: độ đầy của bình mana (so với trần MANA_TOI_DA) */
+  /** 0..1: độ đầy của bình mana (so với max(MANA_TOI_DA, mana hiện có)) */
   nlBay(p: number): number {
     return Math.min(1, this.nguoi[p].mana / Math.max(MANA_TOI_DA, this.nguoi[p].mana));
   }
@@ -3149,7 +3148,7 @@ export class Game {
     return { x: o.x + rx, y: o.y, k: this.camZ };
   }
 
-  // Thanh máu và quả cầu mana nhỏ trên đầu nhân vật (toạ độ thế giới của điểm giữa thanh)
+  // Thanh máu trên đầu nhân vật (toạ độ thế giới của điểm giữa thanh)
   thanhTrenDau(p: number): { x: number; y: number } {
     const n = this.nguoi[p];
     return { x: n.x, y: n.y - (n.nv.cao - n.nv.nhun) * S_NV - (p === 0 ? 195 : 150) };
@@ -3180,7 +3179,7 @@ export class Game {
     return { x: n.x, y: n.y - (n.nv.cao - n.nv.nhun) * S_NV, k: S_NV * n.nv.heSoTo };
   }
 
-  // Bảng chiêu của gà tướng (giữa phía trên, hình bán nguyệt úp): 0 Mổ + đá · 1 Lao · 2 Bay · 3 Đen · 4 Vàng · 5 Đỏ.
+  // Bảng chiêu của gà mẹ (thanh đen phía trên): 0 Mổ + đá · 1 Lao · 2 Bay · 3 Đen · 4 Vàng · 5 Đỏ · 6 Gọi gà con.
   // tien 0..1 là vòng tiến độ (hồi chiêu, hoặc thời gian còn lại khi màu đang chạy); không bấm được, chỉ để xem
   bangTuong(): { k: number; x: number; y: number; dung: boolean; tien: number; op: number }[] {
     const g = this.tuongBang;
@@ -3317,7 +3316,7 @@ export class Game {
       ten: p === 0 ? MABU.ten : ZINBU.ten, mau: p === 0 ? '#e84393' : '#8e44ad',
       hp: mot && p !== co ? 0 : HP_KHOI_DAU, het: mot && p !== co, diem: 0, combo: 0, tamX: W_MAC_DINH / 2, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
       x: MAP / 2 + (mot ? 0 : p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
-      nv: this.taoNhanVat(p), bay: null, mana: MANA_BAN_DAU, bayKhoa: 0, khien: 0, khienCon: 0, thuongLuc: -999,
+      nv: this.taoNhanVat(p), bay: null, mana: MANA_BAN_DAU, bayKhoa: 0, thuongLuc: -999, hoiSoc: 0,
       nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, ngam: null, cuaCan: false, may: { dang: false, con: 0, hoi: 0 }, suc: 1,
     }));
   }
