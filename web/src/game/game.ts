@@ -56,7 +56,7 @@ type VatXep =
   | { loai: 'td'; y: number; td: TrangTri };
 
 /** Vật trang trí nền cỏ (cây, bụi, đá): chỉ để đẹp, không cản đường. loai là chỉ số trong TRANG_TRI_SPRITE (ve-canvas.ts) */
-export interface TrangTri { x: number; y: number; loai: number; lat: boolean; /** thời điểm (`t` của game) bị đánh đổ; chỉ cây (loai 0), chưa đổ thì không có */ doLuc?: number; /** hướng đổ: 1 = sang phải, -1 = sang trái */ huongDo?: number }
+export interface TrangTri { x: number; y: number; loai: number; lat: boolean; /** thời điểm (`t` của game) bị đánh đổ; chỉ cây (loai 0), chưa đổ thì không có */ doLuc?: number; /** hướng đổ: 1 = sang phải, -1 = sang trái */ huongDo?: number; /** cây đã rơi táo thì biến mất, chỉ còn quả táo */ mat?: boolean }
 /** Bán kính (quanh gốc cây) mà đòn / chưởng quét qua thì cây đổ */
 const CAY_DO_KINH = 90;
 /** Chiều cao thân cây tính từ gốc: đòn trúng trong khoảng này phía trên gốc là trúng cây */
@@ -70,7 +70,7 @@ export interface TrangThaiLuu {
   henTuong: number; soLanTuong: number; lanTuong: number;
   ga: Ga[]; trungDe: TrungGa[]; vatPham: VatPham[];
   /** Cây đã đổ: [chỉ số trong trangTri, thời điểm đổ, hướng đổ] */
-  cayDo?: [number, number, number][];
+  cayDo?: [number, number, number, number?][];
   nguoi: (Omit<NguoiChoi, 'nv' | 'nham' | 'ngam' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
 }
 
@@ -558,7 +558,7 @@ export class Game {
       tGame: this.tGame, t: this.t, chamDen: this.chamDen, id: this.id,
       henTuong: this.henTuong, soLanTuong: this.soLanTuong, lanTuong: this.lanTuong,
       ga: this.ga, trungDe: this.trungDe, vatPham: this.vatPham,
-      cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1]])),
+      cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       nguoi: this.nguoi.map((n) => {
         const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
         void nham; void ngam; void cuaCan; void dich;
@@ -575,8 +575,8 @@ export class Game {
     this.tGame = d.tGame; this.t = d.t; this.chamDen = d.chamDen; this.id = d.id;
     this.henTuong = d.henTuong; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
     this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham;
-    for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; }
-    for (const [i, t, h] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; }
+    for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
+    for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
     this.nguoi = d.nguoi.map((o, p) => {
       const { nhom, lat, huong, ...r } = o;
       const n: NguoiChoi = { ...this.taoNguoiChoi()[p], ...r };
@@ -897,8 +897,11 @@ export class Game {
         c.doLuc = this.t;
         const dx = d.x1 - d.x0;
         c.huongDo = Math.abs(dx) > 20 ? Math.sign(dx) : c.lat ? -1 : 1;
-        // Cây đổ có TAO_ROI cơ hội rơi 1 quả táo ở chỗ ngọn cây đổ xuống
-        if (Math.random() < TAO_ROI) this.themVatPham(c.x + c.huongDo * ngauNhien(60, 160), c.y + ngauNhien(-10, 30));
+        // Cây đổ có TAO_ROI cơ hội rơi 1 quả táo; rơi táo thì cây biến mất, chỉ còn quả táo ở gốc
+        if (Math.random() < TAO_ROI) {
+          c.mat = true;
+          this.themVatPham(c.x + ngauNhien(-30, 30), c.y + ngauNhien(0, 30));
+        }
         break;
       }
     }
@@ -1033,7 +1036,7 @@ export class Game {
       xep.push({ loai: 'ga', y: g.y, ga: g });
     }
     this.nguoi.forEach((n, i) => { if (trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
-    for (const t of this.trangTri) if (trong(t.x, t.y, 400)) xep.push({ loai: 'td', y: t.y, td: t });
+    for (const t of this.trangTri) if (!t.mat && trong(t.x, t.y, 400)) xep.push({ loai: 'td', y: t.y, td: t });
     xep.sort((a, b) => a.y - b.y);
     this.xep = xep;
     this.gaBayView = this.ga.filter((g) => g.loai === 'flyer' && this.thay(g.x, g.y) && trong(g.x, g.y, 400));

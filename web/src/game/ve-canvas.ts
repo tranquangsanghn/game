@@ -538,15 +538,9 @@ export class VeCanvas {
     ctx.fillStyle = '#fff';
     ctx.fillText(`❤ ${c.hpNv(p)}/${c.HP_NV}`, xt, ym);
     ctx.textAlign = 'start';
-    tronCD(ctx, xt - 30, ym + 10, 60, 10, 5);
-    ctx.fillStyle = '#16241b';
-    ctx.fill();
-    tronCD(ctx, xt - 28, ym + 12, 56 * c.mauNv(p), 6, 3);
-    ctx.fillStyle = '#35d96a';
-    ctx.fill();
-
-    // Bình thể lực bay (hình cầu) nằm ngay phía trên số máu; xám khi đang khoá sau lần bay
-    this.veBinh(ctx, xt, ym - 30, dongHe(c.nlBay(p)), ng.bayKhoa > 0 ? '#8a9a94' : '#4fd8ff', ng.het);
+    // Hai bình cầu cùng kiểu mana nằm cạnh nhau dưới số máu: trái = máu (xanh lá), phải = thể lực bay (xanh lơ, xám khi đang khoá sau lần bay)
+    this.veBinh(ctx, xt - 18, ym + 20, dongHe(c.mauNv(p)), '#35d96a', ng.het, 16);
+    this.veBinh(ctx, xt + 18, ym + 20, dongHe(c.nlBay(p)), ng.bayKhoa > 0 ? '#8a9a94' : '#4fd8ff', ng.het, 16);
 
     // Các chiêu xếp dọc từ dưới lên: đang dùng sáng + phát sáng, hết mana thì mờ hẳn
     for (const b of c.nutBang(p)) {
@@ -572,22 +566,22 @@ export class VeCanvas {
   }
 
   // Bình mana hình cầu: nền tối, phần đầy dâng từ đáy lên, viền sáng
-  private veBinh(ctx: CanvasRenderingContext2D, x: number, y: number, nl: number, mau: string, mo: boolean): void {
+  private veBinh(ctx: CanvasRenderingContext2D, x: number, y: number, nl: number, mau: string, mo: boolean, r = 20): void {
     ctx.save();
     ctx.translate(x, y);
     ctx.globalAlpha = mo ? 0.4 : 1;
-    duongTron(ctx, 20);
+    duongTron(ctx, r);
     ctx.fillStyle = '#16241b';
     ctx.fill();
     ctx.save();
     ctx.beginPath();
-    ctx.rect(-16, 16 - 32 * nl, 32, 32);
+    ctx.rect(-r * 0.8, r * 0.8 - r * 1.6 * nl, r * 1.6, r * 1.6);
     ctx.clip();
-    duongTron(ctx, 16);
+    duongTron(ctx, r * 0.8);
     ctx.fillStyle = mau;
     ctx.fill();
     ctx.restore();
-    duongTron(ctx, 16);
+    duongTron(ctx, r * 0.8);
     ctx.strokeStyle = 'rgba(255,255,255,0.6)';
     ctx.lineWidth = 2;
     ctx.stroke();
