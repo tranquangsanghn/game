@@ -18,10 +18,10 @@
 # Nguyên tắc bố cục & chọn chiêu
 
 - Ngoại lệ do người dùng yêu cầu: có thêm thanh đen phía trên map chứa chiêu của gà mẹ (xem mục "Nguyên tắc gà mẹ"). Khung game chiếm cả cửa sổ, chiều rộng khung nhìn `W` tự theo tỉ lệ cửa sổ (`ResizeObserver`) nên map tràn sát hai bên, không có dải đen hai bên; `H` cố định.
-- Map chiếm cả màn hình. Hai bảng chiêu thức khoét vào map ở 2 góc dưới (hình quạt (1/4 hình tròn) nền đen bán kính `R_BANG`, tâm nằm đúng ở góc dưới màn hình): Mabu trái, Zinbu phải. Không thu nhỏ map vì bảng.
-- Giữa mỗi bảng là animation hiện tại của nhân vật (cùng `khung` / `lat` với trên map), không phải ảnh tĩnh. Chiêu thức xếp vòng cung phía trên (`nutBang()`, `tamBang()`), không có chữ.
+- Bố cục: khung game chiếm cả cửa sổ. Map nằm giữa; phía trên có thanh đen ngang `BAR` (chiêu gà mẹ), hai bên có 2 thanh đen dọc rộng `SIDE` (Mabu trái, Zinbu phải). Toạ độ map vẫn là x 0..`W`, y 0..`H`; thanh đen nằm ở toạ độ âm / lớn hơn `W` (viewBox `-SIDE -BAR`). `W` tự theo tỉ lệ cửa sổ.
+- Trên mỗi thanh bên: tên, máu (số `hp/HP_NV` và thanh), rồi các chiêu thức xếp dọc, canh giữa theo nửa vòng tròn (`nutBang()`, `xThanh()`). Nửa vòng tròn đen bán kính `R_NV` (= 2/3 `R_BANG`) nhô vào map ở giữa chiều cao (`tamNv()`), chỉ có animation hiện tại của nhân vật (cùng `khung` / `lat` với trên map). Không thu nhỏ map vì bảng.
 - Chiêu đang dùng sáng + phát sáng, chiêu khác mờ, hết mana / đang khoá / Mây đang chạy hoặc hồi (`hetMana()`) thì mờ hẳn và không chọn được.
-- Đổi chiêu bằng bấm chuột trái vào nút (`chonNut()` → `NhanVat.datNhom`), bất kể chuột đang điều khiển ai. Không còn con lăn. Chuột trên bảng (`tronBang()` → `trenBang`) thì không ra đòn, không di chuyển, tâm ngắm ẩn.
+- Đổi chiêu bằng bấm chuột trái vào nút (`chonNut()` → `NhanVat.datNhom`), bất kể chuột đang điều khiển ai. Không còn con lăn. Chuột trên thanh đen hoặc nửa vòng tròn (`tronBang()` → `trenBang`) thì không ra đòn, không di chuyển, tâm ngắm ẩn.
 
 # Nguyên tắc điều khiển
 
@@ -30,7 +30,7 @@
 
 # Nguyên tắc giữ nguyên bố cục khi đổi map / màn
 
-- Bố cục hiện tại là chuẩn, cố định: 2 bảng chiêu thức hình quạt ở 2 góc dưới (kích thước, vị trí, vòng cung nút, chân dung animation nhân vật), cách chọn chiêu bằng click, thanh máu / mana, camera, tâm ngắm, mọi nguyên tắc ghi trong file này.
+- Bố cục hiện tại là chuẩn, cố định: 2 thanh đen hai bên với chiêu thức, máu và nửa vòng tròn nhân vật (kích thước, vị trí, hàng nút, chân dung animation nhân vật), thanh đen trên của gà mẹ, cách chọn chiêu bằng click, thanh máu / mana, camera, tâm ngắm, mọi nguyên tắc ghi trong file này.
 - Sang map khác, màn khác thì chỉ thay phần map (nền, kích thước `MAP`, vật cản, quái của màn đó). Không đổi bố cục giao diện, vị trí các thành phần, hay các nguyên tắc ở trên; chỉ đổi khi người dùng yêu cầu rõ ràng.
 
 # Nguyên tắc biên bản đồ
@@ -41,12 +41,12 @@
 
 # Nguyên tắc thanh máu
 
-- Chỉ nhân vật và gà tướng (boss) có thanh máu, vẽ trên đầu trong không gian thế giới (trong nhóm camera), cùng kiểu. Quái thường có máu nhưng không hiện thanh. Không dùng thanh máu cố định trên đỉnh màn hình.
+- Chỉ nhân vật và gà tướng (boss) có thanh máu, vẽ trên đầu trong không gian thế giới (trong nhóm camera), cùng kiểu. Máu Mabu / Zinbu còn hiển thị dạng số trên thanh đen hai bên. Quái thường có máu nhưng không hiện thanh. Không dùng thanh máu cố định trên đỉnh màn hình.
 
 # Nguyên tắc máu & sát thương
 
-- Mỗi nhân vật (Mabu, Zinbu) và mỗi con quái (mọi loại gà, kể cả gà tướng) đều khởi đầu 100 máu (`HP_NV`, `HP_GA`). Máu tính riêng từng đối tượng, không còn máu chung của đội.
-- Mạnh / yếu chỉ thể hiện ở 2 thứ: sát thương gây ra và tỉ lệ giảm sát thương khi nhận (`GIAM_NV`, `GIAM_GA`). Máu tối đa ai cũng như nhau. Sát thương thực nhận = sát thương gốc × (1 − tỉ lệ giảm), làm tròn.
+- Mabu và Zinbu khởi đầu `HP_NV` = 200 máu; mỗi con quái (mọi loại gà, kể cả gà tướng) khởi đầu `HP_GA` = 100 máu. Máu tính riêng từng đối tượng, không còn máu chung của đội.
+- Ngoài máu tối đa, mạnh / yếu thể hiện ở sát thương gây ra và tỉ lệ giảm sát thương khi nhận (`GIAM_NV`, `GIAM_GA`). Sát thương thực nhận = sát thương gốc × (1 − tỉ lệ giảm), làm tròn.
 - Mabu và Zinbu giảm 50% sát thương nhận (gà đen đánh 60 thì nhận 30). Gà thường giảm 0%, gà tướng giảm 80%.
 - Khả năng né đòn (`NE_GA`): gà tướng né 50% số đòn trúng nó (kể cả mỗi nhịp mây), gà con (trắng, đỏ, đen) 0%; Mabu và Zinbu né 25% đòn gà đánh (`NE_NV`). Né là tự động, ngẫu nhiên từng đòn. Né được thì không mất máu, không hiện hiệu ứng trúng, hiện chữ bay "NÉ!"; đòn bị né không tính trúng, không tính trượt và không ngắt combo.
 - Sát thương nhân vật gây ra (`SAT_THUONG`), mỗi đòn trúng một con:
@@ -60,7 +60,8 @@
   - Gà đen: 60 · 1,5s (nhận 30)
   - Gà tướng: 80 · 2,5s (nhận 40)
 - Nhân vật dạng mây không nhận sát thương. Nhân vật hết máu thì ngã và không điều khiển được; cả hai cùng hết máu thì thua (`ketThuc()`).
-- Quái chỉ chết khi máu về 0 (chết thì mới tính điểm). Đòn trúng mà chưa chết thì gà nháy sáng. Hạ gà tướng không còn thưởng mạng; thay vào đó hồi `HOI_MAU_TUONG` máu cho mỗi nhân vật còn sống.
+- Quái chỉ chết khi máu về 0 (chết thì mới tính điểm). Đòn trúng mà chưa chết thì gà nháy sáng. Hạ gà tướng không còn thưởng mạng; thay vào đó hồi `HOI_MAU_TUONG` = 60 máu cho mỗi nhân vật còn sống.
+- Vật phẩm máu (trái tim, `vatPham` → `vatPhamView`): cứ `VP_CHU_KY` = 15s xuất hiện một cái cách một nhân vật còn sống 300–1100 (tối đa `VP_TOI_DA` = 5 trên map), gà con chết rơi với xác suất `VP_ROI` = 20%, gà mẹ chết rơi `VP_ROI_TUONG` = 3 cái. Nhân vật (không phải mây, chưa gục, chưa đầy máu) đi vào bán kính `VP_BAN_KINH` thì nhặt và hồi `VP_HOI` = 50 máu (hiện chữ "+50 ❤"); đầy máu thì không nhặt. Không ai nhặt sau `VP_TON_TAI` = 45s thì biến mất (nhấp nháy 8s cuối). Không bị sương mù.
 
 # Nguyên tắc mana
 

@@ -1,5 +1,5 @@
 <div class="khung" #khung tabindex="-1" [class.dang-choi]="man === 'play'" [class.tren-bang]="trenBang">
-  <svg #manHinh [attr.viewBox]="'0 ' + (-BAR) + ' ' + W + ' ' + (H + BAR)" preserveAspectRatio="xMidYMid meet">
+  <svg #manHinh [attr.viewBox]="(-SIDE) + ' ' + (-BAR) + ' ' + (W + 2 * SIDE) + ' ' + (H + BAR)" preserveAspectRatio="xMidYMid meet">
     <defs>
       <filter id="cg-sang" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="5" result="b" />
@@ -11,7 +11,7 @@
     </defs>
 
     <clipPath id="cg-map"><rect x="0" y="0" [attr.width]="W" [attr.height]="H" /></clipPath>
-    <rect x="0" [attr.y]="-BAR" [attr.width]="W" [attr.height]="H + BAR" fill="#000" />
+    <rect [attr.x]="-SIDE" [attr.y]="-BAR" [attr.width]="W + 2 * SIDE" [attr.height]="H + BAR" fill="#000" />
 
     <!-- Một camera chung bám trung điểm 2 nhân vật, zoom ra khi họ xa nhau; chỉ vẽ trong map (thanh đen phía trên chứa chiêu gà mẹ) -->
     <g clip-path="url(#cg-map)">
@@ -51,6 +51,17 @@
         @for (v of vachView; track $index) {
         <line [attr.x1]="v.x1" [attr.y1]="v.y1" [attr.x2]="v.x2" [attr.y2]="v.y2" stroke="#ff3b30" stroke-width="90"
           stroke-linecap="round" [attr.stroke-opacity]="v.a" pointer-events="none" />
+        }
+        <!-- Vật phẩm máu: nhân vật đi vào để nhặt; nhấp nháy khi sắp biến mất -->
+        @for (v of vatPhamView; track v.id) {
+        <g [attr.transform]="'translate(' + v.x + ',' + v.y + ')'" pointer-events="none" [attr.opacity]="v.t > 37 && (v.t * 6) % 1 < 0.5 ? 0.35 : 1">
+          <ellipse rx="26" ry="8" fill="#000" fill-opacity="0.22" />
+          <circle r="44" cy="-34" fill="#35d96a" [attr.fill-opacity]="0.12 + 0.08 * (v.t * 4 % 1)" />
+          <g [attr.transform]="'translate(0,' + (-34 - 6 * (v.t * 4 % 2 < 1 ? v.t * 4 % 1 : 1 - v.t * 4 % 1)) + ')'">
+            <path d="M0,16 C-30,-6 -22,-26 -10,-26 C-4,-26 0,-20 0,-16 C0,-20 4,-26 10,-26 C22,-26 30,-6 0,16 Z" fill="#ff3b5c" stroke="#fff" stroke-width="3" stroke-linejoin="round" />
+            <path d="M-12,-17 q4,-5 9,-3" fill="none" stroke="#fff" stroke-opacity="0.8" stroke-width="3" stroke-linecap="round" />
+          </g>
+        </g>
         }
         <!-- Gà dưới đất + nhân vật, xếp theo y -->
         @for (o of xep; track $index) {
@@ -124,22 +135,27 @@
       pointer-events="none" />
 
 
-    <!-- Hai bảng chiêu thức khoét vào map ở góc dưới (nền đen): Mabu trái, Zinbu phải. Bấm vào nút để chọn chiêu.
-         Chiêu đang dùng sáng, chiêu khác mờ, hết mana thì mờ hẳn và không chọn được. Ở giữa là animation nhân vật như trên map -->
+    <!-- Hai thanh đen hai bên map: Mabu trái, Zinbu phải. Trên thanh: tên + máu (số và thanh), các chiêu xếp dọc, bấm vào nút để chọn chiêu.
+         Chiêu đang dùng sáng, chiêu khác mờ, hết mana thì mờ hẳn và không chọn được. Nửa vòng tròn đen nhô vào map chỉ có animation nhân vật -->
     @for (p of [0, 1]; track p) {
     @let ng = nguoi[p];
-    @let tb = tamBang(p);
+    @let tn = tamNv(p);
+    @let xt = xThanh(p);
     <g pointer-events="none">
-      <circle [attr.cx]="gocBang(p)" [attr.cy]="H" [attr.r]="R_BANG" fill="#000" />
-      <g [attr.transform]="'translate(' + tb.x + ',' + tb.y + ')'">
-        <svg x="-60" y="-60" width="120" height="120" viewBox="-36 -66 72 76" [attr.opacity]="ng.het ? 0.4 : 1">
+      <circle [attr.cx]="tn.x" [attr.cy]="tn.y" [attr.r]="R_NV" fill="#000" />
+      <g [attr.transform]="'translate(' + (tn.x + (p === 0 ? 70 : -70)) + ',' + tn.y + ')'" [attr.opacity]="ng.het ? 0.4 : 1">
+        <svg x="-55" y="-60" width="110" height="110" viewBox="-36 -66 72 76">
           <g cgSprite [sp]="ng.nv.sp" [khung]="ng.nv.khung" [lat]="ng.nv.lat"></g>
         </svg>
       </g>
+      <text [attr.x]="xt" y="46" text-anchor="middle" [attr.fill]="ng.mau" font-size="22" font-weight="800">{{ ng.ten }}</text>
+      <text [attr.x]="xt" y="82" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">❤ {{ hpNv(p) }}/{{ HP_NV }}</text>
+      <rect [attr.x]="xt - 40" y="94" width="80" height="10" rx="5" fill="#16241b" />
+      <rect [attr.x]="xt - 38" y="96" [attr.width]="76 * mauNv(p)" height="6" rx="3" fill="#35d96a" />
       @for (b of nutBang(p); track b.k) {
       @let dung = ng.nv.nhom === b.k;
       @let het = hetMana(p, b.k);
-      <g [attr.transform]="'translate(' + b.x + ',' + b.y + ')'" [attr.opacity]="het ? 0.12 : dung ? 1 : 0.4" [attr.filter]="dung && !het ? 'url(#cg-sang)' : null">
+      <g [attr.transform]="'translate(' + b.x + ',' + b.y + ') scale(0.8)'" [attr.opacity]="het ? 0.12 : dung ? 1 : 0.4" [attr.filter]="dung && !het ? 'url(#cg-sang)' : null">
         <circle [attr.r]="R_NUT" fill="#0d1b12" [attr.stroke]="dung ? ng.mau : '#555'" stroke-width="4" />
         <g transform="scale(1.35)">
           <ng-container *ngTemplateOutlet="bieuTuong; context: { $implicit: b.k, sp: ng.nv.sp }" />
@@ -286,10 +302,10 @@
           </svg>
           @if (i === 0) {
           <h3>1P Mabu · chuột</h3>
-          <p><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Bấm vào chiêu</b> ở góc dưới trái: đổi nhóm đòn<br /><b>Tab</b>: chuyển chuột sang nhân vật kia</p>
+          <p><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Bấm vào chiêu</b> ở thanh đen bên trái: đổi nhóm đòn<br /><b>Tab</b>: chuyển chuột sang nhân vật kia</p>
           } @else {
           <h3>2P Zinbu · chuột</h3>
-          <p>Điều khiển giống Mabu, chiêu thức ở góc dưới phải.<br />Hiện chỉ có 1 chuột: bấm <b>Tab</b> để chuyển chuột sang Zinbu (sau này sẽ có chuột thứ 2)</p>
+          <p>Điều khiển giống Mabu, chiêu thức ở thanh đen bên phải.<br />Hiện chỉ có 1 chuột: bấm <b>Tab</b> để chuyển chuột sang Zinbu (sau này sẽ có chuột thứ 2)</p>
           }
         </div>
         }

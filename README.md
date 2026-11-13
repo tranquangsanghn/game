@@ -10,7 +10,7 @@ Game 2 nhân vật chơi hoàn toàn bằng chuột (sau này 2 chuột), viết
 Hai người chơi chung một khung hình. Camera bám trung điểm hai nhân vật và tự zoom ra khi họ xa nhau;
 hai người không đi xa nhau quá mức camera chứa nổi (màn hình hiện cảnh báo khi gần chạm giới hạn).
 
-Chỉ chơi bằng chuột; cả Mabu (bảng chiêu góc dưới trái) và Zinbu (góc dưới phải) điều khiển giống nhau:
+Chỉ chơi bằng chuột; cả Mabu (chiêu thức ở thanh đen bên trái) và Zinbu (bên phải) điều khiển giống nhau:
 - **Chuột phải**: chỉ chỗ để chạy tới (xa thì bay)
 - **Chuột trái**: ra đòn
 - **Bấm vào chiêu** ở bảng chiêu thức: đổi nhóm đòn (Đấm / Đá / Chiêu đặc biệt / Biến mây)
