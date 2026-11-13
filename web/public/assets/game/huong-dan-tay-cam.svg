@@ -25,69 +25,69 @@
   <rect x="520" y="202" width="12" height="20" rx="5" class="btn" opacity=".6"/>
   <rect x="668" y="202" width="12" height="20" rx="5" class="btn"/>
 
-  <!-- Chữ thập (chạy) -->
-  <path d="M458 220 h24 v18 h18 v24 h-18 v18 h-24 v-18 h-18 v-24 h18 z" class="btn on" transform="translate(-6 -2)"/>
-  <!-- Nút △ □ ○ ✕ -->
-  <circle cx="730" cy="206" r="20" class="btn on"/><text x="730" y="215" text-anchor="middle" fill="#6fe0c5" font-size="26" font-weight="800">△</text>
-  <circle cx="696" cy="240" r="20" class="btn on"/><text x="696" y="249" text-anchor="middle" fill="#f48fb1" font-size="26" font-weight="800">□</text>
-  <circle cx="764" cy="240" r="20" class="btn on"/><text x="764" y="249" text-anchor="middle" fill="#ff6b6b" font-size="26" font-weight="800">○</text>
-  <circle cx="730" cy="274" r="20" class="btn on"/><text x="730" y="283" text-anchor="middle" fill="#7aa7ff" font-size="28" font-weight="800">✕</text>
-  <!-- Cần analog -->
-  <circle cx="530" cy="322" r="34" class="btn on"/><circle cx="530" cy="322" r="19" fill="#2b3145" stroke="#8a93aa" stroke-width="2"/>
-  <circle cx="670" cy="322" r="34" class="btn on"/><circle cx="670" cy="322" r="19" fill="#2b3145" stroke="#8a93aa" stroke-width="2"/>
+  <!-- Chữ thập (chạy) – dưới bên trái (bố cục Xbox) -->
+  <path d="M528 290 h24 v18 h18 v24 h-18 v18 h-24 v-18 h-18 v-24 h18 z" class="btn on"/>
+  <!-- Nút Y X B A (Y trên, X trái, B phải, A dưới) -->
+  <circle cx="760" cy="200" r="20" class="btn on"/><text x="760" y="209" text-anchor="middle" fill="#facc15" font-size="24" font-weight="800">Y</text>
+  <circle cx="726" cy="234" r="20" class="btn on"/><text x="726" y="243" text-anchor="middle" fill="#60a5fa" font-size="24" font-weight="800">X</text>
+  <circle cx="794" cy="234" r="20" class="btn on"/><text x="794" y="243" text-anchor="middle" fill="#ff6b6b" font-size="24" font-weight="800">B</text>
+  <circle cx="760" cy="268" r="20" class="btn on"/><text x="760" y="277" text-anchor="middle" fill="#4ade80" font-size="24" font-weight="800">A</text>
+  <!-- Cần analog chéo: cần trái trên-trái, cần phải dưới-phải -->
+  <circle cx="440" cy="234" r="34" class="btn on"/><circle cx="440" cy="234" r="19" fill="#2b3145" stroke="#8a93aa" stroke-width="2"/>
+  <circle cx="660" cy="320" r="34" class="btn on"/><circle cx="660" cy="320" r="19" fill="#2b3145" stroke="#8a93aa" stroke-width="2"/>
 
   <!-- Chú thích trái -->
-  <path class="ln" d="M452 245 H320"/><circle class="dot" cx="452" cy="245" r="5"/>
-  <text x="310" y="240" text-anchor="end" class="k">Mũi tên</text><text x="310" y="266" text-anchor="end" class="m">Chạy</text>
+  <path class="ln" d="M406 234 H320"/><circle class="dot" cx="406" cy="234" r="5"/>
+  <text x="310" y="229" text-anchor="end" class="k">Cần trái</text><text x="310" y="255" text-anchor="end" class="m">Bay</text>
 
-  <path class="ln" d="M498 332 H320"/><circle class="dot" cx="498" cy="332" r="5"/>
-  <text x="310" y="327" text-anchor="end" class="k">Cần trái</text><text x="310" y="353" text-anchor="end" class="m">Bay</text>
+  <path class="ln" d="M512 320 H320"/><circle class="dot" cx="512" cy="320" r="5"/>
+  <text x="310" y="315" text-anchor="end" class="k">Mũi tên</text><text x="310" y="341" text-anchor="end" class="m">Chạy</text>
 
   <!-- Chú thích phải -->
-  <path class="ln" d="M750 197 H860"/><circle class="dot" cx="750" cy="197" r="5"/>
-  <text x="872" y="204" class="k" style="fill:#6fe0c5">△</text><text x="912" y="204" class="m" style="font-size:22px">Chưởng</text>
+  <path class="ln" d="M780 200 H860"/><circle class="dot" cx="780" cy="200" r="5"/>
+  <text x="872" y="208" class="k" style="fill:#facc15">Y</text><text x="912" y="208" class="m" style="font-size:22px">Chưởng</text>
 
-  <path class="ln" d="M784 240 H860"/><circle class="dot" cx="784" cy="240" r="5"/>
-  <text x="872" y="248" class="k" style="fill:#ff6b6b">○</text><text x="912" y="248" class="m" style="font-size:22px">Chiêu riêng</text>
+  <path class="ln" d="M814 240 H860"/><circle class="dot" cx="814" cy="240" r="5"/>
+  <text x="872" y="248" class="k" style="fill:#ff6b6b">B</text><text x="912" y="248" class="m" style="font-size:22px">Chiêu riêng</text>
 
-  <path class="ln" d="M750 280 H860 V292 H860"/><circle class="dot" cx="750" cy="280" r="5"/>
-  <text x="872" y="298" class="k" style="fill:#7aa7ff">✕</text><text x="912" y="298" class="m" style="font-size:22px">Đấm</text>
+  <path class="ln" d="M780 280 L800 292 H860"/><circle class="dot" cx="780" cy="280" r="5"/>
+  <text x="872" y="300" class="k" style="fill:#4ade80">A</text><text x="912" y="300" class="m" style="font-size:22px">Đấm</text>
 
-  <path class="ln" d="M702 332 H860"/><circle class="dot" cx="702" cy="332" r="5"/>
-  <text x="872" y="336" class="k">Cần phải</text><text x="872" y="362" class="m">Chiêu riêng (đẩy đâu cũng được)</text>
+  <path class="ln" d="M694 330 L720 352 H860"/><circle class="dot" cx="694" cy="330" r="5"/>
+  <text x="872" y="358" class="k">Cần phải</text><text x="872" y="384" class="m">Chiêu riêng (đẩy đâu cũng được)</text>
 
-  <path class="ln" d="M678 232 L650 190 V118"/><circle class="dot" cx="678" cy="232" r="5"/>
-  <text x="650" y="102" text-anchor="middle" class="k" style="fill:#f48fb1">□ <tspan class="m" style="font-size:22px">Đá</tspan></text>
-  <text x="600" y="414" text-anchor="middle" class="m" style="font-size:20px">Nút <tspan fill="#ffd166" font-weight="800">Options</tspan>: tạm dừng</text>
+  <path class="ln" d="M708 226 L650 190 V118"/><circle class="dot" cx="708" cy="226" r="5"/>
+  <text x="650" y="102" text-anchor="middle" class="k" style="fill:#60a5fa">X <tspan class="m" style="font-size:22px">Đá</tspan></text>
+  <text x="600" y="414" text-anchor="middle" class="m" style="font-size:20px">Nút <tspan fill="#ffd166" font-weight="800">Menu ☰</tspan>: tạm dừng · <tspan fill="#ffd166" font-weight="800">View</tspan>: đổi nhân vật (1 tay cầm)</text>
 
   <!-- Bảng chiêu -->
   <rect x="30" y="440" width="1140" height="300" rx="18" fill="#10172b" stroke="#2f3a5a" stroke-width="2"/>
   <text x="600" y="482" text-anchor="middle" class="t" style="font-size:26px">Bấm nút là ra chiêu, giữ nút để đánh liên tục</text>
 
   <g transform="translate(50 510)">
-    <rect width="260" height="210" rx="14" fill="#1a2340" stroke="#7aa7ff" stroke-width="3"/>
-    <circle cx="130" cy="50" r="30" fill="#1b2030" stroke="#7aa7ff" stroke-width="3"/><text x="130" y="62" text-anchor="middle" fill="#7aa7ff" font-size="36" font-weight="800">✕</text>
-    <text x="130" y="112" text-anchor="middle" class="tt" style="fill:#7aa7ff">ĐẤM</text>
+    <rect width="260" height="210" rx="14" fill="#1a2340" stroke="#4ade80" stroke-width="3"/>
+    <circle cx="130" cy="50" r="30" fill="#1b2030" stroke="#4ade80" stroke-width="3"/><text x="130" y="62" text-anchor="middle" fill="#4ade80" font-size="36" font-weight="800">A</text>
+    <text x="130" y="112" text-anchor="middle" class="tt" style="fill:#4ade80">ĐẤM</text>
     <text x="130" y="145" text-anchor="middle" class="ts">Đánh gà ở gần</text>
     <text x="130" y="172" text-anchor="middle" class="ts">Sát thương 50</text>
   </g>
   <g transform="translate(330 510)">
-    <rect width="260" height="210" rx="14" fill="#1a2340" stroke="#f48fb1" stroke-width="3"/>
-    <circle cx="130" cy="50" r="30" fill="#1b2030" stroke="#f48fb1" stroke-width="3"/><text x="130" y="62" text-anchor="middle" fill="#f48fb1" font-size="36" font-weight="800">□</text>
-    <text x="130" y="112" text-anchor="middle" class="tt" style="fill:#f48fb1">ĐÁ</text>
+    <rect width="260" height="210" rx="14" fill="#1a2340" stroke="#60a5fa" stroke-width="3"/>
+    <circle cx="130" cy="50" r="30" fill="#1b2030" stroke="#60a5fa" stroke-width="3"/><text x="130" y="62" text-anchor="middle" fill="#60a5fa" font-size="36" font-weight="800">X</text>
+    <text x="130" y="112" text-anchor="middle" class="tt" style="fill:#60a5fa">ĐÁ</text>
     <text x="130" y="145" text-anchor="middle" class="ts">Đòn mạnh hơn đấm</text>
     <text x="130" y="172" text-anchor="middle" class="ts">Mabu 70 · Zinbu 100</text>
   </g>
   <g transform="translate(610 510)">
-    <rect width="260" height="210" rx="14" fill="#1a2340" stroke="#6fe0c5" stroke-width="3"/>
-    <circle cx="130" cy="50" r="30" fill="#1b2030" stroke="#6fe0c5" stroke-width="3"/><text x="130" y="61" text-anchor="middle" fill="#6fe0c5" font-size="34" font-weight="800">△</text>
-    <text x="130" y="112" text-anchor="middle" class="tt" style="fill:#6fe0c5">CHƯỞNG</text>
+    <rect width="260" height="210" rx="14" fill="#1a2340" stroke="#facc15" stroke-width="3"/>
+    <circle cx="130" cy="50" r="30" fill="#1b2030" stroke="#facc15" stroke-width="3"/><text x="130" y="61" text-anchor="middle" fill="#facc15" font-size="34" font-weight="800">Y</text>
+    <text x="130" y="112" text-anchor="middle" class="tt" style="fill:#facc15">CHƯỞNG</text>
     <text x="130" y="145" text-anchor="middle" class="ts">Bắn ra xa, làm cây đổ</text>
     <text x="130" y="172" text-anchor="middle" class="ts">Mabu 100 · Zinbu 150</text>
   </g>
   <g transform="translate(890 510)">
     <rect width="260" height="210" rx="14" fill="#1a2340" stroke="#ffd166" stroke-width="3"/>
-    <circle cx="90" cy="50" r="30" fill="#1b2030" stroke="#ff6b6b" stroke-width="3"/><text x="90" y="61" text-anchor="middle" fill="#ff6b6b" font-size="34" font-weight="800">○</text>
+    <circle cx="90" cy="50" r="30" fill="#1b2030" stroke="#ff6b6b" stroke-width="3"/><text x="90" y="61" text-anchor="middle" fill="#ff6b6b" font-size="34" font-weight="800">B</text>
     <circle cx="170" cy="50" r="30" fill="#2b3145" stroke="#ffd166" stroke-width="3"/><circle cx="170" cy="50" r="15" fill="#1b2030" stroke="#8a93aa" stroke-width="2"/>
     <text x="130" y="112" text-anchor="middle" class="tt" style="fill:#ffd166">CHIÊU RIÊNG</text>
     <text x="130" y="145" text-anchor="middle" class="ts" style="fill:#ec4899;font-weight:700">☁ Mabu: biến thành mây</text>

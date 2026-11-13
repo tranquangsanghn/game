@@ -515,11 +515,11 @@ export class Game {
   onManPhu: () => void = () => {};
   /** Tay cầm bấm nút bắt đầu ở màn bắt đầu (giao diện quyết định mở hướng dẫn hay vào chơi) */
   onNutBatDau: () => void = () => {};
-  /** Tay cầm bấm ○ ở màn bắt đầu / hướng dẫn: quay lại bước trước */
+  /** Tay cầm bấm B ở màn bắt đầu / hướng dẫn: quay lại bước trước */
   onNutQuay: () => void = () => {};
   /** Thẻ đang chọn ở màn chọn chế độ (0 Mabu · 1 Zinbu · 2 hai người), chữ thập / cần trái trái-phải để chọn */
   menuChon = 2;
-  /** Màn kết thúc: đã bấm ✕, đang chờ bấm ○ (B) để chơi lại */
+  /** Màn kết thúc: đã bấm A, đang chờ bấm B để chơi lại */
   choiLaiChoB = false;
   private menuCanCu = 0;
   /** Gọi khi ván kết thúc (để lưu điểm lên máy chủ) */
@@ -615,7 +615,7 @@ export class Game {
   /** Lựa chọn ở màn bắt đầu (nhớ để Chơi lại giữ nguyên) */
   cheNguoi: 'mabu' | 'zinbu' | 'ca2' = 'ca2';
   trenBang = false;
-  // Chỉ có 1 tay cầm thì nó điều khiển nhân vật này (nút Share / Select để đổi); có 2 tay cầm thì mỗi tay một nhân vật
+  // Chỉ có 1 tay cầm thì nó điều khiển nhân vật này (nút View để đổi); có 2 tay cầm thì mỗi tay một nhân vật
   tayCam = 0;
   // Thông tin tay cầm đang kết nối (hiện ở màn bắt đầu) và nút vừa bấm gần nhất (để dò tay cầm lạ)
   tayCamTen: string[] = [];
@@ -2705,9 +2705,9 @@ export class Game {
     cu.dich = null;
   }
 
-  // ─── Điều khiển bằng tay cầm (Gamepad API, bố cục kiểu PS; mapping "standard") ───
-  // Dành cho trẻ em, chỉ các nút đơn giản: Chữ thập: chạy · Cần trái: bay · ✕ đấm · □ đá · △ chưởng · ○ / Cần phải: chiêu riêng
-  // Options: bắt đầu / tạm dừng · Share (Select): khi chỉ có 1 tay cầm thì đổi sang điều khiển nhân vật kia
+  // ─── Điều khiển bằng tay cầm (Gamepad API, bố cục kiểu Xbox; mapping "standard") ───
+  // Dành cho trẻ em, chỉ các nút đơn giản: Chữ thập: chạy · Cần trái: bay · A đấm · X đá · Y chưởng · B / Cần phải: chiêu riêng
+  // Menu: bắt đầu / tạm dừng · View: khi chỉ có 1 tay cầm thì đổi sang điều khiển nhân vật kia
 
   private docTayCam(): void {
     const ds = this.dsTayCam;
@@ -2733,7 +2733,7 @@ export class Game {
     for (const g of dungTayCam ? ds : []) {
       if (this.man === 'start' || this.man === 'over') {
         if (this.man === 'start') {
-          // Chọn thẻ (trái / phải) chỉ tay cầm 1 (người chơi 1); ✕ / ○ xác nhận thì tay cầm nào cũng được (kể cả màn hướng dẫn)
+          // Chọn thẻ (trái / phải) chỉ tay cầm 1 (người chơi 1); A / B xác nhận thì tay cầm nào cũng được (kể cả màn hướng dẫn)
           if (g.index === ds[0]!.index) {
             const cx = g.axes[0] ?? 0;
             const canMoi = Math.abs(cx) > 0.6 ? Math.sign(cx) : 0;
@@ -2744,7 +2744,7 @@ export class Game {
           if (moi(g, 0) || moi(g, 9)) this.onNutBatDau();
           else if (moi(g, 1)) this.onNutQuay();
         } else {
-          // Màn kết thúc: bấm ✕ trước rồi bấm ○ (B) mới chơi lại, tránh lỡ tay chơi lại ngay
+          // Màn kết thúc: bấm A trước rồi bấm B mới chơi lại, tránh lỡ tay chơi lại ngay
           if (moi(g, 0)) this.choiLaiChoB = true;
           else if (moi(g, 1) && this.choiLaiChoB) { this.choiLaiChoB = false; this.batDau(); }
         }
@@ -2809,7 +2809,7 @@ export class Game {
         n.cuaCan = false;
       }
 
-      // Ra đòn: giữ nút thì đánh liên tục theo thời gian hồi chiêu. ✕ đấm · □ đá · △ chưởng · ○ hoặc cần phải: chiêu riêng
+      // Ra đòn: giữ nút thì đánh liên tục theo thời gian hồi chiêu. A đấm · X đá · Y chưởng · B hoặc cần phải: chiêu riêng
       const nhom = duoc(g, 1) || phai.m > 0 || duoc(g, 11) ? NHOM_MAY : duoc(g, 3) ? 2 : duoc(g, 2) ? 1 : duoc(g, 0) ? 0 : -1;
       if (nhom >= 0) this.dungChieu(p, nhom);
     }

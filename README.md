@@ -1,6 +1,6 @@
 # Dragon Ball
 
-Game 2 nhân vật, chơi bằng chuột + Tab hoặc tay cầm kiểu PS (chọn ở màn bắt đầu), viết bằng TypeScript thuần (Vite) + máy chủ Java / MySQL để lưu ván và điểm, tách ra từ dự án EORM.
+Game 2 nhân vật, chơi bằng chuột + Tab hoặc tay cầm kiểu Xbox (chọn ở màn bắt đầu), viết bằng TypeScript thuần (Vite) + máy chủ Java / MySQL để lưu ván và điểm, tách ra từ dự án EORM.
 
 - Chơi online: https://tranquangsanghn.github.io/game/
 - Mỗi lần push lên `main`, GitHub Actions tự build `web/` và deploy lên GitHub Pages (bản này không có máy chủ nên ván lưu tạm trong trình duyệt).
@@ -40,15 +40,15 @@ Màn bắt đầu cho chọn chế độ chơi (nhớ lại lần sau):
 - **Phím 1 / 2 / 3 / 4**: chọn chiêu thứ 1 / 2 / 3 / 4 (từ dưới lên trên) của nhân vật đang dùng chuột
 - **Tab**: chuyển chuột sang nhân vật kia (Mabu ↔ Zinbu)
 
-**🎮 Tay cầm** (Gamepad API, mapping "standard" kiểu PS; dành cho trẻ em nên chỉ dùng các nút đơn giản). Tay cầm thứ nhất điều khiển Mabu (thanh đen bên trái), tay cầm thứ hai điều khiển Zinbu (bên phải). Nối tay cầm rồi bấm một nút bất kỳ để trình duyệt nhận ra nó:
+**🎮 Tay cầm** (Gamepad API, mapping "standard" kiểu Xbox; dành cho trẻ em nên chỉ dùng các nút đơn giản). Tay cầm thứ nhất điều khiển Mabu (thanh đen bên trái), tay cầm thứ hai điều khiển Zinbu (bên phải). Nối tay cầm rồi bấm một nút bất kỳ để trình duyệt nhận ra nó:
 - **Mũi tên (chữ thập)**: chạy
 - **Cần trái**: bay (gạt hướng nào bay hướng đó, tốn mana, bay xong nghỉ 5 giây; hết mana hoặc đang nghỉ thì chạy)
-- **✕**: đấm · **□**: đá · **△**: chưởng (chiêu đặc biệt) — giữ để đánh liên tục, đánh theo hướng đang quay mặt (không có tâm ngắm)
-- **○ hoặc cần phải** (đẩy đâu cũng được): chiêu riêng — Mabu biến thành mây, Zinbu biến gà thành socola
-- **Options**: bắt đầu / tạm dừng / tiếp tục · **Share (Select)**: khi chỉ có 1 tay cầm, chuyển tay cầm sang nhân vật kia
+- **A**: đấm · **X**: đá · **Y**: chưởng (chiêu đặc biệt) — giữ để đánh liên tục, đánh theo hướng đang quay mặt (không có tâm ngắm)
+- **B hoặc cần phải** (đẩy đâu cũng được): chiêu riêng — Mabu biến thành mây, Zinbu biến gà thành socola
+- **Menu**: bắt đầu / tạm dừng / tiếp tục · **View**: khi chỉ có 1 tay cầm, chuyển tay cầm sang nhân vật kia
 - Tay cầm rung khi nhân vật bị đánh / gục; rút tay cầm hoặc chuyển sang cửa sổ khác thì ván tự tạm dừng; 2 tay cầm giữ cố định vai (rút / cắm lại không đổi người)
 
-Chọn nhân vật xong sẽ vào màn hướng dẫn (ảnh `web/public/assets/game/huong-dan-tay-cam.svg`): chọn Chuột + Tab hoặc Tay cầm, xem cách dùng Đấm / Đá / Chiêu đặc biệt / chiêu riêng rồi bấm Vào chơi (✕).
+Chọn nhân vật xong sẽ vào màn hướng dẫn (ảnh `web/public/assets/game/huong-dan-tay-cam.svg`): chọn Chuột + Tab hoặc Tay cầm, xem cách dùng Đấm / Đá / Chiêu đặc biệt / chiêu riêng rồi bấm Vào chơi (A).
 
 Màn bắt đầu (chế độ tay cầm) hiện tên các tay cầm đã nối và nút vừa bấm (để dò tay cầm lạ có gửi đúng chỉ số nút không).
 
