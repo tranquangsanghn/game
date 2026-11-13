@@ -517,9 +517,11 @@ export class Game {
   onNutBatDau: () => void = () => {};
   /** Tay cầm bấm B ở màn bắt đầu / hướng dẫn: quay lại bước trước */
   onNutQuay: () => void = () => {};
+  /** Tay cầm bấm X ở màn chọn chế độ: đánh dấu thẻ, chờ bấm B để xác nhận */
+  onNutX: () => void = () => {};
   /** Thẻ đang chọn ở màn chọn chế độ (0 Mabu · 1 Zinbu · 2 hai người), chữ thập / cần trái trái-phải để chọn */
   menuChon = 2;
-  /** Màn kết thúc: đã bấm A, đang chờ bấm B để chơi lại */
+  /** Màn kết thúc: đã bấm X, đang chờ bấm B để chơi lại */
   choiLaiChoB = false;
   private menuCanCu = 0;
   /** Gọi khi ván kết thúc (để lưu điểm lên máy chủ) */
@@ -2733,7 +2735,7 @@ export class Game {
     for (const g of dungTayCam ? ds : []) {
       if (this.man === 'start' || this.man === 'over') {
         if (this.man === 'start') {
-          // Chọn thẻ (trái / phải) chỉ tay cầm 1 (người chơi 1); A / B xác nhận thì tay cầm nào cũng được (kể cả màn hướng dẫn)
+          // Chọn thẻ (trái / phải) chỉ tay cầm 1 (người chơi 1); X / A / B xác nhận thì tay cầm nào cũng được (kể cả màn hướng dẫn)
           if (g.index === ds[0]!.index) {
             const cx = g.axes[0] ?? 0;
             const canMoi = Math.abs(cx) > 0.6 ? Math.sign(cx) : 0;
@@ -2741,11 +2743,13 @@ export class Game {
             this.menuCanCu = canMoi;
             if (sang) this.menuChon = Math.max(0, Math.min(2, this.menuChon + sang));
           }
-          if (moi(g, 0) || moi(g, 9)) this.onNutBatDau();
+          // X: đánh dấu thẻ ở màn chọn chế độ · A / Menu: Tiếp / Vào chơi ở màn hướng dẫn · B: xác nhận / quay lại
+          if (moi(g, 2)) this.onNutX();
+          else if (moi(g, 0) || moi(g, 9)) this.onNutBatDau();
           else if (moi(g, 1)) this.onNutQuay();
         } else {
-          // Màn kết thúc: bấm A trước rồi bấm B mới chơi lại, tránh lỡ tay chơi lại ngay
-          if (moi(g, 0)) this.choiLaiChoB = true;
+          // Màn kết thúc: bấm X trước rồi bấm B mới chơi lại, tránh lỡ tay chơi lại ngay
+          if (moi(g, 2)) this.choiLaiChoB = true;
           else if (moi(g, 1) && this.choiLaiChoB) { this.choiLaiChoB = false; this.batDau(); }
         }
       } else if (moi(g, 9)) this.tamDung();

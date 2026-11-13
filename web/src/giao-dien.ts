@@ -28,7 +28,7 @@ export class GiaoDien {
   private huongDan: 'mabu' | 'zinbu' | 'ca2' | null = null;
   /** Bước cuối sau màn hướng dẫn: màn mục tiêu (diệt vua gà), bấm Vào chơi mới bắt đầu */
   private buocMucTieu = false;
-  /** Màn chọn chế độ (tay cầm): thẻ đã bấm A, chờ bấm B để xác nhận; -1 = chưa bấm */
+  /** Màn chọn chế độ (tay cầm): thẻ đã bấm X, chờ bấm B để xác nhận; -1 = chưa bấm */
   private daBamX = -1;
 
   // Trạng thái nói chuyện với máy chủ
@@ -83,11 +83,13 @@ export class GiaoDien {
     if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = this.game;
     this.game.onDong = () => this.onDong();
     this.game.onManPhu = () => this.veManPhu();
-    // Tay cầm bấm A / Menu ở màn bắt đầu: mở hướng dẫn, bấm lần nữa mới vào chơi
+    // Tay cầm bấm A / Menu ở màn hướng dẫn: Tiếp, bấm lần nữa (màn mục tiêu) mới vào chơi
     this.game.onNutBatDau = () => {
       if (this.huongDan) void this.lam(this.buocMucTieu ? 'vao' : 'muc');
-      // Màn chọn chế độ: bấm A rồi B mới xác nhận
-      else this.daBamX = this.game.menuChon;
+    };
+    // Màn chọn chế độ: bấm X rồi B mới xác nhận
+    this.game.onNutX = () => {
+      if (!this.huongDan) this.daBamX = this.game.menuChon;
     };
     this.game.onNutQuay = () => {
       if (this.huongDan) void this.lam('quay');
@@ -230,7 +232,7 @@ export class GiaoDien {
       ${the('mabu', '#ec4899', this.anhNv(0, 3.4), '1 người chơi')}
       ${the('zinbu', '#facc15', this.anhNv(1, 3.4), '1 người chơi')}
       ${the('ca2', '#38bdf8', this.anhNv(0, 2.4) + this.anhNv(1, 2.4), '2 người chơi')}
-    </div>${this.game.cheDo === 'tayCam' ? `<p class="phu">Người chơi 1: ◀ ▶ chọn · ${this.daBamX === this.game.menuChon ? 'bấm B để vào' : 'bấm A rồi B để xác nhận'}</p>` : ''}${this.luu ? '<button type="button" tabindex="-1" class="nut-phu" data-act="tiep" style="margin-top:20px">▶ Chơi tiếp ván đã lưu</button>' : ''}${this.htmlThongBao()}</div>`;
+    </div>${this.game.cheDo === 'tayCam' ? `<p class="phu">Người chơi 1: ◀ ▶ chọn · ${this.daBamX === this.game.menuChon ? 'bấm B để vào' : 'bấm X rồi B để xác nhận'}</p>` : ''}${this.luu ? '<button type="button" tabindex="-1" class="nut-phu" data-act="tiep" style="margin-top:20px">▶ Chơi tiếp ván đã lưu</button>' : ''}${this.htmlThongBao()}</div>`;
   }
 
   /** Màn hướng dẫn sau khi chọn nhân vật: chọn chuột / tay cầm, xem ảnh hướng dẫn rồi vào chơi */
@@ -316,7 +318,7 @@ export class GiaoDien {
       <p>Điểm đội: <b>${g.tongDiem}</b> · Kỷ lục: <b>${g.kyLuc}</b>${g.kyLucMoi ? '<span class="ky-luc-moi">Kỷ lục mới!</span>' : ''}</p>
       ${top}
       <div class="nhom-nut">
-        <button type="button" tabindex="-1" class="nut-chinh" data-act="moi">${g.cheDo === 'tayCam' ? (g.choiLaiChoB ? 'Chơi lại: bấm B' : 'Chơi lại: bấm A rồi B') : 'Chơi lại'}</button>
+        <button type="button" tabindex="-1" class="nut-chinh" data-act="moi">${g.cheDo === 'tayCam' ? (g.choiLaiChoB ? 'Chơi lại: bấm B' : 'Chơi lại: bấm X rồi B') : 'Chơi lại'}</button>
         <button type="button" tabindex="-1" class="nut-phu" data-act="dong">Đóng</button>
       </div>
     </div></div>`;
