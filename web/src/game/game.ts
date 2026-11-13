@@ -33,7 +33,8 @@ interface ChieuTuong {
 // Trứng do gà tướng đẻ: sau TRUNG_NO giây nở ra gà `loai`
 export interface TrungGa { id: number; x: number; y: number; t: number; loai: 'hen' | 'rooster' | 'flyer'; }
 interface Dan { id: number; p: number; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; }
-export interface VatPham { id: number; x: number; y: number; t: number; }
+/** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
+export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh'; }
 interface Chu { id: number; x: number; y: number; text: string; mau: string; t: number; }
 interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay: number; vxoay: number; t: number; mau: string; }
 interface Vet { id: number; x: number; y: number; t: number; loai: 'bui' | 'no'; }
@@ -66,7 +67,7 @@ export const PHIEN_BAN_LUU = 1;
 /** Dữ liệu một ván đã lưu: các trường tuỳ ý của game, máy chủ chỉ lưu nguyên khối JSON */
 export interface TrangThaiLuu {
   phienBan: number; tGame: number; t: number; chamDen: number; id: number;
-  henTuong: number; henVatPham: number; soLanTuong: number; lanTuong: number;
+  henTuong: number; soLanTuong: number; lanTuong: number;
   ga: Ga[]; trungDe: TrungGa[]; vatPham: VatPham[];
   /** Cây đã đổ: [chỉ số trong trangTri, thời điểm đổ, hướng đổ] */
   cayDo?: [number, number, number][];
@@ -152,13 +153,10 @@ const DOT_NHIP = 0.5;
 const MO_THOI_GIAN = 0.35;
 // Hạ được gà tướng thì mỗi nhân vật còn sống hồi chừng này máu
 const HOI_MAU_TUONG = 60;
-// Vật phẩm máu: cứ VP_CHU_KY giây xuất hiện một cái quanh nhân vật (tối đa VP_TOI_DA trên map), gà con chết rơi với xác suất VP_ROI, gà mẹ chết rơi VP_ROI_TUONG cái.
-// Nhân vật (không phải mây, chưa gục, chưa đầy máu) đi vào bán kính VP_BAN_KINH thì nhặt, hồi VP_HOI máu; không ai nhặt sau VP_TON_TAI giây thì biến mất.
-const VP_CHU_KY = 15;
-const VP_TOI_DA = 5;
-const VP_ROI = 0.2;
-const VP_ROI_TUONG = 3;
-const VP_HOI = 50;
+// Quả táo: mỗi lần cây đổ có TAO_ROI = 30% rơi 1 quả, đỏ / xanh ngẫu nhiên (50/50). Táo đỏ hồi VP_HOI máu (cộng dồn, tối đa HP_NV), táo xanh hồi VP_HOI mana (VP_HOI = đầy: mọi nhóm đòn và thể lực bay).
+// Nhân vật (không phải mây, chưa gục, còn thiếu máu / mana tương ứng) đi vào bán kính VP_BAN_KINH thì nhặt; không ai nhặt sau VP_TON_TAI giây thì biến mất.
+const TAO_ROI = 0.3;
+const VP_HOI = 100;
 const VP_BAN_KINH = 90;
 const VP_TON_TAI = 45;
 // Hai thanh đen hai bên map (chứa chiêu thức và máu của Mabu / Zinbu) rộng SIDE; nửa vòng tròn chứa nhân vật nhô vào map, bán kính R_NV = 2/3 bảng cũ
@@ -398,7 +396,6 @@ export class Game {
   // Vật phẩm máu trên map (vatPhamView: chỉ cái nằm trong khung nhìn)
   vatPham: VatPham[] = [];
   vatPhamView: VatPham[] = [];
-  private henVatPham = VP_CHU_KY;
   // Vệt đỏ chỉ hướng lúc gà mẹ báo hiệu Lao / Bay (chỉ khi trong khung nhìn)
   vachView: { x1: number; y1: number; x2: number; y2: number; a: number }[] = [];
   // Lần hồi sinh của gà tướng gần nhất (để bảng vẫn hiện khi chờ hồi sinh)
@@ -526,7 +523,6 @@ export class Game {
     this.rung = 0;
     this.trungDe = [];
     this.vatPham = [];
-    this.henVatPham = VP_CHU_KY;
     this.henTuong = CHO_TUONG_DAU;
     this.soLanTuong = 0;
     this.lanTuong = 0;
@@ -560,7 +556,7 @@ export class Game {
     return JSON.parse(JSON.stringify({
       phienBan: PHIEN_BAN_LUU,
       tGame: this.tGame, t: this.t, chamDen: this.chamDen, id: this.id,
-      henTuong: this.henTuong, henVatPham: this.henVatPham, soLanTuong: this.soLanTuong, lanTuong: this.lanTuong,
+      henTuong: this.henTuong, soLanTuong: this.soLanTuong, lanTuong: this.lanTuong,
       ga: this.ga, trungDe: this.trungDe, vatPham: this.vatPham,
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1]])),
       nguoi: this.nguoi.map((n) => {
@@ -577,7 +573,7 @@ export class Game {
     if (!d || d.phienBan !== PHIEN_BAN_LUU || !Array.isArray(d.nguoi) || d.nguoi.length !== 2) throw new Error('Dữ liệu lưu không hợp lệ');
     this.batDau();
     this.tGame = d.tGame; this.t = d.t; this.chamDen = d.chamDen; this.id = d.id;
-    this.henTuong = d.henTuong; this.henVatPham = d.henVatPham; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
+    this.henTuong = d.henTuong; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
     this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham;
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; }
     for (const [i, t, h] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; }
@@ -690,28 +686,23 @@ export class Game {
     this.capNhatHieuUng(dt, dtE);
   }
 
-  // Vật phẩm máu: sinh theo chu kỳ, hết hạn thì biến mất, nhân vật chạm vào thì nhặt (chỉ người chưa đầy máu)
+  // Quả táo: hết hạn thì biến mất, nhân vật chạm vào thì nhặt (đỏ: còn thiếu máu · xanh: còn thiếu mana)
   private capNhatVatPham(dt: number): void {
-    this.henVatPham -= dt;
-    if (this.henVatPham <= 0) {
-      this.henVatPham = VP_CHU_KY;
-      const song = this.nguoi.filter((n) => !n.het);
-      if (song.length && this.vatPham.length < VP_TOI_DA) {
-        const n = song[Math.floor(Math.random() * song.length)];
-        const goc = ngauNhien(0, Math.PI * 2);
-        const r = ngauNhien(300, 1100);
-        this.themVatPham(n.x + Math.cos(goc) * r, n.y + Math.sin(goc) * r);
-      }
-    }
     const conLai: VatPham[] = [];
     for (const v of this.vatPham) {
       v.t += dt;
       if (v.t >= VP_TON_TAI) continue;
-      const n = this.nguoi.find((m) => !m.het && !m.nv.laMay && m.hp < HP_NV && Math.hypot(m.x - v.x, m.y - v.y) < VP_BAN_KINH);
+      const xanh = v.loai === 'xanh';
+      const n = this.nguoi.find((m) => !m.het && !m.nv.laMay && (xanh ? this.thieuMana(m) : m.hp < HP_NV) && Math.hypot(m.x - v.x, m.y - v.y) < VP_BAN_KINH);
       if (n) {
-        const hoi = Math.min(VP_HOI, HP_NV - n.hp);
-        n.hp += hoi;
-        this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${hoi} ❤`, mau: '#35d96a', t: 0 });
+        if (xanh) {
+          this.hoiDayMana(n);
+          this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${VP_HOI} mana`, mau: '#3aa0ff', t: 0 });
+        } else {
+          const hoi = Math.min(VP_HOI, HP_NV - n.hp);
+          n.hp += hoi;
+          this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${hoi} ❤`, mau: '#35d96a', t: 0 });
+        }
         this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
         continue;
       }
@@ -723,7 +714,20 @@ export class Game {
   private themVatPham(x: number, y: number): void {
     const v = { x, y };
     giuTrongMap(v, LE_VP);
-    this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0 });
+    this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: Math.random() < 0.5 ? 'do' : 'xanh' });
+  }
+
+  private thieuMana(n: NguoiChoi): boolean {
+    return n.mana.some((m, g) => m < MANA_TOI_DA[g]) || n.khoaMana.some((k) => k > 0) || n.bayNl < BAY_NL_TOI_DA || n.bayKhoa > 0;
+  }
+
+  // Táo xanh: đầy mana mọi nhóm đòn (mở khoá luôn) và thể lực bay
+  private hoiDayMana(n: NguoiChoi): void {
+    n.mana = MANA_TOI_DA.map((m) => m);
+    n.khoaMana = n.khoaMana.map(() => 0);
+    n.hoiMana = n.hoiMana.map(() => 0);
+    n.bayNl = BAY_NL_TOI_DA;
+    n.bayKhoa = 0;
   }
 
   private dieuKhien(dt: number): void {
@@ -893,6 +897,8 @@ export class Game {
         c.doLuc = this.t;
         const dx = d.x1 - d.x0;
         c.huongDo = Math.abs(dx) > 20 ? Math.sign(dx) : c.lat ? -1 : 1;
+        // Cây đổ có TAO_ROI cơ hội rơi 1 quả táo ở chỗ ngọn cây đổ xuống
+        if (Math.random() < TAO_ROI) this.themVatPham(c.x + c.huongDo * ngauNhien(60, 160), c.y + ngauNhien(-10, 30));
         break;
       }
     }
@@ -1538,7 +1544,6 @@ export class Game {
         xoay: ngauNhien(0, 360), vxoay: ngauNhien(-400, 400), t: 0, mau: MAU_LONG[g.loai],
       });
     }
-    if (Math.random() < VP_ROI) this.themVatPham(tam.x + ngauNhien(-40, 40), g.y + ngauNhien(-20, 40));
     n.combo++;
     n.banTrung++;
     const hs = this.heSo(p);
@@ -1576,7 +1581,6 @@ export class Game {
     g.h0 = 0;
     // Chỉ hồi sinh sau khi chết, chờ đủ CHO_TUONG giây kể từ lúc chết
     this.henTuong = CHO_TUONG;
-    for (let i = 0; i < VP_ROI_TUONG; i++) this.themVatPham(g.x + ngauNhien(-200, 200), g.y + ngauNhien(-60, 120));
     rai(40);
     this.rung = Math.max(this.rung, 0.6);
     this.congDiem(p, DIEM.boss * hs, tam.x, tam.y - 110, `+${DIEM.boss * hs} HẠ GÀ TƯỚNG!`);

@@ -379,28 +379,42 @@ export class VeCanvas {
     }
   }
 
-  private veVatPham(ctx: CanvasRenderingContext2D, v: { x: number; y: number; t: number }): void {
-    const P = duong();
+  // Quả táo: đỏ hồi máu, xanh hồi mana; nảy nhẹ trên đất, có vầng sáng cùng màu
+  private veVatPham(ctx: CanvasRenderingContext2D, v: { x: number; y: number; t: number; loai?: 'do' | 'xanh' }): void {
+    const xanh = v.loai === 'xanh';
+    const mau = xanh ? '#2fa8ff' : '#ff3b3b';
     ctx.save();
     ctx.translate(v.x, v.y);
     ctx.globalAlpha = v.t > 37 && (v.t * 6) % 1 < 0.5 ? 0.35 : 1;
-    duongElip(ctx, 26, 8);
+    duongElip(ctx, 24, 7);
     ctx.fillStyle = 'rgba(0,0,0,0.22)';
     ctx.fill();
-    duongTron(ctx, 44, 0, -34);
-    ctx.fillStyle = `rgba(53,217,106,${0.12 + 0.08 * ((v.t * 4) % 1)})`;
+    duongTron(ctx, 40, 0, -30);
+    ctx.fillStyle = `${xanh ? 'rgba(47,168,255,' : 'rgba(255,59,59,'}${0.12 + 0.08 * ((v.t * 4) % 1)})`;
     ctx.fill();
     const tri = (v.t * 4) % 2 < 1 ? (v.t * 4) % 1 : 1 - ((v.t * 4) % 1);
-    ctx.translate(0, -34 - 6 * tri);
-    ctx.lineJoin = 'round';
-    ctx.fillStyle = '#ff3b5c';
-    ctx.fill(P.tim);
+    ctx.translate(0, -26 - 5 * tri);
+    // Thân táo
+    duongTron(ctx, 20);
+    ctx.fillStyle = mau;
+    ctx.fill();
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 3;
-    ctx.stroke(P.tim);
-    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.stroke();
+    // Cuống và lá
+    ctx.strokeStyle = '#6b3f1d';
     ctx.lineCap = 'round';
-    ctx.stroke(P.timSang);
+    ctx.beginPath();
+    ctx.moveTo(0, -18);
+    ctx.lineTo(3, -28);
+    ctx.stroke();
+    duongElip(ctx, 9, 5, 11, -26);
+    ctx.fillStyle = '#35d96a';
+    ctx.fill();
+    // Điểm sáng
+    duongTron(ctx, 4.5, -8, -7);
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.fill();
     ctx.restore();
   }
 
