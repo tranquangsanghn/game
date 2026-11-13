@@ -531,16 +531,22 @@ export class VeCanvas {
     this.sprite(ctx, ng.nv.sp, ng.nv.khung, ng.nv.lat, false);
     ctx.restore();
 
-    // Máu: số và thanh
+    // Hai bình cầu xếp dọc ngay trên nút trên cùng: trên = máu (xanh lá, số máu nằm giữa bình), dưới = thể lực bay (xanh lơ, xám khi đang khoá sau lần bay)
     const ym = c.yMauNv(p);
-    ctx.font = `700 12px ${FONT}`;
+    this.veBinh(ctx, xt, ym - 28, dongHe(c.mauNv(p)), '#35d96a', ng.het);
+    this.veBinh(ctx, xt, ym + 14, dongHe(c.nlBay(p)), ng.bayKhoa > 0 ? '#8a9a94' : '#4fd8ff', ng.het);
+    ctx.save();
+    ctx.globalAlpha = ng.het ? 0.4 : 1;
+    ctx.font = `700 15px ${FONT}`;
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+    ctx.strokeText(`${c.hpNv(p)}`, xt, ym - 28);
     ctx.fillStyle = '#fff';
-    ctx.fillText(`❤ ${c.hpNv(p)}/${c.HP_NV}`, xt, ym);
-    ctx.textAlign = 'start';
-    // Hai bình cầu cùng kiểu mana nằm cạnh nhau dưới số máu: trái = máu (xanh lá), phải = thể lực bay (xanh lơ, xám khi đang khoá sau lần bay)
-    this.veBinh(ctx, xt - 18, ym + 20, dongHe(c.mauNv(p)), '#35d96a', ng.het, 16);
-    this.veBinh(ctx, xt + 18, ym + 20, dongHe(c.nlBay(p)), ng.bayKhoa > 0 ? '#8a9a94' : '#4fd8ff', ng.het, 16);
+    ctx.fillText(`${c.hpNv(p)}`, xt, ym - 28);
+    ctx.restore();
 
     // Các chiêu xếp dọc từ dưới lên: đang dùng sáng + phát sáng, hết mana thì mờ hẳn
     for (const b of c.nutBang(p)) {
