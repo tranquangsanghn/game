@@ -33,8 +33,6 @@ export interface Ga {
   suc?: number; to?: number; db?: boolean;
   // Gà mẹ phụ: kiểu chuyên (0 Lao · 1 Bay · 2 đen · 3 vàng · 4 đỏ), cũng là màu riêng của con đó
   kieuPhu?: number;
-  // Gà mẹ phụ dưới TRON_MAU máu: quãng chạy trốn nhanh còn lại (px thật) và hướng; daTron = đã dùng lần trốn chạy duy nhất của mạng này
-  tron?: number; tronX?: number; tronY?: number; daTron?: boolean;
   // Gà con bị đòn ăn (quất râu Zinbu / bắn chưởng Mabu) đang bị kéo về nhân vật p; hong = socola hồng (Mabu); an = máu / mana nhận được khi ăn
   keo?: { p: number; an: number }; hong?: boolean;
   // Thế phòng thủ: giây còn lại (đang né mọi đòn) và đếm ngược tới thế kế tiếp
@@ -210,10 +208,6 @@ const THE_KEO_DAI = 2;
 const THE_TANG = 0.5;
 // Chiêu Gọi gà con (mọi gà mẹ): máu dưới GOI_MAU (40%) thì gọi GOI_DAN (cộng thêm 1 con mỗi lần hồi sinh) gà con ra bảo vệ, hồi GOI_HOI giây
 const GOI_MAU = 0.4;
-// Tướng gà (gà mẹ phụ) dưới TRON_MAU máu: chỉ chạy trốn nhân vật, không đuổi đánh, không Lao / Bay;
-// mỗi mạng được đúng 1 lần chạy trốn nhanh: tốc độ gấp TRON_TOC lần tốc độ đi thường (TOC_DO_TUONG), quãng TRON_QUANG = 2 × quãng bay của Zinbu (BAY_CAN)
-const TRON_MAU = 0.2;
-const TRON_TOC = 4;
 const GOI_HOI = 30;
 const GOI_DAN: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'rooster', 'flyer'];
 const GOI_HIEN = 1.2;
@@ -293,7 +287,6 @@ const MANA_TOI_THIEU = 15;
 const BAY_KHOA = 2;
 const VUNG_BAY_CAN = 0.6; // cần trái phải gạt mạnh mới bay (tránh bay nhầm)
 const BAY_CAN = 600; // mỗi lần gạt cần trái bay một đoạn (xa hơn BAY_KHI_XA)
-const TRON_QUANG = 2 * BAY_CAN;
 const VUNG_CHET_CAN = 0.25; // cần analog gạt dưới mức này coi như nằm yên
 const TOC_DO_DAN = 2400;
 // Chiêu Biến mây (riêng Mabu, nhóm đòn 3): mây to gấp 2, quét trúng mọi con gà nó đi qua. Hiệu lực MAY_THOI_GIAN giây, sau đó chờ MAY_HOI giây mới dùng lại.
@@ -1291,11 +1284,6 @@ export class Game {
       g.x += g.vx * dt * HE_SO_TOC_GA;
       g.y += g.vy * dt * HE_SO_TOC_GA;
       const cham = giuTrongMap(g, leCuaGa(g));
-      if (g.tron) {
-        // Đang chạy trốn nhanh: trừ quãng đã chạy, chạm mép map thì thôi
-        g.tron = Math.max(0, g.tron - Math.hypot(g.vx, g.vy) * dt * HE_SO_TOC_GA);
-        if (cham.cx || cham.cy) g.tron = 0;
-      }
       if (g.chieu) {
         // Đang lao / bay mà chạm mép map thì dừng lại nghỉ, không bật lại
         if (g.chieu.pha === 'chay' && (cham.cx || cham.cy)) this.nghiChieu(g, g.chieu);
@@ -2261,36 +2249,6 @@ export class Game {
       const d = Math.hypot(n.x - g.x, n.y - g.y);
       if (d < gan) { gan = d; muc = n; }
     }
-    // Dưới TRON_MAU máu: chạy trốn, không đánh
-    if (g.hp < HP_GA * TRON_MAU) {
-      if (g.tron) {
-        g.vx = (g.tronX ?? 0) * TOC_DO_TUONG * TRON_TOC;
-        g.vy = (g.tronY ?? 0) * TOC_DO_TUONG * TRON_TOC;
-        g.lat = g.vx < 0;
-        return;
-      }
-      if (muc) {
-        const d = Math.hypot(g.x - muc.x, g.y - muc.y) || 1;
-        const ux = (g.x - muc.x) / d;
-        const uy = (g.y - muc.y) / d;
-        if (!g.daTron) {
-          // Lần chạy trốn nhanh duy nhất của mạng này: khoá hướng ra xa nhân vật gần nhất
-          g.daTron = true;
-          g.tron = TRON_QUANG;
-          g.tronX = ux;
-          g.tronY = uy;
-          this.chu.push({ id: this.id++, x: g.x, y: g.y - 380, text: '🏃 TRỐN CHẠY!', mau: '#ffd23c', t: 0 });
-          g.vx = ux * TOC_DO_TUONG * TRON_TOC;
-          g.vy = uy * TOC_DO_TUONG * TRON_TOC;
-        } else {
-          g.vx = ux * TOC_DO_TUONG;
-          g.vy = uy * TOC_DO_TUONG;
-        }
-        g.lat = g.vx < 0;
-        g.doiHuong = 0;
-        return;
-      }
-    } else g.tron = 0;
     // Nhân vật chưa vào tầm đánh mà có socola trong tầm ngửi thì đi ăn socola trước
     const soc = this.socolaGan(g);
     if (soc && (!muc || gan > TAM_LAO)) {
