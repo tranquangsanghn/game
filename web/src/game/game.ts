@@ -110,6 +110,10 @@ type VatXep =
 /** Quả cầu trốn: san = sẵn sàng · trong = có nhân vật p đang trốn · vo = đang vỡ ra (hoạt ảnh) · moc = đã vỡ, chờ CAU_MOC giây mọc quả mới. t = số giây của pha hiện tại */
 /** cua = chủ quả cầu (0 Mabu · 1 Zinbu): chỉ đúng người đó chui vào được, quả cầu có avatar của người đó */
 export interface CauTron { x: number; y: number; pha: 'san' | 'trong' | 'vo' | 'moc'; p: number; t: number; cua: number; }
+/** Tự hạ độ phân giải: dưới FPS_THAP thì giảm DPR_BUOC mỗi lần, không thấp hơn DPR_SAN */
+const FPS_THAP = 50;
+const DPR_BUOC = 0.25;
+const DPR_SAN = 1;
 const taoCauTron = (): CauTron[] => CAU_VI_TRI.map(([dx, dy], cua) => ({ x: MAP / 2 + dx, y: MAP / 2 + dy, pha: 'san', p: -1, t: 0, cua }));
 
 /**
@@ -844,6 +848,10 @@ export class Game {
   private cssW = 0;
   private cssH = 0;
   private dpr = 1;
+  /** Trần độ phân giải canvas (đơn vị: tỉ lệ điểm ảnh): tự hạ dần khi FPS thấp (máy yếu), không tăng lại để khỏi dao động */
+  private dprTran = 2;
+  private fpsThap = 0;
+  private datKhung: () => void = () => {};
   private manDaVe: ManChoi | null = null;
   private id = 1;
   private rafId = 0;
@@ -873,7 +881,7 @@ export class Game {
         // Canvas theo kích thước khung và độ phân giải màn hình (tối đa 2× cho nhẹ)
         this.cssW = kt.width;
         this.cssH = kt.height;
-        this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+        this.dpr = Math.min(window.devicePixelRatio || 1, this.dprTran);
         const cv = this.canvasEl;
         const pw = Math.max(1, Math.round(kt.width * this.dpr));
         const ph = Math.max(1, Math.round(kt.height * this.dpr));
@@ -886,6 +894,7 @@ export class Game {
       this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas, SP_CELL.atlas, SP_CELL_TIEC.atlas, ...CHUONG_LOAI.map((l) => l.atlas));
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG, LOC_SOCOLA, LOC_SOCOLA_HONG]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO, LOC_SOCOLA, ...LOC_PHU]);
+      this.datKhung = vua;
       vua();
       const quanSat = new ResizeObserver(vua);
       quanSat.observe(this.khungEl);
@@ -1116,6 +1125,14 @@ export class Game {
       this.fps = Math.round((this.fpsDem * 1000) / (now - this.fpsMoc));
       this.fpsDem = 0;
       this.fpsMoc = now;
+      // Máy yếu: FPS dưới FPS_THAP 3 lần đo liền (1,5s) khi đang chơi thì hạ độ phân giải canvas một bậc (số điểm ảnh phải vẽ giảm mạnh)
+      if (this.man === 'play' && !document.hidden && this.fps < FPS_THAP && this.dpr > DPR_SAN) {
+        if (++this.fpsThap >= 3) {
+          this.fpsThap = 0;
+          this.dprTran = Math.max(DPR_SAN, this.dpr - DPR_BUOC);
+          this.datKhung();
+        }
+      } else this.fpsThap = 0;
     }
     this.lanCuoi = now;
     this.docTayCam();
