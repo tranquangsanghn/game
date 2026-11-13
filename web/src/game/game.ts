@@ -140,11 +140,11 @@ const THOI_GIAN_HOANG_HON = 90;
 // Máu: nhân vật và quái đều khởi đầu 100, khác nhau ở sát thương gây ra và tỉ lệ giảm sát thương khi nhận
 // HP_NV là TRẦN máu của nhân vật; vào ván chỉ có HP_KHOI_DAU. Máu vượt trần (táo, socola, hạ gà mẹ) chuyển thành khiên tạm (tối đa KHIEN_TOI_DA, mất sau KHIEN_THOI_GIAN giây).
 // Không bị thương HP_HOI_CHO giây thì tự hồi HP_HOI máu mỗi giây, nhưng chỉ hồi tới HP_HOI_TOI_DA.
-const HP_NV = 200;
-const HP_KHOI_DAU = 100;
+const HP_NV = 300;
+const HP_KHOI_DAU = 150;
 const HP_HOI = 2;
 const HP_HOI_CHO = 5;
-const HP_HOI_TOI_DA = 100;
+const HP_HOI_TOI_DA = 150;
 const KHIEN_TOI_DA = 100;
 const KHIEN_THOI_GIAN = 5;
 const HP_GA = 100;
