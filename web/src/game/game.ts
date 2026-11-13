@@ -642,7 +642,6 @@ export class Game {
   /** Tay cầm bấm X ở màn chọn chế độ: đánh dấu thẻ, chờ bấm B để xác nhận */
   onNutX: () => void = () => {};
   /** Tay cầm 1 bấm trái / phải ở màn bắt đầu (sang = -1 / 1); giao diện trả true nếu đã dùng (chọn bản đồ ở màn mục tiêu) */
-  onSang: (sang: number) => boolean = () => false;
   /** Thẻ đang chọn ở màn chọn chế độ (0 Mabu · 1 Zinbu · 2 hai người), chữ thập / cần trái trái-phải để chọn */
   menuChon = 2;
   /** Màn kết thúc: đã bấm X, đang chờ bấm B để chơi lại */
@@ -698,7 +697,7 @@ export class Game {
   /** Toàn bộ cây / bụi / đá của map (sinh một lần, cố định); chỉ vật trong khung nhìn mới vào `xep` */
   trangTri: TrangTri[] = taoTrangTri();
   /** Bản đồ chọn ở màn mục tiêu (nhớ để Chơi lại giữ nguyên): 'co' đồng cỏ · 'sa' đảo sa mạc */
-  banDo: LoaiBanDo = 'co';
+  banDo: LoaiBanDo = 'sa';
   /** Bản đồ của ván đang dựng (trangTri, nền, biển): chỉ đổi khi bắt đầu ván, để màn chọn map không vẽ lẫn */
   banDoVan: LoaiBanDo = 'co';
   gaBayView: Ga[] = [];
@@ -3116,7 +3115,7 @@ export class Game {
             const canMoi = Math.abs(cx) > 0.6 ? Math.sign(cx) : 0;
             const sang = (moi(g, 15) ? 1 : 0) - (moi(g, 14) ? 1 : 0) || (canMoi && canMoi !== this.menuCanCu ? canMoi : 0);
             this.menuCanCu = canMoi;
-            if (sang && !this.onSang(sang)) this.menuChon = Math.max(0, Math.min(2, this.menuChon + sang));
+            if (sang) this.menuChon = Math.max(0, Math.min(2, this.menuChon + sang));
           }
           // X: đánh dấu thẻ ở màn chọn chế độ · A / Menu: Tiếp / Vào chơi ở màn hướng dẫn · B: xác nhận / quay lại
           if (moi(g, 2)) this.onNutX();

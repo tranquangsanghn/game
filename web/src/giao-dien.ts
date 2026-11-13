@@ -1,7 +1,5 @@
-import { chuanBiSaMac } from './game/ban-do';
 import { Game } from './game/game';
 import { MABU, ZINBU } from './game/nhan-vat-du-lieu';
-import { GA_TUONG, KHUNG_DUNG } from './game/ga-du-lieu';
 import { BanLuu, DiemCao, bangDiem, guiDiem, layLuu, luuGame, nhoTen, tenDaNho, xoaLuu } from './may-chu';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -96,14 +94,6 @@ export class GiaoDien {
       if (this.huongDan) void this.lam('quay');
       else if (this.daBamX === this.game.menuChon) void this.lam((['mabu', 'zinbu', 'ca2'] as const)[this.game.menuChon]!);
     };
-    // Màn mục tiêu: trái / phải chọn bản đồ
-    this.game.onSang = (sang) => {
-      if (!this.huongDan || !this.buocMucTieu) return false;
-      this.game.banDo = sang > 0 ? 'sa' : 'co';
-      if (sang > 0) setTimeout(chuanBiSaMac, 50);
-      this.veManPhu();
-      return true;
-    };
     this.game.onKetThuc = (kq) => void this.ketThuc(kq);
   }
 
@@ -128,8 +118,6 @@ export class GiaoDien {
         this.buocMucTieu = false;
         break;
       case 'muc': this.buocMucTieu = true; break;
-      case 'map-co': this.game.banDo = 'co'; break;
-      case 'map-sa': this.game.banDo = 'sa'; setTimeout(chuanBiSaMac, 50); break;
       case 'vao':
         if (this.huongDan) g.batDau(this.huongDan);
         this.huongDan = null;
@@ -227,13 +215,11 @@ export class GiaoDien {
     return `<span class="anh-nv" style="width:${(x1 - x0) * tiLe}px;height:${(y1 - y0) * tiLe}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * tiLe}px ${sp.atlasH * tiLe}px;background-position:-${gx * tiLe}px -${gy * tiLe}px"></span>`;
   }
 
-  /** Ảnh vua gà (gà tướng, khung đứng đầu tiên, không chạy animation, đội vương miện 👑 như trong game) cho màn mục tiêu */
-  private anhVuaGa(tiLe: number): string {
-    const sp = GA_TUONG;
-    const k = KHUNG_DUNG[0]!;
-    const gx = (k % sp.cot) * sp.w;
-    const gy = Math.floor(k / sp.cot) * sp.h;
-    return `<span class="anh-nv" style="image-rendering:auto;width:${sp.w * tiLe}px;height:${sp.h * tiLe}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * tiLe}px ${sp.atlasH * tiLe}px;background-position:-${gx * tiLe}px -${gy * tiLe}px;position:relative;margin-top:${24 * tiLe}px"><span style="position:absolute;left:64%;top:14%;transform:translate(-50%,-85%);font-size:${27 * tiLe}px;line-height:1">👑</span></span>`;
+  /** Hàng 7 viên ngọc rồng (1 → 7 sao, từ ngoc_rong.png) cho màn mục tiêu */
+  private anhNgocRong(): string {
+    const sp = this.game.SP_NGOC;
+    const tl = 0.3;
+    return `<div class="hang-ngoc">${Array.from({ length: 7 }, (_, i) => `<span class="anh-nv" style="image-rendering:auto;width:${sp.w * tl}px;height:${sp.h * tl}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * tl}px ${sp.atlasH * tl}px;background-position:-${i * sp.w * tl}px 0"></span>`).join('')}</div>`;
   }
 
   private htmlBatDau(): string {
@@ -268,12 +254,8 @@ export class GiaoDien {
   private htmlMucTieu(): string {
     const tay = this.game.cheDo === 'tayCam';
     return `<div class="man-phu man-chon man-hd">
-      ${this.anhVuaGa(2.6)}
-      <p class="muc-tieu">Bạn phải tiêu diệt vua gà để thắng game</p>
-      <div class="chon-map">
-        ${(['co', 'sa'] as const).map((m) => `<button type="button" tabindex="-1" class="the-map${this.game.banDo === m ? ' dang-chon' : ''}" data-act="map-${m}">${m === 'co' ? '🌳 Đồng cỏ' : '🏝️ Đảo sa mạc'}</button>`).join('')}
-      </div>
-      ${tay ? '<p class="phu">◀ ▶ chọn bản đồ</p>' : ''}
+      ${this.anhNgocRong()}
+      <p class="muc-tieu">Bạn phải tìm đủ 7 viên ngọc rồng để chiến thắng game</p>
       <div class="nhom-nut">
         <button type="button" tabindex="-1" class="nut-phu" data-act="quay">◀ Quay lại</button>
         <button type="button" tabindex="-1" class="nut-chinh" data-act="vao">${tay ? 'Vào chơi (A)' : 'Vào chơi'}</button>
