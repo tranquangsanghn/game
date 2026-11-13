@@ -213,7 +213,7 @@ const GOI_MAU = 0.4;
 // Vua gà (gà mẹ gốc) dưới TRON_MAU máu: bỏ canh trứng đỏ / đi ăn socola, chỉ chạy trốn nhân vật;
 // mỗi mạng được đúng 1 lần chạy trốn nhanh: tốc độ gấp TRON_TOC lần tốc độ chạy trốn thường (TOC_TRON), quãng TRON_QUANG = 2 × quãng bay của Zinbu (BAY_CAN)
 const TRON_MAU = 0.2;
-// Vua gà (gà mẹ gốc) tự hồi HOI_MAU_VUA máu / giây, tới tối đa HP_GA (đang hoá socola thì không hồi)
+// Vua gà (gà mẹ gốc) tự hồi HOI_MAU_VUA máu / giây, tới máu tối đa (hpToiDa) (đang hoá socola thì không hồi)
 const HOI_MAU_VUA = 2;
 const TRON_TOC = 4;
 const GOI_HOI = 30;
@@ -507,6 +507,8 @@ const leCuaGa = (g: { loai: LoaiGa; to?: number }): Le => {
 const tlGa = (g: { loai: LoaiGa; to?: number }) => TL_GA[g.loai] * (g.to ?? 1);
 // Gà mẹ phụ = gà tướng không phải gà mẹ gốc
 const laMePhu = (g: Ga) => g.loai === 'boss' && !g.goc;
+// Máu tối đa: vua gà (gà mẹ gốc) mỗi lần hồi sinh thêm HP_GA (100 → 200 → 300), gà khác HP_GA (gà nở từ trứng đỏ × suc)
+const hpToiDa = (g: Ga) => (g.goc ? HP_GA * (1 + (g.lan ?? 0)) : HP_GA * (g.db ? g.suc ?? 1 : 1));
 // Hệ số sát thương của gà tướng theo lần hồi sinh; sát thương gốc của mọi con gà
 const heSoLan = (g: Ga) => 1 + TUONG_TANG_SAT * (g.lan ?? 0);
 const satGa = (g: Ga) => SAT_GA[g.loai] * (g.loai === 'boss' ? heSoLan(g) : 1) * (g.suc ?? 1);
@@ -1241,10 +1243,10 @@ export class Game {
         this.capNhatChieuTuong(g, dt);
         // Chỉ gà mẹ gốc đẻ trứng (đang lao / bay thì không đẻ; gà mẹ gốc không có Lao / Bay)
         if (g.goc) {
-          if (g.hp > 0 && g.hp < HP_GA) g.hp = Math.min(HP_GA, g.hp + HOI_MAU_VUA * dt);
+          if (g.hp > 0 && g.hp < hpToiDa(g)) g.hp = Math.min(hpToiDa(g), g.hp + HOI_MAU_VUA * dt);
           if (!g.chieu) g.de = (g.de ?? 0) - dt;
           // Giai đoạn 2: máu dưới GD2_MAU thì đẻ trứng nhanh hơn
-          if (!g.gd2 && g.hp < HP_GA * GD2_MAU) {
+          if (!g.gd2 && g.hp < hpToiDa(g) * GD2_MAU) {
             g.gd2 = true;
             g.de = Math.min(g.de ?? 0, 1.5);
             this.chu.push({ id: this.id++, x: g.x, y: g.y - 400, text: '🔥 GIAI ĐOẠN 2!', mau: '#ff6a3c', t: 0 });
@@ -1263,7 +1265,7 @@ export class Game {
         // Gọi gà con bảo vệ khi máu dưới GOI_MAU
         g.hoiGoi = Math.max(0, (g.hoiGoi ?? 0) - dt);
         g.dangGoi = Math.max(0, (g.dangGoi ?? 0) - dt);
-        if (g.hp < HP_GA * GOI_MAU && g.hoiGoi <= 0 && !g.chieu) this.goiGaCon(g);
+        if (g.hp < hpToiDa(g) * GOI_MAU && g.hoiGoi <= 0 && !g.chieu) this.goiGaCon(g);
         if (g.goc) this.dieuTuongGoc(g, dt);
         else this.dieuTuong(g, dt);
       }
@@ -1864,7 +1866,7 @@ export class Game {
   private taoTuong(x: number, y: number, lat: boolean, lan: number, goc: boolean, kieuPhu?: number): Ga {
     return {
       id: this.id++, loai: 'boss', x, y, h: 0, h0: 0, vx: 0, vy: 0, phase: 0, doiHuong: 0,
-      chet: false, tChet: 0, lat, hp: HP_GA, nhay: 0, de: 0,
+      chet: false, tChet: 0, lat, hp: goc ? HP_GA * (1 + lan) : HP_GA, nhay: 0, de: 0,
       lan, chieu: null, hoiLao: LAO_HOI, hoiBay: BAY_HOI, mau: null, conMau: 0, hoiMau: MAU_CHU_KY, luotMau: 0, dot: 0,
       goc, socola: 0,
       ...(goc ? {} : { daDe: true, choChieu: 1, kieuPhu, hoiLao: 3, hoiBay: 3 }),
@@ -1945,7 +1947,7 @@ export class Game {
 
   // Vua gà dưới TRON_MAU máu: chỉ chạy trốn nhân vật gần nhất (trong TAM_NHIN_TUONG), mỗi mạng 1 lần chạy trốn nhanh. Trả về true nếu đã điều khiển.
   private tronNhanh(g: Ga): boolean {
-    if (g.hp >= HP_GA * TRON_MAU) {
+    if (g.hp >= hpToiDa(g) * TRON_MAU) {
       g.tron = 0;
       return false;
     }
@@ -2392,7 +2394,7 @@ export class Game {
 
   private comboSocolaMay(g: Ga, p: number): void {
     const t = this.tamGa(g);
-    const nguong = HP_GA * SOCOLA_MAY_MAT;
+    const nguong = hpToiDa(g) * SOCOLA_MAY_MAT;
     g.hp = g.hp <= nguong ? 0 : g.hp - nguong;
     this.vet.push({ id: this.id++, x: g.x, y: t.y, t: 0, loai: 'chay', co: 1.1 });
     this.chu.push({ id: this.id++, x: t.x + ngauNhien(-40, 40), y: t.y - 90, text: g.hp > 0 ? '🍫☁ -30%!' : '🍫☁ NGHIỀN NÁT!', mau: '#c98a4b', t: 0 });
@@ -3288,8 +3290,8 @@ export class Game {
   }
 
   // Thanh máu gà tướng
-  get maxHpTuong(): number {
-    return HP_GA;
+  maxHpTuong(g: Ga): number {
+    return hpToiDa(g);
   }
 
   danHienTai(d: Dan) {

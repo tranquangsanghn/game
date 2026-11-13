@@ -224,3 +224,5 @@
 - Vua gà (gà mẹ gốc) dưới `TRON_MAU` = 20% máu (`HP_GA`): bỏ canh trứng đỏ / đi ăn socola, chỉ chạy trốn nhân vật gần nhất trong `TAM_NHIN_TUONG` (`tronNhanh()` gọi đầu `dieuTuongGoc()`); mỗi mạng đúng 1 lần **trốn chạy nhanh** (`daTron`, `tron` / `tronX` / `tronY` trong `Ga`): khoá hướng ra xa nhân vật gần nhất, tốc độ `TOC_TRON` × `TRON_TOC` = 4 (thật ~480 px/s), quãng `TRON_QUANG` = 2 × `BAY_CAN` (quãng bay của Zinbu) = 1200, chạm mép map thì thôi, hiện chữ "🏃 VUA GÀ TRỐN CHẠY!". Tướng gà (gà mẹ phụ) không đổi.
 
 - Vua gà (gà mẹ gốc) tự hồi `HOI_MAU_VUA` = 2 máu/s tới tối đa `HP_GA` (100), cả khi đang bị đánh; đang hoá socola thì không hồi. Tướng gà và gà con không tự hồi.
+
+- Máu vua gà (gà mẹ gốc) tăng theo lần hồi sinh: `hpToiDa()` = `HP_GA` × (1 + `lan`) = 100 → 200 → 300 (gà mẹ phụ, gà con vẫn 100). Mọi ngưỡng % máu của vua gà (giai đoạn 2, gọi gà con, trốn chạy, combo socola + mây 30%, tự hồi, thanh máu `maxHpTuong(g)`) tính theo máu tối đa này.

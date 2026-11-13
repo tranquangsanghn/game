@@ -751,7 +751,7 @@ export class VeCanvas {
     tronCD(ctx, -34, -6, 68, 12, 6);
     ctx.fillStyle = 'rgba(13,27,18,0.75)';
     ctx.fill();
-    tronCD(ctx, -31, -3, Math.min(62, Math.max(0, (62 * g.hp) / c.HP_GA)), 6, 3);
+    tronCD(ctx, -31, -3, Math.min(62, Math.max(0, (62 * g.hp) / c.maxHpTuong(g))), 6, 3);
     ctx.fillStyle = c.mauThanh(g);
     ctx.fill();
     ctx.restore();
