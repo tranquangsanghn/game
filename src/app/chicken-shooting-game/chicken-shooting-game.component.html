@@ -1,4 +1,4 @@
-<div class="khung" #khung tabindex="-1" [class.dang-choi]="man === 'play'" [class.tren-bang]="trenBang">
+<div class="khung" #khung tabindex="-1" [class.dang-choi]="man === 'play'">
   <svg #manHinh [attr.viewBox]="(-SIDE) + ' ' + (-BAR) + ' ' + (W + 2 * SIDE) + ' ' + (H + BAR)" preserveAspectRatio="xMidYMid meet">
     <defs>
       <filter id="cg-sang" x="-50%" y="-50%" width="200%" height="200%">
@@ -230,15 +230,6 @@
     </g>
     }
     }
-    <!-- Tâm ngắm của nhân vật đang được chuột điều khiển (Tab để đổi); ẩn khi chuột nằm trên bảng chiêu thức -->
-    @if (!trenBang) {
-    <g [attr.transform]="'translate(' + nguoi[chuot].tamX + ',' + nguoi[chuot].tamY + ')'" [attr.stroke]="nguoi[chuot].mau" stroke-width="3" fill="none">
-      <circle r="3" [attr.fill]="nguoi[chuot].mau" />
-      <path d="M-28,0 h14 M14,0 h14 M0,-28 v14 M0,14 v14" />
-    </g>
-    }
-
-
     <text x="14" y="34" text-anchor="start" class="hud-fps" pointer-events="none">{{ fps }} FPS</text>
 
     }
@@ -300,16 +291,23 @@
             <g cgSprite [sp]="nvm.sp" [khung]="nvm.khung" [lat]="false"></g>
           </svg>
           @if (i === 0) {
-          <h3>1P Mabu · chuột</h3>
-          <p><b>Chuột phải</b>: chạy tới (xa thì bay)<br /><b>Chuột trái</b>: ra đòn<br /><b>Bấm vào chiêu</b> ở thanh đen bên trái: đổi nhóm đòn<br /><b>Tab</b>: chuyển chuột sang nhân vật kia</p>
+          <h3>1P Mabu · tay cầm 1</h3>
+          <p><b>Cần trái</b>: chạy · <b>Cần phải</b>: ngắm (không gạt thì tự ngắm)<br /><b>✕ / R2</b>: ra đòn (giữ để đánh liên tục) · <b>○ / L2</b>: bay<br /><b>L1 / R1</b>: đổi chiêu · <b>Options</b>: tạm dừng</p>
           } @else {
-          <h3>2P Zinbu · chuột</h3>
-          <p>Điều khiển giống Mabu, chiêu thức ở thanh đen bên phải.<br />Hiện chỉ có 1 chuột: bấm <b>Tab</b> để chuyển chuột sang Zinbu (sau này sẽ có chuột thứ 2)</p>
+          <h3>2P Zinbu · tay cầm 2</h3>
+          <p>Điều khiển giống Mabu.<br />Chỉ có 1 tay cầm: bấm <b>Share</b> (Select) để chuyển tay cầm sang Zinbu</p>
           }
         </div>
         }
       </div>
-      <button type="button" tabindex="-1" class="nut-chinh" (click)="batDau()">Bắt đầu</button>
+      <p class="phu">
+        @if (tayCamTen.length) {
+        🎮 Đã nối {{ tayCamTen.length }} tay cầm: {{ tayCamTen.join(' · ') }}@if (tayCamNut) { · vừa bấm {{ tayCamNut }} }
+        } @else {
+        🎮 Chưa thấy tay cầm: nối tay cầm rồi bấm một nút bất kỳ trên nó
+        }
+      </p>
+      <button type="button" tabindex="-1" class="nut-chinh" (click)="batDau()">Bắt đầu (✕ / Options)</button>
     </div>
   </div>
   }
@@ -347,7 +345,7 @@
         @if (kyLucMoi) {<span class="ky-luc-moi">Kỷ lục mới!</span>}
       </p>
       <div class="nhom-nut">
-        <button type="button" tabindex="-1" class="nut-chinh" (click)="batDau()">Chơi lại</button>
+        <button type="button" tabindex="-1" class="nut-chinh" (click)="batDau()">Chơi lại (✕)</button>
         <button type="button" tabindex="-1" class="nut-phu" (click)="dongGame()">Đóng</button>
       </div>
     </div>

@@ -13,7 +13,7 @@
 # Nguyên tắc camera
 
 - Camera chung bám trung điểm 2 nhân vật nhưng luôn bị kẹp trong bản đồ (trong `capNhatView()`, tính theo mức zoom hiện tại): chạm mép bản đồ thì mép đó trùng đúng mép màn hình, không bao giờ lộ vùng đen ngoài map.
-- Mọi thứ liên quan đến vị trí camera (chuyển đổi toạ độ chuột, lọc render) dùng chung `camX` / `camY` / `camZ` sau khi đã kẹp.
+- Mọi thứ liên quan đến vị trí camera (lọc render, toạ độ thế giới – màn hình) dùng chung `camX` / `camY` / `camZ` sau khi đã kẹp.
 
 # Nguyên tắc bố cục & chọn chiêu
 
@@ -21,12 +21,12 @@
 - Bố cục: khung game chiếm cả cửa sổ. Map nằm giữa; phía trên có thanh đen ngang `BAR` (chiêu gà mẹ), hai bên có 2 thanh đen dọc rộng `SIDE` (Mabu trái, Zinbu phải). Toạ độ map vẫn là x 0..`W`, y 0..`H`; thanh đen nằm ở toạ độ âm / lớn hơn `W` (viewBox `-SIDE -BAR`). `W` tự theo tỉ lệ cửa sổ.
 - Trên mỗi thanh bên (không có tên nhân vật): các chiêu thức xếp dọc từ dưới lên trên, nút đầu (Đấm) sát đáy (`nutBang()`, `xThanh()`); máu (số `hp/HP_NV` và thanh) nằm ngay phía trên nút trên cùng (`yMauNv()`). Nửa vòng tròn đen bán kính `R_NV` (= 2/3 `R_BANG`) nằm đúng ở góc dưới map như cũ, tâm ở góc dưới (`tamNv()`), chỉ có animation hiện tại của nhân vật (cùng `khung` / `lat` với trên map). Không thu nhỏ map vì bảng.
 - Chiêu đang dùng sáng + phát sáng, chiêu khác mờ, hết mana / đang khoá / Mây đang chạy hoặc hồi (`hetMana()`) thì mờ hẳn và không chọn được.
-- Đổi chiêu bằng bấm chuột trái vào nút (`chonNut()` → `NhanVat.datNhom`), bất kể chuột đang điều khiển ai. Không còn con lăn. Chuột trên thanh đen hoặc nửa vòng tròn (`tronBang()` → `trenBang`) thì không ra đòn, không di chuyển, tâm ngắm ẩn.
+- Đổi chiêu bằng L1 / R1 (`chuyenChieu()` → `NhanVat.datNhom`); các nút trên thanh đen chỉ để hiển thị. Không còn chuột / con lăn.
 
 # Nguyên tắc điều khiển
 
-- Game chỉ chơi bằng chuột, không có bàn phím / tay cầm: chuột phải di chuyển (xa thì bay), chuột trái ra đòn, bấm vào bảng chiêu để đổi chiêu. Hiện chưa có 2 chuột nên chỉ có phím Tab chuyển chuột sang nhân vật kia (`doiChuot()`); sau này sẽ có 2 chuột, mỗi nhân vật một chuột.
-- Thêm điều khiển mới thì làm theo chuột; không thêm phím tắt / tay cầm. Màn hình bắt đầu và README chỉ hướng dẫn chuột + Tab.
+- Game chỉ chơi bằng tay cầm kiểu PS (Gamepad API, mapping "standard", `docTayCam()` đọc mỗi khung hình): tay cầm 1 → Mabu, tay cầm 2 → Zinbu. Cần trái chạy, cần phải ngắm (không gạt thì tự ngắm `diemNham()`), ✕ / R2 ra đòn, ○ / L2 bay, L1 / R1 đổi chiêu (`chuyenChieu()`), Options bắt đầu / tạm dừng, Share (Select) đổi nhân vật khi chỉ có 1 tay cầm (`doiTayCam()`). Không còn điều khiển bằng chuột / bàn phím; chuột chỉ để bấm nút trên các màn bắt đầu / tạm dừng / kết thúc.
+- Thêm điều khiển mới thì làm theo tay cầm; không thêm phím tắt / chuột. Màn bắt đầu và README chỉ hướng dẫn tay cầm. Tay cầm không phải mapping "standard" dùng tạm chỉ số nút / cần như standard (cần phải lấy trục 2 và 5 nếu có ≥ 6 trục); màn bắt đầu hiện nút vừa bấm để dò.
 
 # Nguyên tắc giữ nguyên bố cục khi đổi map / màn
 
@@ -83,7 +83,7 @@
 
 # Nguyên tắc tâm tự ngắm
 
-- Tâm tự ngắm (`nham`, vẽ qua `nhamView` đã lọc theo khung nhìn) tính lại mỗi khung hình cho cả 2 nhân vật. Chỉ hiện khi có gà trong tầm và nhân vật đó không dùng chuột (`chuot`), chưa ngã, không là mây. Hết điều kiện là tâm biến mất ngay, không giữ hình cũ.
+- Tâm tự ngắm (`nham`, vẽ qua `nhamView` đã lọc theo khung nhìn) tính lại mỗi khung hình cho cả 2 nhân vật. Hiện khi có gà trong tầm, hoặc luôn hiện theo hướng cần phải khi đang gạt cần ngắm (`ngam`); chưa ngã, không là mây. Hết điều kiện là tâm biến mất ngay, không giữ hình cũ.
 
 # Nguyên tắc sương mù & gà lao vào
 
@@ -105,7 +105,7 @@
 
 # Nguyên tắc gà mẹ (gà tướng): chiêu thức, hồi sinh
 
-- Chiêu của gà mẹ (`bangTuong()`, `tuongSong`) nằm trên thanh đen `BAR` phía trên map (toạ độ y âm, giữa trên), 6 chiêu xếp ngang: Mổ + đá · Lao · Bay · Đen · Vàng · Đỏ, kèm chữ "Gà mẹ · hồi sinh n/3"; chỉ để xem, không bấm được. Chiêu đang dùng sáng + phát sáng; Lao / Bay / màu có vòng tiến độ (hồi chiêu hoặc thời gian còn lại). Nửa vòng tròn đen dưới thanh (bán kính `R_TUONG` = `R_BANG` / 3, tâm ở mép trên map giữa màn hình) chỉ có hình con gà (animation, kèm màu đang đổi). Chuột trên thanh hoặc nửa vòng tròn thì không ra đòn (`tronBang()`).
+- Chiêu của gà mẹ (`bangTuong()`, `tuongSong`) nằm trên thanh đen `BAR` phía trên map (toạ độ y âm, giữa trên), 6 chiêu xếp ngang: Mổ + đá · Lao · Bay · Đen · Vàng · Đỏ, kèm chữ "Gà mẹ · hồi sinh n/3"; chỉ để xem, không bấm được. Chiêu đang dùng sáng + phát sáng; Lao / Bay / màu có vòng tiến độ (hồi chiêu hoặc thời gian còn lại). Nửa vòng tròn đen dưới thanh (bán kính `R_TUONG` = `R_BANG` / 3, tâm ở mép trên map giữa màn hình) chỉ có hình con gà (animation, kèm màu đang đổi). 
 - Mổ + đá: sát thương và tốc độ như cũ (80 · 2,5s), luân phiên animation mổ / đá (`kieuMo`).
 - Lao (`TOC_LAO_THAT` = 500 px/s, `LAO_SAT` = 2, `LAO_HOI` = 15s) và Bay (`TOC_BAY_THAT` = 700 px/s, `BAY_SAT` = 3, `BAY_HOI` = 20s): khi thấy nhân vật xa hơn `CHIEU_TOI_THIEU` (xa hơn `CHIEU_XA` thì ưu tiên Bay), gà mẹ báo hiệu `CHIEU_BAO` = 1s (nháy sáng, đứng yên, vệt đỏ trên mặt đất bám theo mục tiêu — `vachView`), hết báo hiệu thì khoá hướng rồi chạy / bay một đường thẳng, không đổi hướng. Chạm nhân vật thì gây sát thương gốc × hệ số, mỗi nhân vật một lần mỗi đợt, nhân vật vẫn né được (`NE_NV`). Hết quãng (`CHIEU_QUANG_THEM`, tối đa `CHIEU_QUANG_TOI_DA`) hoặc chạm mép map thì nghỉ `CHIEU_NGHI`, rồi lộ sơ hở `SO_HO` = 3s (không né được đòn nào, hiện chữ "SƠ HỞ!"). Đang lao / bay thì không mổ, không đẻ trứng.
 - Các chiêu không chồng nhau: giữa 2 chiêu bất kỳ (Lao, Bay, đổi màu) nghỉ ít nhất `CHIEU_NGHI_CHUNG` = 4s (`nghiChung`); màu chỉ bật khi không đang Lao / Bay và đang chờ thì Lao / Bay nhường (`capNhatChieuTuong()`, `batDauChieu()`).

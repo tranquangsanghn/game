@@ -41,12 +41,12 @@ interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay:
 interface Vet { id: number; x: number; y: number; t: number; loai: 'bui' | 'no'; }
 interface ChuyenBay { x0: number; y0: number; x1: number; y1: number; t: number; T: number; }
 interface NguoiChoi {
-  ten: string; mau: string; diem: number; combo: number; tamX: number; tamY: number;
+  ten: string; mau: string; diem: number; combo: number; 
   hoiChieu: number; chumDen: number; banTrung: number; banTruot: number;
   x: number; y: number; dich: { x: number; y: number } | null; dangDi: boolean;
   hp: number; het: boolean;
   mana: number[]; khoaMana: number[]; hoiMana: number[]; nv: NhanVat; bay: ChuyenBay | null;
-  nhin: { x: number; y: number }; nham: { x: number; y: number } | null;
+  nhin: { x: number; y: number }; nham: { x: number; y: number } | null; ngam: { x: number; y: number } | null; cuaCan: boolean;
   may: { dang: boolean; con: number; hoi: number };
 }
 type VatXep =
@@ -148,6 +148,7 @@ const TOC_DO_DI = 460;
 const TOC_DO_BAY = 900;
 const BAY_KHI_XA = 450;
 const BAY_TOI_DA = 1200;
+const VUNG_CHET_CAN = 0.25; // cần analog gạt dưới mức này coi như nằm yên
 const TOC_DO_DAN = 2400;
 // Mana theo nhóm đòn (0 Đấm · 1 Đá · 2 Chiêu đặc biệt). Đấm không bao giờ hết; 0 nghĩa là vô hạn.
 const MANA_TOI_DA = [0, 10, 5];
@@ -362,10 +363,12 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   camX = MAP / 2;
   camY = MAP / 2;
   camZ = ZOOM;
-  // Người chơi mà chuột đang điều khiển (Tab để đổi) — tạm thời khi chỉ có 1 chuột
-  chuot = 0;
-  // Chuột đang nằm trên bảng chiêu thức (không phải trên map)
-  trenBang = false;
+  // Chỉ có 1 tay cầm thì nó điều khiển nhân vật này (nút Share / Select để đổi); có 2 tay cầm thì mỗi tay một nhân vật
+  tayCam = 0;
+  // Thông tin tay cầm đang kết nối (hiện ở màn bắt đầu) và nút vừa bấm gần nhất (để dò tay cầm lạ)
+  tayCamTen: string[] = [];
+  tayCamNut = '';
+  private nutCu = new Map<number, boolean[]>();
   tGame = 0;
   t = 0;
   rung = 0;
@@ -392,7 +395,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     this.khungRef.nativeElement.focus();
 
     this.zone.runOutsideAngular(() => {
-      const svg = this.svgRef.nativeElement;
       // Khung chiếm cả cửa sổ: chiều rộng khung nhìn theo tỉ lệ cửa sổ nên map tràn sát hai bên, không còn dải đen
       const vua = () => {
         const kt = this.khungRef.nativeElement.getBoundingClientRect();
@@ -402,18 +404,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       const quanSat = new ResizeObserver(vua);
       quanSat.observe(this.khungRef.nativeElement);
       this.goLangNghe.push(() => quanSat.disconnect());
-      const nghe = <K extends keyof WindowEventMap>(el: Window | SVGSVGElement, ten: K, fn: (e: any) => void, capture = false) => {
-        el.addEventListener(ten, fn, capture);
-        this.goLangNghe.push(() => el.removeEventListener(ten, fn, capture));
-      };
-      nghe(svg, 'pointermove', (e: PointerEvent) => this.diChuot(e));
-      nghe(svg, 'pointerdown', (e: PointerEvent) => {
-        this.khungRef.nativeElement.focus({ preventScroll: true });
-        this.bamChuot(e);
-      });
-      // Chặn menu chuột phải của trình duyệt trên toàn trang: chuột phải chỉ dùng để di chuyển
-      nghe(window, 'contextmenu', (e: Event) => e.preventDefault(), true);
-      nghe(window, 'keydown', (e: KeyboardEvent) => this.phimXuong(e), true);
 
       this.lanCuoi = performance.now();
       this.rafId = requestAnimationFrame(this.vongLap);
@@ -444,7 +434,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     this.soLanTuong = 0;
     this.lanTuong = 0;
     this.kyLucMoi = false;
-    this.trenBang = false;
     this.capNhatView(0, true);
     this.man = 'play';
   }
@@ -505,6 +494,7 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       this.fpsMoc = now;
     }
     this.lanCuoi = now;
+    this.docTayCam();
     if (this.man !== 'pause') {
       this.t += dt;
       if (this.man === 'play') this.capNhat(dt);
@@ -587,9 +577,9 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
       this.hoiMana(n, dt);
       this.capNhatMay(n, dt);
 
-      // Tâm tự ngắm cập nhật mỗi khung hình; không hiện cho nhân vật đang dùng chuột (ngắm bằng chuột), đã ngã hoặc đang là mây
+      // Tâm ngắm cập nhật mỗi khung hình: cần ngắm phải đang gạt thì ngắm theo hướng gạt, không thì tự ngắm; ẩn khi đã ngã hoặc đang là mây
       const m = this.diemNham(p);
-      n.nham = m.co && p !== this.chuot && !n.het && !n.nv.laMay ? { x: m.x, y: m.y } : null;
+      n.nham = n.het || n.nv.laMay ? null : n.ngam ?? (m.co ? { x: m.x, y: m.y } : null);
 
       if (n.nv.khoa) {
         n.dich = null;
@@ -1286,10 +1276,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  doiNhom(p: number, buoc: number): void {
-    this.nguoi[p].nv.doiNhom(buoc, this.t);
-  }
-
   // Thanh đen bên trái (Mabu) / bên phải (Zinbu) map: x giữa thanh, và tâm nửa vòng tròn chứa nhân vật (nằm đúng ở góc dưới map như cũ)
   xThanh(p: number): number {
     return p === 0 ? -SIDE / 2 : this.W + SIDE / 2;
@@ -1309,29 +1295,12 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     return H - 50 - (this.dsBieuTuong(p).length - 1) * 70 - 62;
   }
 
-  // Chuột có nằm trên vùng không phải map không: thanh đen trên / hai bên, nửa vòng tròn của gà mẹ và của Mabu / Zinbu
-  private tronBang(x: number, y: number): boolean {
-    return y < 0 || x < 0 || x > this.W || Math.hypot(x - this.GIUA, y) <= R_BANG * HE_BANG_TUONG
-      || [0, 1].some((p) => Math.hypot(x - this.tamNv(p).x, y - this.tamNv(p).y) <= R_NV);
-  }
-
   // Chiêu hết mana (đang khoá / chưa hồi) hoặc Mây đang chạy / đang hồi: không dùng được
   hetMana(p: number, k: number): boolean {
     const n = this.nguoi[p];
     if (k === 0) return false;
     if (k === NHOM_MAY) return n.may.dang || n.may.hoi > 0;
     return n.khoaMana[k] > 0 || n.mana[k] < 1;
-  }
-
-  private chonNut(x: number, y: number): void {
-    for (const p of [0, 1]) {
-      const n = this.nutBang(p).find((b) => Math.hypot(b.x - x, b.y - y) <= R_NUT * 0.8 + 6);
-      if (n) {
-        if (this.hetMana(p, n.k)) return;
-        this.nguoi[p].nv.datNhom(n.k, this.t);
-        return;
-      }
-    }
   }
 
   tenNhom(p: number): string {
@@ -1492,47 +1461,109 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  // ─── Input ───
+  // ─── Điều khiển bằng tay cầm (Gamepad API, bố cục kiểu PS; mapping "standard") ───
+  // Cần trái: chạy · Cần phải: ngắm (không gạt thì tự ngắm) · ✕ / R2: ra đòn · ○ / L2: bay · L1 / R1: đổi chiêu
+  // Options: bắt đầu / tạm dừng · Share (Select): khi chỉ có 1 tay cầm thì đổi sang điều khiển nhân vật kia
 
-  private diChuot(e: PointerEvent): void {
-    const pt = this.toaDo(e);
-    if (!pt) return;
-    this.trenBang = this.tronBang(pt.x, pt.y);
-    if (this.trenBang) return;
-    const p = this.chuot;
-    this.nguoi[p].tamX = pt.x;
-    this.nguoi[p].tamY = pt.y;
-    if (this.man !== 'play') return;
-    // Bấm thêm nút khi nút khác đang giữ: trình duyệt chỉ phát pointermove
-    if (e.button === 0 || e.button === 2) this.bamChuot(e);
-    else if (e.buttons & 2) this.datDich(p, pt.x, pt.y);
+  private docTayCam(): void {
+    const ds = typeof navigator !== 'undefined' && navigator.getGamepads
+      ? Array.from(navigator.getGamepads()).filter((g): g is Gamepad => !!g && g.connected)
+      : [];
+    const ten = ds.map((g) => g.id.replace(/\s*\(.*$/, '').slice(0, 40));
+    if (ten.join('|') !== this.tayCamTen.join('|')) this.tayCamTen = ten;
+    const cu = (g: Gamepad) => this.nutCu.get(g.index) ?? [];
+    const duoc = (g: Gamepad, i: number) => !!g.buttons[i]?.pressed;
+    const moi = (g: Gamepad, i: number) => duoc(g, i) && !cu(g)[i];
+
+    // Nút bất kỳ vừa bấm (hiện ở màn bắt đầu để biết tay cầm lạ gửi nút số mấy)
+    for (const g of ds) {
+      const i = g.buttons.findIndex((_, k) => moi(g, k));
+      if (i >= 0) this.tayCamNut = `nút ${i}`;
+    }
+
+    // Nút chung cho cả hai tay cầm: bắt đầu / chơi lại / tạm dừng
+    for (const g of ds) {
+      if (this.man === 'start' || this.man === 'over') {
+        if (moi(g, 0) || moi(g, 9)) this.batDau();
+      } else if (moi(g, 9)) this.tamDung();
+      else if (moi(g, 8) && ds.length === 1 && this.man === 'play') this.doiTayCam();
+    }
+
+    // Tay cầm nào điều khiển nhân vật nào
+    const gan: (Gamepad | undefined)[] = ds.length >= 2 ? [ds[0], ds[1]] : this.tayCam === 0 ? [ds[0], undefined] : [undefined, ds[0]];
+    for (const p of [0, 1]) {
+      const n = this.nguoi[p];
+      const g = gan[p];
+      if (this.man !== 'play' || !g) {
+        if (n.cuaCan) n.dich = null;
+        n.cuaCan = false;
+        n.ngam = null;
+        continue;
+      }
+      const trai = this.canGat(g, 0, 1);
+      const phai = this.canGat(g, 2, g.mapping === 'standard' || g.axes.length < 6 ? 3 : 5);
+      // Hướng nhìn theo cần ngắm, không có thì theo hướng chạy
+      if (phai.m > 0) n.nhin = { x: phai.x / phai.m, y: phai.y / phai.m };
+      else if (trai.m > 0) n.nhin = { x: trai.x / trai.m, y: trai.y / trai.m };
+      n.ngam = phai.m > 0 ? { x: kepMap(n.x + n.nhin.x * 300), y: kepMap(n.y + n.nhin.y * 300 - 60) } : null;
+
+      // Chạy: gạt cần thì chạy theo hướng gạt, buông cần thì đứng lại
+      if (trai.m > 0) {
+        this.datDichThe(p, n.x + (trai.x / trai.m) * 200, n.y + (trai.y / trai.m) * 200);
+        n.cuaCan = true;
+      } else if (n.cuaCan) {
+        n.dich = null;
+        n.cuaCan = false;
+      }
+      // Bay một đoạn xa theo hướng cần chạy (không gạt thì theo hướng đang nhìn)
+      if (moi(g, 1) || ((g.buttons[6]?.value ?? 0) > 0.5 && !cu(g)[6])) {
+        const h = trai.m > 0 ? { x: trai.x / trai.m, y: trai.y / trai.m } : n.nhin;
+        this.datDichThe(p, n.x + h.x * BAY_TOI_DA, n.y + h.y * BAY_TOI_DA);
+      }
+      if (moi(g, 4)) this.chuyenChieu(p, -1);
+      if (moi(g, 5)) this.chuyenChieu(p, 1);
+      // Ra đòn: giữ ✕ / R2 thì đánh liên tục theo thời gian hồi chiêu
+      if (duoc(g, 0) || duoc(g, 7)) {
+        const m = this.diemNham(p);
+        const a = n.ngam ? { x: n.x + n.nhin.x * TAM_CHIEU, y: n.y + n.nhin.y * TAM_CHIEU - 60 } : m;
+        this.ban(p, kepMap(a.x), kepMap(a.y));
+      }
+    }
+    // Lưu trạng thái nút ở khung này để lần sau biết nút nào mới bấm
+    const luu = new Map<number, boolean[]>();
+    for (const g of ds) luu.set(g.index, g.buttons.map((b, i) => b.pressed || (i === 6 || i === 7) && b.value > 0.5));
+    this.nutCu = luu;
   }
 
-  private bamChuot(e: PointerEvent): void {
-    if (this.man !== 'play') return;
-    const pt = this.toaDo(e);
-    if (!pt) return;
-    // Bấm vào bảng chiêu thức: chọn chiêu, không ra đòn / di chuyển
-    if (this.tronBang(pt.x, pt.y)) {
-      if (e.button === 0 && e.buttons & 1) this.chonNut(pt.x, pt.y);
-      return;
+  // Cần analog có vùng chết; trả hướng (đã co giãn) và độ lớn m (0 = đang nằm yên)
+  private canGat(g: Gamepad, ax: number, ay: number): { x: number; y: number; m: number } {
+    const x = g.axes[ax] ?? 0;
+    const y = g.axes[ay] ?? 0;
+    const m = Math.hypot(x, y);
+    return m < VUNG_CHET_CAN ? { x: 0, y: 0, m: 0 } : { x, y, m };
+  }
+
+  private doiTayCam(): void {
+    this.nguoi[this.tayCam].dich = null;
+    this.nguoi[this.tayCam].cuaCan = false;
+    this.tayCam = 1 - this.tayCam;
+  }
+
+  // L1 / R1: sang chiêu trước / sau, bỏ qua chiêu đang khoá hoặc hết mana
+  private chuyenChieu(p: number, buoc: number): void {
+    const ds = this.dsBieuTuong(p);
+    const nv = this.nguoi[p].nv;
+    let i = ds.indexOf(nv.nhom);
+    for (let s = 0; s < ds.length; s++) {
+      i = (i + buoc + ds.length) % ds.length;
+      if (!this.hetMana(p, ds[i])) {
+        nv.datNhom(ds[i], this.t);
+        return;
+      }
     }
-    const p = this.chuot;
-    if (e.button === 2 && e.buttons & 2) {
-      this.datDich(p, pt.x, pt.y);
-      return;
-    }
-    if (e.button !== 0 || !(e.buttons & 1)) return;
-    const w = this.manHinhRaThe(pt.x, pt.y);
-    this.ban(p, w.x, w.y);
   }
 
   // Chỉ xa thì bay theo vòng cung, gần thì chạy
-  private datDich(p: number, x: number, y: number): void {
-    const w = this.manHinhRaThe(x, y);
-    this.datDichThe(p, w.x, w.y);
-  }
-
   private datDichThe(p: number, x: number, y: number): void {
     const n = this.nguoi[p];
     if (n.nv.khoa || n.bay) return;
@@ -1559,11 +1590,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
     n.bay = { x0: n.x, y0: n.y, x1: dich.x, y1: dich.y, t: 0, T: d / TOC_DO_BAY };
   }
 
-  private toaDo(e: MouseEvent): DOMPoint | null {
-    const ctm = this.svgRef.nativeElement.getScreenCTM();
-    return ctm ? new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse()) : null;
-  }
-
   private gocView() {
     return { x: this.W / 2 - this.camX * this.camZ, y: TAM_VIEW_Y - this.camY * this.camZ };
   }
@@ -1571,24 +1597,6 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   private manHinhRaThe(x: number, y: number) {
     const o = this.gocView();
     return { x: (x - o.x) / this.camZ, y: (y - o.y) / this.camZ };
-  }
-
-  // ─── Chỉ chơi bằng chuột. Tạm thời chỉ có 1 chuột nên Tab chuyển chuột sang nhân vật kia (sau này sẽ có 2 chuột) ───
-
-  private phimXuong(e: KeyboardEvent): void {
-    if (e.key !== 'Tab') return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (!e.repeat) this.doiChuot();
-  }
-
-  private doiChuot(): void {
-    const cu = this.nguoi[this.chuot];
-    this.chuot = 1 - this.chuot;
-    const moi = this.nguoi[this.chuot];
-    moi.tamX = cu.tamX;
-    moi.tamY = cu.tamY;
-    cu.dich = null;
   }
 
   // Tự ngắm vào con gà gần nhất trong tầm; không có thì đánh theo hướng đang nhìn
@@ -1790,10 +1798,10 @@ export class ChickenShootingGameComponent implements AfterViewInit, OnDestroy {
   private taoNguoiChoi(): NguoiChoi[] {
     return [0, 1].map((p) => ({
       ten: p === 0 ? MABU.ten : ZINBU.ten, mau: p === 0 ? '#e84393' : '#8e44ad',
-      hp: HP_NV, het: false, diem: 0, combo: 0, tamX: W_MAC_DINH / 2, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
+      hp: HP_NV, het: false, diem: 0, combo: 0, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
       x: MAP / 2 + (p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
       mana: MANA_TOI_DA.map((m) => m), khoaMana: [0, 0, 0], hoiMana: [0, 0, 0], nv: this.taoNhanVat(p), bay: null,
-      nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, may: { dang: false, con: 0, hoi: 0 },
+      nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, ngam: null, cuaCan: false, may: { dang: false, con: 0, hoi: 0 },
     }));
   }
 

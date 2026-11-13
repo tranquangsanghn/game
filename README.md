@@ -1,6 +1,6 @@
 # Dragon Ball
 
-Game 2 nhân vật chơi hoàn toàn bằng chuột (sau này 2 chuột), viết bằng Angular, tách ra từ dự án EORM.
+Game 2 nhân vật chơi hoàn toàn bằng tay cầm (kiểu PS, mỗi nhân vật một tay cầm), viết bằng Angular, tách ra từ dự án EORM.
 
 - Chơi online: https://tranquangsanghn.github.io/game/
 - Mỗi lần push lên `main`, GitHub Actions tự build và deploy lên GitHub Pages.
@@ -10,11 +10,16 @@ Game 2 nhân vật chơi hoàn toàn bằng chuột (sau này 2 chuột), viết
 Hai người chơi chung một khung hình. Camera bám trung điểm hai nhân vật và tự zoom ra khi họ xa nhau;
 hai người không đi xa nhau quá mức camera chứa nổi (màn hình hiện cảnh báo khi gần chạm giới hạn).
 
-Chỉ chơi bằng chuột; cả Mabu (chiêu thức ở thanh đen bên trái) và Zinbu (bên phải) điều khiển giống nhau:
-- **Chuột phải**: chỉ chỗ để chạy tới (xa thì bay)
-- **Chuột trái**: ra đòn
-- **Bấm vào chiêu** ở bảng chiêu thức: đổi nhóm đòn (Đấm / Đá / Chiêu đặc biệt / Biến mây)
-- **Tab**: chuyển chuột sang điều khiển nhân vật kia (tạm thời vì mới có 1 chuột; sau này mỗi nhân vật một chuột)
+Chỉ chơi bằng tay cầm (Gamepad API, mapping "standard" kiểu PS). Tay cầm thứ nhất điều khiển Mabu (thanh đen bên trái), tay cầm thứ hai điều khiển Zinbu (bên phải). Nối tay cầm rồi bấm một nút bất kỳ để trình duyệt nhận ra nó:
+- **Cần trái**: chạy theo hướng gạt
+- **Cần phải**: ngắm (không gạt thì tự ngắm vào con gà gần nhất)
+- **✕ hoặc R2**: ra đòn (giữ để đánh liên tục)
+- **○ hoặc L2**: bay một đoạn xa theo hướng cần trái
+- **L1 / R1**: đổi nhóm đòn trước / sau (Đấm / Chiêu đặc biệt / Đá / Biến mây), bỏ qua chiêu đang khoá
+- **Options**: bắt đầu / tạm dừng / tiếp tục · **✕** ở màn bắt đầu / kết thúc: chơi lại
+- **Share (Select)**: khi chỉ có 1 tay cầm, chuyển tay cầm sang nhân vật kia
+
+Màn bắt đầu hiện tên các tay cầm đã nối và nút vừa bấm (để dò tay cầm lạ có gửi đúng chỉ số nút không).
 
 **Biến mây (chỉ Mabu)**: bấm vào nút đám mây (mana tím) trên bảng chiêu rồi bấm đánh. Mabu biến thành đám mây to gấp 2 trong 7 giây, không còn thanh máu / mana, mọi con gà mây quét qua đều trúng đòn. Sau đó phải chờ 40 giây mới dùng lại.
 
