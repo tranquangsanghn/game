@@ -104,11 +104,36 @@ export class VeCanvas {
       cv.width = img.naturalWidth;
       cv.height = img.naturalHeight;
       const x = cv.getContext('2d')!;
-      x.filter = boLoc;
-      x.drawImage(img, 0, 0);
+      if (boLoc.startsWith('tint:')) {
+        x.drawImage(img, 0, 0);
+        this.nhuomMau(x, cv.width, cv.height, boLoc.slice(5));
+      } else {
+        x.filter = boLoc;
+        x.drawImage(img, 0, 0);
+      }
       this.nhuom.set(khoa, cv);
     }
     return cv;
+  }
+
+  /** Nhuộm cả thân sang màu hex, giữ độ sáng tối của nét vẽ; chỉ giữ nguyên phần trắng (đầu) và phần vàng (mỏ, chân) */
+  private nhuomMau(x: CanvasRenderingContext2D, w: number, h: number, hex: string): void {
+    const m = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    const d = x.getImageData(0, 0, w, h);
+    const p = d.data;
+    for (let i = 0; i < p.length; i += 4) {
+      if (p[i + 3] === 0) continue;
+      const r = p[i], g = p[i + 1], b = p[i + 2];
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+      const s = mx ? (mx - mn) / mx : 0;
+      if (s < 0.28 && mx > 158) continue;
+      if (r > 150 && g > 110 && b < 110 && s > 0.45) continue;
+      const k = 0.35 + 0.95 * Math.pow((0.3 * r + 0.59 * g + 0.11 * b) / 255, 0.8);
+      p[i] = Math.min(255, m[0] * k);
+      p[i + 1] = Math.min(255, m[1] * k);
+      p[i + 2] = Math.min(255, m[2] * k);
+    }
+    x.putImageData(d, 0, 0);
   }
 
   private lay(url: string): HTMLImageElement | null {
@@ -273,27 +298,27 @@ export class VeCanvas {
 
     // Dấu X đỏ nhấp nháy + số giây đếm ngược của trứng đỏ (cuối mũi tên chỉ hướng); 3 giây cuối nháy nhanh hơn
     for (const x of c.xTrungView) {
-      const nhanh = x.con <= 3 ? 12 : 6;
+      // Dấu X và số nháy: hiện 0,5s rồi ẩn 0,5s
+      if (Math.floor(c.t / 0.5) % 2 !== 0) continue;
       ctx.save();
       ctx.translate(x.x, x.y - 40);
-      ctx.globalAlpha = dongHe(0.45 + 0.55 * Math.abs(Math.sin(c.t * nhanh)));
       ctx.lineCap = 'round';
-      ctx.lineWidth = 26;
+      ctx.lineWidth = 14;
       ctx.strokeStyle = '#fff';
       ctx.beginPath();
-      ctx.moveTo(-50, -50); ctx.lineTo(50, 50); ctx.moveTo(50, -50); ctx.lineTo(-50, 50);
+      ctx.moveTo(-26, -26); ctx.lineTo(26, 26); ctx.moveTo(26, -26); ctx.lineTo(-26, 26);
       ctx.stroke();
-      ctx.lineWidth = 16;
+      ctx.lineWidth = 8;
       ctx.strokeStyle = '#ff2a1f';
       ctx.stroke();
-      ctx.font = `900 96px ${FONT}`;
+      ctx.font = `900 56px ${FONT}`;
       ctx.textAlign = 'center';
       ctx.lineJoin = 'round';
-      ctx.lineWidth = 12;
+      ctx.lineWidth = 8;
       ctx.strokeStyle = '#fff';
-      ctx.strokeText(`${x.con}`, 0, -90);
+      ctx.strokeText(`${x.con}`, 0, -50);
       ctx.fillStyle = '#ff2a1f';
-      ctx.fillText(`${x.con}`, 0, -90);
+      ctx.fillText(`${x.con}`, 0, -50);
       ctx.restore();
     }
     ctx.lineCap = 'butt';
@@ -568,9 +593,6 @@ export class VeCanvas {
     }
     ctx.translate(h.x, h.y);
     ctx.scale(h.kx, h.ky);
-    duongElip(ctx, 44 * bong, 12 * bong);
-    ctx.fillStyle = `rgba(0,0,0,${0.22 * bong})`;
-    ctx.fill();
     // Thế phòng thủ của gà mẹ: khiên xanh nhấp nháy bao quanh thân (đang né mọi đòn)
     if (!g.chet && (g.the ?? 0) > 0) {
       ctx.save();
@@ -582,12 +604,6 @@ export class VeCanvas {
       ctx.lineWidth = 5;
       ctx.stroke();
       ctx.restore();
-    }
-    // Gà con nở từ trứng đỏ (sức mạnh > 1): quầng đỏ dưới chân
-    if (!g.chet && (g.suc ?? 1) > 1) {
-      duongElip(ctx, 56 * bong, 17 * bong);
-      ctx.fillStyle = `rgba(255,59,48,${0.18 + 0.05 * (g.suc ?? 1)})`;
-      ctx.fill();
     }
     ctx.translate(0, h.dy);
     ctx.rotate(rad(h.xoay));

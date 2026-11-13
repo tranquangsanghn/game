@@ -25,11 +25,11 @@ export interface Ga {
   lan?: number; chieu?: ChieuTuong | null; hoiLao?: number; hoiBay?: number;
   mau?: MauTuong | null; conMau?: number; hoiMau?: number; luotMau?: number; dot?: number;
   // Gà mẹ GỐC (đánh dấu khác biệt): chỉ con này đẻ trứng, chỉ sống sót chứ không đi đánh; gà mẹ phụ (nở từ trứng đỏ) mới đi đánh. deDb = đếm ngược tới quả trứng đỏ kế tiếp
-  goc?: boolean; deDb?: number;
+  goc?: boolean;
   // Gà mẹ đang bị biến thành socola: số giây còn lại (đứng yên, không né, không đánh)
-  socola?: number;
+  socola?: number; comboSoc?: boolean;
   // Gà con nở từ trứng đỏ: sức mạnh (nhân máu và sát thương) và độ to (nhân kích thước)
-  suc?: number; to?: number;
+  suc?: number; to?: number; db?: boolean;
   // Gà mẹ phụ: kiểu chuyên (0 Lao · 1 Bay · 2 đen · 3 vàng · 4 đỏ), cũng là màu riêng của con đó
   kieuPhu?: number;
   // Thế phòng thủ: giây còn lại (đang né mọi đòn) và đếm ngược tới thế kế tiếp
@@ -140,6 +140,12 @@ const SOCOLA_HOI = 6;
 // Ăn socola (nhân vật chạm vào): cộng máu và mana (không có trần), rồi tự bắn chưởng lên trời
 const SOCOLA_HOI_MAU = 200;
 const SOCOLA_HOI_MANA = 200;
+// Gà (con, mẹ gốc, mẹ phụ) ăn socola: +SOCOLA_HOI_MAU máu, sức mạnh (nhân sát thương) +SOCOLA_SUC_GA, độ to +SOCOLA_TO_GA mỗi thanh; có trần để không to vô hạn
+const SOCOLA_SUC_GA = 0.5;
+const SOCOLA_TO_GA = 0.25;
+const SOCOLA_SUC_TOI_DA = 8;
+const SOCOLA_TO_TOI_DA = 3.5;
+const SOCOLA_TO_TOI_DA_ME = 2;
 // Gà mẹ đang là socola mà dính mây của Mabu: luôn mất SOCOLA_MAY_MAT (30%) máu tối đa (không né, không giảm sát thương); máu còn từ 30% trở xuống thì chết luôn
 const SOCOLA_MAY_MAT = 0.3;
 // Chưởng tự bắn lên trời: bay SOCOLA_TROI_CAO lên trên, mất TROI_THOI_GIAN giây rồi nổ cháy
@@ -163,11 +169,9 @@ const GOI_DAN: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'roos
 const GOI_HIEN = 1.2;
 // Gà mẹ phụ chuyên một kiểu (xoay vòng theo thứ tự sinh), mỗi kiểu một màu riêng (hue-rotate trên atlas, nhuộm sẵn) và màu thanh máu
 const KIEU_PHU = 5;
-const LOC_PHU = [
-  'hue-rotate(190deg) saturate(1.3)', 'hue-rotate(105deg) saturate(1.3)', 'hue-rotate(265deg) saturate(1.4)',
-  'hue-rotate(315deg) saturate(1.5) brightness(1.1)', 'hue-rotate(160deg) brightness(1.25)',
-];
 const MAU_PHU = ['#3fa7ff', '#3ddc84', '#b46bff', '#ff6bd6', '#2fe0d0'];
+// Nhuộm cả thân theo màu của con đó, chỉ giữ đầu trắng, mỏ và chân (tiền tố "tint:" được ve-canvas.ts nhận ra)
+const LOC_PHU = MAU_PHU.map((m) => `tint:${m}`);
 // Hồi chiêu riêng của kiểu chuyên: kiểu Lao hồi 8s, kiểu Bay hồi 12s (gà mẹ khác theo LAO_HOI / BAY_HOI)
 const LAO_HOI_CHUYEN = 8;
 const BAY_HOI_CHUYEN = 12;
@@ -299,19 +303,18 @@ const LOC_DO = 'sepia(1) saturate(7) hue-rotate(-52deg) brightness(1.05)';
 const CHO_TUONG_DAU = 0;
 const CHO_TUONG = 30;
 const TOC_DO_TUONG = 60;
-// Gà tướng đẻ trứng: mỗi lượt TRUNG_SO quả (2 gà trắng, 2 gà đỏ, 1 gà đen), trứng nở sau TRUNG_NO giây, cách nhau TRUNG_CHO giây.
+// Gà tướng đẻ trứng: mỗi lượt 4 quả thường (2 gà trắng, 1 gà đỏ, 1 gà đen, DAN_TRUNG) rồi quả thứ 5 là trứng đỏ đặc biệt, trứng nở sau TRUNG_NO giây, cách nhau TRUNG_CHO giây.
 // Tổng số gà (kể cả gà tướng) + trứng đang ấp đạt GA_TOI_DA thì không đẻ nữa.
-const DAN_TRUNG: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'rooster', 'flyer'];
+const DAN_TRUNG: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'flyer'];
 const TRUNG_NO = 2;
-const TRUNG_CHO = 30;
+const TRUNG_CHO = 15;
 const GA_TOI_DA = 20;
-// Trứng đỏ đặc biệt (do gà mẹ GỐC đẻ, cứ TRUNG_DB_CHO giây một quả, không tính vào GA_TOI_DA): to gấp TRUNG_DB_TO lần quả thường, gà mẹ gốc canh quanh nó (TRUNG_DB_BAO_VE).
+// Trứng đỏ đặc biệt (do gà mẹ GỐC đẻ: quả thứ 5 của mỗi lượt trứng, cứ TRUNG_CHO giây, không tính vào GA_TOI_DA): to gấp TRUNG_DB_TO lần quả thường, gà mẹ gốc canh quanh nó (TRUNG_DB_BAO_VE).
 // Cứ TRUNG_DB_NHIP giây nở một gà con mạnh dần (GA_DB_SUC: sức mạnh nhân máu / sát thương, GA_DB_TO: độ to): 2s gà con thường, 4s x2 to gấp đôi, 6s x3, 8s x4; hết TRUNG_DB_NO giây thì nở ra một gà mẹ phụ (đi đánh thay gà mẹ gốc, không giới hạn số lượng).
-const TRUNG_DB_CHO = 15;
 const TRUNG_DB_TO = 5;
 const TRUNG_DB_NHIP = 2;
 const TRUNG_DB_NO = 10;
-const TRUNG_DB_BAO_VE = 260;
+const TRUNG_DB_BAO_VE = 450;
 const GA_DB_SUC = [1, 2, 3, 4];
 const GA_DB_TO = [1, 2, 2.5, 3];
 // Gà mẹ gốc chạy trốn nhân vật trong tầm TAM_NHIN_TUONG (tốc độ gốc, sẽ nhân HE_SO_TOC_GA)
@@ -732,7 +735,7 @@ export class Game {
 
   /** Số gà tính vào GA_TOI_DA: không tính gà mẹ phụ và gà / trứng của trứng đỏ (không giới hạn) */
   private demGaThuong(): number {
-    return this.ga.filter((g) => !g.chet && !laMePhu(g) && g.suc === undefined).length + this.trungDe.filter((e) => !e.db).length;
+    return this.ga.filter((g) => !g.chet && !laMePhu(g) && !g.db).length + this.trungDe.filter((e) => !e.db).length;
   }
 
   // Thắng khi gà mẹ đã dùng hết mạng (đã hồi sinh đủ lần và chết) và không còn gà con nào, kể cả trứng chưa nở
@@ -847,13 +850,22 @@ export class Game {
         this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
         continue;
       }
-      // Gà đi qua chỉ mổ ăn táo đỏ (táo xanh gà không ăn): hồi VP_HOI máu, không có trần
-      const ga = xanh || v.loai === 'socola' ? undefined : this.ga.find((g) => !g.chet && Math.hypot(g.x - v.x, g.y - v.y) < VP_GA_BAN_KINH);
+      // Gà đi qua chỉ mổ ăn táo đỏ (táo xanh gà không ăn): hồi VP_HOI máu, không có trần. Socola thì mọi gà (con, mẹ gốc, mẹ phụ) đều ăn
+      const socola = v.loai === 'socola';
+      const ga = xanh ? undefined : this.ga.find((g) => !g.chet && Math.hypot(g.x - v.x, g.y - v.y) < (g.loai === 'boss' ? VP_GA_BAN_KINH * 2.5 : VP_GA_BAN_KINH));
       if (ga) {
-        ga.hp += VP_HOI;
         ga.mo = MO_THOI_GIAN;
         ga.lat = v.x < ga.x;
-        this.chu.push({ id: this.id++, x: ga.x, y: this.tamGa(ga).y - 60, text: `+${VP_HOI} ❤`, mau: '#ff6b6b', t: 0 });
+        if (socola) {
+          // Ăn socola: +SOCOLA_HOI_MAU máu, sức mạnh và độ to tăng theo
+          ga.hp += SOCOLA_HOI_MAU;
+          ga.suc = Math.min(SOCOLA_SUC_TOI_DA, (ga.suc ?? 1) + SOCOLA_SUC_GA);
+          ga.to = Math.min(ga.loai === 'boss' ? SOCOLA_TO_TOI_DA_ME : SOCOLA_TO_TOI_DA, (ga.to ?? 1) + SOCOLA_TO_GA);
+          this.chu.push({ id: this.id++, x: ga.x, y: this.tamGa(ga).y - 60, text: `🍫 +${SOCOLA_HOI_MAU} ❤ SỨC MẠNH x${ga.suc}`, mau: '#c98a4b', t: 0 });
+        } else {
+          ga.hp += VP_HOI;
+          this.chu.push({ id: this.id++, x: ga.x, y: this.tamGa(ga).y - 60, text: `+${VP_HOI} ❤`, mau: '#ff6b6b', t: 0 });
+        }
         this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
         continue;
       }
@@ -983,11 +995,6 @@ export class Game {
               g.daDe = true;
               g.choChieu = TRUNG_NO;
             }
-          }
-          g.deDb = (g.deDb ?? TRUNG_DB_CHO) - dt;
-          if (g.deDb <= 0) {
-            g.deDb = TRUNG_DB_CHO;
-            this.deTrungDb(g);
           }
         }
         g.choChieu = Math.max(0, (g.choChieu ?? 0) - dt);
@@ -1159,6 +1166,7 @@ export class Game {
     this.trungGa(g, p, sat);
     if (g.chet || g.hp >= truoc || (g.socola ?? 0) > 0) return;
     g.socola = SOCOLA_THOI_GIAN;
+    g.comboSoc = false;
     g.the = 0;
     g.chieu = null;
     g.mau = null;
@@ -1393,14 +1401,17 @@ export class Game {
 
   // Gà tướng đẻ một lượt trứng quanh mình, trừ khi tổng số gà đã đủ GA_TOI_DA
   private deTrung(boss: Ga): void {
-    if (this.demGaThuong() >= GA_TOI_DA) return;
-    const dan = [...DAN_TRUNG, ...TRUNG_THEM.slice(0, boss.lan ?? 0)];
-    for (const loai of dan) {
-      this.trungDe.push({
-        id: this.id++, loai, t: 0,
-        x: kepMap(boss.x + ngauNhien(-110, 110)), y: kepMap(boss.y + ngauNhien(-60, 90)),
-      });
+    if (this.demGaThuong() < GA_TOI_DA) {
+      const dan = [...DAN_TRUNG, ...TRUNG_THEM.slice(0, boss.lan ?? 0)];
+      for (const loai of dan) {
+        this.trungDe.push({
+          id: this.id++, loai, t: 0,
+          x: kepMap(boss.x + ngauNhien(-110, 110)), y: kepMap(boss.y + ngauNhien(-60, 90)),
+        });
+      }
     }
+    // Quả thứ 5 của mỗi lượt là trứng đỏ đặc biệt (không tính vào GA_TOI_DA)
+    this.deTrungDb(boss);
   }
 
   // Trứng nở thành gà sau TRUNG_NO giây
@@ -1460,7 +1471,7 @@ export class Game {
       id: this.id++, loai: 'boss', x, y, h: 0, h0: 0, vx: 0, vy: 0, phase: 0, doiHuong: 0,
       chet: false, tChet: 0, lat, hp: HP_GA, nhay: 0, de: 0,
       lan, chieu: null, hoiLao: LAO_HOI, hoiBay: BAY_HOI, mau: null, conMau: 0, hoiMau: MAU_CHU_KY, luotMau: 0, dot: 0,
-      goc, deDb: TRUNG_DB_CHO, socola: 0,
+      goc, socola: 0,
       ...(goc ? {} : { daDe: true, choChieu: 1, kieuPhu, hoiLao: 3, hoiBay: 3 }),
     };
   }
@@ -1507,7 +1518,7 @@ export class Game {
     const g: Ga = {
       id: this.id++, loai, x: e.x + Math.cos(huong) * 120, y: e.y + Math.sin(huong) * 60, h: 0, h0: bay ? ngauNhien(200, 300) : 0,
       vx: Math.cos(huong) * v, vy: Math.sin(huong) * v, phase: Math.random() * 6, doiHuong: 0,
-      chet: false, tChet: 0, lat: Math.cos(huong) < 0, hp: HP_GA * suc, nhay: 0, suc, to: GA_DB_TO[k],
+      chet: false, tChet: 0, lat: Math.cos(huong) < 0, hp: HP_GA * suc, nhay: 0, suc, to: GA_DB_TO[k], db: true,
     };
     giuTrongMap(g, leCuaGa(g));
     this.ga.push(g);
@@ -1525,21 +1536,34 @@ export class Game {
     this.rung = Math.max(this.rung, 0.3);
   }
 
+  // Thanh socola gần nhất trong tầm ngửi TAM_NGUI_TAO của gà g
+  private socolaGan(g: Ga): VatPham | null {
+    let kq: VatPham | null = null;
+    let xa = TAM_NGUI_TAO;
+    for (const v of this.vatPham) {
+      if (v.loai !== 'socola') continue;
+      const d = Math.hypot(v.x - g.x, v.y - g.y);
+      if (d < xa) { xa = d; kq = v; }
+    }
+    return kq;
+  }
+
   // Gà mẹ gốc không đi đánh: có trứng đỏ đang ấp thì canh quanh quả trứng, không thì chạy trốn nhân vật gần nhất, không ai tới gần thì đi loanh quanh
   private dieuTuongGoc(g: Ga, dt: number): void {
     const e = this.trungDe.find((t) => t.db && t.me === g.id);
     if (e) {
       const d = Math.hypot(e.x - g.x, e.y - g.y);
       if (d > TRUNG_DB_BAO_VE) {
-        g.vx = ((e.x - g.x) / d) * TOC_DO_TUONG * 2;
-        g.vy = ((e.y - g.y) / d) * TOC_DO_TUONG * 2;
+        g.vx = ((e.x - g.x) / d) * TOC_DO_TUONG * 4;
+        g.vy = ((e.y - g.y) / d) * TOC_DO_TUONG * 4;
         g.doiHuong = 0;
       } else {
+        // Đi vòng quanh quả trứng, cách xa một chút (trong TRUNG_DB_BAO_VE)
         g.doiHuong -= dt;
         if (g.doiHuong <= 0) {
           g.doiHuong = ngauNhien(1, 2.5);
           const goc = ngauNhien(0, Math.PI * 2);
-          const v = Math.random() < 0.3 ? 0 : TOC_DO_TUONG;
+          const v = Math.random() < 0.1 ? 0 : TOC_DO_TUONG * 3;
           g.vx = Math.cos(goc) * v;
           g.vy = Math.sin(goc) * v;
         }
@@ -1553,6 +1577,15 @@ export class Game {
       if (n.het || n.nv.laMay) continue;
       const d = Math.hypot(n.x - g.x, n.y - g.y);
       if (d < gan) { gan = d; muc = n; }
+    }
+    // Không có nhân vật nào gần mà có socola trong tầm ngửi thì đi ăn
+    const soc = this.socolaGan(g);
+    if (soc && (!muc || gan > 800)) {
+      const d = Math.hypot(soc.x - g.x, soc.y - g.y) || 1;
+      g.vx = ((soc.x - g.x) / d) * TOC_DO_TUONG * 3;
+      g.vy = ((soc.y - g.y) / d) * TOC_DO_TUONG * 3;
+      g.lat = g.vx < 0;
+      return;
     }
     if (muc) {
       const d = Math.hypot(muc.x - g.x, muc.y - g.y) || 1;
@@ -1587,7 +1620,7 @@ export class Game {
     if (!muc || gan > TAM_LAO) {
       let xa = TAM_NGUI_TAO;
       for (const v of this.vatPham) {
-        if (v.loai === 'xanh' || v.loai === 'socola') continue;
+        if (v.loai === 'xanh') continue;
         const d = Math.hypot(v.x - g.x, v.y - g.y);
         if (d < xa) { xa = d; muc = v; }
       }
@@ -1754,6 +1787,16 @@ export class Game {
       const d = Math.hypot(n.x - g.x, n.y - g.y);
       if (d < gan) { gan = d; muc = n; }
     }
+    // Nhân vật chưa vào tầm đánh mà có socola trong tầm ngửi thì đi ăn socola trước
+    const soc = this.socolaGan(g);
+    if (soc && (!muc || gan > TAM_LAO)) {
+      const d = Math.hypot(soc.x - g.x, soc.y - g.y) || 1;
+      g.vx = ((soc.x - g.x) / d) * TOC_DO_TUONG * 2;
+      g.vy = ((soc.y - g.y) / d) * TOC_DO_TUONG * 2;
+      g.lat = g.vx < 0;
+      g.doiHuong = 0;
+      return;
+    }
     if (muc) {
       if (this.batDauChieu(g, muc, gan)) return;
       const dx = muc.x - g.x;
@@ -1813,8 +1856,9 @@ export class Game {
         g.chamMay = this.t + MAY_NHIP;
       }
       this.vet.push({ id: this.id++, x: g.x, y: this.tamGa(g).y, t: 0, loai: 'no' });
-      // Gà mẹ đang là socola (Zinbu) mà dính mây (Mabu): luôn mất 30% máu tối đa, từ 30% trở xuống thì chết luôn
-      if (boss && (g.socola ?? 0) > 0) {
+      // Gà mẹ đang là socola (Zinbu) mà dính mây (Mabu): chỉ combo được MỘT lần mỗi lần hoá socola, mất luôn 30% máu tối đa, từ 30% trở xuống thì chết luôn; các nhịp mây sau đó tính như thường
+      if (boss && (g.socola ?? 0) > 0 && !g.comboSoc) {
+        g.comboSoc = true;
         this.comboSocolaMay(g, p);
         continue;
       }
@@ -2380,7 +2424,7 @@ export class Game {
   // Thanh máu trên đầu gà tướng (to hơn của nhân vật vì gà tướng cao gấp nhiều lần)
   thanhTuong(g: Ga): { x: number; y: number } {
     // Gà mẹ đang bay (g.h) thì thanh máu nâng theo, vẫn nằm trên đầu
-    return { x: g.x, y: g.y - 310 - g.h * EP_GA };
+    return { x: g.x, y: g.y - (310 * (g.to ?? 1) - 0) - g.h * EP_GA };
   }
 
   hpNv(p: number): number {
