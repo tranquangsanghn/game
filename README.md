@@ -40,15 +40,13 @@ Màn bắt đầu cho chọn chế độ chơi (nhớ lại lần sau):
 - **Phím 1 / 2 / 3 / 4**: chọn chiêu thứ 1 / 2 / 3 / 4 (từ dưới lên trên) của nhân vật đang dùng chuột
 - **Tab**: chuyển chuột sang nhân vật kia (Mabu ↔ Zinbu)
 
-**🎮 Tay cầm** (Gamepad API, mapping "standard" kiểu PS). Tay cầm thứ nhất điều khiển Mabu (thanh đen bên trái), tay cầm thứ hai điều khiển Zinbu (bên phải). Nối tay cầm rồi bấm một nút bất kỳ để trình duyệt nhận ra nó:
-- **Cần trái**: chạy theo hướng gạt
-- **Cần phải**: ngắm (không gạt thì tự ngắm vào con gà gần nhất)
-- **✕, □ hoặc R2**: ra đòn (giữ để đánh liên tục) · **Chữ thập**: chạy khi không dùng cần trái
+**🎮 Tay cầm** (Gamepad API, mapping "standard" kiểu PS; dành cho trẻ em nên chỉ dùng các nút đơn giản). Tay cầm thứ nhất điều khiển Mabu (thanh đen bên trái), tay cầm thứ hai điều khiển Zinbu (bên phải). Nối tay cầm rồi bấm một nút bất kỳ để trình duyệt nhận ra nó:
+- **Mũi tên (chữ thập)**: chạy
+- **Cần trái**: bay (gạt hướng nào bay hướng đó, tốn mana, bay xong nghỉ 5 giây; hết mana hoặc đang nghỉ thì chạy)
+- **✕**: đấm · **□**: đá · **△**: chưởng (chiêu đặc biệt) — giữ để đánh liên tục, game tự ngắm gà gần nhất
+- **○ hoặc cần phải** (đẩy đâu cũng được): chiêu riêng — Mabu biến thành mây, Zinbu biến gà thành socola
+- **Options**: bắt đầu / tạm dừng / tiếp tục · **Share (Select)**: khi chỉ có 1 tay cầm, chuyển tay cầm sang nhân vật kia
 - Tay cầm rung khi nhân vật bị đánh / gục; rút tay cầm hoặc chuyển sang cửa sổ khác thì ván tự tạm dừng; 2 tay cầm giữ cố định vai (rút / cắm lại không đổi người)
-- **○ hoặc L2**: bay một đoạn xa theo hướng cần trái
-- **L1 / R1**: đổi nhóm đòn trước / sau (Đấm / Chiêu đặc biệt / Đá / Biến mây), bỏ qua chiêu đang khoá
-- **Options**: bắt đầu / tạm dừng / tiếp tục · **✕** ở màn bắt đầu / kết thúc: chơi lại
-- **Share (Select)**: khi chỉ có 1 tay cầm, chuyển tay cầm sang nhân vật kia
 
 Chọn nhân vật xong sẽ vào màn hướng dẫn (ảnh `web/public/assets/game/huong-dan-tay-cam.svg`): chọn Chuột + Tab hoặc Tay cầm, xem cách dùng Đấm / Đá / Chiêu đặc biệt / chiêu riêng rồi bấm Vào chơi (✕).
 

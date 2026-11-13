@@ -231,6 +231,8 @@ const MANA_HOI = 2;
 const MANA_BAY = 50;
 const MANA_TOI_THIEU = 15;
 const BAY_KHOA = 5;
+const VUNG_BAY_CAN = 0.6; // cần trái phải gạt mạnh mới bay (tránh bay nhầm)
+const BAY_CAN = 600; // mỗi lần gạt cần trái bay một đoạn (xa hơn BAY_KHI_XA)
 const VUNG_CHET_CAN = 0.25; // cần analog gạt dưới mức này coi như nằm yên
 const TOC_DO_DAN = 2400;
 // Chiêu Biến mây (riêng Mabu, nhóm đòn 3): mây to gấp 2, quét trúng mọi con gà nó đi qua. Hiệu lực MAY_THOI_GIAN giây, sau đó chờ MAY_HOI giây mới dùng lại.
@@ -510,7 +512,7 @@ export class Game {
   camY = MAP / 2;
   camZ = ZOOM;
   // Chế độ điều khiển (chọn ở màn bắt đầu, nhớ lại lần sau)
-  cheDo: CheDo = 'chuot';
+  cheDo: CheDo = 'tayCam';
   // Chế độ chuột: người chơi mà chuột đang điều khiển (Tab để đổi) và chuột đang nằm trên bảng chiêu thức (không phải trên map)
   chuot = 0;
   /** Lựa chọn ở màn bắt đầu (nhớ để Chơi lại giữ nguyên) */
@@ -2279,7 +2281,7 @@ export class Game {
   }
 
   // ─── Điều khiển bằng tay cầm (Gamepad API, bố cục kiểu PS; mapping "standard") ───
-  // Cần trái (hoặc chữ thập): chạy · Cần phải: ngắm (không gạt thì tự ngắm) · ✕ / □ / R2: ra đòn · ○ / L2: bay · L1 / R1: đổi chiêu
+  // Dành cho trẻ em, chỉ các nút đơn giản: Chữ thập: chạy · Cần trái: bay · ✕ đấm · □ đá · △ chưởng · ○ / Cần phải: chiêu riêng
   // Options: bắt đầu / tạm dừng · Share (Select): khi chỉ có 1 tay cầm thì đổi sang điều khiển nhân vật kia
 
   private docTayCam(): void {
@@ -2342,40 +2344,32 @@ export class Game {
         n.ngam = null;
         continue;
       }
-      let trai = this.canGat(g, 0, 1);
-      if (trai.m === 0) {
-        // Phím chữ thập (nút 12–15) dùng thay cần trái
-        const dx = (duoc(g, 15) ? 1 : 0) - (duoc(g, 14) ? 1 : 0);
-        const dy = (duoc(g, 13) ? 1 : 0) - (duoc(g, 12) ? 1 : 0);
-        if (dx || dy) trai = { x: dx, y: dy, m: Math.hypot(dx, dy) };
-      }
+      // Chữ thập: chạy. Cần trái: bay (gạt hướng nào bay hướng đó). Cần phải: chiêu riêng (Mabu biến mây, Zinbu biến socola)
+      const dx = (duoc(g, 15) ? 1 : 0) - (duoc(g, 14) ? 1 : 0);
+      const dy = (duoc(g, 13) ? 1 : 0) - (duoc(g, 12) ? 1 : 0);
+      const bay = this.canGat(g, 0, 1, VUNG_BAY_CAN);
       const phai = this.canGat(g, 2, g.mapping === 'standard' || g.axes.length < 6 ? 3 : 5);
-      // Hướng nhìn theo cần ngắm, không có thì theo hướng chạy
-      if (phai.m > 0) n.nhin = { x: phai.x / phai.m, y: phai.y / phai.m };
-      else if (trai.m > 0) n.nhin = { x: trai.x / trai.m, y: trai.y / trai.m };
-      n.ngam = phai.m > 0 ? { x: kepMap(n.x + n.nhin.x * 300), y: kepMap(n.y + n.nhin.y * 300 - 60) } : null;
+      const chay = dx || dy ? { x: dx, y: dy, m: Math.hypot(dx, dy) } : { x: 0, y: 0, m: 0 };
+      // Hướng nhìn theo hướng đang bay / chạy; không có điều khiển nào thì giữ nguyên
+      const huong = bay.m > 0 ? bay : chay;
+      if (huong.m > 0) n.nhin = { x: huong.x / huong.m, y: huong.y / huong.m };
+      n.ngam = null;
 
-      // Chạy: gạt cần thì chạy theo hướng gạt, buông cần thì đứng lại
-      if (trai.m > 0) {
-        this.datDichThe(p, n.x + (trai.x / trai.m) * 200, n.y + (trai.y / trai.m) * 200);
+      if (bay.m > 0) {
+        // Gạt cần trái: bay một đoạn theo hướng gạt; đang khoá bay hoặc hết mana thì chỉ chạy
+        this.datDichThe(p, n.x + (bay.x / bay.m) * BAY_CAN, n.y + (bay.y / bay.m) * BAY_CAN);
+        n.cuaCan = true;
+      } else if (chay.m > 0) {
+        this.datDichThe(p, n.x + (chay.x / chay.m) * 200, n.y + (chay.y / chay.m) * 200);
         n.cuaCan = true;
       } else if (n.cuaCan) {
         n.dich = null;
         n.cuaCan = false;
       }
-      // Bay một đoạn xa theo hướng cần chạy (không gạt thì theo hướng đang nhìn)
-      if (moi(g, 1) || ((g.buttons[6]?.value ?? 0) > 0.5 && !cu(g)[6])) {
-        const h = trai.m > 0 ? { x: trai.x / trai.m, y: trai.y / trai.m } : n.nhin;
-        this.datDichThe(p, n.x + h.x * BAY_TOI_DA, n.y + h.y * BAY_TOI_DA);
-      }
-      if (moi(g, 4)) this.chuyenChieu(p, -1);
-      if (moi(g, 5)) this.chuyenChieu(p, 1);
-      // Ra đòn: giữ ✕ / □ / R2 thì đánh liên tục theo thời gian hồi chiêu
-      if (duoc(g, 0) || duoc(g, 2) || duoc(g, 7)) {
-        const m = this.diemNham(p);
-        const a = n.ngam ? { x: n.x + n.nhin.x * TAM_CHIEU, y: n.y + n.nhin.y * TAM_CHIEU - 60 } : m;
-        this.ban(p, kepMap(a.x), kepMap(a.y));
-      }
+
+      // Ra đòn: giữ nút thì đánh liên tục theo thời gian hồi chiêu. ✕ đấm · □ đá · △ chưởng · ○ hoặc cần phải: chiêu riêng
+      const nhom = duoc(g, 1) || phai.m > 0 || duoc(g, 11) ? NHOM_MAY : duoc(g, 3) ? 2 : duoc(g, 2) ? 1 : duoc(g, 0) ? 0 : -1;
+      if (nhom >= 0) this.dungChieu(p, nhom);
     }
     // Lưu trạng thái nút ở khung này để lần sau biết nút nào mới bấm
     const luu = new Map<number, boolean[]>();
@@ -2384,11 +2378,11 @@ export class Game {
   }
 
   // Cần analog có vùng chết; trả hướng (đã co giãn) và độ lớn m (0 = đang nằm yên)
-  private canGat(g: Gamepad, ax: number, ay: number): { x: number; y: number; m: number } {
+  private canGat(g: Gamepad, ax: number, ay: number, vung = VUNG_CHET_CAN): { x: number; y: number; m: number } {
     const x = g.axes[ax] ?? 0;
     const y = g.axes[ay] ?? 0;
     const m = Math.hypot(x, y);
-    return m < VUNG_CHET_CAN ? { x: 0, y: 0, m: 0 } : { x, y, m };
+    return m < vung ? { x: 0, y: 0, m: 0 } : { x, y, m };
   }
 
   /** Rung tay cầm của nhân vật p (bị đánh / gục); bỏ qua nếu tay cầm không hỗ trợ, không đè nhau */
@@ -2408,18 +2402,13 @@ export class Game {
     this.tayCam = 1 - this.tayCam;
   }
 
-  // L1 / R1: sang chiêu trước / sau, bỏ qua chiêu đang khoá hoặc hết mana
-  private chuyenChieu(p: number, buoc: number): void {
-    const ds = this.dsBieuTuong(p);
-    const nv = this.nguoi[p].nv;
-    let i = ds.indexOf(nv.nhom);
-    for (let s = 0; s < ds.length; s++) {
-      i = (i + buoc + ds.length) % ds.length;
-      if (!this.hetMana(p, ds[i])) {
-        nv.datNhom(ds[i], this.t);
-        return;
-      }
-    }
+  // Dùng thẳng nhóm đòn k (chọn chiêu và ra đòn cùng lúc, tự ngắm); chiêu đang hồi / khoá thì bỏ qua
+  private dungChieu(p: number, k: number): void {
+    const n = this.nguoi[p];
+    if (n.het || n.may.dang || this.hetMana(p, k) || n.nv.sp.nhomDon.length <= k) return;
+    if (n.nv.nhom !== k) n.nv.datNhom(k, this.t);
+    const m = this.diemNham(p);
+    this.ban(p, kepMap(m.x), kepMap(m.y));
   }
 
   // Chỉ xa thì bay theo vòng cung, gần thì chạy
@@ -2693,7 +2682,7 @@ export class Game {
   private docKyLuc(): void {
     try {
       this.kyLuc = Number(localStorage.getItem(KHOA_KY_LUC)) || 0;
-      this.cheDo = localStorage.getItem(KHOA_CHE_DO) === 'tayCam' ? 'tayCam' : 'chuot';
+      this.cheDo = localStorage.getItem(KHOA_CHE_DO) === 'chuot' ? 'chuot' : 'tayCam';
     } catch {
       this.kyLuc = 0;
     }
