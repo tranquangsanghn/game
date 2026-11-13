@@ -132,4 +132,4 @@
 
 # Nguyên tắc thể lực bay
 
-- Bay có thanh thể lực riêng (`bayNl`, vẽ bình cầu xanh ở mép trái phía trên thanh máu, bình mana nhóm đòn ở mép phải, `nlBay()`), không dùng mana của nhóm đòn. Đầy = `BAY_NL_TOI_DA` = 2 giây bay, hao theo thời gian đang bay, hồi `BAY_NL_HOI` = 0,2 / giây khi không bay. Mỗi lần bay xong khoá `BAY_KHOA` = 5s (`bayKhoa`, thanh xám) mới bay tiếp được; còn dưới `BAY_NL_TOI_THIEU` = 0,3 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); thể lực không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn.
+- Bay có thanh thể lực riêng (`bayNl`, vẽ thanh mảnh xanh dưới thanh máu trên đầu nhân vật, `nlBay()`), không dùng mana của nhóm đòn. Đầy = `BAY_NL_TOI_DA` = 2 giây bay, hao theo thời gian đang bay, hồi `BAY_NL_HOI` = 0,2 / giây khi không bay. Mỗi lần bay xong khoá `BAY_KHOA` = 5s (`bayKhoa`, thanh xám) mới bay tiếp được; còn dưới `BAY_NL_TOI_THIEU` = 0,3 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); thể lực không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn.

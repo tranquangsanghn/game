@@ -459,25 +459,24 @@ export class VeCanvas {
     tronCD(ctx, -31, -3, 62 * c.mauNv(p), 6, 3);
     ctx.fillStyle = '#35d96a';
     ctx.fill();
-    // Hai bình cầu nằm phía trên hai mép thanh máu: trái = thể lực bay (xám khi đang khoá), phải = mana nhóm đòn đang dùng
-    this.veBinh(ctx, -34, -20, dongHe(c.nlBay(p)), n.bayKhoa > 0 ? '#8a9a94' : '#4fd8ff');
-    this.veBinh(ctx, 34, -20, dongHe(c.nangLuong(p)), c.mauMana(p));
-    ctx.restore();
-  }
-
-  // Bình mana hình cầu: nền tối, phần đầy dâng từ đáy lên, viền sáng
-  private veBinh(ctx: CanvasRenderingContext2D, x: number, y: number, nl: number, mau: string): void {
-    ctx.save();
-    ctx.translate(x, y);
+    // Thể lực bay: thanh mảnh dưới thanh máu (xám khi đang khoá sau lần bay trước)
+    tronCD(ctx, -34, 9, 68, 6, 3);
+    ctx.fillStyle = 'rgba(13,27,18,0.75)';
+    ctx.fill();
+    tronCD(ctx, -32, 10.5, Math.max(0, 64 * c.nlBay(p)), 3, 1.5);
+    ctx.fillStyle = n.bayKhoa > 0 ? '#8a9a94' : '#4fd8ff';
+    ctx.fill();
+    ctx.translate(48, 0);
     duongTron(ctx, 13.3);
     ctx.fillStyle = 'rgba(13,27,18,0.75)';
     ctx.fill();
+    const nl = dongHe(c.nangLuong(p));
     ctx.save();
     ctx.beginPath();
     ctx.rect(-10.7, 10.7 - 21.4 * nl, 21.4, 21.4);
     ctx.clip();
     duongTron(ctx, 10.7);
-    ctx.fillStyle = mau;
+    ctx.fillStyle = c.mauMana(p);
     ctx.fill();
     ctx.restore();
     duongTron(ctx, 10.7);
