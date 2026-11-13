@@ -315,7 +315,7 @@ const TAM_NHIN_TUONG = TAM_NHIN * 3;
 // Tầm gà con phát hiện và lao vào nhân vật = tầm đánh xa nhất (không đổi theo tầm nhìn)
 const TAM_LAO = TAM_DANH_XA;
 // Gà con ngửi thấy nhân vật trong TAM_NGUI_NV thì đi về phía nhân vật (xu hướng đuổi theo); ngửi thấy táo đỏ trong TAM_NGUI_TAO thì đi tới ăn
-const TAM_NGUI_NV = 1500;
+const TAM_NGUI_NV = 800;
 const TAM_NGUI_TAO = 500;
 // Tốc độ gà lao vào nhân vật (gà bay giữ nguyên tốc độ bay, chỉ đổi hướng)
 // Hệ số nhân tốc độ di chuyển thật của mọi loại gà (kể cả gà tướng): 1/4 tốc độ gốc ghi trong các hằng số
