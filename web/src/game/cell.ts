@@ -49,7 +49,7 @@ export interface Cell {
   choDanh: number; danh: number; nhay: number; chamMay?: number;
   chet: boolean; tChet: number;
   /** đang ngồi dự tiệc sinh nhật (xem tiec.ts) và đếm ngược tới lần bắn chưởng vào bánh kế tiếp */
-  tiec?: boolean; banTiec?: number;
+  tiec?: boolean;
   /** đảo của tiệc đang dự và góc hiện tại trên vòng quanh bánh */
   dao?: number; goc?: number;
   /** giây đã trôi trong chu trình biến hình → hào quang → phóng chưởng vào bánh (chưa vào chu trình thì không có) */

@@ -2,7 +2,7 @@ import type { ChuongTiec, Tiec } from './tiec';
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
 import { capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, SO_CAP, SP_CELL, type Cell } from './cell';
-import { BANH_FPS, BANH_KHUNG, loiDangHat, LOI, notDangHat, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
+import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { bamDiem, doSau, doSauVuon, nhieu, TG } from './ban-do';
 
@@ -1066,7 +1066,7 @@ export class VeCanvas {
     ctx.globalAlpha = ce.chet ? Math.max(0, 1 - ce.tChet / CELL_CHET_T) : 1;
     ctx.translate(ce.x, ce.y);
     ctx.scale(k, k);
-    // Dự tiệc: ngồi (hơi thấp xuống), đung đưa theo nhịp hát, bay nốt nhạc ♪ trên đầu khi đang hát
+    // Dự tiệc: ngồi (hơi thấp xuống), bay nốt nhạc ♪ trên đầu
     const tcc = ce.tiec ? c.tiecCua(ce) : undefined;
     const tiec = !!tcc?.on && !ce.chet;
     if (ce.cap === SO_CAP - 1 && !ce.chet) {
@@ -1077,15 +1077,15 @@ export class VeCanvas {
     // Đang vận nội công / phóng chưởng vào bánh: dùng atlas riêng (gồng, hào quang, phóng); hào quang đập nhẹ, thân rung khi gồng
     const kt = c.cellTiecKhung(ce);
     if (kt !== null) {
-      if ((TIEC_KHUNG.hao as readonly number[]).includes(kt)) ctx.scale(1 + 0.04 * Math.sin(c.t * 30), 1 + 0.04 * Math.sin(c.t * 30));
+      if ((TIEC_KHUNG.hao as readonly number[]).includes(kt)) ctx.scale(1 + 0.04 * Math.sin(c.t * 10), 1 + 0.04 * Math.sin(c.t * 10));
       else if (kt === TIEC_KHUNG.bien) {
         // Biến hình: gió xanh nháy ngang / dọc quanh người, thân rung
-        this.sprite(ctx, SP_CELL_TIEC, ce.cap * SP_CELL_TIEC.cot + (Math.floor(c.t * 16) % 2 ? TIEC_KHUNG.gioNgang : TIEC_KHUNG.gioDoc), ce.lat, false);
-        ctx.translate(Math.sin(c.t * 80) * 1.2, 0);
+        this.sprite(ctx, SP_CELL_TIEC, ce.cap * SP_CELL_TIEC.cot + (Math.floor(c.t * 6) % 2 ? TIEC_KHUNG.gioNgang : TIEC_KHUNG.gioDoc), ce.lat, false);
+        ctx.translate(Math.sin(c.t * 25) * 1.2, 0);
       }
       this.sprite(ctx, SP_CELL_TIEC, ce.cap * SP_CELL_TIEC.cot + kt, ce.lat, false);
     } else this.sprite(ctx, SP_CELL, ce.cap * SP_CELL.cot + c.cellKhung(ce), ce.lat, false);
-    if (tiec && notDangHat(tcc!.t) >= 0) {
+    if (tiec) {
       ctx.shadowBlur = 0;
       ctx.font = `bold 9px ${FONT}`;
       ctx.textAlign = 'center';
@@ -1097,7 +1097,7 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  // Bánh sinh nhật giữa vòng Cell: sprite 8 khung lửa lặp, quầng sáng cam, lời bài hát hiện phía trên
+  // Bánh sinh nhật giữa vòng Cell: sprite 8 khung lửa lặp, quầng sáng cam
   private veBanh(ctx: CanvasRenderingContext2D, c: Game, tc: Tiec): void {
     const BANH_TO = tc.to;
     ctx.save();
@@ -1118,26 +1118,6 @@ export class VeCanvas {
     ctx.scale(BANH_TO, BANH_TO);
     this.sprite(ctx, SP_BANH, Math.floor(c.t * BANH_FPS) % BANH_KHUNG, false, true);
     ctx.restore();
-    // Lời bài hát (chỉ khi tiệc còn)
-    const dong = tc.on ? loiDangHat(tc.t) : -1;
-    if (dong >= 0) {
-      const text = `🎵 ${LOI[dong]} 🎵`;
-      ctx.font = `bold ${Math.round(34 * Math.max(1, BANH_TO / 0.6))}px ${FONT}`;
-      ctx.textAlign = 'center';
-      const w = ctx.measureText(text).width + 50;
-      const y = 25 + 75 * BANH_TO;
-      ctx.fillStyle = 'rgba(20,10,0,0.55)';
-      ctx.beginPath();
-      const hf = 34 * Math.max(1, BANH_TO / 0.6);
-      ctx.roundRect(-w / 2, y - hf * 1.05, w, hf * 1.6, 18);
-      ctx.fill();
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = 'rgba(255,200,90,0.9)';
-      ctx.stroke();
-      ctx.fillStyle = '#fff3b0';
-      this.sang(ctx, '#ffb347');
-      ctx.fillText(text, 0, y);
-    }
     ctx.restore();
   }
 
