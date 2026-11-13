@@ -129,3 +129,7 @@
 # Nguyên tắc cây đổ
 
 - Cây (`trangTri` loại 0) bị đổ khi đòn / chưởng của Mabu, Zinbu bay qua trong `CAY_DO_KINH` = 70 quanh gốc (chưởng ×1,4): `danDoCay()` quét đoạn bay mỗi khung hình nên bay tới đâu cây đổ tới đó. Cây đổ (`doLuc`, `huongDo`) quay 90° quanh gốc trong 0,45s rồi nằm luôn, được lưu trong `cayDo` của ván lưu. Chỉ để đẹp, không ảnh hưởng gà.
+
+# Nguyên tắc thể lực bay
+
+- Bay có thanh thể lực riêng (`bayNl`, vẽ thanh mảnh xanh dưới thanh máu trên đầu nhân vật, `nlBay()`), không dùng mana của nhóm đòn. Đầy = `BAY_NL_TOI_DA` = 2 giây bay, hao theo thời gian đang bay, hồi `BAY_NL_HOI` = 0,2 / giây khi không bay. Mỗi lần bay xong khoá `BAY_KHOA` = 5s (`bayKhoa`, thanh xám) mới bay tiếp được; còn dưới `BAY_NL_TOI_THIEU` = 0,3 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); thể lực không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn.

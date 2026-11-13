@@ -44,6 +44,8 @@ export interface NguoiChoi {
   x: number; y: number; dich: { x: number; y: number } | null; dangDi: boolean;
   hp: number; het: boolean;
   mana: number[]; khoaMana: number[]; hoiMana: number[]; nv: NhanVat; bay: ChuyenBay | null;
+  /** Thể lực bay (giây bay còn lại) và thời gian còn khoá sau mỗi lần bay */
+  bayNl: number; bayKhoa: number;
   nhin: { x: number; y: number }; nham: { x: number; y: number } | null; ngam: { x: number; y: number } | null; cuaCan: boolean;
   may: { dang: boolean; con: number; hoi: number };
 }
@@ -164,6 +166,11 @@ const TOC_DO_DI = 460;
 const TOC_DO_BAY = 900;
 const BAY_KHI_XA = 450;
 const BAY_TOI_DA = 1200;
+// Thể lực bay riêng: đầy = BAY_NL_TOI_DA giây bay, hao theo thời gian bay, hồi BAY_NL_HOI giây-bay mỗi giây; mỗi lần bay xong khoá BAY_KHOA giây mới bay tiếp; còn dưới BAY_NL_TOI_THIEU thì không bay
+const BAY_NL_TOI_DA = 2;
+const BAY_NL_HOI = 0.2;
+const BAY_NL_TOI_THIEU = 0.3;
+const BAY_KHOA = 5;
 const VUNG_CHET_CAN = 0.25; // cần analog gạt dưới mức này coi như nằm yên
 const TOC_DO_DAN = 2400;
 // Mana theo nhóm đòn (0 Đấm · 1 Đá · 2 Chiêu đặc biệt). Đấm không bao giờ hết; 0 nghĩa là vô hạn.
@@ -722,6 +729,9 @@ export class Game {
       n.hoiChieu = Math.max(0, n.hoiChieu - dt);
       this.hoiMana(n, dt);
       this.capNhatMay(n, dt);
+      n.bayKhoa = Math.max(0, n.bayKhoa - dt);
+      if (n.bay) n.bayNl = Math.max(0, n.bayNl - dt);
+      else n.bayNl = Math.min(BAY_NL_TOI_DA, n.bayNl + BAY_NL_HOI * dt);
 
       // Tâm ngắm cập nhật mỗi khung hình: cần ngắm phải đang gạt thì ngắm theo hướng gạt, không thì tự ngắm; ẩn khi đã ngã hoặc đang là mây
       const m = this.diemNham(p);
@@ -784,6 +794,7 @@ export class Game {
       return;
     }
     n.bay = null;
+    n.bayKhoa = BAY_KHOA;
     n.dangDi = false;
     n.nv.tiepDat();
   }
@@ -1834,6 +1845,16 @@ export class Game {
   }
 
   // Chỉ xa thì bay theo vòng cung, gần thì chạy
+  /** Bay được khi không bị khoá và còn đủ thể lực */
+  coTheBay(n: NguoiChoi): boolean {
+    return n.bayKhoa <= 0 && n.bayNl >= BAY_NL_TOI_THIEU;
+  }
+
+  /** 0..1: thể lực bay còn lại (thanh nhỏ trên đầu nhân vật) */
+  nlBay(p: number): number {
+    return this.nguoi[p].bayNl / BAY_NL_TOI_DA;
+  }
+
   private datDichThe(p: number, x: number, y: number): void {
     const n = this.nguoi[p];
     if (n.nv.khoa || n.bay) return;
@@ -1850,10 +1871,16 @@ export class Game {
       dich = { x: n.x + ((dich.x - n.x) / d) * BAY_TOI_DA, y: n.y + ((dich.y - n.y) / d) * BAY_TOI_DA };
       d = BAY_TOI_DA;
     }
-    // Dạng mây không bay, chỉ trôi tới nơi
-    if (d <= BAY_KHI_XA || n.may.dang) {
+    // Dạng mây không bay, chỉ trôi tới nơi; đang khoá hoặc hết thể lực thì chỉ chạy bộ
+    if (d <= BAY_KHI_XA || n.may.dang || !this.coTheBay(n)) {
       n.dich = dich;
       return;
+    }
+    // Thể lực không đủ bay hết quãng thì bay ngắn lại đúng bằng quãng thể lực cho phép
+    const toiDa = n.bayNl * TOC_DO_BAY;
+    if (d > toiDa) {
+      dich = { x: n.x + ((dich.x - n.x) / d) * toiDa, y: n.y + ((dich.y - n.y) / d) * toiDa };
+      d = toiDa;
     }
     n.dich = null;
     n.nv.lat = dich.x < n.x;
@@ -2063,7 +2090,7 @@ export class Game {
       ten: p === 0 ? MABU.ten : ZINBU.ten, mau: p === 0 ? '#e84393' : '#8e44ad',
       hp: HP_NV, het: false, diem: 0, combo: 0, tamX: W_MAC_DINH / 2, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
       x: MAP / 2 + (p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
-      mana: MANA_TOI_DA.map((m) => m), khoaMana: [0, 0, 0], hoiMana: [0, 0, 0], nv: this.taoNhanVat(p), bay: null,
+      mana: MANA_TOI_DA.map((m) => m), khoaMana: [0, 0, 0], hoiMana: [0, 0, 0], nv: this.taoNhanVat(p), bay: null, bayNl: BAY_NL_TOI_DA, bayKhoa: 0,
       nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, ngam: null, cuaCan: false, may: { dang: false, con: 0, hoi: 0 },
     }));
   }

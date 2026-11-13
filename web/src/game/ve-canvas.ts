@@ -459,6 +459,13 @@ export class VeCanvas {
     tronCD(ctx, -31, -3, 62 * c.mauNv(p), 6, 3);
     ctx.fillStyle = '#35d96a';
     ctx.fill();
+    // Thể lực bay: thanh mảnh dưới thanh máu (xám khi đang khoá sau lần bay trước)
+    tronCD(ctx, -34, 9, 68, 6, 3);
+    ctx.fillStyle = 'rgba(13,27,18,0.75)';
+    ctx.fill();
+    tronCD(ctx, -32, 10.5, Math.max(0, 64 * c.nlBay(p)), 3, 1.5);
+    ctx.fillStyle = n.bayKhoa > 0 ? '#8a9a94' : '#4fd8ff';
+    ctx.fill();
     ctx.translate(48, 0);
     duongTron(ctx, 13.3);
     ctx.fillStyle = 'rgba(13,27,18,0.75)';
