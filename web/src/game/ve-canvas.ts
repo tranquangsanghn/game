@@ -95,17 +95,20 @@ const TRANG_TRI_SA = [
 ];
 /** Ô cát gốc của gói tileset (128px): lấy đốm sẫm làm vân cát */
 const SA_CAT = SA + 'cat.png';
-/** Nền cát / biển vẽ sẵn theo mảnh MANH × MANH đơn vị bản đồ, độ phân giải 1/MANH_TL; dựng dần từng hàng, mỗi khung tối đa MANH_NGAN_SACH ms */
+/** Nền cát / biển vẽ sẵn theo mảnh MANH × MANH đơn vị bản đồ, độ phân giải 1/MANH_TL. Mỗi mảnh dựng MỘT lần rồi giữ luôn
+ *  (không xoá rồi dựng lại khi bay qua bay lại): mảnh có cát / bờ / biển nông là mảnh riêng, mảnh biển sâu (cả mảnh một màu
+ *  + lấp lánh) dùng chung một mảnh. Mảnh trong khung nhìn dựng trước, còn lại dựng dần ở nền theo hạn mức thời gian mỗi khung. */
 const MANH = 800;
-const MANH_TL = 3;
+const MANH_TL = 4;
 /** Mảnh dựng thêm viền MANH_PAD điểm ảnh chứa đúng nội dung của mảnh bên cạnh (cùng lưới điểm ảnh toàn thế giới): vẽ chồng lên nhau thì giống hệt, không lộ đường nối */
 const MANH_PAD = 2;
 const MANH_N = Math.ceil(MANH / MANH_TL);
 const MANH_O = MANH / MANH_N;
-/** Thời gian tối đa mỗi khung dành cho việc dựng mảnh (ms): mảnh dựng dần từng hàng điểm ảnh qua nhiều khung, không khựng */
-const MANH_NGAN_SACH = 4;
-/** Số mảnh giữ lại tối đa (thế giới rất rộng): quá thì bỏ mảnh lâu không thấy nhất */
-const MANH_GIU = 120;
+/** Thời gian tối đa mỗi khung dành cho việc dựng mảnh (ms): còn mảnh trong khung nhìn chưa có thì MANH_NGAN_SACH, không thì dựng dần ở nền MANH_NEN */
+const MANH_NGAN_SACH = 6;
+const MANH_NEN = 2.5;
+/** Mảnh mà mọi điểm sâu hơn MANH_SAU (đơn vị bản đồ) dưới mặt biển: chỉ còn màu biển sâu, dùng chung một mảnh */
+const MANH_SAU = -700;
 // Bảng màu lấy từ tileset (kem viền trên, cam giữa, nâu bóng) + biển kiểu đảo Kame
 const C_KEM = [243, 213, 148];
 const C_CAT = [240, 195, 122];
@@ -115,15 +118,17 @@ const C_NONG = [96, 206, 236];
 const C_SAU = [40, 122, 214];
 const CO_LAP = 16; // pattern 16×16 ô ngẫu nhiên rồi lặp: một fillRect, không lộ đường nối
 
-/** Chế độ thử nhẹ (mở game với ?nhe=1): nền đảo phẳng, không trang trí đảo, Cell / bánh vẽ tối giản, không chưởng tiệc */
-const NHE = typeof location !== 'undefined' && new URLSearchParams(location.search).has('nhe');
-
 export class VeCanvas {
   private mauCo: CanvasPattern | null = null;
   /** Đảo sa mạc: mảnh nền đã dựng (khoá "i,j"), ảnh toàn map độ phân giải thấp lót trước khi mảnh dựng xong, điểm ảnh ô cát */
-  private manhSa = new Map<string, HTMLCanvasElement>(); // thứ tự chèn = thứ tự dùng gần đây (LRU)
-  /** Mảnh đang dựng dở (khoá "i,j"): canvas, dữ liệu điểm ảnh và hàng đã dựng tới đâu */
-  private viecManh = new Map<string, { cv: HTMLCanvasElement; d: ImageData; hang: number; mi: number; mj: number }>();
+  private manhSa = new Map<number, HTMLCanvasElement>();
+  /** Loại từng mảnh (chỉ số mj * số cột + mi): 0 nằm hẳn trong vườn gà (nền cỏ che, bỏ qua) · 1 biển sâu (dùng chung manhSau) · 2 mảnh riêng */
+  private loaiManh: Uint8Array | null = null;
+  private manhSau: HTMLCanvasElement | null = null;
+  /** Mảnh riêng chưa dựng (dựng dần ở nền, gần camera trước) */
+  private manhChua: number[] = [];
+  /** Mảnh đang dựng dở: canvas, dữ liệu điểm ảnh và hàng đã dựng tới đâu (mỗi lúc chỉ một mảnh) */
+  private viecManh: { k: number; cv: HTMLCanvasElement; d: ImageData; hang: number } | null = null;
   private tongSa: HTMLCanvasElement | null = null;
   private vanCat: Uint8ClampedArray | null = null;
   private mauTuong: { mat: CanvasPattern; gach: CanvasPattern; vienNgang: CanvasPattern; vienDoc: CanvasPattern } | null = null;
@@ -415,16 +420,16 @@ export class VeCanvas {
     p[i] = r!; p[i + 1] = g!; p[i + 2] = b!; p[i + 3] = 255;
   }
 
-  /** Dựng dở một mảnh nền sa mạc (MANH đơn vị bản đồ, độ phân giải 1/MANH_TL) tới khi hết hạn mức thời gian; xong thì trả canvas */
-  private dungManhSa(mi: number, mj: number, han: number): HTMLCanvasElement | null {
-    const khoa = `${mi},${mj}`;
+  /** Dựng dở mảnh k (MANH đơn vị bản đồ, độ phân giải 1/MANH_TL) tới khi hết hạn mức thời gian; xong thì trả canvas */
+  private dungManhSa(k: number, han: number): HTMLCanvasElement | null {
+    const sx = Math.ceil((TG.x1 - TG.x0) / MANH);
+    const mi = k % sx, mj = (k - mi) / sx;
     const n = MANH_N + 2 * MANH_PAD, o = MANH_O;
-    let v = this.viecManh.get(khoa);
-    if (!v) {
+    let v = this.viecManh;
+    if (!v || v.k !== k) {
       const cv = document.createElement('canvas');
       cv.width = cv.height = n;
-      v = { cv, d: cv.getContext('2d')!.createImageData(n, n), hang: 0, mi, mj };
-      this.viecManh.set(khoa, v);
+      v = this.viecManh = { k, cv, d: cv.getContext('2d')!.createImageData(n, n), hang: 0 };
     }
     while (v.hang < n && performance.now() < han) {
       const py = v.hang++;
@@ -434,11 +439,39 @@ export class VeCanvas {
     }
     if (v.hang < n) return null;
     v.cv.getContext('2d')!.putImageData(v.d, 0, 0);
-    this.viecManh.delete(khoa);
+    this.viecManh = null;
     return v.cv;
   }
 
-  /** Nền đảo sa mạc: ảnh lót toàn map (thô) rồi các mảnh chi tiết trong khung nhìn (dựng dần, nhớ lại) */
+  /** Phân loại mọi mảnh một lần (vườn gà / biển sâu / mảnh riêng) */
+  private phanLoaiManh(MAP: number): Uint8Array {
+    const sx = Math.ceil((TG.x1 - TG.x0) / MANH), sy = Math.ceil((TG.y1 - TG.y0) / MANH);
+    const l = new Uint8Array(sx * sy);
+    let sau = -1;
+    for (let mj = 0; mj < sy; mj++) {
+      for (let mi = 0; mi < sx; mi++) {
+        const ox = TG.x0 + mi * MANH, oy = TG.y0 + mj * MANH;
+        const k = mj * sx + mi;
+        if (ox >= 0 && oy >= 0 && ox + MANH <= MAP && oy + MANH <= MAP) continue;
+        // Lấy mẫu dày (kể cả viền) cùng công thức với mauSa(): còn điểm nào nông hơn MANH_SAU thì là mảnh riêng
+        let nong = false;
+        for (let y = -20; y <= MANH + 20 && !nong; y += 40) {
+          for (let x = -20; x <= MANH + 20; x += 40) {
+            const dat = doSau(ox + x, oy + y);
+            if (dat >= 0 || Math.max(dat, doSauVuon(ox + x, oy + y)) > MANH_SAU) { nong = true; break; }
+          }
+        }
+        l[k] = nong ? 2 : 1;
+        if (nong) this.manhChua.push(k);
+        else if (sau < 0) sau = k;
+      }
+    }
+    // Mảnh biển sâu dùng chung: dựng một lần (mảnh nhỏ, nhanh)
+    if (sau >= 0) this.manhSau = this.dungManhSa(sau, Infinity);
+    return l;
+  }
+
+  /** Nền đảo sa mạc: ảnh lót toàn map (thô) rồi các mảnh chi tiết trong khung nhìn (dựng một lần, giữ luôn) */
   private veNenSa(ctx: CanvasRenderingContext2D, c: Game): void {
     if (!this.vanCat) {
       const img = this.lay(SA_CAT);
@@ -448,8 +481,6 @@ export class VeCanvas {
         const x = cv.getContext('2d')!;
         x.drawImage(img, 0, 0, 128, 128);
         this.vanCat = x.getImageData(0, 0, 128, 128).data;
-        this.manhSa.clear();
-        this.viecManh.clear();
       }
     }
     const RX = TG.x1 - TG.x0, RY = TG.y1 - TG.y0;
@@ -464,53 +495,61 @@ export class VeCanvas {
       x.putImageData(d, 0, 0);
       this.tongSa = cv;
     }
+    // Ván cát (vân cát) chưa nạp thì chỉ có ảnh lót; nạp xong mới phân loại / dựng mảnh (mảnh dựng ra là bản cuối, không phải dựng lại)
+    if (this.vanCat && !this.loaiManh) this.loaiManh = this.phanLoaiManh(c.MAP);
+    const loai = this.loaiManh;
     // Vùng thế giới đang thấy (theo phép camera), lấn thêm một chút cho rung màn hình
     const cam = c.gocCamera();
     const x0 = -cam.x / cam.k - 40, x1 = (c.W - cam.x) / cam.k + 40;
     const y0 = -cam.y / cam.k - 40, y1 = (c.H - cam.y) / cam.k + 40;
     const sx = Math.ceil(RX / MANH), sy = Math.ceil(RY / MANH);
     const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-    const i0 = Math.floor((x0 - TG.x0) / MANH), i1 = Math.floor((x1 - TG.x0) / MANH);
-    const j0 = Math.floor((y0 - TG.y0) / MANH), j1 = Math.floor((y1 - TG.y0) / MANH);
-    // Mảnh cần dựng: trong khung nhìn (ưu tiên, gần tâm trước) rồi vòng một mảnh bên ngoài (dựng trước cho chỗ sắp bay tới)
-    const cho: { khoa: string; mi: number; mj: number; uu: number }[] = [];
-    const ve: { m: HTMLCanvasElement; ox: number; oy: number }[] = [];
-    const muon = new Set<string>();
-    for (let mj = Math.max(0, j0 - 1); mj <= Math.min(sy - 1, j1 + 1); mj++) {
-      for (let mi = Math.max(0, i0 - 1); mi <= Math.min(sx - 1, i1 + 1); mi++) {
+    const i0 = Math.max(0, Math.floor((x0 - TG.x0) / MANH)), i1 = Math.min(sx - 1, Math.floor((x1 - TG.x0) / MANH));
+    const j0 = Math.max(0, Math.floor((y0 - TG.y0) / MANH)), j1 = Math.min(sy - 1, Math.floor((y1 - TG.y0) / MANH));
+    ctx.imageSmoothingEnabled = true;
+    // Canvas nền độ phân giải thấp nên vẽ ảnh lót luôn (rẻ): che đường nối giữa các mảnh và chỗ mảnh chưa dựng xong
+    ctx.drawImage(this.tongSa, TG.x0, TG.y0, RX, RY);
+    if (!loai) return;
+    // Mảnh có viền MANH_PAD điểm ảnh: vẽ lấn ra ngoài mảnh đúng bằng viền, phần chồng giữa hai mảnh giống hệt nhau
+    const vien = MANH_PAD * MANH_O;
+    let thieu = -1, thieuD = Infinity;
+    for (let mj = j0; mj <= j1; mj++) {
+      for (let mi = i0; mi <= i1; mi++) {
+        const k = mj * sx + mi;
+        const l = loai[k];
+        if (!l) continue;
+        const m = l === 1 ? this.manhSau : this.manhSa.get(k);
         const ox = TG.x0 + mi * MANH, oy = TG.y0 + mj * MANH;
-        // Mảnh nằm hẳn trong vườn gà thì bị nền cỏ che hết: không cần dựng
-        if (ox >= 0 && oy >= 0 && ox + MANH <= c.MAP && oy + MANH <= c.MAP) continue;
-        const khoa = `${mi},${mj}`;
-        const thay = mi >= i0 && mi <= i1 && mj >= j0 && mj <= j1;
-        let m = this.manhSa.get(khoa);
-        if (m) {
-          this.manhSa.delete(khoa);
-          this.manhSa.set(khoa, m);
-          if (thay) ve.push({ m, ox, oy });
-        } else if (this.vanCat) {
-          muon.add(khoa);
-          cho.push({ khoa, mi, mj, uu: (thay ? 0 : 1e9) + Math.hypot(ox + MANH / 2 - cx, oy + MANH / 2 - cy) });
+        if (m) ctx.drawImage(m, ox - vien, oy - vien, MANH + 2 * vien, MANH + 2 * vien);
+        else {
+          // Mảnh trong khung nhìn chưa có: dựng trước, gần tâm màn hình trước
+          const d = Math.hypot(ox + MANH / 2 - cx, oy + MANH / 2 - cy);
+          if (d < thieuD) { thieuD = d; thieu = k; }
         }
       }
     }
-    ctx.imageSmoothingEnabled = true;
-    // Canvas nền độ phân giải thấp nên vẽ ảnh lót luôn (rẻ): che đường nối giữa các mảnh (mép khử răng cưa lộ nền trong suốt)
-    ctx.drawImage(this.tongSa, TG.x0, TG.y0, RX, RY);
-    // Mảnh có viền MANH_PAD điểm ảnh: vẽ lấn ra ngoài mảnh đúng bằng viền, phần chồng giữa hai mảnh giống hệt nhau
-    const vien = MANH_PAD * MANH_O;
-    for (const v of ve) ctx.drawImage(v.m, v.ox - vien, v.oy - vien, MANH + 2 * vien, MANH + 2 * vien);
-    // Bỏ phần dựng dở của mảnh không còn cần (giải phóng bộ nhớ)
-    for (const k of this.viecManh.keys()) if (!muon.has(k)) this.viecManh.delete(k);
-    if (!cho.length) return;
-    cho.sort((p, q) => p.uu - q.uu);
-    const han = performance.now() + MANH_NGAN_SACH;
-    for (const w of cho) {
-      if (performance.now() >= han) break;
-      const m = this.dungManhSa(w.mi, w.mj, han);
+    if (!this.manhChua.length) return;
+    // Dựng tiếp: mảnh thiếu trong khung nhìn (hạn mức lớn), không thì mảnh gần camera nhất còn chưa dựng (dựng dần ở nền)
+    const han = performance.now() + (thieu >= 0 ? MANH_NGAN_SACH : MANH_NEN);
+    while (performance.now() < han && this.manhChua.length) {
+      let k = thieu;
+      if (k < 0) {
+        // Đang dựng dở mảnh nào thì làm nốt, không thì chọn mảnh gần camera nhất
+        if (this.viecManh) k = this.viecManh.k;
+        else {
+          let bd = Infinity;
+          for (const q of this.manhChua) {
+            const qi = q % sx, qj = (q - qi) / sx;
+            const d = Math.hypot(TG.x0 + (qi + 0.5) * MANH - cx, TG.y0 + (qj + 0.5) * MANH - cy);
+            if (d < bd) { bd = d; k = q; }
+          }
+        }
+      }
+      const m = this.dungManhSa(k, han);
       if (!m) break;
-      this.manhSa.set(w.khoa, m);
-      if (this.manhSa.size > MANH_GIU) this.manhSa.delete(this.manhSa.keys().next().value!);
+      this.manhSa.set(k, m);
+      this.manhChua.splice(this.manhChua.indexOf(k), 1);
+      thieu = -1;
     }
   }
 
@@ -524,12 +563,6 @@ export class VeCanvas {
     const trongVuon =
       -cam.x / cam.k - 40 >= 0 && -cam.y / cam.k - 40 >= 0 && (c.W - cam.x) / cam.k + 40 <= c.MAP && (c.H - cam.y) / cam.k + 40 <= c.MAP;
     if (c.banDoVan !== 'sa' || trongVuon) return;
-    if (NHE) {
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.fillStyle = '#e8b86a';
-      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      return;
-    }
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
     ctx.beginPath();
     ctx.rect(0, 0, c.W, c.H);
@@ -687,7 +720,7 @@ export class VeCanvas {
     // Gà dưới đất + nhân vật, xếp theo y
     for (const o of c.xep) {
       if (o.loai === 'ga') this.veGa(ctx, c, o.ga);
-      else if (o.loai === 'td') { if (!(NHE && o.td.sa)) this.veTrangTri(ctx, o.td, c.t, !!o.td.sa); }
+      else if (o.loai === 'td') this.veTrangTri(ctx, o.td, c.t, !!o.td.sa);
       else if (o.loai === 'cuu') this.veCuu(ctx, c, o.cu);
       else if (o.loai === 'cau') this.veCau(ctx, c, o.cau);
       else if (o.loai === 'cell') this.veCell(ctx, c, o.ce);
@@ -699,7 +732,7 @@ export class VeCanvas {
     this.veMbDem(ctx, c);
 
     // Kamehameha của Cell bắn vào bánh sinh nhật
-    if (!NHE) for (const q of c.chuongTiecView) this.veChuongTiec(ctx, q);
+    for (const q of c.chuongTiecView) this.veChuongTiec(ctx, q);
 
     for (let p = 0; p < c.nguoi.length; p++) this.veThanhTrenDau(ctx, c, p);
     for (const g of c.tuongView) this.veMauTuong(ctx, c, g);
@@ -1089,7 +1122,7 @@ export class VeCanvas {
     ctx.rotate(Math.atan2(dy, dx));
     ctx.scale(s, s);
     ctx.imageSmoothingEnabled = false;
-    this.sang(ctx, '#7fc4ff');
+    // Không dùng shadowBlur: chùm chưởng phóng rất to, làm mờ bóng mỗi khung cực tốn GPU (nhiều Cell cùng bắn là tụt FPS); ảnh chưởng tự có quầng sáng
     const ve = (sx: number, sw: number, dxx: number, dw: number) => ctx.drawImage(img, sx * f, 0, sw * f, h * f, dxx, -h / 2, dw, h);
     ve(nk0, nk1 - nk0, bw * 0.5, Math.max(0, dau - bw * 0.5 + 2));
     ve(0, bw, 0, bw);
@@ -1108,7 +1141,7 @@ export class VeCanvas {
     const tcc = ce.tiec ? c.tiecCua(ce) : undefined;
     const tiec = !!tcc?.on && !ce.chet;
     // Cấp cao nhất: quầng sáng đỏ cam bằng gradient (không dùng shadowBlur: sprite phóng rất to nên làm mờ cực chậm)
-    if (!NHE && ce.cap === SO_CAP - 1 && !ce.chet) {
+    if (ce.cap === SO_CAP - 1 && !ce.chet) {
       const g = ctx.createRadialGradient(0, -32, 2, 0, -32, 36);
       g.addColorStop(0, `rgba(255,${150 + Math.round(60 * Math.sin(c.t * 6))},40,0.5)`);
       g.addColorStop(1, 'rgba(255,120,30,0)');
@@ -1127,7 +1160,7 @@ export class VeCanvas {
       }
       this.sprite(ctx, SP_CELL_TIEC, ce.cap * SP_CELL_TIEC.cot + kt, ce.lat, false);
     } else this.sprite(ctx, SP_CELL, ce.cap * SP_CELL.cot + c.cellKhung(ce), ce.lat, false);
-    if (tiec && !NHE) {
+    if (tiec) {
       ctx.shadowBlur = 0;
       ctx.font = `bold 9px ${FONT}`;
       ctx.textAlign = 'center';
@@ -1145,7 +1178,6 @@ export class VeCanvas {
     ctx.save();
     ctx.translate(tc.x, tc.y);
     // Quầng sáng dưới đáy
-    if (!NHE) {
     ctx.save();
     ctx.scale(1, 0.35);
     const R = 330 * BANH_TO;
@@ -1157,7 +1189,6 @@ export class VeCanvas {
     ctx.arc(0, 0, R, 0, TAU);
     ctx.fill();
     ctx.restore();
-    }
     ctx.save();
     ctx.scale(BANH_TO, BANH_TO);
     this.sprite(ctx, SP_BANH, Math.floor(c.t * BANH_FPS) % BANH_KHUNG, false, true);

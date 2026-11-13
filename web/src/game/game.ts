@@ -1977,17 +1977,15 @@ export class Game {
       xep.push({ loai: 'ga', y: g.y, ga: g });
     }
     for (const g of this.keoGa) if (trong(g.x, g.y, 120)) xep.push({ loai: 'ga', y: g.y, ga: g });
-    // Đang ở đảo nào thì Cell của đảo đó không bị sương mù: thấy hết nếu nằm trong khung nhìn
-    const daoNv = this.trenDao ? this.daoHienTai : -1;
-    this.cellView = this.cell.filter((c) => (daoNv >= 0 && daoCua(c.x, c.y) === daoNv ? true : this.thay(c.x, c.y)) && trong(c.x, c.y - 32 * cellK(c.cap), (c.cap === SO_CAP - 1 ? 58 : 40) * cellK(c.cap) + 60));
+    // Cell, bánh sinh nhật, chưởng tiệc: không bị sương mù, cứ nằm trong khung nhìn camera là vẽ, ra khỏi khung thì thôi
+    // (trước đây theo sương mù nên Cell hiện ra / biến mất đột ngột ngay giữa màn hình). Lề theo kích thước sprite thật.
+    this.cellView = this.cell.filter((c) => trong(c.x, c.y - 32 * cellK(c.cap), (c.cap === SO_CAP - 1 ? 58 : 40) * cellK(c.cap) + 60));
     for (const c of this.cellView) xep.push({ loai: 'cell', y: c.y, ce: c });
-    // Bánh sinh nhật + chưởng Cell bắn vào bánh: cùng quy tắc sương mù như Cell của đảo
-    const thayTiec = (x: number, y: number) => (daoNv >= 0 && daoCua(x, y) === daoNv ? true : this.thay(x, y));
-    this.banhView = this.tiec.filter((tc) => thayTiec(tc.x, tc.y) && trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to));
+    this.banhView = this.tiec.filter((tc) => trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to));
     for (const tc of this.banhView) xep.push({ loai: 'banh', y: tc.y, tc });
     this.chuongTiecView = this.chuongTiec.filter((q) => {
       const dai = Math.hypot(q.x1 - q.x0, q.y1 - q.y0);
-      return thayTiec(q.x1, q.y1) && trong((q.x0 + q.x1) / 2, (q.y0 + q.y1) / 2, dai / 2 + 60 * q.k);
+      return trong((q.x0 + q.x1) / 2, (q.y0 + q.y1) / 2, dai / 2 + 60 * q.k);
     });
     // Người đang được mây / socola phủ lên thì thân được thay bằng mây / socola (cuuView)
     this.cuuView = this.cuu.filter((c) => trong(c.x, c.y, 500));
