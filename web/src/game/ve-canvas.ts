@@ -703,7 +703,7 @@ export class VeCanvas {
     ctx.lineCap = 'butt';
 
     for (const v of c.vatPhamView) {
-      if (v.loai === 'ngoc') this.veNgoc(ctx, c.SP_NGOC, v.x, v.y, v.t, 0.55);
+      if (v.loai === 'ngoc') this.veNgoc(ctx, c.SP_NGOC, v.x, v.y, v.t, 0.55, v.sao ?? 1);
       else if (v.loai === 'socola') this.veSocola(ctx, v);
       else this.veVatPham(ctx, v);
     }
@@ -725,7 +725,9 @@ export class VeCanvas {
         ctx.globalAlpha = 1;
       } else if (o.loai === 'banh') {
         ctx.globalAlpha = c.doRo(o.tc.x, o.tc.y);
-        this.veBanh(ctx, c, o.tc);
+        // Tiệc có ngọc rồng (chưa nhặt): giữa vòng là viên ngọc thay cho bánh
+        if (o.tc.ngoc) this.veNgoc(ctx, c.SP_NGOC, o.tc.x, o.tc.y, c.t, c.ngocTiecTo(o.tc), o.tc.ngoc);
+        else this.veBanh(ctx, c, o.tc);
         ctx.globalAlpha = 1;
       }
       else if (o.loai === 'mb') this.veMayBay(ctx, c);
@@ -1263,12 +1265,12 @@ export class VeCanvas {
   }
 
   /** Ngọc rồng 1 sao (khung 0 của atlas), phát sáng vàng cam, nhấp nhô nhẹ; (x, y) là tâm viên ngọc, k = tỉ lệ */
-  private veNgoc(ctx: CanvasRenderingContext2D, sp: KhungSprite, x: number, y: number, t: number, k: number): void {
+  private veNgoc(ctx: CanvasRenderingContext2D, sp: KhungSprite, x: number, y: number, t: number, k: number, sao = 1): void {
     ctx.save();
     ctx.translate(x, y - (k > 0.25 ? (40 * (k - 0.25)) / 0.3 : 0) + 4 * Math.sin(t * 3));
     ctx.scale(k, k);
     this.sang(ctx, '#ffb347');
-    this.sprite(ctx, sp, 0, false, true);
+    this.sprite(ctx, sp, Math.max(0, Math.min(6, sao - 1)), false, true);
     ctx.restore();
   }
 
@@ -1481,7 +1483,7 @@ export class VeCanvas {
     const xong = c.ngocNhat.length - c.ngocBay.length;
     for (let i = 0; i < xong; i++) {
       const p = toa(i);
-      this.veNgoc(ctx, c.SP_NGOC, p.x, p.y, c.tGame + i, 0.2);
+      this.veNgoc(ctx, c.SP_NGOC, p.x, p.y, c.tGame + i, 0.2, c.ngocNhat[i] ?? 1);
     }
     const cam = c.gocCamera();
     for (const b of c.ngocBay) {
@@ -1491,7 +1493,7 @@ export class VeCanvas {
       const x0 = cam.x + b.x * cam.k, y0 = cam.y + b.y * cam.k;
       const x = x0 + (p.x - x0) * e;
       const y = y0 + (p.y - y0) * e - Math.sin(Math.PI * e) * 120;
-      this.veNgoc(ctx, c.SP_NGOC, x, y, b.t * 2, 0.55 + (0.2 - 0.55) * e);
+      this.veNgoc(ctx, c.SP_NGOC, x, y, b.t * 2, 0.55 + (0.2 - 0.55) * e, b.sao);
     }
   }
 

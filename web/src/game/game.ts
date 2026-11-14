@@ -5,7 +5,7 @@ import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { chuanBiSaMac, daoCua, doSau, trongVuon, veDat, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, type Cell } from './cell';
-import { taoTiec, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_CHU_KY, TIEC_DI, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
+import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_CHU_KY, TIEC_DI, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
@@ -72,7 +72,7 @@ export interface TrungGa {
 interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn hồi SOCOLA_GA_TI_LE máu tối đa */
-export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; }
+export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; /** ngọc: số sao (thiếu = 1) */ sao?: number; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; }
 interface Chu { id: number; x: number; y: number; text: string; mau: string; t: number; }
 interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay: number; vxoay: number; t: number; mau: string; }
 /** chay = cháy nổ (lửa + tia lửa); co = hệ số kích thước */
@@ -785,7 +785,7 @@ export class Game {
   tuongSong: Ga | null = null;
   /** Ngọc rồng đã nhặt (số sao, theo thứ tự nhặt) xếp ở thanh đen trên, bên trái; ngocBay = viên đang bay từ chỗ nhặt lên thanh đen */
   ngocNhat: number[] = [];
-  ngocBay: { x: number; y: number; t: number; slot: number }[] = [];
+  ngocBay: { x: number; y: number; t: number; slot: number; sao: number }[] = [];
   readonly NGOC_BAY_T = 1.1;
   // Gà mẹ đang đánh (phụ gần nhân vật nhất; chưa có thì gà mẹ gốc): chiêu hiện trên thanh đen phía trên
   tuongBang: Ga | null = null;
@@ -1089,6 +1089,12 @@ export class Game {
     this.chuongTiec = [];
     // Tiệc không còn tan hẳn (ván lưu cũ có thể có on = false): Cell về vòng tiệc, đội hình dựng lại từ đầu
     for (const tc of this.tiec) tc.on = true;
+    // Ván lưu cũ (trước khi có ngọc 2 sao trong tiệc): chưa nhặt viên 2 sao thì đặt nó vào một tiệc
+    if (this.tiec.length && !this.tiec.some((t) => t.ngoc) && !this.ngocNhat.includes(NGOC_TIEC_SAO)) {
+      const ds = this.tiec.filter((t) => t.dao !== 0);
+      const tc = ds[Math.floor(Math.random() * ds.length)] ?? this.tiec[0]!;
+      tc.ngoc = NGOC_TIEC_SAO;
+    }
     this.cellDoi = [];
     for (const c of this.cell) { c.vai = undefined; c.muc = undefined; c.nap = undefined; c.chien = false; if (!this.tiecCua(c)) c.tiec = false; }
     if (d.mayBay) this.mayBay = { ...taoMayBay(d.mayBay.x, d.mayBay.y), ...d.mayBay };
@@ -1247,6 +1253,7 @@ export class Game {
     this.capNhatCau(dt);
     this.capNhatCay();
     this.capNhatVatPham(dt);
+    this.capNhatNgocTiec();
     this.anGaSocola();
     this.capNhatHieuUng(dt, dtE);
   }
@@ -1269,6 +1276,32 @@ export class Game {
     }
   }
 
+  /** Nhân vật m nhặt viên ngọc rồng `sao` sao ở (x, y): chữ bay, nổ sáng, chưởng lên trời, viên ngọc bay lên hàng ngọc trên thanh đen */
+  private nhatNgoc(m: NguoiChoi, x: number, y: number, sao: number): void {
+    this.am.phat('anTao');
+    this.chu.push({ id: this.id++, x: m.x, y: m.y - 220, text: `⭐ NGỌC RỒNG ${sao} SAO! (${this.ngocNhat.length + 1}/7)`, mau: '#ffb347', t: 0 });
+    this.vet.push({ id: this.id++, x, y, t: 0, loai: 'chay', co: 1.2 });
+    this.chuongLenTroi(this.nguoi.indexOf(m));
+    this.ngocBay.push({ x, y: y - 40, t: 0, slot: this.ngocNhat.length, sao });
+    this.ngocNhat.push(sao);
+  }
+
+  /** Ngọc rồng giữa vòng tiệc của Cell: nhân vật (không ẩn / gục / mây, không đang bay) chạm vào thì nhặt; chỗ đó thành bánh sinh nhật thường */
+  private capNhatNgocTiec(): void {
+    for (const tc of this.tiec) {
+      if (!tc.ngoc) continue;
+      const m = this.nguoi.find((q) => !q.vang && !this.khuat(q) && !q.bay && Math.hypot(q.x - tc.x, q.y - tc.y) < NGOC_BAN_KINH + 60 * this.ngocTiecTo(tc));
+      if (!m) continue;
+      this.nhatNgoc(m, tc.x, tc.y - 60, tc.ngoc);
+      delete tc.ngoc;
+    }
+  }
+
+  /** Độ to viên ngọc rồng nằm giữa vòng tiệc (theo độ to bánh của đảo, không nhỏ hơn ngọc rơi trên đất) */
+  ngocTiecTo(tc: Tiec): number {
+    return Math.max(0.55, tc.to * 1.2);
+  }
+
   private capNhatVatPham(dt: number): void {
     const conLai: VatPham[] = [];
     for (const b of this.ngocBay) b.t += dt;
@@ -1279,14 +1312,8 @@ export class Game {
       if (!ngoc && v.t >= VP_TON_TAI) continue;
       if (ngoc) {
         const m = this.nguoi.find((q) => !this.khuat(q) && !q.bay && Math.hypot(q.x - v.x, q.y - v.y) < NGOC_BAN_KINH);
-        if (m) {
-          this.am.phat('anTao');
-          this.chu.push({ id: this.id++, x: m.x, y: m.y - 220, text: '⭐ NGỌC RỒNG 1 SAO!', mau: '#ffb347', t: 0 });
-          this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'chay', co: 1.2 });
-          this.chuongLenTroi(this.nguoi.indexOf(m));
-          this.ngocBay.push({ x: v.x, y: v.y - 40, t: 0, slot: this.ngocNhat.length });
-          this.ngocNhat.push(1);
-        } else conLai.push(v);
+        if (m) this.nhatNgoc(m, v.x, v.y, v.sao ?? 1);
+        else conLai.push(v);
         continue;
       }
       const xanh = v.loai === 'xanh';
