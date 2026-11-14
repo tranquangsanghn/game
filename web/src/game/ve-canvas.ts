@@ -4,7 +4,7 @@ import type { KhungSprite } from './sprite';
 import { capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, SO_CAP, SP_CELL, type Cell } from './cell';
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
-import { duongBo } from './ban-do';
+import { duongBo, TG } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
 // Toạ độ vẽ giữ nguyên như bản SVG cũ: viewBox (-SIDE, -BAR, W + 2·SIDE, H + BAR), căn giữa, giữ tỉ lệ.
@@ -108,12 +108,22 @@ const SA_VACH_CAO = 120;
 const SA_VACH_SAU = 190;
 const SA_VIEN = 26;
 const SA_O_DOAN = 1600;
+/** Vòng tối trên đảo: sáng hẳn trong TOI_R0, tối hẳn từ TOI_R1 (đơn vị thế giới); mặt nạ vẽ ở độ phân giải 1/TOI_TL rồi phóng lên */
+const TOI_R0 = 480;
+const TOI_R1 = 880;
+const TOI_TL = 4;
+/** Bản đồ nhỏ khi ngồi máy bay: rộng BDN_W (đơn vị khung nhìn), cách mép BDN_LE */
+const BDN_W = 220;
+const BDN_LE = 14;
 const CO_LAP = 16; // pattern 16×16 ô ngẫu nhiên rồi lặp: một fillRect, không lộ đường nối
 
 export class VeCanvas {
   private mauCo: CanvasPattern | null = null;
   /** Đảo sa mạc: đường bờ (Path2D dựng một lần từ duongBo()) và các mẫu lặp cát / vách đá / biển */
   private bo: Path2D | null = null;
+  /** Mặt nạ vòng tối (độ phân giải thấp) và ảnh bản đồ nhỏ dựng một lần */
+  private matNa: HTMLCanvasElement | null = null;
+  private anhBdn: HTMLCanvasElement | null = null;
   /** Đường bờ cắt thành từng đoạn theo ô SA_O_DOAN (kèm khung bao): stroke chỉ ghép các đoạn trong khung nhìn (stroke cả đường bờ mỗi khung rất tốn) */
   private doanBo: { p: Path2D; x0: number; y0: number; x1: number; y1: number }[] = [];
   private mauSa: { cat: CanvasPattern; vach: CanvasPattern; vien: CanvasPattern } | null = null;
@@ -226,6 +236,8 @@ export class VeCanvas {
     ctx.scale(cam.k, cam.k);
     this.veTheGioi(ctx, c);
     ctx.restore();
+    if (c.tamToi) this.veVongToi(ctx, c, c.tamToi);
+    if (c.banDoNho) this.veBanDoNho(ctx, c, c.banDoNho);
 
     if (c.doHoangHon > 0) {
       ctx.globalAlpha = c.doHoangHon * 0.6;
@@ -463,6 +475,100 @@ export class VeCanvas {
     ctx.stroke(vien);
     ctx.lineJoin = 'miter';
     ctx.lineCap = 'butt';
+  }
+
+  /** Vòng tối quanh nhân vật khi đi bộ trên đảo: mặt nạ đen độ phân giải thấp, khoét lỗ mờ dần quanh từng nhân vật, phóng phủ map một lần */
+  private veVongToi(ctx: CanvasRenderingContext2D, c: Game, tam: { x: number; y: number }[]): void {
+    const w = Math.ceil(c.W / TOI_TL), h = Math.ceil(c.H / TOI_TL);
+    let m = this.matNa;
+    if (!m) m = this.matNa = document.createElement('canvas');
+    if (m.width !== w || m.height !== h) { m.width = w; m.height = h; }
+    const x = m.getContext('2d')!;
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.globalCompositeOperation = 'source-over';
+    x.fillStyle = '#000';
+    x.fillRect(0, 0, w, h);
+    x.globalCompositeOperation = 'destination-out';
+    const cam = c.gocCamera();
+    x.setTransform(1 / TOI_TL, 0, 0, 1 / TOI_TL, 0, 0);
+    for (const t of tam) {
+      const vx = cam.x + t.x * cam.k, vy = cam.y + t.y * cam.k;
+      const r0 = TOI_R0 * cam.k, r1 = TOI_R1 * cam.k;
+      const g = x.createRadialGradient(vx, vy, r0, vx, vy, r1);
+      g.addColorStop(0, 'rgba(0,0,0,1)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = g;
+      x.fillRect(vx - r1, vy - r1, 2 * r1, 2 * r1);
+    }
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(m, 0, 0, w * TOI_TL, h * TOI_TL);
+  }
+
+  /** Bản đồ nhỏ góc trên phải (chỉ khi ngồi máy bay): cả thế giới (đảo + vườn gà) dựng sẵn một lần, máy bay là mũi tên vàng theo hướng bay */
+  private veBanDoNho(ctx: CanvasRenderingContext2D, c: Game, b: { x: number; y: number; huong: number }): void {
+    const RX = TG.x1 - TG.x0, RY = TG.y1 - TG.y0;
+    const W = BDN_W, H = Math.round((BDN_W * RY) / RX);
+    if (!this.anhBdn) {
+      const TL = 2;
+      const cv = document.createElement('canvas');
+      cv.width = W * TL;
+      cv.height = H * TL;
+      const x = cv.getContext('2d')!;
+      x.scale((W * TL) / RX, (H * TL) / RY);
+      x.translate(-TG.x0, -TG.y0);
+      const p = new Path2D();
+      for (const v of duongBo()) {
+        p.moveTo(v[0]!, v[1]!);
+        for (let i = 2; i < v.length; i += 2) p.lineTo(v[i]!, v[i + 1]!);
+        p.closePath();
+      }
+      x.fillStyle = '#f0c75a';
+      x.fill(p, 'evenodd');
+      x.lineWidth = 160;
+      x.strokeStyle = '#a8641e';
+      x.stroke(p);
+      x.fillStyle = '#4caf50';
+      x.fillRect(0, 0, c.MAP, c.MAP);
+      x.lineWidth = 260;
+      x.strokeStyle = '#8a2e22';
+      x.strokeRect(130, 130, c.MAP - 260, c.MAP - 260);
+      this.anhBdn = cv;
+    }
+    const x0 = c.W - W - BDN_LE, y0 = BDN_LE;
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.fillStyle = '#000';
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(x0 - 6, y0 - 6, W + 12, H + 12, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(this.anhBdn, x0, y0, W, H);
+    // Máy bay: vòng nhấp nháy + mũi máy bay theo hướng bay
+    const px = x0 + ((b.x - TG.x0) / RX) * W, py = y0 + ((b.y - TG.y0) / RY) * H;
+    const t = performance.now() / 1000;
+    ctx.globalAlpha = 0.5 + 0.4 * Math.sin(t * 6);
+    duongTron(ctx, 15, px, py);
+    ctx.strokeStyle = '#ffe14d';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.translate(px, py);
+    ctx.rotate(b.huong);
+    ctx.scale(1.5, 1.5);
+    ctx.beginPath();
+    ctx.moveTo(9, 0); ctx.lineTo(2, -2); ctx.lineTo(-1, -9); ctx.lineTo(-4, -9); ctx.lineTo(-2, -2); ctx.lineTo(-7, -2);
+    ctx.lineTo(-9, -5); ctx.lineTo(-10, -5); ctx.lineTo(-9, 0); ctx.lineTo(-10, 5); ctx.lineTo(-9, 5); ctx.lineTo(-7, 2);
+    ctx.lineTo(-2, 2); ctx.lineTo(-4, 9); ctx.lineTo(-1, 9); ctx.lineTo(2, 2); ctx.closePath();
+    ctx.fillStyle = '#ffd23f';
+    ctx.strokeStyle = '#3a2400';
+    ctx.lineWidth = 1.5;
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
   }
 
   /** Nền cát / biển vẽ ở canvas riêng nằm dưới canvas chính, độ phân giải thấp (dprNen × điểm ảnh CSS) rồi trình duyệt phóng lên: phủ kín màn hình bằng ảnh phóng rất tốn ở độ phân giải cao, nền vốn mịn nên không mất nét */

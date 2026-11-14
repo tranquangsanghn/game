@@ -768,6 +768,12 @@ export class Game {
   tuongView: Ga[] = [];
   /** Vùng đang thấy (tính trong capNhatView()): không lên máy bay thì chỉ thấy khối đất nhân vật đang đứng, bên kia vực đen */
   thayVuon = true;
+  /** Đi bộ trên đảo: tâm các vòng sáng (toạ độ thế giới), ngoài vòng là tối; null = không tối */
+  tamToi: { x: number; y: number }[] | null = null;
+  /** Bản đồ nhỏ (chỉ khi ngồi máy bay): vị trí máy bay và hướng bay (radian) */
+  banDoNho: { x: number; y: number; huong: number } | null = null;
+  private mbCu = { x: 0, y: 0 };
+  private mbHuong = 0;
   /** Camera đã vào hẳn trong vườn gà (kẹp cứng theo tường) */
   private camVuon = false;
   thayDao = true;
@@ -1994,6 +2000,16 @@ export class Game {
     const ngoai = banDoHt !== 'sa' || this.nguoi.some((_, i) => this.trongMb(i));
     this.thayVuon = ngoai || !dung.length || dung.some((n) => trongVuon(n.x, n.y));
     this.thayDao = ngoai || !dung.length || dung.some((n) => !trongVuon(n.x, n.y));
+    // Đi bộ trên đảo: tầm nhìn thu hẹp bằng vòng tối quanh từng nhân vật (tâm ở giữa thân)
+    this.tamToi = banDoHt === 'sa' && !ngoai && dung.length > 0 && !this.thayVuon
+      ? dung.filter((n) => !this.trongCau(this.nguoi.indexOf(n))).map((n) => ({ x: n.x, y: n.y - 110 }))
+      : null;
+    // Bản đồ nhỏ góc trên phải khi có người ngồi máy bay: vị trí + hướng bay (theo quãng vừa đi)
+    const mbv = this.mayBay;
+    const ddx = mbv.x - this.mbCu.x, ddy = mbv.y - this.mbCu.y;
+    if (Math.hypot(ddx, ddy) > 2) this.mbHuong = Math.atan2(ddy, ddx);
+    this.mbCu = { x: mbv.x, y: mbv.y };
+    this.banDoNho = banDoHt === 'sa' && this.nguoi.some((_, i) => this.trongMb(i)) ? { x: mbv.x, y: mbv.y, huong: this.mbHuong } : null;
     const trong = (x: number, y: number, le: number) =>
       (trongVuon(x, y) ? this.thayVuon : this.thayDao) &&
       Math.abs(x - this.camX) < this.W / 2 / z + le && y - this.camY > -TAM_VIEW_Y / z - le && y - this.camY < (H - TAM_VIEW_Y) / z + le;
