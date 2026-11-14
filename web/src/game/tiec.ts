@@ -43,10 +43,12 @@ export interface Tiec {
   dao: number; x: number; y: number; on: boolean; t: number;
   /** độ to bánh (nhân khung) và bán kính vòng quanh bánh */
   to: number; bk: number;
-  /** Tiệc này "bánh" là một viên ngọc rồng (số sao, NGOC_TIEC_SAO); nhặt rồi thì bỏ trường này, chỗ đó thành bánh thường */
+  /** Bánh đã bị chưởng của nhân vật bắn nổ (không vẽ nữa) */
+  vo?: boolean;
+  /** Bánh cuối cùng đã hoá ngọc rồng (số sao, NGOC_TIEC_SAO): vẽ viên ngọc thay bánh; nhặt rồi thì bỏ trường này, chỗ đó thành bánh thường */
   ngoc?: number;
 }
-/** Một trong các tiệc (đảo 1..4, ngẫu nhiên, không phải đảo xuất phát) có ngọc rồng 2 sao thay cho bánh: Cell đi vòng quanh và bắn chưởng vào viên ngọc */
+/** Hạ hết sạch Cell rồi bắn chưởng vào các bánh sinh nhật: mỗi phát làm nổ một bánh, bánh cuối cùng hoá ngọc rồng 2 sao */
 export const NGOC_TIEC_SAO = 2;
 /** Chưởng đang bay từ Cell tới bánh (chỉ để đẹp) hoặc tới nhân vật (chưởng chiến đấu: có `sat`, `cap`; đầu chùm tới nơi thì ai nằm trên chùm bị trúng). Không lưu ván. */
 export interface ChuongTiec { id: number; x0: number; y0: number; x1: number; y1: number; t: number; k: number; loai: number; sat?: number; cap?: number }
@@ -98,8 +100,5 @@ export function taoTiec(cell: Cell[]): Tiec[] {
     });
     kq.push(tc);
   }
-  const coNgoc = kq.filter((t) => t.dao !== 0);
-  const chon = coNgoc[Math.floor(Math.random() * coNgoc.length)] ?? kq[0];
-  if (chon) chon.ngoc = NGOC_TIEC_SAO;
   return kq;
 }

@@ -1089,12 +1089,8 @@ export class Game {
     this.chuongTiec = [];
     // Tiệc không còn tan hẳn (ván lưu cũ có thể có on = false): Cell về vòng tiệc, đội hình dựng lại từ đầu
     for (const tc of this.tiec) tc.on = true;
-    // Ván lưu cũ (trước khi có ngọc 2 sao trong tiệc): chưa nhặt viên 2 sao thì đặt nó vào một tiệc
-    if (this.tiec.length && !this.tiec.some((t) => t.ngoc) && !this.ngocNhat.includes(NGOC_TIEC_SAO)) {
-      const ds = this.tiec.filter((t) => t.dao !== 0);
-      const tc = ds[Math.floor(Math.random() * ds.length)] ?? this.tiec[0]!;
-      tc.ngoc = NGOC_TIEC_SAO;
-    }
+    // Ngọc 2 sao chỉ hiện khi đã hạ hết Cell (ván lưu bản trước có thể đặt sẵn ngọc giữa tiệc khi Cell còn sống)
+    if (this.cell.some((c) => !c.chet)) for (const tc of this.tiec) delete tc.ngoc;
     this.cellDoi = [];
     for (const c of this.cell) { c.vai = undefined; c.muc = undefined; c.nap = undefined; c.chien = false; if (!this.tiecCua(c)) c.tiec = false; }
     if (d.mayBay) this.mayBay = { ...taoMayBay(d.mayBay.x, d.mayBay.y), ...d.mayBay };
@@ -1649,6 +1645,7 @@ export class Game {
       if (!d.troi) this.danDoCay(d, t0);
       if (d.to && !d.troi) this.danTrungMb(d, t0);
       if (d.to && !d.soc && !d.troi && d.t < d.T) this.chuongXuyen(d);
+      if (d.to && !d.troi) this.danTrungBanh(d, t0);
       if (d.t < d.T) conLai.push(d);
       else if (d.troi) this.noTroi(d);
       else this.chamDich(d);
@@ -2062,7 +2059,7 @@ export class Game {
     // Cell, bánh sinh nhật, chưởng tiệc: bị sương mù (chỉ vẽ trong tầm nhìn, mờ dần ở dải MO_RO cuối, doRo()) và lọc theo khung nhìn. Lề theo kích thước sprite thật.
     this.cellView = this.cell.filter((c) => this.doRo(c.x, c.y) > 0 && trong(c.x, c.y - 32 * cellK(c.cap), (c.cap === SO_CAP - 1 ? 58 : 40) * cellK(c.cap) + 60));
     for (const c of this.cellView) xep.push({ loai: 'cell', y: c.y, ce: c });
-    this.banhView = this.tiec.filter((tc) => this.doRo(tc.x, tc.y) > 0 && trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to));
+    this.banhView = this.tiec.filter((tc) => !tc.vo && this.doRo(tc.x, tc.y) > 0 && trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to));
     for (const tc of this.banhView) xep.push({ loai: 'banh', y: tc.y, tc });
     this.chuongTiecView = this.chuongTiec.filter((q) => {
       const dai = Math.hypot(q.x1 - q.x0, q.y1 - q.y0);
@@ -3707,6 +3704,45 @@ export class Game {
   }
 
   // Chưởng (Chiêu đặc biệt / socola, không tính chưởng tự bắn lên trời) bay qua thân máy bay thì máy bay trúng (người ngồi trên máy bay bắn chưởng thì máy bay nổ ngay, xem ban())
+  /**
+   * Chưởng (Chiêu đặc biệt / socola) của nhân vật quét qua bánh sinh nhật. Còn Cell sống thì bánh không hề hấn (chữ "CÒN n CELL!").
+   * Hạ hết sạch Cell rồi: mỗi phát làm nổ một bánh; bánh cuối cùng không nổ mà hoá ngọc rồng 2 sao (nhặt như ngọc thường, capNhatNgocTiec()).
+   */
+  private danTrungBanh(d: Dan, t0: number): void {
+    const k0 = Math.min(1, t0 / d.T), k1 = Math.min(1, d.t / d.T);
+    const dx = d.x1 - d.x0, dy = d.y1 - d.y0;
+    const buoc = Math.max(1, Math.ceil((Math.hypot(dx, dy) * (k1 - k0)) / 40));
+    for (const tc of this.tiec) {
+      if (tc.vo || tc.ngoc || d.da?.includes(-1000 - tc.dao)) continue;
+      const rx = 90 * tc.to + 50, tren = 480 * tc.to + 40;
+      let trung = false;
+      for (let i = 0; i <= buoc && !trung; i++) {
+        const k = k0 + ((k1 - k0) * i) / buoc;
+        const px = d.x0 + dx * k, py = d.y0 + dy * k;
+        trung = Math.abs(px - tc.x) < rx && py > tc.y - tren && py < tc.y + 60;
+      }
+      if (!trung) continue;
+      (d.da ??= []).push(-1000 - tc.dao);
+      const yTam = tc.y - 200 * tc.to;
+      const conCell = this.cell.filter((c) => !c.chet).length;
+      if (conCell > 0) {
+        this.chu.push({ id: this.id++, x: tc.x, y: yTam - 120, text: `🎂 CÒN ${conCell} CELL! HẠ HẾT CELL ĐÃ`, mau: '#ffd166', t: 0 });
+        continue;
+      }
+      const conBanh = this.tiec.filter((t) => !t.vo && !t.ngoc).length;
+      this.vet.push({ id: this.id++, x: tc.x, y: yTam, t: 0, loai: 'chay', co: 1.4 });
+      this.rungMan(0.2, 10);
+      if (conBanh > 1 || this.ngocNhat.includes(NGOC_TIEC_SAO)) {
+        tc.vo = true;
+        this.chu.push({ id: this.id++, x: tc.x, y: yTam - 120, text: conBanh > 1 ? `🎂 BÙM! CÒN ${conBanh - 1} BÁNH` : '🎂 BÙM!', mau: '#ffd166', t: 0 });
+      } else {
+        tc.ngoc = NGOC_TIEC_SAO;
+        this.vet.push({ id: this.id++, x: tc.x, y: yTam, t: 0, loai: 'no' });
+        this.chu.push({ id: this.id++, x: tc.x, y: yTam - 160, text: `✨ BÁNH CUỐI CÙNG HOÁ NGỌC RỒNG ${NGOC_TIEC_SAO} SAO!`, mau: '#ffb347', t: 0 });
+      }
+    }
+  }
+
   private danTrungMb(d: Dan, t0: number): void {
     const m = this.mayBay;
     if (m.pha === 'trung' || m.pha === 'no') return;
