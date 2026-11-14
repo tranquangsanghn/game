@@ -108,10 +108,6 @@ const SA_VACH_CAO = 120;
 const SA_VACH_SAU = 190;
 const SA_VIEN = 26;
 const SA_O_DOAN = 1600;
-/** Vòng tối trên đảo: sáng hẳn trong TOI_R0, tối hẳn từ TOI_R1 (đơn vị thế giới); mặt nạ vẽ ở độ phân giải 1/TOI_TL rồi phóng lên */
-const TOI_R0 = 480;
-const TOI_R1 = 880;
-const TOI_TL = 4;
 /** Bản đồ nhỏ khi ngồi máy bay: rộng BDN_W (đơn vị khung nhìn), cách mép BDN_LE */
 const BDN_W = 220;
 const BDN_LE = 14;
@@ -121,8 +117,7 @@ export class VeCanvas {
   private mauCo: CanvasPattern | null = null;
   /** Đảo sa mạc: đường bờ (Path2D dựng một lần từ duongBo()) và các mẫu lặp cát / vách đá / biển */
   private bo: Path2D | null = null;
-  /** Mặt nạ vòng tối (độ phân giải thấp) và ảnh bản đồ nhỏ dựng một lần */
-  private matNa: HTMLCanvasElement | null = null;
+  /** Ảnh bản đồ nhỏ dựng một lần */
   private anhBdn: HTMLCanvasElement | null = null;
   /** Đường bờ cắt thành từng đoạn theo ô SA_O_DOAN (kèm khung bao): stroke chỉ ghép các đoạn trong khung nhìn (stroke cả đường bờ mỗi khung rất tốn) */
   private doanBo: { p: Path2D; x0: number; y0: number; x1: number; y1: number }[] = [];
@@ -236,7 +231,6 @@ export class VeCanvas {
     ctx.scale(cam.k, cam.k);
     this.veTheGioi(ctx, c);
     ctx.restore();
-    if (c.tamToi) this.veVongToi(ctx, c, c.tamToi);
     if (c.banDoNho) this.veBanDoNho(ctx, c, c.banDoNho);
 
     if (c.doHoangHon > 0) {
@@ -475,33 +469,6 @@ export class VeCanvas {
     ctx.stroke(vien);
     ctx.lineJoin = 'miter';
     ctx.lineCap = 'butt';
-  }
-
-  /** Vòng tối quanh nhân vật khi đi bộ trên đảo: mặt nạ đen độ phân giải thấp, khoét lỗ mờ dần quanh từng nhân vật, phóng phủ map một lần */
-  private veVongToi(ctx: CanvasRenderingContext2D, c: Game, tam: { x: number; y: number }[]): void {
-    const w = Math.ceil(c.W / TOI_TL), h = Math.ceil(c.H / TOI_TL);
-    let m = this.matNa;
-    if (!m) m = this.matNa = document.createElement('canvas');
-    if (m.width !== w || m.height !== h) { m.width = w; m.height = h; }
-    const x = m.getContext('2d')!;
-    x.setTransform(1, 0, 0, 1, 0, 0);
-    x.globalCompositeOperation = 'source-over';
-    x.fillStyle = '#000';
-    x.fillRect(0, 0, w, h);
-    x.globalCompositeOperation = 'destination-out';
-    const cam = c.gocCamera();
-    x.setTransform(1 / TOI_TL, 0, 0, 1 / TOI_TL, 0, 0);
-    for (const t of tam) {
-      const vx = cam.x + t.x * cam.k, vy = cam.y + t.y * cam.k;
-      const r0 = TOI_R0 * cam.k, r1 = TOI_R1 * cam.k;
-      const g = x.createRadialGradient(vx, vy, r0, vx, vy, r1);
-      g.addColorStop(0, 'rgba(0,0,0,1)');
-      g.addColorStop(1, 'rgba(0,0,0,0)');
-      x.fillStyle = g;
-      x.fillRect(vx - r1, vy - r1, 2 * r1, 2 * r1);
-    }
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(m, 0, 0, w * TOI_TL, h * TOI_TL);
   }
 
   /** Bản đồ nhỏ góc trên phải (chỉ khi ngồi máy bay): cả thế giới (đảo + vườn gà) dựng sẵn một lần, máy bay là mũi tên vàng theo hướng bay */
@@ -744,11 +711,23 @@ export class VeCanvas {
     // Gà dưới đất + nhân vật, xếp theo y
     for (const o of c.xep) {
       if (o.loai === 'ga') this.veGa(ctx, c, o.ga);
-      else if (o.loai === 'td') this.veTrangTri(ctx, o.td, c.t, !!o.td.sa);
+      else if (o.loai === 'td') {
+        // Trang trí đảo hiện dần theo sương mù
+        if (o.td.sa) ctx.globalAlpha = c.doRo(o.td.x, o.td.y);
+        this.veTrangTri(ctx, o.td, c.t, !!o.td.sa);
+        ctx.globalAlpha = 1;
+      }
       else if (o.loai === 'cuu') this.veCuu(ctx, c, o.cu);
       else if (o.loai === 'cau') this.veCau(ctx, c, o.cau);
-      else if (o.loai === 'cell') this.veCell(ctx, c, o.ce);
-      else if (o.loai === 'banh') this.veBanh(ctx, c, o.tc);
+      else if (o.loai === 'cell') {
+        ctx.globalAlpha = c.doRo(o.ce.x, o.ce.y);
+        this.veCell(ctx, c, o.ce);
+        ctx.globalAlpha = 1;
+      } else if (o.loai === 'banh') {
+        ctx.globalAlpha = c.doRo(o.tc.x, o.tc.y);
+        this.veBanh(ctx, c, o.tc);
+        ctx.globalAlpha = 1;
+      }
       else if (o.loai === 'mb') this.veMayBay(ctx, c);
       else this.veNhanVat(ctx, c, o.p);
     }
@@ -756,7 +735,11 @@ export class VeCanvas {
     this.veMbDem(ctx, c);
 
     // Kamehameha của Cell bắn vào bánh sinh nhật
-    for (const q of c.chuongTiecView) this.veChuongTiec(ctx, q);
+    for (const q of c.chuongTiecView) {
+      ctx.globalAlpha = c.doRo(q.x0, q.y0);
+      this.veChuongTiec(ctx, q);
+      ctx.globalAlpha = 1;
+    }
 
     for (let p = 0; p < c.nguoi.length; p++) this.veThanhTrenDau(ctx, c, p);
     for (const g of c.tuongView) this.veMauTuong(ctx, c, g);

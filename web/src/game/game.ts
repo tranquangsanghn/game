@@ -197,6 +197,8 @@ const TUONG = 114; // = đúng một lớp mặt tường (38px × TL_TUONG 3)
 // Hai bảng chiêu thức khoét vào map ở hai góc dưới (hình bán nguyệt nền đen, tâm nằm trên mép dưới): Mabu bên trái, Zinbu bên phải. Map vẫn chiếm cả màn hình.
 const R_BANG = 225;
 const TAM_VIEW_Y = 520;
+/** Dải mờ dần ở mép tầm nhìn của sương mù trên đảo (đơn vị thế giới) */
+const MO_RO = 220;
 // Camera chung đặt ở trung điểm 2 nhân vật. ZOOM là mức gần nhất, hai người càng xa thì càng thu nhỏ tới ZOOM_MIN.
 const ZOOM = 0.55;
 const ZOOM_MIN = 0.36;
@@ -768,8 +770,6 @@ export class Game {
   tuongView: Ga[] = [];
   /** Vùng đang thấy (tính trong capNhatView()): không lên máy bay thì chỉ thấy khối đất nhân vật đang đứng, bên kia vực đen */
   thayVuon = true;
-  /** Đi bộ trên đảo: tâm các vòng sáng (toạ độ thế giới), ngoài vòng là tối; null = không tối */
-  tamToi: { x: number; y: number }[] | null = null;
   /** Bản đồ nhỏ (chỉ khi ngồi máy bay): vị trí máy bay và hướng bay (radian) */
   banDoNho: { x: number; y: number; huong: number } | null = null;
   private mbCu = { x: 0, y: 0 };
@@ -2000,10 +2000,6 @@ export class Game {
     const ngoai = banDoHt !== 'sa' || this.nguoi.some((_, i) => this.trongMb(i));
     this.thayVuon = ngoai || !dung.length || dung.some((n) => trongVuon(n.x, n.y));
     this.thayDao = ngoai || !dung.length || dung.some((n) => !trongVuon(n.x, n.y));
-    // Đi bộ trên đảo: tầm nhìn thu hẹp bằng vòng tối quanh từng nhân vật (tâm ở giữa thân)
-    this.tamToi = banDoHt === 'sa' && !ngoai && dung.length > 0 && !this.thayVuon
-      ? dung.filter((n) => !this.trongCau(this.nguoi.indexOf(n))).map((n) => ({ x: n.x, y: n.y - 110 }))
-      : null;
     // Bản đồ nhỏ góc trên phải khi có người ngồi máy bay: vị trí + hướng bay (theo quãng vừa đi)
     const mbv = this.mayBay;
     const ddx = mbv.x - this.mbCu.x, ddy = mbv.y - this.mbCu.y;
@@ -2028,12 +2024,14 @@ export class Game {
     for (const g of this.keoGa) if (trong(g.x, g.y, 120)) xep.push({ loai: 'ga', y: g.y, ga: g });
     // Cell, bánh sinh nhật, chưởng tiệc: không bị sương mù, cứ nằm trong khung nhìn camera là vẽ, ra khỏi khung thì thôi
     // (trước đây theo sương mù nên Cell hiện ra / biến mất đột ngột ngay giữa màn hình). Lề theo kích thước sprite thật.
-    this.cellView = this.cell.filter((c) => trong(c.x, c.y - 32 * cellK(c.cap), (c.cap === SO_CAP - 1 ? 58 : 40) * cellK(c.cap) + 60));
+    this.cellView = this.cell.filter((c) => this.doRo(c.x, c.y) > 0 && trong(c.x, c.y - 32 * cellK(c.cap), (c.cap === SO_CAP - 1 ? 58 : 40) * cellK(c.cap) + 60));
     for (const c of this.cellView) xep.push({ loai: 'cell', y: c.y, ce: c });
-    this.banhView = this.tiec.filter((tc) => trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to));
+    this.banhView = this.tiec.filter((tc) => this.doRo(tc.x, tc.y) > 0 && trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to));
     for (const tc of this.banhView) xep.push({ loai: 'banh', y: tc.y, tc });
     this.chuongTiecView = this.chuongTiec.filter((q) => {
       const dai = Math.hypot(q.x1 - q.x0, q.y1 - q.y0);
+      // Chưởng hiện theo con Cell bắn ra nó (đầu x0, y0)
+      if (this.doRo(q.x0, q.y0) <= 0) return false;
       return trong((q.x0 + q.x1) / 2, (q.y0 + q.y1) / 2, dai / 2 + 60 * q.k);
     });
     // Người đang được mây / socola phủ lên thì thân được thay bằng mây / socola (cuuView)
@@ -2048,7 +2046,7 @@ export class Game {
     const dem = this.mbDem();
     this.mbDemView = dem && trong(dem.x, dem.y, 300) ? dem : null;
     this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && !this.trongMb(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
-    for (const t of this.trangTri) if (!t.mat && trong(t.x, t.y, t.to ? 700 : 400)) xep.push({ loai: 'td', y: t.y, td: t });
+    for (const t of this.trangTri) if (!t.mat && (!t.sa || this.doRo(t.x, t.y) > 0) && trong(t.x, t.y, t.to ? 700 : 400)) xep.push({ loai: 'td', y: t.y, td: t });
     xep.sort((a, b) => a.y - b.y);
     this.xep = xep;
     this.gaBayView = this.ga.filter((g) => g.loai === 'flyer' && this.thay(g.x, g.y) && trong(g.x, g.y, 400));
@@ -2087,6 +2085,13 @@ export class Game {
       }
     }
     this.tuongView = cacTuong.filter((t) => this.thay(t.x, t.y) && trong(t.x, t.y, 450));
+  }
+
+  /** Sương mù trên đảo: độ rõ 0..1 của một điểm, rõ hẳn trong TAM_NHIN − MO_RO, mờ dần tới TAM_NHIN (Cell, bánh, trang trí đảo hiện dần khi đi tới) */
+  doRo(x: number, y: number): number {
+    let r = 0;
+    for (const o of this.nhinNguon) r = Math.max(r, (TAM_NHIN - Math.hypot(o.x - x, o.y - y)) / MO_RO);
+    return Math.min(1, r);
   }
 
   // Điểm có nằm trong tầm nhìn của nhân vật hoặc chưởng nào không
