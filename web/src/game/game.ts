@@ -768,6 +768,8 @@ export class Game {
   tuongView: Ga[] = [];
   /** Vùng đang thấy (tính trong capNhatView()): không lên máy bay thì chỉ thấy khối đất nhân vật đang đứng, bên kia vực đen */
   thayVuon = true;
+  /** Camera đã vào hẳn trong vườn gà (kẹp cứng theo tường) */
+  private camVuon = false;
   thayDao = true;
   // Gà mẹ GỐC còn sống (không lọc theo khung nhìn): avatar, số mạng, mũi tên chỉ hướng
   tuongSong: Ga | null = null;
@@ -1969,19 +1971,27 @@ export class Game {
     const tz = kep(Math.min(ZOOM, dx > 1 ? VUNG_X / dx : ZOOM, dy > 1 ? VUNG_Y / dy : ZOOM), ZOOM_MIN, ZOOM) * (1 - (1 - MB_ZOOM) * zb);
     const kv = ngay ? 1 : 1 - Math.exp(-dt * 6);
     const kz = ngay ? 1 : 1 - Math.exp(-dt * 3);
-    this.camX += (tx - this.camX) * kv;
-    this.camY += (ty - this.camY) * kv;
     this.camZ += (tz - this.camZ) * kz;
-    // Camera không ra khỏi bản đồ: chạm mép map thì mép đó nằm đúng mép màn hình, không lộ vùng đen
     const zc = this.camZ;
-    const bien = banDoHt === 'sa' ? TG : { x0: 0, y0: 0, x1: MAP, y1: MAP };
+    // Đi bộ trong vườn gà (không ai ngồi máy bay): camera bị giữ trong vườn, tường luôn là mép màn hình, không bao giờ thấy vực.
+    // Chỉ khi có người ngồi máy bay camera mới ra được ngoài vườn (thấy vực, đảo). Vừa xuống máy bay thì camera trượt dần về
+    // trong vườn (đích kẹp trong vườn), vào hẳn rồi mới kẹp cứng (camVuon).
+    const dung = this.nguoi.filter((n) => !n.vang);
+    const giuVuon = banDoHt === 'sa' && !this.nguoi.some((_, i) => this.trongMb(i)) && dung.length > 0 && dung.every((n) => trongVuon(n.x, n.y));
+    const vx0 = this.W / 2 / zc, vx1 = MAP - this.W / 2 / zc, vy0 = TAM_VIEW_Y / zc, vy1 = MAP - (H - TAM_VIEW_Y) / zc;
+    if (!giuVuon) this.camVuon = false;
+    else if (!this.camVuon && this.camX >= vx0 - 1 && this.camX <= vx1 + 1 && this.camY >= vy0 - 1 && this.camY <= vy1 + 1) this.camVuon = true;
+    const dx2 = giuVuon ? kep(tx, vx0, vx1) : tx, dy2 = giuVuon ? kep(ty, vy0, vy1) : ty;
+    this.camX += (dx2 - this.camX) * kv;
+    this.camY += (dy2 - this.camY) * kv;
+    // Camera không ra khỏi bản đồ: chạm mép map thì mép đó nằm đúng mép màn hình, không lộ vùng đen
+    const bien = banDoHt !== 'sa' || (giuVuon && (this.camVuon || ngay)) ? { x0: 0, y0: 0, x1: MAP, y1: MAP } : TG;
     this.camX = kep(this.camX, bien.x0 + this.W / 2 / zc, bien.x1 - this.W / 2 / zc);
     this.camY = kep(this.camY, bien.y0 + TAM_VIEW_Y / zc, bien.y1 - (H - TAM_VIEW_Y) / zc);
 
     const z = this.camZ;
     // Không lên máy bay thì không nhìn ra ngoài: chỉ thấy khối đất (vườn gà / vòng đảo) có nhân vật đang đứng; ai trên máy bay thì thấy hết
     const ngoai = banDoHt !== 'sa' || this.nguoi.some((_, i) => this.trongMb(i));
-    const dung = this.nguoi.filter((n) => !n.vang);
     this.thayVuon = ngoai || !dung.length || dung.some((n) => trongVuon(n.x, n.y));
     this.thayDao = ngoai || !dung.length || dung.some((n) => !trongVuon(n.x, n.y));
     const trong = (x: number, y: number, le: number) =>

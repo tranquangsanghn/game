@@ -32,6 +32,7 @@
 # Nguyên tắc camera
 
 - Camera chung bám trung điểm 2 nhân vật nhưng luôn bị kẹp trong bản đồ (trong `capNhatView()`, tính theo mức zoom hiện tại): chạm mép bản đồ thì mép đó trùng đúng mép màn hình, không bao giờ lộ vùng đen ngoài map.
+- **Đi bộ trong vườn gà thì camera bị giữ trong vườn** (`giuVuon` / `camVuon` trong `capNhatView()`): kẹp theo 0..`MAP`, tường vườn luôn là mép màn hình, không bao giờ thấy vực đen bên ngoài. Chỉ khi có người ngồi máy bay camera mới ra ngoài vườn (thấy vực, đảo); xuống máy bay trong vườn thì camera trượt dần về rồi mới kẹp cứng. Trên đảo camera vẫn kẹp theo `TG` (đảo / dải cát hẹp hơn khung nhìn nên vẫn thấy vực quanh bờ).
 - Mọi thứ liên quan đến vị trí camera (lọc render, toạ độ thế giới – màn hình) dùng chung `camX` / `camY` / `camZ` sau khi đã kẹp.
 
 # Nguyên tắc bố cục & chọn chiêu
