@@ -712,8 +712,8 @@ export class VeCanvas {
     for (const o of c.xep) {
       if (o.loai === 'ga') this.veGa(ctx, c, o.ga);
       else if (o.loai === 'td') {
-        // Trang trí đảo hiện dần theo sương mù
-        if (o.td.sa) ctx.globalAlpha = c.doRo(o.td.x, o.td.y);
+        // Trang trí hiện dần theo sương mù (đảo; vườn gà khi không ai ở trong vườn)
+        ctx.globalAlpha = c.doRo(o.td.x, o.td.y);
         this.veTrangTri(ctx, o.td, c.t, !!o.td.sa);
         ctx.globalAlpha = 1;
       }

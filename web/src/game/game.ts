@@ -770,6 +770,8 @@ export class Game {
   tuongView: Ga[] = [];
   /** Vùng đang thấy (tính trong capNhatView()): không lên máy bay thì chỉ thấy khối đất nhân vật đang đứng, bên kia vực đen */
   thayVuon = true;
+  /** Có người đang ở trong vườn gà: vật trong vườn không bị sương mù */
+  private vuonRo = true;
   /** Bản đồ nhỏ (chỉ khi ngồi máy bay): vị trí máy bay và hướng bay (radian) */
   banDoNho: { x: number; y: number; huong: number } | null = null;
   private mbCu = { x: 0, y: 0 };
@@ -1999,6 +2001,7 @@ export class Game {
     // Không lên máy bay thì không nhìn ra ngoài: chỉ thấy khối đất (vườn gà / vòng đảo) có nhân vật đang đứng; ai trên máy bay thì thấy hết
     const ngoai = banDoHt !== 'sa' || this.nguoi.some((_, i) => this.trongMb(i));
     this.thayVuon = ngoai || !dung.length || dung.some((n) => trongVuon(n.x, n.y));
+    this.vuonRo = banDoHt !== 'sa' || dung.some((n) => trongVuon(n.x, n.y));
     this.thayDao = ngoai || !dung.length || dung.some((n) => !trongVuon(n.x, n.y));
     // Bản đồ nhỏ góc trên phải khi có người ngồi máy bay: vị trí + hướng bay (theo quãng vừa đi)
     const mbv = this.mayBay;
@@ -2009,7 +2012,7 @@ export class Game {
     const trong = (x: number, y: number, le: number) =>
       (trongVuon(x, y) ? this.thayVuon : this.thayDao) &&
       Math.abs(x - this.camX) < this.W / 2 / z + le && y - this.camY > -TAM_VIEW_Y / z - le && y - this.camY < (H - TAM_VIEW_Y) / z + le;
-    this.vatPhamView = this.vatPham.filter((v) => trong(v.x, v.y, 100));
+    this.vatPhamView = this.vatPham.filter((v) => trong(v.x, v.y, 100) && this.doRo(v.x, v.y) > 0);
     this.trungView = this.trungDe.filter((e) => this.thay(e.x, e.y) && trong(e.x, e.y, e.db ? 300 : 100));
     this.huongView = this.huongToiTuong(trong);
     this.nhinNguon = [
@@ -2037,7 +2040,7 @@ export class Game {
     // Người đang được mây / socola phủ lên thì thân được thay bằng mây / socola (cuuView)
     this.cuuView = this.cuu.filter((c) => trong(c.x, c.y, 500));
     for (const c of this.cuuView) xep.push({ loai: 'cuu', y: c.y, cu: c });
-    this.cauView = this.cauTron.filter((q) => (q.pha !== 'moc' || q.t > CAU_MOC - 1) && trong(q.x, q.y, 400));
+    this.cauView = this.cauTron.filter((q) => this.doRo(q.x, q.y) > 0 && (q.pha !== 'moc' || q.t > CAU_MOC - 1) && trong(q.x, q.y, 400));
     for (const q of this.cauView) xep.push({ loai: 'cau', y: q.y, cau: q });
     // Máy bay: đang bay thì luôn nằm trên mọi vật
     const mb = this.mbHinh();
@@ -2046,7 +2049,7 @@ export class Game {
     const dem = this.mbDem();
     this.mbDemView = dem && trong(dem.x, dem.y, 300) ? dem : null;
     this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && !this.trongMb(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
-    for (const t of this.trangTri) if (!t.mat && (!t.sa || this.doRo(t.x, t.y) > 0) && trong(t.x, t.y, t.to ? 700 : 400)) xep.push({ loai: 'td', y: t.y, td: t });
+    for (const t of this.trangTri) if (!t.mat && this.doRo(t.x, t.y) > 0 && trong(t.x, t.y, t.to ? 700 : 400)) xep.push({ loai: 'td', y: t.y, td: t });
     xep.sort((a, b) => a.y - b.y);
     this.xep = xep;
     this.gaBayView = this.ga.filter((g) => g.loai === 'flyer' && this.thay(g.x, g.y) && trong(g.x, g.y, 400));
@@ -2089,6 +2092,8 @@ export class Game {
 
   /** Sương mù trên đảo: độ rõ 0..1 của một điểm, rõ hẳn trong TAM_NHIN − MO_RO, mờ dần tới TAM_NHIN (Cell, bánh, trang trí đảo hiện dần khi đi tới) */
   doRo(x: number, y: number): number {
+    // Trong vườn gà mà có người đang ở trong vườn (đi bộ hay bay ngang) thì vật của vườn luôn rõ; ra khỏi vườn thì vườn cũng bị sương mù, chỉ còn nền cỏ + tường
+    if (this.vuonRo && trongVuon(x, y)) return 1;
     let r = 0;
     for (const o of this.nhinNguon) r = Math.max(r, (TAM_NHIN - Math.hypot(o.x - x, o.y - y)) / MO_RO);
     return Math.min(1, r);
