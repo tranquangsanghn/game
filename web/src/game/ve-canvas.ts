@@ -4,7 +4,7 @@ import type { KhungSprite } from './sprite';
 import { capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, SO_CAP, SP_CELL, type Cell } from './cell';
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
-import { bamDiem, doSau, doSauVuon, nhieu, TG } from './ban-do';
+import { duongBo } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
 // Toạ độ vẽ giữ nguyên như bản SVG cũ: viewBox (-SIDE, -BAR, W + 2·SIDE, H + BAR), căn giữa, giữ tỉ lệ.
@@ -80,57 +80,43 @@ const TG_MAT = { sx: 16, sy: 138, w: 48, h: 38 };
 const TG_GACH = { sx: 16, sy: 141, w: 48, h: 35 };
 const TG_VIEN = { sx: 16, sy: 10, w: 48, h: 6 };
 const TL_TUONG = 3;
-/** Đảo sa mạc: ảnh trang trí (gói "Desert Tileset", vẽ mượt), neo ở giữa đáy; thứ tự khớp loai (0 = cây đổ được) */
+/** Đảo sa mạc (gói "Free Desert Top-Down Tileset" của LudicArts, dựng bằng tools/tao-atlas-sa-mac.py): một atlas trang trí
+ *  neo giữa đáy, thứ tự khớp loai (0 = cây đổ được); k = số đơn vị thế giới mỗi điểm ảnh atlas */
 const SA = 'assets/game/sa_mac/';
+const SA_TRANG_TRI = SA + 'trang_tri.png';
 const TRANG_TRI_SA = [
-  { url: SA + 'cay.png', w: 313, h: 260, k: 1.1 },
-  { url: SA + 'bui.png', w: 145, h: 88, k: 1.15 },
-  { url: SA + 'xuong_rong_1.png', w: 108, h: 111, k: 1.5 },
-  { url: SA + 'da.png', w: 124, h: 73, k: 1.3 },
-  { url: SA + 'xuong_rong_3.png', w: 86, h: 96, k: 1.5 },
-  { url: SA + 'xuong.png', w: 150, h: 51, k: 1.1 },
-  { url: SA + 'co.png', w: 102, h: 50, k: 1.0 },
-  { url: SA + 'bui_kho.png', w: 131, h: 74, k: 1.1 },
-  { url: SA + 'xuong_rong_2.png', w: 70, h: 45, k: 1.4 },
+  { sx: 0, sy: 0, w: 318, h: 258, k: 1.25 }, // cây khô
+  { sx: 320, sy: 0, w: 103, h: 90, k: 1.8 }, // tảng đá to
+  { sx: 425, sy: 0, w: 61, h: 90, k: 1.8 }, // xương rồng nhỏ
+  { sx: 0, sy: 260, w: 83, h: 74, k: 1.8 }, // xương rồng tròn hoa đỏ
+  { sx: 85, sy: 260, w: 100, h: 91, k: 1.6 }, // cỏ vàng
+  { sx: 187, sy: 260, w: 50, h: 61, k: 1.8 }, // sọ bò
+  { sx: 239, sy: 260, w: 83, h: 74, k: 1.8 }, // xương rồng tròn hoa cam
+  { sx: 324, sy: 260, w: 81, h: 72, k: 1.8 }, // đá
+  { sx: 407, sy: 260, w: 92, h: 140, k: 1.8 }, // xương rồng to
+  { sx: 0, sy: 402, w: 100, h: 91, k: 1.6 }, // cỏ xanh
+  { sx: 102, sy: 402, w: 75, h: 68, k: 1.8 }, // sỏi
+  { sx: 179, sy: 402, w: 44, h: 37, k: 1.8 }, // cành khô
 ];
-/** Ô cát gốc của gói tileset (128px): lấy đốm sẫm làm vân cát */
+/** Ô cát lặp (128px phủ SA_O_CAT đơn vị) và vách đá lặp (128px rộng phủ SA_O_VACH đơn vị) */
 const SA_CAT = SA + 'cat.png';
-/** Nền cát / biển vẽ sẵn theo mảnh MANH × MANH đơn vị bản đồ, độ phân giải 1/MANH_TL. Mỗi mảnh dựng MỘT lần rồi giữ luôn
- *  (không xoá rồi dựng lại khi bay qua bay lại): mảnh có cát / bờ / biển nông là mảnh riêng, mảnh biển sâu (cả mảnh một màu
- *  + lấp lánh) dùng chung một mảnh. Mảnh trong khung nhìn dựng trước, còn lại dựng dần ở nền theo hạn mức thời gian mỗi khung. */
-const MANH = 800;
-const MANH_TL = 4;
-/** Mảnh dựng thêm viền MANH_PAD điểm ảnh chứa đúng nội dung của mảnh bên cạnh (cùng lưới điểm ảnh toàn thế giới): vẽ chồng lên nhau thì giống hệt, không lộ đường nối */
-const MANH_PAD = 2;
-const MANH_N = Math.ceil(MANH / MANH_TL);
-const MANH_O = MANH / MANH_N;
-/** Thời gian tối đa mỗi khung dành cho việc dựng mảnh (ms): còn mảnh trong khung nhìn chưa có thì MANH_NGAN_SACH, không thì dựng dần ở nền MANH_NEN */
-const MANH_NGAN_SACH = 6;
-const MANH_NEN = 2.5;
-/** Mảnh mà mọi điểm sâu hơn MANH_SAU (đơn vị bản đồ) dưới mặt biển: chỉ còn màu biển sâu, dùng chung một mảnh */
-const MANH_SAU = -700;
-// Bảng màu lấy từ tileset (kem viền trên, cam giữa, nâu bóng) + biển kiểu đảo Kame
-const C_KEM = [243, 213, 148];
-const C_CAT = [240, 195, 122];
-const C_UOT = [214, 168, 94];
-const C_BOT = [246, 252, 255];
-const C_NONG = [96, 206, 236];
-const C_SAU = [40, 122, 214];
+const SA_VACH = SA + 'vach.png';
+const SA_O_CAT = 520;
+const SA_O_VACH = 260;
+/** Đảo là cao nguyên cát: vách đá cao SA_VACH_CAO lộ ra ở bờ phía nam, viền đá SA_VIEN quanh mép, sóng bọt quanh chân vách */
+const SA_VACH_CAO = 110;
+const SA_VIEN = 26;
+const SA_BIEN = '#2f86d0';
+const SA_O_DOAN = 1600;
 const CO_LAP = 16; // pattern 16×16 ô ngẫu nhiên rồi lặp: một fillRect, không lộ đường nối
 
 export class VeCanvas {
   private mauCo: CanvasPattern | null = null;
-  /** Đảo sa mạc: mảnh nền đã dựng (khoá "i,j"), ảnh toàn map độ phân giải thấp lót trước khi mảnh dựng xong, điểm ảnh ô cát */
-  private manhSa = new Map<number, HTMLCanvasElement>();
-  /** Loại từng mảnh (chỉ số mj * số cột + mi): 0 nằm hẳn trong vườn gà (nền cỏ che, bỏ qua) · 1 biển sâu (dùng chung manhSau) · 2 mảnh riêng */
-  private loaiManh: Uint8Array | null = null;
-  private manhSau: HTMLCanvasElement | null = null;
-  /** Mảnh riêng chưa dựng (dựng dần ở nền, gần camera trước) */
-  private manhChua: number[] = [];
-  /** Mảnh đang dựng dở: canvas, dữ liệu điểm ảnh và hàng đã dựng tới đâu (mỗi lúc chỉ một mảnh) */
-  private viecManh: { k: number; cv: HTMLCanvasElement; d: ImageData; hang: number } | null = null;
-  private tongSa: HTMLCanvasElement | null = null;
-  private vanCat: Uint8ClampedArray | null = null;
+  /** Đảo sa mạc: đường bờ (Path2D dựng một lần từ duongBo()) và các mẫu lặp cát / vách đá / biển */
+  private bo: Path2D | null = null;
+  /** Đường bờ cắt thành từng đoạn theo ô SA_O_DOAN (kèm khung bao): stroke chỉ ghép các đoạn trong khung nhìn (stroke cả đường bờ mỗi khung rất tốn) */
+  private doanBo: { p: Path2D; x0: number; y0: number; x1: number; y1: number }[] = [];
+  private mauSa: { cat: CanvasPattern; vach: CanvasPattern; vien: CanvasPattern; bien: CanvasPattern } | null = null;
   private mauTuong: { mat: CanvasPattern; gach: CanvasPattern; vienNgang: CanvasPattern; vienDoc: CanvasPattern } | null = null;
   private anh = new Map<string, HTMLImageElement>();
   // Atlas đã nhuộm sẵn theo bộ lọc màu (nháy sáng, đen, vàng, đỏ…): nhuộm cả atlas MỘT lần rồi dùng lại.
@@ -143,7 +129,7 @@ export class VeCanvas {
   napTruoc(...atlas: string[]): void {
     atlas.forEach((a) => this.lay(a));
     // Ảnh của đảo sa mạc (nhỏ) nạp luôn để chọn map nào cũng có ngay
-    [SA_CAT, ...TRANG_TRI_SA.map((t) => t.url)].forEach((a) => this.lay(a));
+    [SA_CAT, SA_VACH, SA_TRANG_TRI].forEach((a) => this.lay(a));
   }
 
   /** Nhuộm sẵn atlas theo các bộ lọc ngay khi ảnh nạp xong, để lần đầu cần dùng không bị khựng */
@@ -352,7 +338,7 @@ export class VeCanvas {
   private veTrangTri(ctx: CanvasRenderingContext2D, t: TrangTri, now: number, sa: boolean): void {
     const spSa = sa ? TRANG_TRI_SA[t.loai] : undefined;
     const sp = sa ? undefined : TRANG_TRI_SPRITE[t.loai];
-    const img = this.lay(spSa ? spSa.url : MAP_CO);
+    const img = this.lay(spSa ? SA_TRANG_TRI : MAP_CO);
     if (!img || !(spSa ?? sp)) return;
     const to = t.to ? 1.8 : 1;
     const w = (spSa ?? sp)!.w * (spSa ?? sp)!.k * to;
@@ -366,9 +352,9 @@ export class VeCanvas {
     }
     if (t.lat) ctx.scale(-1, 1);
     if (spSa) {
-      // Ảnh vẽ vector nên phóng mượt, cả ảnh là một vật
+      // Ảnh vẽ tay nên phóng mượt
       ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(img, -w / 2, -h, w, h);
+      ctx.drawImage(img, spSa.sx, spSa.sy, spSa.w, spSa.h, -w / 2, -h, w, h);
     } else {
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(img, sp!.sx, sp!.sy, sp!.w, sp!.h, -w / 2, -h, w, h);
@@ -376,183 +362,140 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  /** Màu một điểm của đảo sa mạc theo khoảng cách tới bờ s (dương = cát, âm = biển); ghi vào p tại i */
-  private mauSa(p: Uint8ClampedArray, i: number, x: number, y: number, chiTiet: boolean): void {
-    const dat = doSau(x, y);
-    // Biển quanh tường vườn gà cũng nông + có bọt như quanh đảo (vườn vẽ đè lên sau)
-    const s = dat >= 0 ? dat : Math.max(dat, doSauVuon(x, y));
-    let r: number, g: number, b: number;
-    const tron = (a: number[], c: number[], t: number) => {
-      r = a[0]! + (c[0]! - a[0]!) * t; g = a[1]! + (c[1]! - a[1]!) * t; b = a[2]! + (c[2]! - a[2]!) * t;
+  /** Mẫu lặp của đảo (dựng một lần khi ảnh đã nạp): cát, vách đá, viền đá sáng hơn, biển (ô 256 vẽ sẵn sóng lăn tăn + lấp lánh) */
+  private taoMauSa(ctx: CanvasRenderingContext2D): void {
+    const cat = this.lay(SA_CAT), vach = this.lay(SA_VACH);
+    if (!cat || !vach) return;
+    const mau = (src: CanvasImageSource, o: number, w: number) => {
+      const p = ctx.createPattern(src, 'repeat')!;
+      p.setTransform(new DOMMatrix().scale(o / w));
+      return p;
     };
-    if (dat >= 0) {
-      // Cát: mép ướt sẫm → viền kem sáng → cát cam có cồn và vân
-      if (s < 22) tron(C_UOT, C_KEM, s / 22);
-      else tron(C_KEM, C_CAT, Math.min(1, (s - 22) / 70));
-      if (chiTiet) {
-        const k = 0.93 + 0.12 * nhieu(x / 520, y / 520) + 0.04 * nhieu(x / 150 + 9, y / 150);
-        let m = k;
-        if (s > 80 && Math.sin((x * 0.55 + y) / 34 + nhieu(x / 300, y / 300) * 9) > 0.9) m *= 0.95;
-        const v = this.vanCat;
-        if (v && s > 30) {
-          const tx = ((Math.floor(x / 2) % 128) + 128) % 128, ty = ((Math.floor(y / 2) % 128) + 128) % 128;
-          if (v[(ty * 128 + tx) * 4]! < 128) m *= 0.9;
+    // Viền đá: vách đá sáng lên một chút để tách mặt cát với vách
+    const vien = document.createElement('canvas');
+    vien.width = vach.naturalWidth;
+    vien.height = vach.naturalHeight;
+    const v = vien.getContext('2d')!;
+    v.drawImage(vach, 0, 0);
+    v.globalCompositeOperation = 'soft-light';
+    v.fillStyle = '#fff3c0';
+    v.fillRect(0, 0, vien.width, vien.height);
+    // Biển: ô nhỏ màu biển có gợn sáng và lấp lánh, hạt giống cố định
+    const N = 256;
+    const bien = document.createElement('canvas');
+    bien.width = bien.height = N;
+    const b = bien.getContext('2d')!;
+    b.fillStyle = SA_BIEN;
+    b.fillRect(0, 0, N, N);
+    let h = 99;
+    const r = () => ((h = (Math.imul(h, 1103515245) + 12345) >>> 0) >>> 8) / 16777216;
+    for (let i = 0; i < 70; i++) {
+      const x = r() * N, y = r() * N, w = 10 + r() * 26;
+      b.strokeStyle = `rgba(150,215,255,${0.12 + r() * 0.18})`;
+      b.lineWidth = 2;
+      // Gợn sóng vẽ cả bản dời ±N để lặp liền mép
+      for (const dx of [-N, 0, N]) {
+        for (const dy of [-N, 0, N]) {
+          b.beginPath();
+          b.moveTo(x + dx - w / 2, y + dy);
+          b.quadraticCurveTo(x + dx, y + dy - 4, x + dx + w / 2, y + dy);
+          b.stroke();
         }
-        r! *= m; g! *= m; b! *= m;
       }
-    } else if (s >= 0) {
-      r = 60; g = 140; b = 60; // trong vườn gà: bị nền cỏ vẽ đè
-    } else {
-      // Biển: nông xanh ngọc sát bờ → sâu xanh dương; viền bọt trắng, gợn sóng quanh đảo, lấp lánh
-      tron(C_NONG, C_SAU, Math.min(1, -s / 650));
-      if (chiTiet) {
-        const d = -s;
-        if (d < 260) {
-          const gon = Math.sin(d / 17 - nhieu(x / 220, y / 220) * 7);
-          if (gon > 0.88) {
-            const t = 0.45 * (1 - d / 260);
-            r! += (255 - r!) * t; g! += (255 - g!) * t; b! += (255 - b!) * t;
-          }
-        }
-        if (d > 80 && bamDiem(Math.floor(x / 4), Math.floor(y / 4)) < 0.0025) { r = 214; g = 244; b = 255; }
-      }
-      const bot = s > -12 ? 1 : s > -26 ? (s + 26) / 14 * (0.5 + 0.5 * nhieu(x / 30, y / 30)) : 0;
-      if (bot > 0) { r! += (C_BOT[0]! - r!) * bot; g! += (C_BOT[1]! - g!) * bot; b! += (C_BOT[2]! - b!) * bot; }
     }
-    p[i] = r!; p[i + 1] = g!; p[i + 2] = b!; p[i + 3] = 255;
+    b.fillStyle = 'rgba(220,245,255,0.8)';
+    for (let i = 0; i < 14; i++) b.fillRect(Math.floor(r() * N), Math.floor(r() * N), 2, 2);
+    this.mauSa = { cat: mau(cat, SA_O_CAT, cat.naturalWidth), vach: mau(vach, SA_O_VACH, vach.naturalWidth), vien: mau(vien, SA_O_VACH, vien.width), bien: mau(bien, 700, N) };
   }
 
-  /** Dựng dở mảnh k (MANH đơn vị bản đồ, độ phân giải 1/MANH_TL) tới khi hết hạn mức thời gian; xong thì trả canvas */
-  private dungManhSa(k: number, han: number): HTMLCanvasElement | null {
-    const sx = Math.ceil((TG.x1 - TG.x0) / MANH);
-    const mi = k % sx, mj = (k - mi) / sx;
-    const n = MANH_N + 2 * MANH_PAD, o = MANH_O;
-    let v = this.viecManh;
-    if (!v || v.k !== k) {
-      const cv = document.createElement('canvas');
-      cv.width = cv.height = n;
-      v = this.viecManh = { k, cv, d: cv.getContext('2d')!.createImageData(n, n), hang: 0 };
-    }
-    while (v.hang < n && performance.now() < han) {
-      const py = v.hang++;
-      for (let px = 0; px < n; px++) {
-        this.mauSa(v.d.data, (py * n + px) * 4, TG.x0 + mi * MANH + (px - MANH_PAD + 0.5) * o, TG.y0 + mj * MANH + (py - MANH_PAD + 0.5) * o, true);
-      }
-    }
-    if (v.hang < n) return null;
-    v.cv.getContext('2d')!.putImageData(v.d, 0, 0);
-    this.viecManh = null;
-    return v.cv;
-  }
-
-  /** Phân loại mọi mảnh một lần (vườn gà / biển sâu / mảnh riêng) */
-  private phanLoaiManh(MAP: number): Uint8Array {
-    const sx = Math.ceil((TG.x1 - TG.x0) / MANH), sy = Math.ceil((TG.y1 - TG.y0) / MANH);
-    const l = new Uint8Array(sx * sy);
-    let sau = -1;
-    for (let mj = 0; mj < sy; mj++) {
-      for (let mi = 0; mi < sx; mi++) {
-        const ox = TG.x0 + mi * MANH, oy = TG.y0 + mj * MANH;
-        const k = mj * sx + mi;
-        if (ox >= 0 && oy >= 0 && ox + MANH <= MAP && oy + MANH <= MAP) continue;
-        // Lấy mẫu dày (kể cả viền) cùng công thức với mauSa(): còn điểm nào nông hơn MANH_SAU thì là mảnh riêng
-        let nong = false;
-        for (let y = -20; y <= MANH + 20 && !nong; y += 40) {
-          for (let x = -20; x <= MANH + 20; x += 40) {
-            const dat = doSau(ox + x, oy + y);
-            if (dat >= 0 || Math.max(dat, doSauVuon(ox + x, oy + y)) > MANH_SAU) { nong = true; break; }
-          }
-        }
-        l[k] = nong ? 2 : 1;
-        if (nong) this.manhChua.push(k);
-        else if (sau < 0) sau = k;
-      }
-    }
-    // Mảnh biển sâu dùng chung: dựng một lần (mảnh nhỏ, nhanh)
-    if (sau >= 0) this.manhSau = this.dungManhSa(sau, Infinity);
-    return l;
-  }
-
-  /** Nền đảo sa mạc: ảnh lót toàn map (thô) rồi các mảnh chi tiết trong khung nhìn (dựng một lần, giữ luôn) */
+  /** Nền đảo sa mạc, vẽ thẳng mỗi khung từ đường bờ dựng sẵn (vài lệnh fill / stroke, không giữ ảnh mảnh nào):
+   *  biển → nước nông + bọt quanh chân vách và quanh tường vườn → vách đá (đường bờ dời xuống SA_VACH_CAO) → mặt cát → viền đá */
   private veNenSa(ctx: CanvasRenderingContext2D, c: Game): void {
-    if (!this.vanCat) {
-      const img = this.lay(SA_CAT);
-      if (img) {
-        const cv = document.createElement('canvas');
-        cv.width = cv.height = 128;
-        const x = cv.getContext('2d')!;
-        x.drawImage(img, 0, 0, 128, 128);
-        this.vanCat = x.getImageData(0, 0, 128, 128).data;
+    if (!this.bo) {
+      const p = new Path2D();
+      for (const v of duongBo()) {
+        p.moveTo(v[0]!, v[1]!);
+        for (let i = 2; i < v.length; i += 2) p.lineTo(v[i]!, v[i + 1]!);
+        p.closePath();
+        // Cắt thành đoạn: các điểm liên tiếp cùng ô, nối thêm một điểm mỗi đầu để các đoạn gối lên nhau
+        const n = v.length / 2;
+        const o = (i: number) => {
+          const k = ((i % n) + n) % n;
+          return Math.floor(v[2 * k]! / SA_O_DOAN) * 100003 + Math.floor(v[2 * k + 1]! / SA_O_DOAN);
+        };
+        let dau = 0;
+        while (dau < n && o(dau) === o(dau - 1)) dau++;
+        if (dau === n) dau = 0;
+        for (let i = 0; i < n; ) {
+          let j = i + 1;
+          while (j < n && o(dau + j) === o(dau + i)) j++;
+          const d = new Path2D();
+          let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+          for (let q = i - 1; q <= j; q++) {
+            const k = (((dau + q) % n) + n) % n;
+            const x = v[2 * k]!, y = v[2 * k + 1]!;
+            if (q === i - 1) d.moveTo(x, y);
+            else d.lineTo(x, y);
+            x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+          }
+          this.doanBo.push({ p: d, x0, y0, x1, y1 });
+          i = j;
+        }
       }
+      this.bo = p;
     }
-    const RX = TG.x1 - TG.x0, RY = TG.y1 - TG.y0;
-    if (!this.tongSa) {
-      const nx = 320, ny = Math.round((320 * RY) / RX);
-      const cv = document.createElement('canvas');
-      cv.width = nx;
-      cv.height = ny;
-      const x = cv.getContext('2d')!;
-      const d = x.createImageData(nx, ny);
-      for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) this.mauSa(d.data, (j * nx + i) * 4, TG.x0 + ((i + 0.5) * RX) / nx, TG.y0 + ((j + 0.5) * RY) / ny, false);
-      x.putImageData(d, 0, 0);
-      this.tongSa = cv;
-    }
-    // Ván cát (vân cát) chưa nạp thì chỉ có ảnh lót; nạp xong mới phân loại / dựng mảnh (mảnh dựng ra là bản cuối, không phải dựng lại)
-    if (this.vanCat && !this.loaiManh) this.loaiManh = this.phanLoaiManh(c.MAP);
-    const loai = this.loaiManh;
-    // Vùng thế giới đang thấy (theo phép camera), lấn thêm một chút cho rung màn hình
+    if (!this.mauSa) this.taoMauSa(ctx);
+    const m = this.mauSa;
+    const bo = this.bo;
     const cam = c.gocCamera();
     const x0 = -cam.x / cam.k - 40, x1 = (c.W - cam.x) / cam.k + 40;
     const y0 = -cam.y / cam.k - 40, y1 = (c.H - cam.y) / cam.k + 40;
-    const sx = Math.ceil(RX / MANH), sy = Math.ceil(RY / MANH);
-    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-    const i0 = Math.max(0, Math.floor((x0 - TG.x0) / MANH)), i1 = Math.min(sx - 1, Math.floor((x1 - TG.x0) / MANH));
-    const j0 = Math.max(0, Math.floor((y0 - TG.y0) / MANH)), j1 = Math.min(sy - 1, Math.floor((y1 - TG.y0) / MANH));
+    const M = c.MAP;
+    // Ghép các đoạn bờ chạm khung nhìn (lấn thêm nửa nét rộng nhất) thành một đường: cùng một lệnh stroke nên chỗ gối không đậm lên
+    const LE = 340;
+    const vien = new Path2D();
+    for (const d of this.doanBo) {
+      if (d.x1 > x0 - LE && d.x0 < x1 + LE && d.y1 > y0 - LE && d.y0 < y1 + LE) vien.addPath(d.p);
+    }
     ctx.imageSmoothingEnabled = true;
-    // Canvas nền độ phân giải thấp nên vẽ ảnh lót luôn (rẻ): che đường nối giữa các mảnh và chỗ mảnh chưa dựng xong
-    ctx.drawImage(this.tongSa, TG.x0, TG.y0, RX, RY);
-    if (!loai) return;
-    // Mảnh có viền MANH_PAD điểm ảnh: vẽ lấn ra ngoài mảnh đúng bằng viền, phần chồng giữa hai mảnh giống hệt nhau
-    const vien = MANH_PAD * MANH_O;
-    let thieu = -1, thieuD = Infinity;
-    for (let mj = j0; mj <= j1; mj++) {
-      for (let mi = i0; mi <= i1; mi++) {
-        const k = mj * sx + mi;
-        const l = loai[k];
-        if (!l) continue;
-        const m = l === 1 ? this.manhSau : this.manhSa.get(k);
-        const ox = TG.x0 + mi * MANH, oy = TG.y0 + mj * MANH;
-        if (m) ctx.drawImage(m, ox - vien, oy - vien, MANH + 2 * vien, MANH + 2 * vien);
-        else {
-          // Mảnh trong khung nhìn chưa có: dựng trước, gần tâm màn hình trước
-          const d = Math.hypot(ox + MANH / 2 - cx, oy + MANH / 2 - cy);
-          if (d < thieuD) { thieuD = d; thieu = k; }
-        }
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.fillStyle = m?.bien ?? SA_BIEN;
+    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+    // Nước nông + bọt: quanh bờ (cả chân vách dời xuống) và quanh tường vườn gà
+    // (nước nông: một đường dời nửa vách cho khỏi thành bậc; bọt: cả mép trên lẫn chân vách)
+    const viet = (w: number, mau: string, bot: boolean) => {
+      ctx.lineWidth = w;
+      ctx.strokeStyle = mau;
+      ctx.save();
+      ctx.translate(0, bot ? 0 : SA_VACH_CAO / 2);
+      ctx.stroke(vien);
+      if (bot) {
+        ctx.translate(0, SA_VACH_CAO);
+        ctx.stroke(vien);
       }
-    }
-    if (!this.manhChua.length) return;
-    // Dựng tiếp: mảnh thiếu trong khung nhìn (hạn mức lớn), không thì mảnh gần camera nhất còn chưa dựng (dựng dần ở nền)
-    const han = performance.now() + (thieu >= 0 ? MANH_NGAN_SACH : MANH_NEN);
-    while (performance.now() < han && this.manhChua.length) {
-      let k = thieu;
-      if (k < 0) {
-        // Đang dựng dở mảnh nào thì làm nốt, không thì chọn mảnh gần camera nhất
-        if (this.viecManh) k = this.viecManh.k;
-        else {
-          let bd = Infinity;
-          for (const q of this.manhChua) {
-            const qi = q % sx, qj = (q - qi) / sx;
-            const d = Math.hypot(TG.x0 + (qi + 0.5) * MANH - cx, TG.y0 + (qj + 0.5) * MANH - cy);
-            if (d < bd) { bd = d; k = q; }
-          }
-        }
-      }
-      const m = this.dungManhSa(k, han);
-      if (!m) break;
-      this.manhSa.set(k, m);
-      this.manhChua.splice(this.manhChua.indexOf(k), 1);
-      thieu = -1;
-    }
+      ctx.restore();
+      ctx.strokeRect(0, 0, M, M);
+    };
+    viet(560, 'rgba(90,200,235,0.35)', false);
+    viet(280, 'rgba(110,214,240,0.55)', false);
+    viet(46, 'rgba(240,250,255,0.85)', true);
+    // Vách đá: chỉ lộ ở bờ phía nam (phía bắc bị mặt cát vẽ đè)
+    ctx.save();
+    ctx.translate(0, SA_VACH_CAO);
+    ctx.fillStyle = m?.vach ?? '#b8742a';
+    ctx.fill(bo, 'evenodd');
+    ctx.restore();
+    ctx.fillStyle = m?.cat ?? '#f2c94c';
+    ctx.fill(bo, 'evenodd');
+    ctx.lineWidth = SA_VIEN;
+    ctx.strokeStyle = m?.vien ?? '#d99a3c';
+    ctx.stroke(vien);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(90,45,10,0.55)';
+    ctx.stroke(vien);
+    ctx.lineJoin = 'miter';
+    ctx.lineCap = 'butt';
   }
 
   /** Nền cát / biển vẽ ở canvas riêng nằm dưới canvas chính, độ phân giải thấp (dprNen × điểm ảnh CSS) rồi trình duyệt phóng lên: phủ kín màn hình bằng ảnh phóng rất tốn ở độ phân giải cao, nền vốn mịn nên không mất nét */

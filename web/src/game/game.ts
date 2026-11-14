@@ -540,7 +540,7 @@ const kepY = (v: number) => (banDoHt === 'sa' ? kep(v, TG.y0, TG.y1) : kep(v, TU
 /** Bản đồ đang chơi: 'co' đồng cỏ (cả map là đất) · 'sa' đảo sa mạc (biển chặn đường, xem ban-do.ts) */
 let banDoHt: LoaiBanDo = 'co';
 /** Số loại trang trí của đảo sa mạc (0 = cây, còn lại bụi / xương rồng / đá / xương…; khớp TRANG_TRI_SA trong ve-canvas.ts) */
-const SO_TRANG_TRI_SA = 9;
+const SO_TRANG_TRI_SA = 12;
 
 /** Rải cây / bụi / đá theo lưới có nhiễu, hạt giống cố định nên mỗi ván cùng một map; chừa vùng xuất phát ở giữa */
 function taoTrangTri(): TrangTri[] {

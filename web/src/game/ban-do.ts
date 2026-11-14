@@ -238,3 +238,97 @@ export function diemTrenDao(i: number, cachBo = 300): { x: number; y: number } {
   }
   return { x: d.x, y: d.y };
 }
+
+/** Đường bờ đảo (mức doSau = 0) dạng các vòng khép kín [x0, y0, x1, y1, …], tính một lần bằng marching squares trên lưới
+ *  khoảng cách rồi lược bớt điểm (sai lệch ≤ LUOC). Bộ vẽ dựng Path2D một lần từ đây rồi chỉ fill / stroke: rẻ hơn hẳn dựng ảnh mảnh. */
+const LUOC = 6;
+let duongBoCache: number[][] | null = null;
+export function duongBo(): number[][] {
+  if (duongBoCache) return duongBoCache;
+  const L = layLuoiSau();
+  const NX = NX_SAU, NY = NY_SAU;
+  // Điểm cắt trên cạnh: cạnh ngang (i,j)-(i+1,j) khoá 2·k, cạnh dọc (i,j)-(i,j+1) khoá 2·k+1
+  const diem = new Map<number, [number, number]>();
+  const cat = (khoa: number): number => {
+    if (!diem.has(khoa)) {
+      const k = khoa >> 1, i = k % NX, j = (k - i) / NX;
+      const a = L[k]!, b = (khoa & 1) ? L[k + NX]! : L[k + 1]!;
+      const t = a / (a - b);
+      diem.set(khoa, (khoa & 1) ? [TG.x0 + i * O_SAU, TG.y0 + (j + t) * O_SAU] : [TG.x0 + (i + t) * O_SAU, TG.y0 + j * O_SAU]);
+    }
+    return khoa;
+  };
+  // Mỗi đoạn đi từ điểm vào tới điểm ra, đất bên tay trái (hướng nhất quán nên các vòng tự nối)
+  const tiep = new Map<number, number>();
+  for (let j = 0; j < NY - 1; j++) {
+    for (let i = 0; i < NX - 1; i++) {
+      const k = j * NX + i;
+      const a = L[k]! >= 0, b = L[k + 1]! >= 0, c = L[k + NX + 1]! >= 0, d = L[k + NX]! >= 0;
+      const ma = (a ? 1 : 0) | (b ? 2 : 0) | (c ? 4 : 0) | (d ? 8 : 0);
+      if (ma === 0 || ma === 15) continue;
+      const T = 2 * k, R = 2 * (k + 1) + 1, B = 2 * (k + NX), Lf = 2 * k + 1;
+      const noi = (u: number, v: number) => tiep.set(cat(u), cat(v));
+      switch (ma) {
+        case 1: noi(Lf, T); break;
+        case 2: noi(T, R); break;
+        case 3: noi(Lf, R); break;
+        case 4: noi(R, B); break;
+        case 5: noi(Lf, T); noi(R, B); break;
+        case 6: noi(T, B); break;
+        case 7: noi(Lf, B); break;
+        case 8: noi(B, Lf); break;
+        case 9: noi(B, T); break;
+        case 10: noi(T, R); noi(B, Lf); break;
+        case 11: noi(B, R); break;
+        case 12: noi(R, Lf); break;
+        case 13: noi(R, T); break;
+        case 14: noi(T, Lf); break;
+      }
+    }
+  }
+  const vong: number[][] = [];
+  const daDi = new Set<number>();
+  for (const dau of tiep.keys()) {
+    if (daDi.has(dau)) continue;
+    const pts: [number, number][] = [];
+    let k: number | undefined = dau;
+    while (k !== undefined && !daDi.has(k)) {
+      daDi.add(k);
+      pts.push(diem.get(k)!);
+      k = tiep.get(k);
+    }
+    if (pts.length < 8) continue;
+    vong.push(luocDiem(pts));
+  }
+  duongBoCache = vong;
+  return vong;
+}
+
+/** Lược điểm thừa (Douglas–Peucker) của một vòng khép kín */
+function luocDiem(p: [number, number][]): number[] {
+  const giu = new Uint8Array(p.length);
+  const xet = (a: number, b: number) => {
+    const st: [number, number][] = [[a, b]];
+    while (st.length) {
+      const [u, v] = st.pop()!;
+      const [ax, ay] = p[u]!, [bx, by] = p[v]!;
+      const dx = bx - ax, dy = by - ay, l = Math.hypot(dx, dy) || 1;
+      let xa = -1, xk = LUOC;
+      for (let i = u + 1; i < v; i++) {
+        const e = Math.abs((p[i]![0] - ax) * dy - (p[i]![1] - ay) * dx) / l;
+        if (e > xk) { xk = e; xa = i; }
+      }
+      if (xa >= 0) { giu[xa] = 1; st.push([u, xa], [xa, v]); }
+    }
+  };
+  const giua = p.length >> 1;
+  giu[0] = giu[giua] = 1;
+  xet(0, giua);
+  // Nửa sau: nối về điểm đầu
+  p.push(p[0]!);
+  xet(giua, p.length - 1);
+  p.pop();
+  const kq: number[] = [];
+  p.forEach((q, i) => { if (giu[i]) kq.push(q[0], q[1]); });
+  return kq;
+}
