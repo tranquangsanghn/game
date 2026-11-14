@@ -766,6 +766,9 @@ export class Game {
   gaBayView: Ga[] = [];
   /** Mọi gà mẹ (gốc + phụ) còn sống nằm trong khung nhìn và tầm nhìn: để vẽ thanh máu */
   tuongView: Ga[] = [];
+  /** Vùng đang thấy (tính trong capNhatView()): không lên máy bay thì chỉ thấy khối đất nhân vật đang đứng, bên kia vực đen */
+  thayVuon = true;
+  thayDao = true;
   // Gà mẹ GỐC còn sống (không lọc theo khung nhìn): avatar, số mạng, mũi tên chỉ hướng
   tuongSong: Ga | null = null;
   /** Ngọc rồng đã nhặt (số sao, theo thứ tự nhặt) xếp ở thanh đen trên, bên trái; ngocBay = viên đang bay từ chỗ nhặt lên thanh đen */
@@ -1976,7 +1979,13 @@ export class Game {
     this.camY = kep(this.camY, bien.y0 + TAM_VIEW_Y / zc, bien.y1 - (H - TAM_VIEW_Y) / zc);
 
     const z = this.camZ;
+    // Không lên máy bay thì không nhìn ra ngoài: chỉ thấy khối đất (vườn gà / vòng đảo) có nhân vật đang đứng; ai trên máy bay thì thấy hết
+    const ngoai = banDoHt !== 'sa' || this.nguoi.some((_, i) => this.trongMb(i));
+    const dung = this.nguoi.filter((n) => !n.vang);
+    this.thayVuon = ngoai || !dung.length || dung.some((n) => trongVuon(n.x, n.y));
+    this.thayDao = ngoai || !dung.length || dung.some((n) => !trongVuon(n.x, n.y));
     const trong = (x: number, y: number, le: number) =>
+      (trongVuon(x, y) ? this.thayVuon : this.thayDao) &&
       Math.abs(x - this.camX) < this.W / 2 / z + le && y - this.camY > -TAM_VIEW_Y / z - le && y - this.camY < (H - TAM_VIEW_Y) / z + le;
     this.vatPhamView = this.vatPham.filter((v) => trong(v.x, v.y, 100));
     this.trungView = this.trungDe.filter((e) => this.thay(e.x, e.y) && trong(e.x, e.y, e.db ? 300 : 100));
