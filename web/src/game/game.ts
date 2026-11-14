@@ -4,7 +4,7 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { chuanBiSaMac, daoCua, doSau, trongVuon, veDat, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, CELL_XICH, SP_CELL, taoCell, type Cell } from './cell';
+import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, type Cell } from './cell';
 import { taoTiec, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_CHU_KY, TIEC_DI, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -746,6 +746,8 @@ export class Game {
   /** Cell canh đảo (mỗi đảo một cấp, 6–10 con); cellView = phần nằm trong khung nhìn và tầm nhìn */
   cell: Cell[] = [];
   cellView: Cell[] = [];
+  /** Đội Cell từng đảo (không lưu ván): đang xuất trận, id con tách đàn, người nó đuổi, giờ đàn được dịch chuyển lần tới */
+  cellDoi: { chien: boolean; tach: number; muc: number; dichDan: number }[] = [];
   /** Tiệc sinh nhật Cell: bánh ở giữa vòng Cell; chưởng Cell bắn vào bánh (chỉ để đẹp, không lưu); banhView = bánh nằm trong khung nhìn */
   tiec: Tiec[] = [];
   chuongTiec: ChuongTiec[] = [];
@@ -934,6 +936,7 @@ export class Game {
       this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas, SP_CELL.atlas, SP_CELL_TIEC.atlas, ...CHUONG_LOAI.map((l) => l.atlas));
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG, LOC_SOCOLA, LOC_SOCOLA_HONG]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO, LOC_SOCOLA, ...LOC_PHU]);
+      this.ve.nhuomTruoc(SP_CELL.atlas, [LOC_SOCOLA]);
       this.datKhung = vua;
       vua();
       const quanSat = new ResizeObserver(vua);
@@ -1005,6 +1008,7 @@ export class Game {
     this.keoGa = [];
     this.cell = taoCell(() => this.id++);
     this.tiec = taoTiec(this.cell);
+    this.cellDoi = [];
     this.chuongTiec = [];
     this.dan = [];
     this.vet = [];
@@ -1073,7 +1077,7 @@ export class Game {
   /** Nạp lại ván đã lưu và dừng ở màn Tạm dừng để người chơi bấm Tiếp tục */
   khoiPhuc(d: TrangThaiLuu): void {
     if (!d || d.phienBan !== PHIEN_BAN_LUU || !Array.isArray(d.nguoi) || d.nguoi.length !== 2) throw new Error('Dữ liệu lưu không hợp lệ');
-    this.banDo = d.banDo === 'sa' ? 'sa' : 'co';
+    this.banDo = d.banDo === 'co' ? 'co' : 'sa';
     this.batDau();
     this.tGame = d.tGame; this.t = d.t; this.chamDen = d.chamDen; this.id = d.id;
     this.henTuong = d.henTuong; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
@@ -1083,7 +1087,10 @@ export class Game {
     if (d.cell?.length) this.cell = d.cell;
     this.tiec = Array.isArray(d.tiec) ? d.tiec : [];
     this.chuongTiec = [];
-    for (const c of this.cell) if (!this.tiecCua(c)?.on) c.tiec = false;
+    // Tiệc không còn tan hẳn (ván lưu cũ có thể có on = false): Cell về vòng tiệc, đội hình dựng lại từ đầu
+    for (const tc of this.tiec) tc.on = true;
+    this.cellDoi = [];
+    for (const c of this.cell) { c.vai = undefined; c.muc = undefined; c.nap = undefined; c.chien = false; if (!this.tiecCua(c)) c.tiec = false; }
     if (d.mayBay) this.mayBay = { ...taoMayBay(d.mayBay.x, d.mayBay.y), ...d.mayBay };
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
@@ -1799,9 +1806,9 @@ export class Game {
     // Gà con trước, gà mẹ sau (gà mẹ có thể chết và đẻ thêm hiệu ứng)
     for (const g of trung.filter((v) => v.loai !== 'boss')) this.bienSocolaGa(g, d.p);
     for (const g of trung.filter((v) => v.loai === 'boss')) this.socolaTuong(g, d.p, d.sat);
-    // Cell không hoá socola được: chỉ nhận sát thương
-    const ceTrung = this.cell.filter((c) => !c.chet && Math.hypot(this.tamCell(c).x - d.x1, this.tamCell(c).y - d.y1) < BAN_KINH_SOCOLA);
-    ceTrung.forEach((c) => this.trungCell(c, d.p, SAT_SOCOLA));
+    // Cell nhận sát thương; riêng Cell bạo nộ trúng thì hoá socola (chờ mây của Mabu để combo)
+    const ceTrung = this.cell.filter((c) => !c.chet && Math.hypot(this.tamCell(c).x - d.x1, this.tamCell(c).y - d.y1) < BAN_KINH_SOCOLA + CELL_BK * cellK(c.cap));
+    ceTrung.forEach((c) => { if (this.trungCell(c, d.p, SAT_SOCOLA)) this.socolaCell(c); });
     if (!trung.length && !ceTrung.length) {
       this.nguoi[d.p].combo = 0;
       this.nguoi[d.p].banTruot++;
@@ -2025,8 +2032,7 @@ export class Game {
       xep.push({ loai: 'ga', y: g.y, ga: g });
     }
     for (const g of this.keoGa) if (trong(g.x, g.y, 120)) xep.push({ loai: 'ga', y: g.y, ga: g });
-    // Cell, bánh sinh nhật, chưởng tiệc: không bị sương mù, cứ nằm trong khung nhìn camera là vẽ, ra khỏi khung thì thôi
-    // (trước đây theo sương mù nên Cell hiện ra / biến mất đột ngột ngay giữa màn hình). Lề theo kích thước sprite thật.
+    // Cell, bánh sinh nhật, chưởng tiệc: bị sương mù (chỉ vẽ trong tầm nhìn, mờ dần ở dải MO_RO cuối, doRo()) và lọc theo khung nhìn. Lề theo kích thước sprite thật.
     this.cellView = this.cell.filter((c) => this.doRo(c.x, c.y) > 0 && trong(c.x, c.y - 32 * cellK(c.cap), (c.cap === SO_CAP - 1 ? 58 : 40) * cellK(c.cap) + 60));
     for (const c of this.cellView) xep.push({ loai: 'cell', y: c.y, ce: c });
     this.banhView = this.tiec.filter((tc) => this.doRo(tc.x, tc.y) > 0 && trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to));
@@ -2836,6 +2842,15 @@ export class Game {
       if (((tam.x - n.x) / (MAY_RX + 40)) ** 2 + ((tam.y - (n.y - MAY_NANG)) / (MAY_RY + 40)) ** 2 >= 1) continue;
       c.chamMay = this.t + MAY_NHIP;
       this.vet.push({ id: this.id++, x: c.x, y: tam.y, t: 0, loai: 'no' });
+      // Cell bạo nộ đang là socola (Zinbu) mà dính mây (Mabu): combo MỘT lần mỗi lần hoá socola, mất luôn 30% máu tối đa, xuyên giáp
+      if ((c.socola ?? 0) > 0 && !c.comboSoc) {
+        c.comboSoc = true;
+        this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 160, text: '💥 COMBO SOCOLA + MÂY!', mau: '#ff9f1a', t: 0 });
+        this.rungMan(0.3, 12);
+        this.dungKhung(0.12);
+        this.trungCell(c, p, Math.round(CELL_HP[c.cap]! * CELL_SOCOLA_MAY), true);
+        continue;
+      }
       this.trungCell(c, p, SAT_MAY);
     }
   }
@@ -3102,12 +3117,23 @@ export class Game {
   }
 
   // Cell nhận đòn: trừ máu, nháy sáng, hết máu thì ngã (tính điểm / combo). Trả về true nếu đòn trúng.
-  private trungCell(c: Cell, p: number, sat: number): boolean {
+  // Cell bạo nộ (cấp 4) có giáp giảm CELL_GIAP sát thương, trừ khi người đánh đang combo từ CELL_PHA_GIAP đòn hoặc nó đang hoá socola.
+  // `xuyenGiap`: bỏ qua giáp (combo socola + mây).
+  private trungCell(c: Cell, p: number, sat: number, xuyenGiap = false): boolean {
     if (c.chet) return false;
-    if (c.tiec) this.ketThucTiec(this.tiecCua(c));
+    this.cellBiDanh(c, p);
     const n = this.nguoi[p];
-    const mat = Math.max(1, Math.round(sat * (n?.suc ?? 1)));
     const tam = this.tamCell(c);
+    let he = n?.suc ?? 1;
+    if (c.cap === SO_CAP - 1 && !xuyenGiap && !((c.socola ?? 0) > 0)) {
+      if ((n?.combo ?? 0) >= CELL_PHA_GIAP) {
+        if (Math.random() < 0.3) this.chu.push({ id: this.id++, x: tam.x + ngauNhien(-60, 60), y: tam.y - 110, text: 'PHÁ GIÁP!', mau: '#ff9f1a', t: 0 });
+      } else {
+        he *= 1 - CELL_GIAP;
+        if (Math.random() < 0.3) this.chu.push({ id: this.id++, x: tam.x + ngauNhien(-60, 60), y: tam.y - 110, text: '🛡 GIÁP! CẦN COMBO', mau: '#b8c4d6', t: 0 });
+      }
+    }
+    const mat = Math.max(1, Math.round(sat * he));
     c.hp -= mat;
     c.nhay = CELL_NHAY_T;
     this.chu.push({ id: this.id++, x: tam.x + ngauNhien(-40, 40), y: tam.y - 40, text: `-${mat}`, mau: '#ffffff', t: 0 });
@@ -3116,6 +3142,7 @@ export class Game {
     c.hp = 0;
     c.chet = true;
     c.tChet = 0;
+    c.nap = undefined;
     this.vet.push({ id: this.id++, x: c.x, y: tam.y, t: 0, loai: 'chay', co: 0.5 + c.cap * 0.15 });
     n.combo++;
     const hs = this.heSo(p);
@@ -3124,75 +3151,253 @@ export class Game {
     return true;
   }
 
-  // Cell: đi lang thang quanh chỗ đứng, ngửi thấy nhân vật (không ẩn / gục / mây) thì đuổi và đánh khi chạm; ra xa nhà quá thì quay về
+  /** Đảo của Cell (ván lưu cũ thiếu `dao` thì lấy theo chỗ sinh) */
+  private daoCell(c: Cell): number {
+    return c.dao ?? (c.dao = daoCua(c.hx, c.hy));
+  }
+
+  /** Nhân vật p là mục tiêu hợp lệ của đội Cell đảo `dao`: đang chơi, không ẩn / gục / mây, đứng trên đảo đó (không ở vườn gà) */
+  private cellThay(p: number, dao: number): boolean {
+    const n = this.nguoi[p];
+    return !!n && !n.vang && !this.khuat(n) && !trongVuon(n.x, n.y) && daoCua(n.x, n.y) === dao;
+  }
+
+  /** Cell bị đánh: cả đội của đảo xuất trận; nếu đang chỉ có 1 người để đánh mà con bị đánh không phải con tách đàn thì nó thành con tách đàn (con cũ về tiệc) */
+  private cellBiDanh(c: Cell, p: number): void {
+    const dao = this.daoCell(c);
+    const doi = (this.cellDoi[dao] ??= { chien: false, tach: -1, muc: -1, dichDan: 0 });
+    if (!doi.chien) this.cellXuatTran(dao);
+    doi.chien = true;
+    if (!c.vai && this.cellThay(p, dao)) { doi.tach = c.id; doi.muc = p; }
+  }
+
+  /** Đội Cell của đảo xuất trận (chữ báo một lần) */
+  private cellXuatTran(dao: number): void {
+    const tc = this.tiec.find((t) => t.dao === dao);
+    const c0 = this.cell.find((c) => !c.chet && this.daoCell(c) === dao);
+    const x = tc?.x ?? c0?.x, y = tc?.y ?? c0?.y;
+    if (x !== undefined && y !== undefined) this.chu.push({ id: this.id++, x, y: y - 300, text: '⚔ CELL XUẤT TRẬN!', mau: '#ff6b6b', t: 0 });
+  }
+
+  /**
+   * Đội hình Cell mỗi khung (mỗi đảo một đội, chiến đấu theo đồng đội):
+   * - Chưa thấy ai: dự tiệc. Có nhân vật trên đảo lại gần (TIEC_NGUI khi đang tiệc, CELL_NGUI khi không) hoặc Cell bị đánh thì xuất trận.
+   * - Luôn có đúng 1 con tách đàn ('tach', con gần nhân vật nhất) đuổi một người; cả đàn còn lại ('dan') đuổi người kia — con tách đàn là điểm yếu.
+   * - Chỉ có 1 người trên đảo (chơi 1 người, người kia gục / trốn / ở nơi khác): chỉ con tách đàn đi đánh, số còn lại vẫn ngồi tiệc.
+   * - Con tách đàn chết thì con gần nhất trong đàn tách ra thay. Hết người trên đảo thì cả đội về vòng tiệc.
+   */
+  private doiHinhCell(): void {
+    for (let dao = 0; dao < SO_DAO; dao++) {
+      const doi = (this.cellDoi[dao] ??= { chien: false, tach: -1, muc: -1, dichDan: 0 });
+      const ds = this.cell.filter((c) => !c.chet && this.daoCell(c) === dao);
+      const ke = [0, 1].filter((p) => this.cellThay(p, dao));
+      if (doi.chien && (!ds.length || !ke.length)) doi.chien = false;
+      if (!doi.chien && ds.length && ke.some((p) => ds.some((c) => Math.hypot(this.nguoi[p].x - c.x, this.nguoi[p].y - c.y) < (c.tiec ? TIEC_NGUI : CELL_NGUI)))) {
+        doi.chien = true;
+        this.cellXuatTran(dao);
+      }
+      if (!doi.chien) {
+        doi.tach = -1;
+        for (const c of ds) { c.vai = undefined; c.muc = undefined; }
+        continue;
+      }
+      let tach = ds.find((c) => c.id === doi.tach);
+      if (!tach) {
+        // Con gần nhân vật nhất tách đàn đuổi người đó
+        let gan = Infinity;
+        for (const c of ds) for (const p of ke) {
+          const d = Math.hypot(this.nguoi[p].x - c.x, this.nguoi[p].y - c.y);
+          if (d < gan) { gan = d; tach = c; doi.muc = p; }
+        }
+        doi.tach = tach!.id;
+        if (ds.length > 1) this.chu.push({ id: this.id++, x: tach!.x, y: tach!.y - 60 * cellK(tach!.cap), text: '❗ TÁCH ĐÀN', mau: '#ffd166', t: 0 });
+      }
+      if (!ke.includes(doi.muc)) doi.muc = ke[0]!;
+      const khac = ke.find((p) => p !== doi.muc);
+      for (const c of ds) {
+        const vai = c === tach ? 'tach' : khac !== undefined ? 'dan' : undefined;
+        if (vai && c.tiec) { c.tiec = false; c.nap = undefined; c.choDich ??= 0; c.choChuong ??= this.t + 1 + Math.random() * 3; }
+        c.vai = vai;
+        c.muc = vai === 'tach' ? doi.muc : vai === 'dan' ? khac : undefined;
+      }
+    }
+  }
+
+  // Cell: đội hình theo `doiHinhCell()`; có mục tiêu thì đánh (đấm đá, chưởng, dịch chuyển tức thời); không có thì về vòng tiệc (hoặc lang thang nếu đảo không có tiệc)
   private capNhatCell(dt: number): void {
+    this.doiHinhCell();
     for (const c of this.cell) {
       if (c.chet) { c.tChet += dt; continue; }
       c.phase += dt;
       c.nhay = Math.max(0, c.nhay - dt);
       c.danh = Math.max(0, c.danh - dt);
-      // Đang dự tiệc: ngồi quanh bánh, bắn chưởng vào bánh; có nhân vật lại gần thì tiệc tan
-      const tcc = c.tiec ? this.tiecCua(c) : undefined;
+      // Cell bạo nộ đang hoá socola: đứng yên, không đánh
+      if ((c.socola ?? 0) > 0) {
+        c.socola = Math.max(0, c.socola! - dt);
+        c.chay = false;
+        c.nap = undefined;
+        continue;
+      }
+      const tcc = this.tiecCua(c);
+      if (c.tiec && tcc?.on) { this.cellTiec(c, tcc, dt); continue; }
+      const ke = c.muc !== undefined ? this.nguoi[c.muc] : undefined;
+      if (ke) { this.cellChien(c, ke, dt); continue; }
+      c.nap = undefined;
+      c.chien = false;
+      // Hết việc: đi về chỗ của mình trên vòng tiệc rồi ngồi tiệc tiếp
       if (tcc?.on) {
-        if (this.nguoi.some((n) => !n.vang && !this.khuat(n) && Math.hypot(n.x - c.x, n.y - c.y) < TIEC_NGUI)) this.ketThucTiec(tcc);
-        else { this.cellTiec(c, tcc, dt); continue; }
+        const p = viTriVong(tcc, c.goc ?? 0);
+        if (this.cellDiToi(c, p.x, p.y, dt, 0.8) < 20 * cellK(c.cap)) { c.tiec = true; c.x = p.x; c.y = p.y; }
+        continue;
       }
-      const to = CELL_TO[c.cap]!;
-      let muc: { x: number; y: number } | null = null;
-      let gan = CELL_NGUI;
-      let ke: NguoiChoi | null = null;
-      for (const n of this.nguoi) {
-        if (n.vang || this.khuat(n)) continue;
-        const d = Math.hypot(n.x - c.x, n.y - c.y);
-        if (d < gan && Math.hypot(n.x - c.hx, n.y - c.hy) < CELL_XICH) { gan = d; ke = n; }
-      }
-      if (ke) {
-        muc = ke;
-        c.lat = ke.x < c.x;
-        // Chạm nhân vật thì đánh
-        if (gan < CELL_CHAM * to && c.choDanh <= this.t && !ke.nv.khoa) {
-          c.choDanh = this.t + CELL_HOI[c.cap]!;
-          c.danh = CELL_DANH_T;
-          this.nhanSatThuong(ke, CELL_SAT[c.cap]!);
+      // Đảo không có tiệc (ván lưu cũ): lang thang, hay tụ tập
+      c.doi -= dt;
+      if (c.doi <= 0 || Math.hypot(c.dx - c.x, c.dy - c.y) < 30) {
+        const k = cellK(c.cap);
+        const ban = this.cell.filter((o) => o !== c && !o.chet && Math.hypot(o.x - c.x, o.y - c.y) < CELL_TU_TAM);
+        const g = Math.random() * Math.PI * 2;
+        if (ban.length && Math.random() < CELL_TU) {
+          const o = ban[Math.floor(Math.random() * ban.length)]!;
+          const r = (22 + Math.random() * 30) * k;
+          c.dx = o.x + Math.cos(g) * r; c.dy = o.y + Math.sin(g) * r;
+        } else {
+          const r = 100 + Math.random() * 500;
+          c.dx = c.hx + Math.cos(g) * r; c.dy = c.hy + Math.sin(g) * r;
         }
-      } else {
-        c.doi -= dt;
-        if (c.doi <= 0 || Math.hypot(c.dx - c.x, c.dy - c.y) < 30) {
-          // Hay tụ tập: thường đi tới đứng cạnh một Cell khác cùng đảo, không thì đi ngẫu nhiên quanh nhà
-          const k = cellK(c.cap);
-          const ban = this.cell.filter((o) => o !== c && !o.chet && Math.hypot(o.x - c.x, o.y - c.y) < CELL_TU_TAM);
-          const g = Math.random() * Math.PI * 2;
-          if (ban.length && Math.random() < CELL_TU) {
-            const o = ban[Math.floor(Math.random() * ban.length)]!;
-            const r = (22 + Math.random() * 30) * k;
-            c.dx = o.x + Math.cos(g) * r; c.dy = o.y + Math.sin(g) * r;
-          } else {
-            const r = 100 + Math.random() * 500;
-            c.dx = c.hx + Math.cos(g) * r; c.dy = c.hy + Math.sin(g) * r;
-          }
-          c.doi = 3 + Math.random() * 4;
-        }
-        // Đang đuổi xa nhà quá thì về nhà
-        if (Math.hypot(c.x - c.hx, c.y - c.hy) > CELL_XICH) { c.dx = c.hx; c.dy = c.hy; }
-        muc = { x: c.dx, y: c.dy };
+        c.doi = 3 + Math.random() * 4;
       }
-      const dx = muc.x - c.x, dy = muc.y - c.y, dd = Math.hypot(dx, dy);
-      // Đứng sát nhân vật thì không xô vào; lang thang thì đi chậm hơn
-      const toc = CELL_TOC[c.cap]! * (ke ? 1 : 0.5);
-      c.chay = dd > (ke ? CELL_CHAM * to * 0.6 : 20) && c.danh <= 0;
-      if (c.chay) {
-        const b = Math.min(dd, toc * dt);
-        const cu = { x: c.x, y: c.y };
-        c.x += (dx / dd) * b;
-        c.y += (dy / dd) * b;
-        if (!ke) c.lat = dx < 0;
-        giuTrongMap(c, leCell(c.cap), false, 'dao');
-        // Bị bờ biển chặn mà không nhích được thì chọn điểm khác
-        if (!ke && Math.hypot(c.x - cu.x, c.y - cu.y) < b * 0.3) c.doi = 0;
-      }
+      const cu = { x: c.x, y: c.y };
+      const b = Math.min(Math.hypot(c.dx - c.x, c.dy - c.y), CELL_TOC[c.cap]! * 0.5 * dt);
+      this.cellDiToi(c, c.dx, c.dy, dt, 0.5);
+      // Bị bờ biển chặn mà không nhích được thì chọn điểm khác
+      if (Math.hypot(c.x - cu.x, c.y - cu.y) < b * 0.3) c.doi = 0;
     }
     // Xác nằm đủ lâu thì biến mất
     this.cell = this.cell.filter((c) => !c.chet || c.tChet < CELL_CHET_T);
+  }
+
+  /** Cell đi về (x, y) với tốc độ CELL_TOC × he, quay mặt theo hướng đi; trả về khoảng cách còn lại */
+  private cellDiToi(c: Cell, x: number, y: number, dt: number, he: number): number {
+    const dx = x - c.x, dy = y - c.y, dd = Math.hypot(dx, dy);
+    c.chay = dd > 20 && c.danh <= 0;
+    if (!c.chay) return dd;
+    const b = Math.min(dd, CELL_TOC[c.cap]! * he * dt);
+    c.x += (dx / dd) * b;
+    c.y += (dy / dd) * b;
+    c.lat = dx < 0;
+    giuTrongMap(c, leCell(c.cap), false, 'dao');
+    return dd - b;
+  }
+
+  /**
+   * Cell đánh nhân vật `ke`: đang vận chưởng thì đứng yên tới lúc phóng; xa quá thì dịch chuyển tức thời tới sát bên (con tách đàn theo hồi chiêu riêng,
+   * cả đàn chỉ một con mỗi CELL_DICH_DAN giây); trong tầm thì thỉnh thoảng vận chưởng; chạm thì đấm / đá; không thì chạy tới (cả đàn đứng vây quanh, mỗi con một góc).
+   */
+  private cellChien(c: Cell, ke: NguoiChoi, dt: number): void {
+    const to = CELL_TO[c.cap]!;
+    const cham = CELL_CHAM * to;
+    if (c.nap !== undefined && c.chien) { this.cellBanChien(c, dt); return; }
+    const d = Math.hypot(ke.x - c.x, ke.y - c.y);
+    c.lat = ke.x < c.x;
+    const doi = this.cellDoi[this.daoCell(c)];
+    // Dịch chuyển tức thời tới sát mục tiêu
+    if (d > cham + CELL_DICH_XA && (c.choDich ?? 0) <= this.t && (c.vai === 'tach' || (doi?.dichDan ?? 0) <= this.t)) {
+      if (c.vai === 'dan' && doi) doi.dichDan = this.t + CELL_DICH_DAN;
+      this.cellDichChuyen(c, ke);
+      return;
+    }
+    // Vận chưởng khi mục tiêu trong tầm (không quá sát)
+    if ((c.choChuong ?? 0) <= this.t && d > cham * 0.5 && d < CELL_CHUONG_TAM && Math.random() < dt * 1.5) {
+      this.cellVanChuong(c);
+      return;
+    }
+    // Đấm / đá khi chạm
+    if (d < cham && c.choDanh <= this.t && !ke.nv.khoa) {
+      c.choDanh = this.t + CELL_HOI[c.cap]!;
+      c.danh = CELL_DANH_T;
+      this.nhanSatThuong(ke, CELL_SAT[c.cap]!);
+    }
+    // Chạy tới: con tách đàn lao thẳng, cả đàn đứng vây quanh mỗi con một góc
+    const g = c.vai === 'dan' ? c.id * 2.399 : 0;
+    const r = c.vai === 'dan' ? cham * 0.6 : 0;
+    const tx = ke.x + Math.cos(g) * r, ty = ke.y + Math.sin(g) * r * 0.6;
+    if (Math.hypot(tx - c.x, ty - c.y) > cham * 0.5) this.cellDiToi(c, tx, ty, dt, 1);
+    else c.chay = false;
+    c.lat = ke.x < c.x;
+  }
+
+  /** Bắt đầu vận chưởng chiến đấu: biến hình → hào quang → phóng (cùng hoạt ảnh với tiệc), một trong 3 loại ngẫu nhiên */
+  private cellVanChuong(c: Cell): void {
+    c.chien = true;
+    c.nap = 0;
+    c.chay = false;
+    c.loaiChuong = Math.floor(Math.random() * CHUONG_LOAI.length);
+  }
+
+  /** Đang vận chưởng chiến đấu: quay theo mục tiêu tới lúc phóng; phóng thì chùm bay thẳng về chỗ mục tiêu đang đứng (chạy ngang để né) */
+  private cellBanChien(c: Cell, dt: number): void {
+    const truoc = c.nap!;
+    c.nap = truoc + dt;
+    c.chay = false;
+    const ke = c.muc !== undefined ? this.nguoi[c.muc] : undefined;
+    const luc = TIEC_BIEN + TIEC_AURA;
+    if (ke && truoc < luc) c.lat = ke.x < c.x;
+    if (ke && truoc < luc && c.nap >= luc) {
+      const k = cellK(c.cap);
+      const l = CHUONG_LOAI[c.loaiChuong ?? 0]!;
+      const hx = c.x + (c.lat ? -1 : 1) * l.tayX * k, hy = c.y - l.tayY * k;
+      const tx = ke.x, ty = ke.y - 70;
+      const dd = Math.hypot(tx - hx, ty - hy) || 1;
+      const dai = Math.min(CELL_CHUONG_TAM, Math.max(dd + 250, 500));
+      this.chuongTiec.push({
+        id: this.id++, k, loai: c.loaiChuong ?? 0, x0: hx, y0: hy,
+        x1: hx + ((tx - hx) / dd) * dai, y1: hy + ((ty - hy) / dd) * dai, t: 0,
+        sat: CELL_CHUONG_SAT[c.cap]!, cap: c.cap,
+      });
+      this.vet.push({ id: this.id++, x: hx, y: hy, t: 0, loai: 'chay', co: 0.25 + 0.05 * k });
+    }
+    if (c.nap >= luc + TIEC_PHONG) {
+      c.nap = undefined;
+      c.chien = false;
+      c.choChuong = this.t + CELL_CHUONG_HOI[c.cap]!;
+    }
+  }
+
+  /** Dịch chuyển tức thời tới sát nhân vật (một góc trên cát cùng đảo), rồi ngay lập tức đấm đá hoặc vận chưởng sát mặt */
+  private cellDichChuyen(c: Cell, ke: NguoiChoi): void {
+    const to = CELL_TO[c.cap]!;
+    const k = cellK(c.cap);
+    const dao = this.daoCell(c);
+    const r = CELL_CHAM * to * 0.7;
+    const g0 = Math.random() * Math.PI * 2;
+    let x = c.x, y = c.y, duoc = false;
+    for (let i = 0; i < 10 && !duoc; i++) {
+      const g = g0 + (i / 10) * Math.PI * 2;
+      x = ke.x + Math.cos(g) * r; y = ke.y + Math.sin(g) * r * 0.6;
+      duoc = doSau(x, y) > 60 && !trongVuon(x, y) && daoCua(x, y) === dao;
+    }
+    c.choDich = this.t + CELL_DICH_HOI[c.cap]!;
+    if (!duoc) return;
+    this.vet.push({ id: this.id++, x: c.x, y: c.y - 25 * k, t: 0, loai: 'no' });
+    c.x = x; c.y = y;
+    giuTrongMap(c, leCell(c.cap), false, 'dao');
+    c.lat = ke.x < c.x;
+    c.chay = false;
+    this.vet.push({ id: this.id++, x: c.x, y: c.y - 25 * k, t: 0, loai: 'no' });
+    this.chu.push({ id: this.id++, x: c.x, y: c.y - 55 * k, text: '⚡ DỊCH CHUYỂN!', mau: '#7fe0ff', t: 0 });
+    if ((c.choChuong ?? 0) <= this.t && Math.random() < 0.5) this.cellVanChuong(c);
+    else c.choDanh = this.t + 0.3;
+  }
+
+  /** Cell bạo nộ dính Biến socola: hoá socola CELL_SOCOLA_T giây (đứng yên, không giáp) */
+  private socolaCell(c: Cell): void {
+    if (c.chet || c.cap !== SO_CAP - 1) return;
+    c.socola = CELL_SOCOLA_T;
+    c.comboSoc = false;
+    c.nap = undefined;
+    c.chien = false;
+    const t = this.tamCell(c);
+    this.chu.push({ id: this.id++, x: t.x, y: t.y - 150, text: '🍫 CELL HOÁ SOCOLA! MABU DÙNG MÂY!', mau: '#c68642', t: 0 });
   }
 
   // ─── Tiệc sinh nhật của Cell ───
@@ -3200,14 +3405,6 @@ export class Game {
   /** Tiệc của đảo Cell `c` */
   tiecCua(c: Cell): Tiec | undefined {
     return this.tiec.find((t) => t.dao === c.dao);
-  }
-
-  /** Tiệc tan: mọi Cell của đảo đứng dậy (về AI bình thường: ngửi thấy nhân vật thì đuổi); bánh ở lại */
-  private ketThucTiec(tc: Tiec | undefined): void {
-    if (!tc?.on) return;
-    tc.on = false;
-    for (const c of this.cell) if (c.dao === tc.dao) { c.tiec = false; c.nap = undefined; }
-    this.chu.push({ id: this.id++, x: tc.x, y: tc.y - 420 * tc.to / 0.6, text: '🎂 TIỆC TAN RỒI!', mau: '#ffd166', t: 0 });
   }
 
   /** Một Cell dự tiệc: cả đội cùng đi vòng quanh bánh `TIEC_DI` = 2s (animation chạy), rồi cùng dừng: biến hình → vận nội công (hào quang) → phóng một loại chưởng ngẫu nhiên vào bánh, rồi lại đi vòng (theo giờ tiệc chung `tc.t` nên các Cell luôn cách đều nhau) */
@@ -3253,10 +3450,34 @@ export class Game {
   private capNhatTiec(dt: number): void {
     for (const q of this.chuongTiec) {
       q.t += dt;
-      if (q.t >= TIEC_CHUONG_T) this.vet.push({ id: this.id++, x: q.x1, y: q.y1, t: 0, loai: 'chay', co: 0.35 });
+      if (q.t < TIEC_CHUONG_T) continue;
+      this.vet.push({ id: this.id++, x: q.x1, y: q.y1, t: 0, loai: 'chay', co: q.sat ? 0.6 : 0.35 });
+      if (q.sat) this.chuongCellTrung(q);
     }
     this.chuongTiec = this.chuongTiec.filter((q) => q.t < TIEC_CHUONG_T);
     for (const tc of this.tiec) if (tc.on) tc.t += dt;
+  }
+
+  /** Chưởng chiến đấu của Cell tới nơi: ai (không ẩn / gục / mây) nằm trên chùm thì trúng (vẫn né / giảm 50%); chưởng Cell bạo nộ còn phá combo người trúng */
+  private chuongCellTrung(q: ChuongTiec): void {
+    const rong = CELL_CHUONG_RONG * q.k;
+    const vx = q.x1 - q.x0, vy = q.y1 - q.y0, L2 = vx * vx + vy * vy || 1;
+    for (const n of this.nguoi) {
+      if (n.vang || this.khuat(n)) continue;
+      const px = n.x, py = n.y - 70;
+      const u = Math.max(0, Math.min(1, ((px - q.x0) * vx + (py - q.y0) * vy) / L2));
+      if (Math.hypot(px - (q.x0 + vx * u), py - (q.y0 + vy * u)) > rong) continue;
+      this.nhanSatThuong(n, q.sat!);
+      if (q.cap === SO_CAP - 1 && n.combo > 0) {
+        n.combo = 0;
+        this.chu.push({ id: this.id++, x: n.x, y: n.y - 270, text: 'MẤT COMBO!', mau: '#ff6b6b', t: 0 });
+      }
+    }
+  }
+
+  /** Bộ lọc màu của Cell: Cell bạo nộ đang hoá socola thì nhuộm nâu */
+  cellLoc(c: Cell): string | null {
+    return (c.socola ?? 0) > 0 ? LOC_SOCOLA : null;
   }
 
   // Khung hình Cell: ngã · trúng đòn · đánh · chạy · đứng

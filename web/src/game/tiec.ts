@@ -1,5 +1,6 @@
 // Tiệc sinh nhật của Cell: lúc bắt đầu ván, Cell của MỌI đảo (1 con hay nhiều con) đi vòng tròn quanh một cái bánh, bắn chưởng vào bánh (đi vòng 2s rồi dừng bắn); nhạc "Happy Birthday" là nhạc nền của khu đảo (am-thanh.ts).
-// Tiệc tan khi có nhân vật lại gần (Cell ngửi thấy) hoặc có Cell bị đánh; bánh vẫn ở lại cháy.
+// Có nhân vật trên đảo lại gần (Cell ngửi thấy) hoặc Cell bị đánh thì đội Cell xuất trận (xem `doiHinhCell()` trong game.ts): một con tách đàn đuổi một người,
+// cả đàn đuổi người còn lại; chỉ có một người thì chỉ con tách đàn đi đánh, số còn lại vẫn tiệc. Hết người trên đảo thì cả đội về vòng tiệc. Bánh không bao giờ mất.
 // File này chỉ có dữ liệu + hàm thuần; logic chạy trong Game (`capNhatTiec()`), vẽ trong ve-canvas.ts (`veBanh()`).
 import type { KhungSprite } from './sprite';
 import type { Cell } from './cell';
@@ -43,8 +44,8 @@ export interface Tiec {
   /** độ to bánh (nhân khung) và bán kính vòng quanh bánh */
   to: number; bk: number;
 }
-/** Chưởng đang bay từ Cell tới bánh (chỉ để đẹp, không lưu ván) */
-export interface ChuongTiec { id: number; x0: number; y0: number; x1: number; y1: number; t: number; k: number; loai: number }
+/** Chưởng đang bay từ Cell tới bánh (chỉ để đẹp) hoặc tới nhân vật (chưởng chiến đấu: có `sat`, `cap`; đầu chùm tới nơi thì ai nằm trên chùm bị trúng). Không lưu ván. */
+export interface ChuongTiec { id: number; x0: number; y0: number; x1: number; y1: number; t: number; k: number; loai: number; sat?: number; cap?: number }
 
 /** Vị trí Cell trên vòng quanh bánh (vòng gần tròn, hơi dẹt theo chiều dọc) */
 export const viTriVong = (tc: Tiec, goc: number) => ({ x: tc.x + Math.cos(goc) * tc.bk, y: tc.y + Math.sin(goc) * tc.bk * 0.9 });

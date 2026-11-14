@@ -1148,7 +1148,7 @@ export class VeCanvas {
     const tcc = ce.tiec ? c.tiecCua(ce) : undefined;
     const tiec = !!tcc?.on && !ce.chet;
     // Cấp cao nhất: quầng sáng đỏ cam bằng gradient (không dùng shadowBlur: sprite phóng rất to nên làm mờ cực chậm)
-    if (ce.cap === SO_CAP - 1 && !ce.chet) {
+    if (ce.cap === SO_CAP - 1 && !ce.chet && !c.cellLoc(ce)) {
       const g = ctx.createRadialGradient(0, -32, 2, 0, -32, 36);
       g.addColorStop(0, `rgba(255,${150 + Math.round(60 * Math.sin(c.t * 6))},40,0.5)`);
       g.addColorStop(1, 'rgba(255,120,30,0)');
@@ -1166,7 +1166,7 @@ export class VeCanvas {
         ctx.translate(Math.sin(c.t * 80) * 1.2, 0);
       }
       this.sprite(ctx, SP_CELL_TIEC, ce.cap * SP_CELL_TIEC.cot + kt, ce.lat, false);
-    } else this.sprite(ctx, SP_CELL, ce.cap * SP_CELL.cot + c.cellKhung(ce), ce.lat, false);
+    } else this.sprite(ctx, SP_CELL, ce.cap * SP_CELL.cot + c.cellKhung(ce), ce.lat, false, c.cellLoc(ce));
     if (tiec) {
       ctx.shadowBlur = 0;
       ctx.font = `bold 9px ${FONT}`;
