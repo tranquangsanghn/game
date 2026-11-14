@@ -399,6 +399,10 @@ const TAM_LAO = TAM_DANH_XA;
 // Gà con ngửi thấy nhân vật trong TAM_NGUI_NV thì đi về phía nhân vật (xu hướng đuổi theo); ngửi thấy táo đỏ trong TAM_NGUI_TAO thì đi tới ăn
 const TAM_NGUI_NV = 800;
 const TAM_NGUI_TAO = 500;
+// Giới hạn số gà (hiệu năng): đủ ME_PHU_TOI_DA tướng gà thì trứng đỏ không nở thêm tướng gà; đủ GA_CON_TOI_DA gà con thì không nở / gọi thêm gà con.
+// Khi đã đủ, loại gà đó bỏ giới hạn tầm ngửi: đi ăn táo đỏ / socola và tìm Mabu / Zinbu (đang ở trong vườn gà) khắp vườn (dayCon / dayPhu).
+const ME_PHU_TOI_DA = 40;
+const GA_CON_TOI_DA = 120;
 // Tốc độ gà lao vào nhân vật (gà bay giữ nguyên tốc độ bay, chỉ đổi hướng)
 // Hệ số nhân tốc độ di chuyển thật của mọi loại gà (kể cả gà tướng): 1/4 tốc độ gốc ghi trong các hằng số
 const HE_SO_TOC_GA = 0.25;
@@ -1115,6 +1119,10 @@ export class Game {
     return this.ga.filter((g) => laMePhu(g) && !g.chet).length;
   }
 
+  /** Đã đủ GA_CON_TOI_DA gà con / ME_PHU_TOI_DA tướng gà (tính lại đầu mỗi khung trong capNhat) */
+  private dayCon = false;
+  private dayPhu = false;
+
   get nguoiThang(): number {
     const [a, b] = this.nguoi;
     if (a.vang || b.vang) return -1;
@@ -1189,6 +1197,8 @@ export class Game {
     this.rung = Math.max(0, this.rung - dt);
     if (this.rung === 0) this.rungBien = RUNG_BIEN;
 
+    this.dayCon = this.soGaCon >= GA_CON_TOI_DA;
+    this.dayPhu = this.soMePhu >= ME_PHU_TOI_DA;
     this.capNhatVuon(dtE);
     this.capNhatTrungGa(dt);
     this.henTuong -= dtE;
@@ -1530,7 +1540,7 @@ export class Game {
         // Gọi gà con bảo vệ khi máu dưới GOI_MAU
         g.hoiGoi = Math.max(0, (g.hoiGoi ?? 0) - dt);
         g.dangGoi = Math.max(0, (g.dangGoi ?? 0) - dt);
-        if (g.hp < hpToiDa(g) * GOI_MAU && g.hoiGoi <= 0 && !g.chieu) this.goiGaCon(g);
+        if (g.hp < hpToiDa(g) * GOI_MAU && g.hoiGoi <= 0 && !g.chieu && this.soGaCon < GA_CON_TOI_DA) this.goiGaCon(g);
         if (g.goc) this.dieuTuongGoc(g, dt);
         else this.dieuTuong(g, dt);
       }
@@ -2153,7 +2163,9 @@ export class Game {
   // Gà tướng đẻ một lượt trứng quanh mình
   private deTrung(boss: { id: number; x: number; y: number }): void {
     this.am.phat('deTrung');
-    for (const loai of DAN_TRUNG) {
+    // Đủ GA_CON_TOI_DA gà con (tính cả trứng thường đang ấp) thì không đẻ trứng thường
+    const choCon = GA_CON_TOI_DA - this.soGaCon - this.trungDe.filter((e) => !e.db).length;
+    for (const loai of DAN_TRUNG.slice(0, Math.max(0, choCon))) {
       const v = { x: boss.x + ngauNhien(-110, 110), y: boss.y + ngauNhien(-60, 90) };
       giuTrongMap(v, LE_TRUNG, false, 'vuon');
       this.trungDe.push({ id: this.id++, loai, t: 0, x: v.x, y: v.y });
@@ -2272,6 +2284,8 @@ export class Game {
   // Gà mẹ gốc đẻ một quả trứng đỏ đặc biệt; mỗi lần chỉ có một quả đang ấp của gà mẹ này
   private deTrungDb(boss: { id: number; x: number; y: number }): void {
     if (this.trungDe.some((e) => e.db && e.me === boss.id)) return;
+    // Đủ ME_PHU_TOI_DA tướng gà (tính cả trứng đỏ đang ấp) thì không đẻ trứng đỏ
+    if (this.soMePhu + this.trungDe.filter((e) => e.db).length >= ME_PHU_TOI_DA) return;
     const v = { x: boss.x + ngauNhien(-140, 140), y: boss.y + ngauNhien(40, 150) };
     giuTrongMap(v, LE_TRUNG_DB, false, 'vuon');
     const { x, y } = v;
@@ -2281,6 +2295,7 @@ export class Game {
 
   // Trứng đỏ nở gà con ở nhịp k (0 → gà con thường, 1 → x2 to gấp đôi, 2 → x3, 3 → x4)
   private nuaGaDb(e: TrungGa, k: number): void {
+    if (this.soGaCon >= GA_CON_TOI_DA) return;
     const loai = (['hen', 'rooster', 'flyer'] as const)[Math.floor(Math.random() * 3)];
     const bay = loai === 'flyer';
     const huong = ngauNhien(0, Math.PI * 2);
@@ -2299,6 +2314,7 @@ export class Game {
 
   // Trứng đỏ nở ra gà mẹ phụ: đi đánh nhân vật thay gà mẹ gốc
   private sinhMePhu(e: TrungGa): void {
+    if (this.soMePhu >= ME_PHU_TOI_DA) return;
     const g = this.taoTuong(e.x, e.y, Math.random() < 0.5, false, this.demPhu++ % KIEU_PHU);
     giuTrongMap(g, LE_TUONG, false, 'vuon');
     this.ga.push(g);
@@ -2308,12 +2324,13 @@ export class Game {
     this.rung = Math.max(this.rung, 0.3);
   }
 
-  // Thanh socola gần nhất trong tầm ngửi TAM_NGUI_TAO của gà g
-  private socolaGan(g: Ga): VatPham | null {
+  // Thanh socola gần nhất trong tầm ngửi TAM_NGUI_TAO của gà g; khongGioiHan: tìm khắp vườn, kể cả táo đỏ (tướng gà khi đã đủ ME_PHU_TOI_DA)
+  private socolaGan(g: Ga, khongGioiHan = false): VatPham | null {
     let kq: VatPham | null = null;
-    let xa = TAM_NGUI_TAO;
+    let xa = khongGioiHan ? Infinity : TAM_NGUI_TAO;
     for (const v of this.vatPham) {
-      if (v.loai !== 'socola') continue;
+      if (v.loai !== 'socola' && !(khongGioiHan && (v.loai ?? 'do') === 'do')) continue;
+      if (khongGioiHan && !trongVuon(v.x, v.y)) continue;
       const d = Math.hypot(v.x - g.x, v.y - g.y);
       if (d < xa) { xa = d; kq = v; }
     }
@@ -2422,16 +2439,19 @@ export class Game {
   private gaLao(g: Ga, dt: number): boolean {
     let muc: { x: number; y: number } | null = null;
     let gan = TAM_NGUI_NV;
+    // Đã đủ GA_CON_TOI_DA gà con: tìm Mabu / Zinbu (đang ở trong vườn) và táo đỏ / socola khắp vườn
+    const day = this.dayCon;
     for (const n of this.nguoi) {
       if (this.khuat(n)) continue;
       const d = Math.hypot(n.x - g.x, n.y - g.y);
-      if (d < gan) { gan = d; muc = n; }
+      if (d < gan || (day && trongVuon(n.x, n.y) && (!muc || d < gan))) { gan = d; muc = n; }
     }
     // Nhân vật chưa vào tầm đánh (TAM_LAO) mà có táo đỏ trong tầm ngửi TAM_NGUI_TAO thì đi tới táo trước
     if (!muc || gan > TAM_LAO) {
-      let xa = TAM_NGUI_TAO;
+      let xa = day ? Infinity : TAM_NGUI_TAO;
       for (const v of this.vatPham) {
         if (v.loai === 'xanh' || v.loai === 'ngoc') continue;
+        if (day && !trongVuon(v.x, v.y)) continue;
         const d = Math.hypot(v.x - g.x, v.y - g.y);
         if (d < xa) { xa = d; muc = v; }
       }
@@ -2674,15 +2694,16 @@ export class Game {
       return;
     }
     // Thấy nhân vật trong tầm nhìn gấp 3 thì đuổi người gần nhất, không thì đi loanh quanh
+    // Đã đủ ME_PHU_TOI_DA tướng gà: tìm Mabu / Zinbu khắp vườn và đi ăn táo đỏ / socola khắp vườn
     let muc: NguoiChoi | null = null;
     let gan = TAM_NHIN_TUONG;
     for (const n of this.nguoi) {
       if (this.khuat(n)) continue;
       const d = Math.hypot(n.x - g.x, n.y - g.y);
-      if (d < gan) { gan = d; muc = n; }
+      if (d < gan || (this.dayPhu && trongVuon(n.x, n.y) && (!muc || d < gan))) { gan = d; muc = n; }
     }
     // Nhân vật chưa vào tầm đánh mà có socola trong tầm ngửi thì đi ăn socola trước
-    const soc = this.socolaGan(g);
+    const soc = this.socolaGan(g, this.dayPhu);
     if (soc && (!muc || gan > TAM_LAO)) {
       const d = Math.hypot(soc.x - g.x, soc.y - g.y) || 1;
       g.vx = ((soc.x - g.x) / d) * TOC_DO_TUONG * 2;
