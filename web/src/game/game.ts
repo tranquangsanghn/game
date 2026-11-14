@@ -668,6 +668,9 @@ function giuTrongMap(o: { x: number; y: number }, le: Le, quaNuoc = false, vung?
   return r;
 }
 
+// Vùng của nhân vật theo vị trí hiện tại: trong vườn gà hay ngoài đảo (dùng để không cho đi bộ / bay vượt tường vườn)
+const vungCua = (o: { x: number; y: number }): 'vuon' | 'dao' | undefined => (banDoHt !== 'sa' ? undefined : trongVuon(o.x, o.y) ? 'vuon' : 'dao');
+
 function tronMau(a: number[], b: number[], k: number) {
   const c = a.map((v, i) => Math.round(v + (b[i] - v) * k));
   return `rgb(${c[0]},${c[1]},${c[2]})`;
@@ -1200,7 +1203,8 @@ export class Game {
     const truoc = this.nguoi.map((n) => ({ x: n.x, y: n.y }));
     this.dieuKhien(dt);
     this.rangBuoc(truoc);
-    this.nguoi.forEach((n, p) => { if (!this.trongMb(p)) giuTrongMap(n, leNhanVat(n.nv.heSoTo), !!n.bay); });
+    // Nhân vật đi bộ / bay không đổi vùng: đang trong vườn gà thì ở lại trong vườn, đang ở đảo thì ở lại đảo (chỉ máy bay mới ra / vào vườn)
+    this.nguoi.forEach((n, p) => { if (!this.trongMb(p)) giuTrongMap(n, leNhanVat(n.nv.heSoTo), !!n.bay, vungCua(truoc[p])); });
     this.capNhatMb(dt);
     this.nguoi.forEach((n, p) => this.mayQuet(n, p));
     this.capNhatGa(dtE);
@@ -3278,7 +3282,7 @@ export class Game {
           const b = Math.min(d - CUU_BAM, Math.max(CUU_TOC_BAM * dt, (d - CUU_BAM) * Math.min(1, dt * 6)));
           c.x -= (dx / d) * b;
           c.y -= (dy / d) * b;
-          giuTrongMap(c, leNhanVat(n.nv.heSoTo), false);
+          giuTrongMap(c, leNhanVat(n.nv.heSoTo), false, vungCua(s));
         }
         n.x = c.x;
         n.y = c.y;
@@ -3936,7 +3940,7 @@ export class Game {
       x: kep(x, o.x - MAX_DX, o.x + MAX_DX),
       y: kep(y, o.y - MAX_DY, o.y + MAX_DY),
     };
-    giuTrongMap(dich, le, false);
+    giuTrongMap(dich, le, false, vungCua(n));
     let d = Math.hypot(dich.x - n.x, dich.y - n.y);
     if (d > BAY_TOI_DA) {
       // Chỉ xa hơn tầm bay tối đa thì bay tới mép tầm theo hướng chuột
