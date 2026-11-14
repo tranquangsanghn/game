@@ -262,6 +262,8 @@
 
 - Vua gà (gà mẹ gốc) tự hồi `HOI_MAU_VUA` = 2 máu/s tới máu tối đa (`hpToiDa()` = `HP_VUA` = 600), cả khi đang bị đánh; đang hoá socola thì không hồi. Mọi ngưỡng % máu của vua gà (giai đoạn 2, gọi gà con, trốn chạy, combo socola + mây 30%, tự hồi, thanh máu `maxHpTuong(g)`) tính theo máu tối đa này. Tướng gà và gà con không tự hồi.
 
+- **Vua gà đẻ đủ** (đủ `GA_CON_TOI_DA` gà con và `ME_PHU_TOI_DA` tướng gà, `dayCon && dayPhu`, không đẻ được nữa): tự tăng `VUA_DU_MAU` = 5 máu/s và `VUA_DU_SAT` = 3 sát thương/s (`Ga.satThem`, lưu theo `ga` trong ván lưu), **không giới hạn** (máu vượt `HP_VUA`, thanh máu vẽ theo `max(HP_VUA, máu)`); đang hoá socola thì không tăng. Sát thương cộng thêm áp vào `satGa()`, đốt cháy màu đỏ (`DOT_SAT + satThem` mỗi giây) và phản đòn màu đen. Gà chết bớt dưới mức thì vua gà đẻ lại và ngừng tăng (giữ phần đã tăng). Lần đầu đủ hiện chữ "👑 VUA GÀ ĐẺ ĐỦ: TĂNG SỨC!".
+
 
 
 - **Thế giới mở** (trước là bản đồ Đảo sa mạc `'sa'`; nay là bản đồ duy nhất, bỏ chọn bản đồ ở màn mục tiêu và bỏ map đồng cỏ đứng riêng `'co'`; ván lưu thiếu `banDo` coi là thế giới mở). Bố cục (`web/src/game/ban-do.ts`): **nguyên map đồng cỏ = vườn gà** (0..`MAP`, có tường gạch, vua gà / gà con / trứng chạy như map cỏ) nằm giữa biển; quanh nó **5 đảo cát xếp thành vòng** (`DAO`: đảo 0 phía dưới to ≈ 1,5 vườn gà về diện tích, là chỗ xuất phát `XUAT_PHAT`; 4 đảo kia ≈ 2/3 vườn), mỗi đảo nối 2 đảo bên cạnh bằng dải cát (`CAU_NOI`). Vườn gà cách mép đảo ít nhất `CACH_VUON` = 2200 biển; nhân vật vào vườn qua lối `CONG_VUON` (xem mục "Nguyên tắc ngọc rồng"), gà chỉ ở trong vườn. Thế giới rộng `TG` (camera và `kepX` / `kepY` kẹp theo `TG`).

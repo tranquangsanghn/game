@@ -36,6 +36,8 @@ export interface Ga {
   socola?: number; comboSoc?: boolean;
   // Gà con nở từ trứng đỏ: sức mạnh (nhân máu và sát thương) và độ to (nhân kích thước)
   suc?: number; to?: number; db?: boolean;
+  // Vua gà đã đẻ đủ (hết đẻ): sát thương cộng thêm (tăng VUA_DU_SAT mỗi giây, không giới hạn)
+  satThem?: number;
   // Gà mẹ phụ: kiểu chuyên (0 Lao · 1 Bay · 2 đen · 3 vàng · 4 đỏ), cũng là màu riêng của con đó
   kieuPhu?: number;
   // Gà con bị đòn ăn (quất râu Zinbu / bắn chưởng Mabu) đang bị kéo về nhân vật p; hong = socola hồng (Mabu); an = máu / mana nhận được khi ăn
@@ -281,6 +283,10 @@ const GOI_MAU = 0.4;
 const TRON_MAU = 0.2;
 // Vua gà (gà mẹ gốc) tự hồi HOI_MAU_VUA máu / giây, tới máu tối đa (hpToiDa) (đang hoá socola thì không hồi)
 const HOI_MAU_VUA = 2;
+// Vua gà đẻ đủ số lượng (đủ GA_CON_TOI_DA gà con và ME_PHU_TOI_DA tướng gà, không đẻ được nữa) thì tự tăng
+// VUA_DU_MAU máu / giây và VUA_DU_SAT sát thương / giây, không giới hạn (đang hoá socola thì không tăng)
+const VUA_DU_MAU = 5;
+const VUA_DU_SAT = 3;
 const TRON_TOC = 4;
 // Vua gà không hồi sinh nên được trốn chạy nhanh TRON_LAN lần; trong lúc chạy thì bất tử; mỗi lần đều khi máu dưới TRON_MAU và còn bị đuổi
 const TRON_LAN = 2;
@@ -640,7 +646,7 @@ const laMePhu = (g: Ga) => g.loai === 'boss' && !g.goc;
 // Máu tối đa: vua gà (gà mẹ gốc) mỗi lần hồi sinh thêm HP_GA (100 → 200 → 300), gà khác HP_GA (gà nở từ trứng đỏ × suc)
 const hpToiDa = (g: Ga) => (g.goc ? HP_VUA : HP_GA * (g.db ? g.suc ?? 1 : 1));
 // Hệ số sát thương của gà tướng theo lần hồi sinh; sát thương gốc của mọi con gà
-const satGa = (g: Ga) => SAT_GA[g.loai] * (g.suc ?? 1);
+const satGa = (g: Ga) => SAT_GA[g.loai] * (g.suc ?? 1) + (g.satThem ?? 0);
 // Tỉ lệ né của gà: gà mẹ né 100% khi đang trong thế phòng thủ (trừ lúc sơ hở / hoá socola), ngoài thế 0%; gà con theo NE_GA
 const neGa = (g: Ga) => (g.loai === 'boss' ? ((g.the ?? 0) > 0 && (g.soHo ?? 0) <= 0 && (g.socola ?? 0) <= 0 ? 1 : 0) : NE_GA[g.loai]);
 // Chiêu nào gà mẹ dùng được: gà mẹ gốc chỉ có ba màu; gà mẹ phụ theo kiểu chuyên (0 Lao · 1 Bay · 2-4 một màu cố định)
@@ -1562,6 +1568,12 @@ export class Game {
         // Chỉ gà mẹ gốc đẻ trứng (đang lao / bay thì không đẻ; gà mẹ gốc không có Lao / Bay)
         if (g.goc) {
           if (g.hp > 0 && g.hp < hpToiDa(g)) g.hp = Math.min(hpToiDa(g), g.hp + HOI_MAU_VUA * dt);
+          // Đẻ đủ số lượng, không đẻ nữa: tự tăng máu và sát thương, không giới hạn
+          if (g.hp > 0 && this.dayCon && this.dayPhu) {
+            if (!g.satThem) this.chu.push({ id: this.id++, x: g.x, y: g.y - 400, text: '👑 VUA GÀ ĐẺ ĐỦ: TĂNG SỨC!', mau: '#ffd23f', t: 0 });
+            g.hp += VUA_DU_MAU * dt;
+            g.satThem = (g.satThem ?? 0) + VUA_DU_SAT * dt;
+          }
           if (!g.chieu) g.de = (g.de ?? 0) - dt;
           // Giai đoạn 2: máu dưới GD2_MAU thì đẻ trứng nhanh hơn
           if (!g.gd2 && g.hp < hpToiDa(g) * GD2_MAU) {
@@ -2670,7 +2682,7 @@ export class Game {
       if (this.khuat(n) || n.nv.khoa) continue;
       const dx = (n.x - g.x) / DOT_BAN_KINH;
       const dy = (n.y - g.y) / (DOT_BAN_KINH * EP_GA);
-      if (dx * dx + dy * dy < 1) this.nhanSatThuong(n, DOT_SAT * DOT_NHIP, true, '#ff8a3c');
+      if (dx * dx + dy * dy < 1) this.nhanSatThuong(n, (DOT_SAT + (g.satThem ?? 0)) * DOT_NHIP, true, '#ff8a3c');
     }
   }
 
@@ -3004,7 +3016,7 @@ export class Game {
       if (g.mau === 'den') {
         // Màu đen: không bị thương, phản lại 100% sát thương cho người đánh (mây không nhận sát thương nên không bị phản)
         this.chu.push({ id: this.id++, x: t.x + ngauNhien(-40, 40), y: t.y - 80, text: 'PHẢN!', mau: '#c77dff', t: 0 });
-        if (!n.het && !n.nv.laMay) this.nhanSatThuong(n, sat, true);
+        if (!n.het && !n.nv.laMay) this.nhanSatThuong(n, sat + (g.satThem ?? 0), true);
         return false;
       }
     }
@@ -4492,7 +4504,7 @@ export class Game {
 
   // Thanh máu gà tướng
   maxHpTuong(g: Ga): number {
-    return hpToiDa(g);
+    return Math.max(hpToiDa(g), g.hp);
   }
 
   danHienTai(d: Dan) {
