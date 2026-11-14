@@ -136,6 +136,8 @@ export class VeCanvas {
   // Atlas đã nhuộm sẵn theo bộ lọc màu (nháy sáng, đen, vàng, đỏ…): nhuộm cả atlas MỘT lần rồi dùng lại.
   // Không dùng ctx.filter lúc vẽ từng sprite vì rất chậm (mỗi sprite vài ms).
   private nhuom = new Map<string, HTMLCanvasElement>();
+  /** Bản thu nhỏ sẵn (mip) của atlas / atlas nhuộm: khoá `url|boLoc|L`, L = 2, 4, 8 lần nhỏ hơn */
+  private mip = new Map<string, HTMLCanvasElement>();
 
   /** Nạp trước các atlas để khung hình đầu tiên đã có ảnh */
   napTruoc(...atlas: string[]): void {
@@ -1690,18 +1692,51 @@ export class VeCanvas {
 
   /** Vẽ một khung atlas, gốc toạ độ = điểm neo dưới chân; lật ngang quanh điểm neo. boLoc: bộ lọc màu CSS (đã nhuộm sẵn cả atlas). Chưa nạp xong ảnh thì bỏ qua. */
   private sprite(ctx: CanvasRenderingContext2D, sp: KhungSprite, khung: number, lat: boolean, muot: boolean, boLoc: string | null = null): void {
-    const img = this.nguon(sp.atlas, boLoc);
+    let img = this.nguon(sp.atlas, boLoc);
     if (!img) return;
     const rongAnh = img instanceof HTMLImageElement ? img.naturalWidth : (img as HTMLCanvasElement).width;
     // File PNG có thể lớn hơn kích thước logic (2×, 4×): đổi toạ độ khung sang điểm ảnh thật
-    const f = rongAnh / sp.atlasW;
+    let f = rongAnh / sp.atlasW;
+    if (muot) {
+      // Hiệu năng: thu nhỏ ảnh to bằng imageSmoothingQuality 'high' mỗi lần vẽ rất tốn (vài trăm gà là tụt FPS).
+      // Chọn bản thu nhỏ sẵn (mip) nhỏ nhất mà khung vẫn ≥ cỡ thật trên màn hình rồi vẽ bằng 'low' (tỉ lệ < 2 nên vẫn mịn).
+      const m = ctx.getTransform();
+      const dich = Math.hypot(m.a, m.b) * sp.w;
+      let L = 1;
+      while (L < 8 && (sp.w * f) / (L * 2) >= dich) L *= 2;
+      if (L > 1) {
+        const nho = this.layMip(sp.atlas, boLoc, img, L);
+        if (nho) { img = nho; f /= L; }
+      }
+    }
     const sx = (khung % sp.cot) * sp.w * f;
     const sy = Math.floor(khung / sp.cot) * sp.h * f;
     ctx.save();
     if (lat) ctx.scale(-1, 1);
     ctx.imageSmoothingEnabled = muot;
-    if (muot) ctx.imageSmoothingQuality = 'high';
+    if (muot) ctx.imageSmoothingQuality = 'low';
     ctx.drawImage(img, sx, sy, sp.w * f, sp.h * f, -sp.neoX, -sp.neoY, sp.w, sp.h);
     ctx.restore();
   }
+
+  /** Bản thu nhỏ L lần của ảnh nguồn (dựng một lần từ bản L/2, chất lượng cao, rồi giữ lại) */
+  private layMip(url: string, boLoc: string | null, goc: CanvasImageSource, L: number): HTMLCanvasElement | null {
+    const khoa = `${url}|${boLoc ?? ''}|${L}`;
+    let cv = this.mip.get(khoa);
+    if (cv) return cv;
+    const tren = L === 2 ? goc : this.layMip(url, boLoc, goc, L / 2);
+    if (!tren) return null;
+    const rw = tren instanceof HTMLImageElement ? tren.naturalWidth : (tren as HTMLCanvasElement).width;
+    const rh = tren instanceof HTMLImageElement ? tren.naturalHeight : (tren as HTMLCanvasElement).height;
+    cv = document.createElement('canvas');
+    cv.width = Math.max(1, Math.round(rw / 2));
+    cv.height = Math.max(1, Math.round(rh / 2));
+    const x = cv.getContext('2d')!;
+    x.imageSmoothingEnabled = true;
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(tren, 0, 0, cv.width, cv.height);
+    this.mip.set(khoa, cv);
+    return cv;
+  }
+
 }
