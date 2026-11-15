@@ -545,10 +545,12 @@ export class VeCanvas {
     const { s, ox, oy } = c.phepChieu();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    // Khung nhìn nằm trọn trong vườn gà (nền cỏ che hết) thì khỏi vẽ biển / cát bên dưới
+    // Khung nhìn nằm trọn trong vườn gà (nền cỏ che hết) thì khỏi vẽ biển / cát bên dưới.
+    // Camera trong vườn bị kẹp đúng mép 0..MAP nên chỉ cho sai số làm tròn nhỏ (lề cũ 40 làm đứng sát tường vẫn vẽ thừa cả lớp đảo bên dưới cỏ)
     const cam = c.gocCamera();
+    const e = 0.5;
     const trongVuon =
-      -cam.x / cam.k - 40 >= 0 && -cam.y / cam.k - 40 >= 0 && (c.W - cam.x) / cam.k + 40 <= c.MAP && (c.H - cam.y) / cam.k + 40 <= c.MAP;
+      -cam.x / cam.k >= -e && -cam.y / cam.k >= -e && (c.W - cam.x) / cam.k <= c.MAP + e && (c.H - cam.y) / cam.k <= c.MAP + e;
     if (c.banDoVan !== 'sa' || trongVuon) return;
     // Vực đen phủ cả canvas (kể cả hàng điểm ảnh lẻ ở mép do làm tròn)
     ctx.fillStyle = '#000';
