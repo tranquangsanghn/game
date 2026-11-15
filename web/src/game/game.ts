@@ -2271,18 +2271,33 @@ export class Game {
     return x > k.x0 - le && x < k.x1 + le && y > k.y0 - le && y < k.y1 + le;
   }
 
-  /** Gà (gà con, tướng gà, vua gà) đang trên camera: chỉ khi đó mới dùng chiêu / hiệu ứng (đổi màu, thế phòng thủ, Lao / Bay, gọi gà con, trốn chạy nhanh, gà đen nhào, gà đỏ khựng, chữ bay, nổ, âm thanh) */
-  private gaTrenCam(g: { x: number; y: number; loai?: LoaiGa }): boolean {
-    return this.trenCam(g.x, g.y, g.loai === 'boss' ? 450 : 150);
+  /**
+   * Điểm (x, y) được nhân vật nhìn thấy: trên camera (so sánh số, rẻ, kiểm tra trước), khối đất đó đang thấy (thayVuon / thayDao)
+   * và nằm trong tầm nhìn TAM_NHIN (+ lề) của một nhân vật đang chơi chưa gục (sương mù; chưởng bay không tính)
+   */
+  private nvThay(x: number, y: number, leCam: number, le = 0): boolean {
+    if (!this.trenCam(x, y, leCam) || !(trongVuon(x, y) ? this.thayVuon : this.thayDao)) return false;
+    const r = TAM_NHIN + le;
+    for (const n of this.nguoi) {
+      if (n.vang || n.het) continue;
+      const dx = n.x - x, dy = n.y - y;
+      if (dx * dx + dy * dy < r * r) return true;
+    }
+    return false;
   }
 
-  /** Hiệu ứng (vụ nổ, bụi) và chữ bay sinh ra từ gà: ngoài camera thì bỏ, không tạo vật thừa */
+  /** Gà (gà con, tướng gà, vua gà) đang được nhân vật nhìn thấy: chỉ khi đó mới dùng chiêu / hiệu ứng (đổi màu, thế phòng thủ, Lao / Bay, gọi gà con, trốn chạy nhanh, gà đen nhào, gà đỏ khựng, chữ bay, nổ, âm thanh) */
+  private gaTrenCam(g: { x: number; y: number; loai?: LoaiGa }): boolean {
+    return this.nvThay(g.x, g.y, g.loai === 'boss' ? 450 : 150);
+  }
+
+  /** Hiệu ứng (vụ nổ, bụi) và chữ bay sinh ra từ gà: nhân vật không nhìn thấy thì bỏ, không tạo vật thừa */
   private vetGa(v: Vet): void {
-    if (this.trenCam(v.x, v.y)) this.vet.push(v);
+    if (this.nvThay(v.x, v.y, 300, 150)) this.vet.push(v);
   }
 
   private chuGa(c: Chu): void {
-    if (this.trenCam(c.x, c.y + 300)) this.chu.push(c);
+    if (this.nvThay(c.x, c.y + 300, 300, 150)) this.chu.push(c);
   }
 
   private thay(x: number, y: number): boolean {
@@ -2392,7 +2407,7 @@ export class Game {
 
   // Gà tướng đẻ một lượt trứng quanh mình
   private deTrung(boss: { id: number; x: number; y: number }): void {
-    if (this.trenCam(boss.x, boss.y, 450)) this.am.phat('deTrung');
+    if (this.nvThay(boss.x, boss.y, 450, 150)) this.am.phat('deTrung');
     // Đủ GA_CON_TOI_DA gà con (tính cả trứng thường đang ấp) thì không đẻ trứng thường
     const choCon = GA_CON_TOI_DA - this.soGaCon - this.trungDe.filter((e) => !e.db).length;
     for (const loai of DAN_TRUNG.slice(0, Math.max(0, choCon))) {
