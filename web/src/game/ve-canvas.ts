@@ -129,6 +129,8 @@ export class VeCanvas {
   private nhuom = new Map<string, HTMLCanvasElement>();
   /** Bản thu nhỏ sẵn (mip) của atlas / atlas nhuộm: khoá `url|boLoc|L`, L = 2, 4, 8 lần nhỏ hơn */
   private mip = new Map<string, HTMLCanvasElement>();
+  /** Elip (nền + viền) vẽ sẵn đúng cỡ điểm ảnh trên màn hình: khoá `rx|ry|dày|nền|viền` (điểm ảnh thật, làm tròn 4px) */
+  private elip = new Map<string, HTMLCanvasElement>();
 
   /** Nạp trước các atlas để khung hình đầu tiên đã có ảnh */
   napTruoc(...atlas: string[]): void {
@@ -1214,12 +1216,7 @@ export class VeCanvas {
     if (g.loai === 'boss' && g.mau === 'do' && !g.chet) {
       ctx.save();
       ctx.translate(h.x, h.y);
-      duongElip(ctx, c.R_DOT_THE_GIOI, c.R_DOT_THE_GIOI * c.EP_GA);
-      ctx.fillStyle = 'rgba(255,74,28,0.24)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,122,60,0.7)';
-      ctx.lineWidth = 3 / c.camZ;
-      ctx.stroke();
+      this.elipSan(ctx, c.R_DOT_THE_GIOI, c.R_DOT_THE_GIOI * c.EP_GA, 'rgba(255,74,28,0.24)', 'rgba(255,122,60,0.7)', 3 / c.camZ, 1);
       ctx.restore();
     }
     ctx.translate(h.x, h.y);
@@ -1228,12 +1225,7 @@ export class VeCanvas {
     if (!g.chet && (g.the ?? 0) > 0) {
       ctx.save();
       ctx.translate(0, h.dy);
-      duongElip(ctx, 78, 88);
-      ctx.fillStyle = `rgba(90,200,255,${0.14 + 0.1 * Math.abs(Math.sin(c.t * 8))})`;
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(170,230,255,0.9)';
-      ctx.lineWidth = 5;
-      ctx.stroke();
+      this.elipSan(ctx, 78, 88, 'rgba(90,200,255,0.24)', 'rgba(170,230,255,0.9)', 5, 0.6 + 0.4 * Math.abs(Math.sin(c.t * 8)));
       ctx.restore();
     }
     ctx.translate(0, h.dy);
@@ -1698,6 +1690,39 @@ export class VeCanvas {
   }
 
   /** Vẽ một khung atlas, gốc toạ độ = điểm neo dưới chân; lật ngang quanh điểm neo. boLoc: bộ lọc màu CSS (đã nhuộm sẵn cả atlas). Chưa nạp xong ảnh thì bỏ qua. */
+  /** Elip có nền + viền (khiên thế phòng thủ, vòng lửa gà mẹ đỏ) tâm ở gốc toạ độ hiện tại (rx, ry, day theo toạ độ hiện tại).
+   *  Hiệu năng: fill + stroke đường cong to mỗi khung rất tốn khi hàng chục tướng gà cùng trong khung nhìn; vẽ sẵn thành ảnh
+   *  đúng cỡ điểm ảnh trên màn hình (làm tròn 4px) một lần rồi dán nguyên, không phóng / thu (dán 1:1 rẻ hơn ~5 lần). a = độ đậm (nhấp nháy). */
+  private elipSan(ctx: CanvasRenderingContext2D, rx: number, ry: number, nen: string, vien: string, day: number, a: number): void {
+    const m = ctx.getTransform();
+    const sx = Math.hypot(m.a, m.b);
+    const sy = Math.hypot(m.c, m.d);
+    const RX = Math.max(4, Math.round((rx * sx) / 4) * 4);
+    const RY = Math.max(4, Math.round((ry * sy) / 4) * 4);
+    const D = Math.max(1, Math.round(day * (sx + sy) / 2));
+    const khoa = `${RX}|${RY}|${D}|${nen}|${vien}`;
+    let cv = this.elip.get(khoa);
+    if (!cv) {
+      if (this.elip.size > 80) this.elip.clear();
+      cv = document.createElement('canvas');
+      cv.width = 2 * (RX + D + 2);
+      cv.height = 2 * (RY + D + 2);
+      const x = cv.getContext('2d')!;
+      duongElip(x, RX, RY, cv.width / 2, cv.height / 2);
+      x.fillStyle = nen;
+      x.fill();
+      x.strokeStyle = vien;
+      x.lineWidth = D;
+      x.stroke();
+      this.elip.set(khoa, cv);
+    }
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, Math.round(m.e), Math.round(m.f));
+    ctx.globalAlpha *= a;
+    ctx.drawImage(cv, -cv.width / 2, -cv.height / 2);
+    ctx.restore();
+  }
+
   private sprite(ctx: CanvasRenderingContext2D, sp: KhungSprite, khung: number, lat: boolean, muot: boolean, boLoc: string | null = null): void {
     let img = this.nguon(sp.atlas, boLoc);
     if (!img) return;

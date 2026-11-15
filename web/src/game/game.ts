@@ -115,7 +115,7 @@ export interface CauTron { x: number; y: number; pha: 'san' | 'trong' | 'vo' | '
 /** Tự hạ độ phân giải: dưới FPS_THAP thì giảm DPR_BUOC mỗi lần, không thấp hơn DPR_SAN */
 const FPS_THAP = 50;
 const DPR_BUOC = 0.25;
-const DPR_SAN = 1;
+const DPR_SAN = 0.6;
 /** Độ phân giải canvas nền so với điểm ảnh CSS (thấp để nhẹ, nền vốn mịn) */
 const NEN_TL = 0.5;
 const taoCauTron = (): CauTron[] => CAU_VI_TRI.map(([dx, dy], cua) => ({ x: MAP / 2 + dx, y: MAP / 2 + dy, pha: 'san', p: -1, t: 0, cua }));
@@ -402,6 +402,13 @@ const TAM_DANH_XA = Math.max(TAM_DAM_XA, TAM_DA_XA);
 const TAM_NHIN = TAM_DANH_XA * 1.5;
 // Gà tướng nhìn xa gấp 3 lần nhân vật: thấy nhân vật trong tầm này thì đuổi đánh, không thì đi loanh quanh
 const TAM_NHIN_TUONG = 1500;
+/** Hiệu năng + lối chơi: chỉ VAY_TOI_DA tướng gà (gà mẹ phụ) gần nhân vật nhất được đuổi / vây đánh cùng lúc (chọn lại mỗi VAY_NHIP giây);
+ *  số còn lại lang thang và giữ cách nhân vật ít nhất VAY_TRANH (ngoài khung nhìn), nên không bao giờ cả 40 con cùng chen trên màn hình */
+const VAY_TOI_DA = 12;
+const VAY_NHIP = 0.5;
+const VAY_TRANH = 1500;
+/** Tốc độ lùi ra của tướng gà ngoài nhóm vây (× TOC_DO_TUONG, thật ~90 px/s) */
+const VAY_LUI_TOC = 6;
 // Tầm gà con phát hiện và lao vào nhân vật = tầm đánh xa nhất (không đổi theo tầm nhìn)
 const TAM_LAO = TAM_DANH_XA;
 // Gà con ngửi thấy nhân vật trong TAM_NGUI_NV thì đi về phía nhân vật (xu hướng đuổi theo); ngửi thấy táo đỏ trong TAM_NGUI_TAO thì đi tới ăn
@@ -1150,6 +1157,9 @@ export class Game {
   /** Đã đủ GA_CON_TOI_DA gà con / ME_PHU_TOI_DA tướng gà (tính lại đầu mỗi khung trong capNhat) */
   private dayCon = false;
   private dayPhu = false;
+  /** id các tướng gà đang được phép vây đánh (chonVay()), không lưu ván */
+  private vay = new Set<number>();
+  private henVay = 0;
 
   get nguoiThang(): number {
     const [a, b] = this.nguoi;
@@ -1245,6 +1255,7 @@ export class Game {
     this.nguoi.forEach((n, p) => { if (!this.trongMb(p)) giuTrongMap(n, leNhanVat(n.nv.heSoTo), !!n.bay, vungCua(truoc[p])); });
     this.capNhatMb(dt);
     this.nguoi.forEach((n, p) => this.mayQuet(n, p));
+    this.chonVay(dtE);
     this.capNhatGa(dtE);
     this.gaDanhNguoi();
     this.capNhatCell(dtE);
@@ -2775,9 +2786,52 @@ export class Game {
     });
   }
 
+  /** Chọn VAY_TOI_DA tướng gà gần nhân vật (còn thấy được) nhất được phép đuổi / vây đánh; con đang Lao / Bay giữ nguyên chỗ */
+  private chonVay(dt: number): void {
+    this.henVay -= dt;
+    if (this.henVay > 0) return;
+    this.henVay = VAY_NHIP;
+    const ds: { id: number; d: number }[] = [];
+    for (const g of this.ga) {
+      if (g.chet || g.loai !== 'boss' || g.goc) continue;
+      let d = Infinity;
+      for (const n of this.nguoi) if (!this.khuat(n)) d = Math.min(d, Math.hypot(n.x - g.x, n.y - g.y));
+      ds.push({ id: g.id, d: g.chieu ? -1 : d });
+    }
+    ds.sort((a, b) => a.d - b.d);
+    this.vay = new Set(ds.slice(0, VAY_TOI_DA).map((x) => x.id));
+  }
+
   private dieuTuong(g: Ga, dt: number): void {
     if (g.chieu) {
       this.chayChieu(g, g.chieu, dt);
+      return;
+    }
+    // Ngoài nhóm vây: không đuổi, nhân vật lại gần (trong VAY_TRANH) thì lùi ra xa, không thì lang thang
+    if (!this.vay.has(g.id)) {
+      let gan = VAY_TRANH;
+      let muc: NguoiChoi | null = null;
+      for (const n of this.nguoi) {
+        if (this.khuat(n)) continue;
+        const d = Math.hypot(n.x - g.x, n.y - g.y);
+        if (d < gan) { gan = d; muc = n; }
+      }
+      if (muc) {
+        const d = gan || 1;
+        g.vx = ((g.x - muc.x) / d) * TOC_DO_TUONG * VAY_LUI_TOC;
+        g.vy = ((g.y - muc.y) / d) * TOC_DO_TUONG * VAY_LUI_TOC;
+        g.lat = g.vx < 0;
+        g.doiHuong = 0;
+        return;
+      }
+      g.doiHuong -= dt;
+      if (g.doiHuong <= 0) {
+        g.doiHuong = ngauNhien(2, 5);
+        const goc = ngauNhien(0, Math.PI * 2);
+        const v = Math.random() < 0.25 ? 0 : TOC_DO_TUONG * 0.6;
+        g.vx = Math.cos(goc) * v;
+        g.vy = Math.sin(goc) * v;
+      }
       return;
     }
     // Thấy nhân vật trong tầm nhìn gấp 3 thì đuổi người gần nhất, không thì đi loanh quanh
