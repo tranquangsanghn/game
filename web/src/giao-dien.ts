@@ -93,6 +93,7 @@ export class GiaoDien {
       if (this.huongDan) void this.lam('quay');
       else if (this.daBamX === this.game.menuChon) void this.lam((['mabu', 'zinbu', 'ca2'] as const)[this.game.menuChon]!);
     };
+    this.game.onNutTamDung = () => void this.lam(this.game.menuTamDung === 1 ? 'luuGame' : 'tamDung');
     this.game.onKetThuc = (kq) => void this.ketThuc(kq);
   }
 
@@ -142,7 +143,6 @@ export class GiaoDien {
         break;
       case 'tamDung': g.tamDung(); break;
       case 'luuGame': await this.luuVan(); break;
-      case 'matMay': g.doiMatMay(); break;
       case 'xoaLuu':
         xoaLuu(this.ten);
         this.luu = null;
@@ -272,15 +272,16 @@ export class GiaoDien {
   }
 
   private htmlTamDung(): string {
+    const tc = this.game.cheDo === 'tayCam';
+    const chon = this.game.menuTamDung;
     return `<div class="man-phu"><div class="hop nho">
       <h2>Tạm dừng</h2>
       <p class="phu">${esc(this.ten)} · ${this.game.tongDiem} điểm · ${phut(this.game.tGame)}</p>
       <div class="nhom-nut" style="flex-direction:column;align-items:center">
-        <button type="button" tabindex="-1" class="nut-chinh" data-act="tamDung">Tiếp tục</button>
-        <button type="button" tabindex="-1" class="nut-phu" data-act="luuGame" ${this.dangLuu ? 'disabled' : ''}>${this.dangLuu ? 'Đang lưu…' : '💾 Lưu game'}</button>
-        <button type="button" tabindex="-1" class="nut-phu" data-act="matMay">🌡 Mát máy: ${this.game.matMay ? 'Bật' : 'Tắt'}${this.game.cheDo === 'tayCam' ? ' (Y)' : ''}</button>
+        <button type="button" tabindex="-1" class="nut-chinh${tc && chon === 0 ? ' nut-dang-chon' : ''}" data-act="tamDung">Tiếp tục</button>
+        <button type="button" tabindex="-1" class="nut-phu${tc && chon === 1 ? ' nut-dang-chon' : ''}" data-act="luuGame" ${this.dangLuu ? 'disabled' : ''}>${this.dangLuu ? 'Đang lưu…' : '💾 Lưu game'}</button>
       </div>
-      <p class="phu">Mát máy: giới hạn 30 FPS và độ nét, máy đỡ nóng khi chơi lâu / đông gà.</p>
+      ${tc ? '<p class="phu">▲ ▼ chọn · A bấm · Menu / B tiếp tục chơi</p>' : ''}
       ${this.htmlThongBao()}
     </div></div>`;
   }

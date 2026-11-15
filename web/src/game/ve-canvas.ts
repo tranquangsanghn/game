@@ -1656,7 +1656,7 @@ export class VeCanvas {
     ctx.font = `600 22px ${FONT}`;
     ctx.lineWidth = 4;
     ctx.strokeStyle = '#1d2b3a';
-    const fpsChu = `${c.fps} FPS${c.matMay ? ' · mát máy' : ''}`;
+    const fpsChu = `${c.fps} FPS`;
     ctx.strokeText(fpsChu, 14, 34);
     ctx.fillStyle = '#fff';
     ctx.fillText(fpsChu, 14, 34);

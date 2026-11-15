@@ -116,7 +116,7 @@ type VatXep =
 /** Quả cầu trốn: san = sẵn sàng · trong = có nhân vật p đang trốn · vo = đang vỡ ra (hoạt ảnh) · moc = đã vỡ, chờ CAU_MOC giây mọc quả mới. t = số giây của pha hiện tại */
 /** cua = chủ quả cầu (0 Mabu · 1 Zinbu): chỉ đúng người đó chui vào được, quả cầu có avatar của người đó */
 export interface CauTron { x: number; y: number; pha: 'san' | 'trong' | 'vo' | 'moc'; p: number; t: number; cua: number; }
-/** Tự chỉnh độ phân giải: dưới FPS_THAP (so với 60, chế độ mát máy tính theo FPS_MAT) thì giảm DPR_BUOC mỗi lần, không thấp hơn DPR_SAN;
+/** Tự chỉnh độ phân giải: dưới FPS_THAP (chế độ mát máy luôn bật nên tính theo FPS_MAT) thì giảm DPR_BUOC mỗi lần, không thấp hơn DPR_SAN;
  *  FPS ổn định ≥ FPS_TANG × FPS mục tiêu liền DPR_TANG_DEM lần đo (0,5s / lần) và đã chờ đủ dprChoTang từ lần hạ trước thì tăng lại một bậc */
 const FPS_THAP = 50;
 const DPR_BUOC = 0.25;
@@ -128,10 +128,9 @@ const DPR_TANG_DEM = 10;
 const DPR_CHO = 10000;
 const DPR_DAO_DONG = 15000;
 const DPR_CHO_TOI_DA = 120000;
-/** Chế độ mát máy: giới hạn FPS_MAT khung / giây và độ phân giải tối đa DPR_MAT (máy đỡ nóng khi đông gà), nhớ trong localStorage */
+/** Chế độ mát máy (luôn bật): giới hạn FPS_MAT khung / giây và độ phân giải tối đa DPR_MAT (máy đỡ nóng khi đông gà) */
 const FPS_MAT = 30;
 const DPR_MAT = 1;
-const KHOA_MAT_MAY = 'chicken-shooting-game.mat-may';
 /** Độ phân giải canvas nền so với điểm ảnh CSS (thấp để nhẹ, nền vốn mịn) */
 const NEN_TL = 0.5;
 const taoCauTron = (): CauTron[] => CAU_VI_TRI.map(([dx, dy], cua) => ({ x: MAP / 2 + dx, y: MAP / 2 + dy, pha: 'san', p: -1, t: 0, cua }));
@@ -738,6 +737,10 @@ export class Game {
   /** Tay cầm 1 bấm trái / phải ở màn bắt đầu (sang = -1 / 1); giao diện trả true nếu đã dùng (chọn bản đồ ở màn mục tiêu) */
   /** Thẻ đang chọn ở màn chọn chế độ (0 Mabu · 1 Zinbu · 2 hai người), chữ thập / cần trái trái-phải để chọn */
   menuChon = 2;
+  /** Nút đang chọn ở màn tạm dừng (0 Tiếp tục · 1 Lưu game), chữ thập / cần trái lên-xuống để chọn, A để bấm */
+  menuTamDung = 0;
+  /** Tay cầm bấm A ở màn tạm dừng: giao diện bấm nút đang chọn (menuTamDung) */
+  onNutTamDung: () => void = () => {};
   /** Màn kết thúc: đã bấm X, đang chờ bấm B để chơi lại */
   choiLaiChoB = false;
   private menuCanCu = 0;
@@ -923,8 +926,8 @@ export class Game {
   private dprLucHa = 0;
   private dprLucTang = -Infinity;
   private dprChoTang = DPR_CHO;
-  /** Chế độ mát máy (FPS_MAT khung / giây, độ phân giải ≤ DPR_MAT); bật / tắt ở màn tạm dừng */
-  matMay = (() => { try { return localStorage.getItem(KHOA_MAT_MAY) === '1'; } catch { return false; } })();
+  /** Chế độ mát máy (FPS_MAT khung / giây, độ phân giải ≤ DPR_MAT): luôn bật, không có nút tắt */
+  readonly matMay = true;
   private datKhung: () => void = () => {};
   /** Canvas nền (cát / biển) nằm dưới canvas chính, độ phân giải NEN_TL × điểm ảnh CSS */
   private canvasNen: HTMLCanvasElement | null = null;
@@ -1098,7 +1101,7 @@ export class Game {
   }
 
   tamDung(): void {
-    if (this.man === 'play') this.man = 'pause';
+    if (this.man === 'play') { this.man = 'pause'; this.menuTamDung = 0; }
     else if (this.man === 'pause') this.man = 'play';
   }
 
@@ -1227,17 +1230,6 @@ export class Game {
   /** Trần độ phân giải theo màn hình và chế độ mát máy */
   private dprTranThat(): number {
     return Math.min(window.devicePixelRatio || 1, DPR_TOI_DA, this.matMay ? DPR_MAT : DPR_TOI_DA);
-  }
-
-  /** Bật / tắt chế độ mát máy (nhớ lại cho lần sau); đổi chế độ thì độ phân giải tự dò lại từ mức hiện tại */
-  doiMatMay(): void {
-    this.matMay = !this.matMay;
-    try { localStorage.setItem(KHOA_MAT_MAY, this.matMay ? '1' : '0'); } catch { /* trình duyệt chặn localStorage */ }
-    this.dprTran = Math.max(DPR_SAN, Math.min(this.dpr, this.dprTranThat()));
-    this.fpsThap = this.fpsCao = 0;
-    this.dprChoTang = DPR_CHO;
-    this.dprLucHa = performance.now() - DPR_CHO;
-    this.datKhung();
   }
 
   /** Tự chỉnh độ phân giải theo FPS đo được (mỗi 0,5s): thấp liền 1,5s thì hạ một bậc, cao ổn định thì tăng lại một bậc */
@@ -4353,8 +4345,16 @@ export class Game {
           if (moi(g, 2)) this.choiLaiChoB = true;
           else if (moi(g, 1) && this.choiLaiChoB) { this.choiLaiChoB = false; this.batDau(); }
         }
-      } else if (moi(g, 9)) this.tamDung();
-      else if (moi(g, 3) && this.man === 'pause') this.doiMatMay();
+      } else if (moi(g, 9) || this.man === 'pause' && moi(g, 1)) this.tamDung();
+      else if (this.man === 'pause') {
+        // Màn tạm dừng: chữ thập / cần trái lên-xuống chọn nút, A bấm nút đang chọn; Menu / B tiếp tục chơi
+        const cy = g.axes[1] ?? 0;
+        const canMoi = Math.abs(cy) > 0.6 ? Math.sign(cy) : 0;
+        const xuong = (moi(g, 13) ? 1 : 0) - (moi(g, 12) ? 1 : 0) || (canMoi && canMoi !== this.menuCanCu ? canMoi : 0);
+        this.menuCanCu = canMoi;
+        if (xuong) this.menuTamDung = Math.max(0, Math.min(1, this.menuTamDung + xuong));
+        if (moi(g, 0)) this.onNutTamDung();
+      }
       else if (moi(g, 8) && ds.length === 1 && this.man === 'play') this.doiTayCam();
     }
 
