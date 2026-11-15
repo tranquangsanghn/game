@@ -874,7 +874,6 @@ export class Game {
   // Số gà mẹ phụ đã sinh trong ván (quyết định kiểu chuyên và màu của con kế tiếp)
   private demPhu = 0;
   /** Dấu X đỏ đếm ngược của trứng đỏ (cuối mũi tên chỉ hướng); chỉ lấy khi nằm trong khung nhìn */
-  xTrungView: { x: number; y: number; con: number }[] = [];
   nhamView: { x: number; y: number; mau: string }[] = [];
   private nhinNguon: { x: number; y: number }[] = [];
   // Chỉ những vật trong khung nhìn mới được vẽ (xem CLAUDE.md)
@@ -2082,27 +2081,18 @@ export class Game {
     return e.t > 1 ? Math.sin(e.t * 40) * 12 : 0;
   }
 
-  // Các mũi tên ">" chỉ từ nhân vật gần đích nhất về phía đích; chỉ lấy mũi tên nằm trong khung nhìn.
-  // Đích là trứng đỏ đang ấp (mũi tên hiện liên tục, cuối mũi tên là dấu X đỏ nhấp nháy kèm số giây đếm ngược tới lúc nở gà mẹ phụ), không có thì là gà mẹ gốc (hiện từng đợt).
+  // Các mũi tên ">" chỉ từ nhân vật gần gà mẹ gốc hơn về phía nó (hiện từng đợt); chỉ lấy mũi tên nằm trong khung nhìn.
   private huongToiTuong(trong: (x: number, y: number, le: number) => boolean) {
     const kq: { x: number; y: number; goc: number; a: number; mau: string }[] = [];
-    this.xTrungView = [];
     const song = this.nguoi.filter((n, p) => !n.het && !this.trongCau(p));
     if (this.man !== 'play' || !song.length) return kq;
-    // Mọi nhân vật đã rời vườn gà (đang ở đảo): không còn mũi tên / dấu X / số đếm ngược của vườn gà
+    // Mọi nhân vật đã rời vườn gà (đang ở đảo): không còn mũi tên của vườn gà
     if (this.trenDao) return kq;
-    const gan = (o: { x: number; y: number }) => Math.min(...song.map((n) => Math.hypot(n.x - o.x, n.y - o.y)));
-    const trung = this.trungDe.filter((e) => e.db).sort((a, b) => gan(a) - gan(b))[0];
-    const tw = this.ga.find((g) => g.goc && !g.chet);
-    const dich = trung ?? tw;
+    const dich = this.ga.find((g) => g.goc && !g.chet);
     if (!dich) return kq;
-    let a: number;
-    if (trung) a = 0.3 + 0.2 * Math.abs(Math.sin(this.t * 3));
-    else {
-      const pha = this.tGame % HUONG_CHU_KY;
-      if (pha > HUONG_HIEN) return kq;
-      a = Math.sin((Math.PI * pha) / HUONG_HIEN) * 0.5;
-    }
+    const pha = this.tGame % HUONG_CHU_KY;
+    if (pha > HUONG_HIEN) return kq;
+    const a = Math.sin((Math.PI * pha) / HUONG_HIEN) * 0.5;
     // Chỉ nhân vật còn sống và gần đích hơn mới có mũi tên
     const n = [...song].sort((p, q) => Math.hypot(p.x - dich.x, p.y - dich.y) - Math.hypot(q.x - dich.x, q.y - dich.y))[0];
     const dx = dich.x - n.x;
@@ -2110,9 +2100,8 @@ export class Game {
     const d = Math.hypot(dx, dy);
     const ux = d ? dx / d : 0;
     const uy = d ? dy / d : 0;
-    const gom = trung ? 300 : HUONG_GAN;
-    if (d >= gom) {
-      const cuoi = Math.min(d - gom * 0.4, HUONG_TOI_DA);
+    if (d >= HUONG_GAN) {
+      const cuoi = Math.min(d - HUONG_GAN * 0.4, HUONG_TOI_DA);
       for (let k0 = HUONG_BAT_DAU; k0 <= cuoi; k0 += HUONG_CACH) {
         for (let i = 0; i < HUONG_CUM; i++) {
           const k = k0 + i * HUONG_LIEN;
@@ -2121,13 +2110,6 @@ export class Game {
           if (trong(x, y, 60)) kq.push({ x, y, goc: (Math.atan2(uy, ux) * 180) / Math.PI, a, mau: n.mau });
         }
       }
-    }
-    // Dấu X đỏ ở cuối mũi tên: đúng chỗ quả trứng nếu trong tầm, xa hơn thì ở cuối dãy mũi tên
-    if (trung) {
-      const xa = d > HUONG_TOI_DA + 150;
-      const x = xa ? n.x + ux * (HUONG_TOI_DA + 150) : trung.x;
-      const y = xa ? n.y + uy * (HUONG_TOI_DA + 150) : trung.y;
-      if (trong(x, y, 150)) this.xTrungView.push({ x, y, con: Math.max(0, Math.ceil((trung.ap ?? TRUNG_DB_NO) - trung.t)) });
     }
     return kq;
   }

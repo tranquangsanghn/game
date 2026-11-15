@@ -613,33 +613,6 @@ export class VeCanvas {
     ctx.lineCap = 'butt';
     ctx.lineJoin = 'miter';
 
-    // Dấu X đỏ nhấp nháy + số giây đếm ngược của trứng đỏ (cuối mũi tên chỉ hướng); 3 giây cuối nháy nhanh hơn
-    for (const x of c.xTrungView) {
-      // Dấu X và số nháy: hiện 0,5s rồi ẩn 0,5s
-      if (Math.floor(c.t / 0.5) % 2 !== 0) continue;
-      ctx.save();
-      ctx.translate(x.x, x.y - 40);
-      ctx.lineCap = 'round';
-      ctx.lineWidth = 14;
-      ctx.strokeStyle = '#fff';
-      ctx.beginPath();
-      ctx.moveTo(-26, -26); ctx.lineTo(26, 26); ctx.moveTo(26, -26); ctx.lineTo(-26, 26);
-      ctx.stroke();
-      ctx.lineWidth = 8;
-      ctx.strokeStyle = '#ff2a1f';
-      ctx.stroke();
-      ctx.font = `900 56px ${FONT}`;
-      ctx.textAlign = 'center';
-      ctx.lineJoin = 'round';
-      ctx.lineWidth = 8;
-      ctx.strokeStyle = '#fff';
-      ctx.strokeText(`${x.con}`, 0, -50);
-      ctx.fillStyle = '#ff2a1f';
-      ctx.fillText(`${x.con}`, 0, -50);
-      ctx.restore();
-    }
-    ctx.lineCap = 'butt';
-
     // Trứng
     for (const e of c.trungView) {
       ctx.save();
