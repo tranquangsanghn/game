@@ -116,7 +116,7 @@ type VatXep =
 /** Quả cầu trốn: san = sẵn sàng · trong = có nhân vật p đang trốn · vo = đang vỡ ra (hoạt ảnh) · moc = đã vỡ, chờ CAU_MOC giây mọc quả mới. t = số giây của pha hiện tại */
 /** cua = chủ quả cầu (0 Mabu · 1 Zinbu): chỉ đúng người đó chui vào được, quả cầu có avatar của người đó */
 export interface CauTron { x: number; y: number; pha: 'san' | 'trong' | 'vo' | 'moc'; p: number; t: number; cua: number; }
-/** Tự chỉnh độ phân giải: dưới FPS_THAP (chế độ mát máy luôn bật nên tính theo FPS_MAT) thì giảm DPR_BUOC mỗi lần, không thấp hơn DPR_SAN;
+/** Tự chỉnh độ phân giải: dưới FPS_THAP (so với 60, lúc đang mát máy tính theo FPS_MAT) thì giảm DPR_BUOC mỗi lần, không thấp hơn DPR_SAN;
  *  FPS ổn định ≥ FPS_TANG × FPS mục tiêu liền DPR_TANG_DEM lần đo (0,5s / lần) và đã chờ đủ dprChoTang từ lần hạ trước thì tăng lại một bậc */
 const FPS_THAP = 50;
 const DPR_BUOC = 0.25;
@@ -128,9 +128,13 @@ const DPR_TANG_DEM = 10;
 const DPR_CHO = 10000;
 const DPR_DAO_DONG = 15000;
 const DPR_CHO_TOI_DA = 120000;
-/** Chế độ mát máy (luôn bật): giới hạn FPS_MAT khung / giây và độ phân giải tối đa DPR_MAT (máy đỡ nóng khi đông gà) */
+/** Chế độ mát máy (tự động): giới hạn FPS_MAT khung / giây và độ phân giải tối đa DPR_MAT (máy đỡ nóng khi đông gà).
+ *  Đang chơi mà FPS đo được dưới MAT_BAT_FPS liền MAT_BAT_DEM lần đo (0,5s / lần) thì tự bật trong MAT_THOI_GIAN giây rồi tự tắt */
 const FPS_MAT = 30;
 const DPR_MAT = 1;
+const MAT_BAT_FPS = 30;
+const MAT_BAT_DEM = 2;
+const MAT_THOI_GIAN = 40;
 /** Độ phân giải canvas nền so với điểm ảnh CSS (thấp để nhẹ, nền vốn mịn) */
 const NEN_TL = 0.5;
 const taoCauTron = (): CauTron[] => CAU_VI_TRI.map(([dx, dy], cua) => ({ x: MAP / 2 + dx, y: MAP / 2 + dy, pha: 'san', p: -1, t: 0, cua }));
@@ -926,8 +930,11 @@ export class Game {
   private dprLucHa = 0;
   private dprLucTang = -Infinity;
   private dprChoTang = DPR_CHO;
-  /** Chế độ mát máy (FPS_MAT khung / giây, độ phân giải ≤ DPR_MAT): luôn bật, không có nút tắt */
-  readonly matMay = true;
+  /** Chế độ mát máy (FPS_MAT khung / giây, độ phân giải ≤ DPR_MAT): tự bật khi FPS dưới MAT_BAT_FPS, tự tắt sau MAT_THOI_GIAN giây chơi */
+  matMay = false;
+  /** Số giây chơi còn lại của lần mát máy hiện tại */
+  matMayCon = 0;
+  private matDem = 0;
   private datKhung: () => void = () => {};
   /** Canvas nền (cát / biển) nằm dưới canvas chính, độ phân giải NEN_TL × điểm ảnh CSS */
   private canvasNen: HTMLCanvasElement | null = null;
@@ -1234,6 +1241,7 @@ export class Game {
 
   /** Tự chỉnh độ phân giải theo FPS đo được (mỗi 0,5s): thấp liền 1,5s thì hạ một bậc, cao ổn định thì tăng lại một bậc */
   private chinhDoPhanGiai(now: number): void {
+    this.tuMatMay();
     const mucTieu = this.matMay ? FPS_MAT : 60;
     if (this.man !== 'play' || document.hidden) { this.fpsThap = this.fpsCao = 0; return; }
     if (this.fps < (FPS_THAP * mucTieu) / 60 && this.dpr > DPR_SAN) {
@@ -1257,6 +1265,28 @@ export class Game {
         this.datKhung();
       }
     } else this.fpsCao = 0;
+  }
+
+  /** Tự bật / tắt mát máy (gọi mỗi 0,5s): chỉ đo khi đang chơi; đang bật thì không xét FPS (FPS bị giới hạn 30), hết giờ thì tắt */
+  private tuMatMay(): void {
+    if (this.man !== 'play' || document.hidden) { this.matDem = 0; return; }
+    if (this.matMay) {
+      this.matMayCon -= 0.5;
+      if (this.matMayCon > 0) return;
+      this.matMay = false;
+      this.matMayCon = 0;
+    } else {
+      if (this.fps >= MAT_BAT_FPS) { this.matDem = 0; return; }
+      if (++this.matDem < MAT_BAT_DEM) return;
+      this.matMay = true;
+      this.matMayCon = MAT_THOI_GIAN;
+      this.dprTran = Math.max(DPR_SAN, Math.min(this.dpr, this.dprTranThat()));
+    }
+    // Đổi chế độ: độ phân giải tự dò lại từ mức hiện tại (tắt mát máy thì tăng dần lại)
+    this.matDem = this.fpsThap = this.fpsCao = 0;
+    this.dprChoTang = DPR_CHO;
+    this.dprLucHa = performance.now() - DPR_CHO;
+    this.datKhung();
   }
 
   private vongLap = (now: number) => {
