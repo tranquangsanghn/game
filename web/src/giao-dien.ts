@@ -143,6 +143,7 @@ export class GiaoDien {
         break;
       case 'tamDung': g.tamDung(); break;
       case 'luuGame': await this.luuVan(); break;
+      case 'matMay': g.doiMatMay(); break;
       case 'xoaLuu':
         await xoaLuu(this.ten);
         this.luu = null;
@@ -284,7 +285,9 @@ export class GiaoDien {
       <div class="nhom-nut" style="flex-direction:column;align-items:center">
         <button type="button" tabindex="-1" class="nut-chinh" data-act="tamDung">Tiếp tục</button>
         <button type="button" tabindex="-1" class="nut-phu" data-act="luuGame" ${this.dangLuu ? 'disabled' : ''}>${this.dangLuu ? 'Đang lưu…' : '💾 Lưu game'}</button>
+        <button type="button" tabindex="-1" class="nut-phu" data-act="matMay">🌡 Mát máy: ${this.game.matMay ? 'Bật' : 'Tắt'}${this.game.cheDo === 'tayCam' ? ' (Y)' : ''}</button>
       </div>
+      <p class="phu">Mát máy: giới hạn 30 FPS và độ nét, máy đỡ nóng khi chơi lâu / đông gà.</p>
       ${nho}${this.htmlThongBao()}
     </div></div>`;
   }

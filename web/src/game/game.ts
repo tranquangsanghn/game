@@ -112,10 +112,22 @@ type VatXep =
 /** Quả cầu trốn: san = sẵn sàng · trong = có nhân vật p đang trốn · vo = đang vỡ ra (hoạt ảnh) · moc = đã vỡ, chờ CAU_MOC giây mọc quả mới. t = số giây của pha hiện tại */
 /** cua = chủ quả cầu (0 Mabu · 1 Zinbu): chỉ đúng người đó chui vào được, quả cầu có avatar của người đó */
 export interface CauTron { x: number; y: number; pha: 'san' | 'trong' | 'vo' | 'moc'; p: number; t: number; cua: number; }
-/** Tự hạ độ phân giải: dưới FPS_THAP thì giảm DPR_BUOC mỗi lần, không thấp hơn DPR_SAN */
+/** Tự chỉnh độ phân giải: dưới FPS_THAP (so với 60, chế độ mát máy tính theo FPS_MAT) thì giảm DPR_BUOC mỗi lần, không thấp hơn DPR_SAN;
+ *  FPS ổn định ≥ FPS_TANG × FPS mục tiêu liền DPR_TANG_DEM lần đo (0,5s / lần) và đã chờ đủ dprChoTang từ lần hạ trước thì tăng lại một bậc */
 const FPS_THAP = 50;
 const DPR_BUOC = 0.25;
 const DPR_SAN = 0.6;
+const DPR_TOI_DA = 2;
+const FPS_TANG = 0.95;
+const DPR_TANG_DEM = 10;
+/** Chờ sau lần hạ trước khi thử tăng lại (ms); tăng lên rồi lại phải hạ ngay (trong DPR_DAO_DONG) thì chờ gấp đôi, tối đa DPR_CHO_TOI_DA */
+const DPR_CHO = 10000;
+const DPR_DAO_DONG = 15000;
+const DPR_CHO_TOI_DA = 120000;
+/** Chế độ mát máy: giới hạn FPS_MAT khung / giây và độ phân giải tối đa DPR_MAT (máy đỡ nóng khi đông gà), nhớ trong localStorage */
+const FPS_MAT = 30;
+const DPR_MAT = 1;
+const KHOA_MAT_MAY = 'chicken-shooting-game.mat-may';
 /** Độ phân giải canvas nền so với điểm ảnh CSS (thấp để nhẹ, nền vốn mịn) */
 const NEN_TL = 0.5;
 const taoCauTron = (): CauTron[] => CAU_VI_TRI.map(([dx, dy], cua) => ({ x: MAP / 2 + dx, y: MAP / 2 + dy, pha: 'san', p: -1, t: 0, cua }));
@@ -885,9 +897,16 @@ export class Game {
   private cssW = 0;
   private cssH = 0;
   private dpr = 1;
-  /** Trần độ phân giải canvas (đơn vị: tỉ lệ điểm ảnh): tự hạ dần khi FPS thấp (máy yếu), không tăng lại để khỏi dao động */
-  private dprTran = 2;
+  /** Trần độ phân giải canvas (đơn vị: tỉ lệ điểm ảnh): tự hạ dần khi FPS thấp (máy yếu), FPS cao ổn định thì tăng lại dần */
+  private dprTran = DPR_TOI_DA;
   private fpsThap = 0;
+  private fpsCao = 0;
+  /** Lúc hạ / tăng độ phân giải gần nhất (ms, performance.now) và thời gian phải chờ trước khi thử tăng lại */
+  private dprLucHa = 0;
+  private dprLucTang = -Infinity;
+  private dprChoTang = DPR_CHO;
+  /** Chế độ mát máy (FPS_MAT khung / giây, độ phân giải ≤ DPR_MAT); bật / tắt ở màn tạm dừng */
+  matMay = (() => { try { return localStorage.getItem(KHOA_MAT_MAY) === '1'; } catch { return false; } })();
   private datKhung: () => void = () => {};
   /** Canvas nền (cát / biển) nằm dưới canvas chính, độ phân giải NEN_TL × điểm ảnh CSS */
   private canvasNen: HTMLCanvasElement | null = null;
@@ -921,7 +940,7 @@ export class Game {
         // Canvas theo kích thước khung và độ phân giải màn hình (tối đa 2× cho nhẹ)
         this.cssW = kt.width;
         this.cssH = kt.height;
-        this.dpr = Math.min(window.devicePixelRatio || 1, this.dprTran);
+        this.dpr = Math.min(this.dprTranThat(), this.dprTran);
         const cv = this.canvasEl;
         const pw = Math.max(1, Math.round(kt.width * this.dpr));
         const ph = Math.max(1, Math.round(kt.height * this.dpr));
@@ -1187,7 +1206,55 @@ export class Game {
 
   // ─── Vòng lặp ───
 
+  /** Trần độ phân giải theo màn hình và chế độ mát máy */
+  private dprTranThat(): number {
+    return Math.min(window.devicePixelRatio || 1, DPR_TOI_DA, this.matMay ? DPR_MAT : DPR_TOI_DA);
+  }
+
+  /** Bật / tắt chế độ mát máy (nhớ lại cho lần sau); đổi chế độ thì độ phân giải tự dò lại từ mức hiện tại */
+  doiMatMay(): void {
+    this.matMay = !this.matMay;
+    try { localStorage.setItem(KHOA_MAT_MAY, this.matMay ? '1' : '0'); } catch { /* trình duyệt chặn localStorage */ }
+    this.dprTran = Math.max(DPR_SAN, Math.min(this.dpr, this.dprTranThat()));
+    this.fpsThap = this.fpsCao = 0;
+    this.dprChoTang = DPR_CHO;
+    this.dprLucHa = performance.now() - DPR_CHO;
+    this.datKhung();
+  }
+
+  /** Tự chỉnh độ phân giải theo FPS đo được (mỗi 0,5s): thấp liền 1,5s thì hạ một bậc, cao ổn định thì tăng lại một bậc */
+  private chinhDoPhanGiai(now: number): void {
+    const mucTieu = this.matMay ? FPS_MAT : 60;
+    if (this.man !== 'play' || document.hidden) { this.fpsThap = this.fpsCao = 0; return; }
+    if (this.fps < (FPS_THAP * mucTieu) / 60 && this.dpr > DPR_SAN) {
+      this.fpsCao = 0;
+      if (++this.fpsThap >= 3) {
+        this.fpsThap = 0;
+        // Vừa tăng lên mà phải hạ ngay: máy không gánh nổi mức đó, lần sau chờ lâu hơn mới thử tăng lại
+        this.dprChoTang = now - this.dprLucTang < DPR_DAO_DONG ? Math.min(DPR_CHO_TOI_DA, this.dprChoTang * 2) : DPR_CHO;
+        this.dprLucHa = now;
+        this.dprTran = Math.max(DPR_SAN, this.dpr - DPR_BUOC);
+        this.datKhung();
+      }
+      return;
+    }
+    this.fpsThap = 0;
+    if (this.fps >= mucTieu * FPS_TANG && this.dpr < this.dprTranThat()) {
+      if (++this.fpsCao >= DPR_TANG_DEM && now - this.dprLucHa >= this.dprChoTang) {
+        this.fpsCao = 0;
+        this.dprLucTang = now;
+        this.dprTran = Math.min(this.dprTranThat(), this.dpr + DPR_BUOC);
+        this.datKhung();
+      }
+    } else this.fpsCao = 0;
+  }
+
   private vongLap = (now: number) => {
+    // Chế độ mát máy: bỏ qua khung hình tới khi đủ ~1/FPS_MAT giây (trừ hao 4ms cho lệch nhịp màn hình)
+    if (this.matMay && now - this.lanCuoi < 1000 / FPS_MAT - 4) {
+      this.rafId = requestAnimationFrame(this.vongLap);
+      return;
+    }
     const dt = Math.min(0.05, (now - this.lanCuoi) / 1000);
     // Đếm FPS thật (số khung hình vẽ ra mỗi giây), cập nhật mỗi 0.5 giây
     this.fpsDem++;
@@ -1195,14 +1262,7 @@ export class Game {
       this.fps = Math.round((this.fpsDem * 1000) / (now - this.fpsMoc));
       this.fpsDem = 0;
       this.fpsMoc = now;
-      // Máy yếu: FPS dưới FPS_THAP 3 lần đo liền (1,5s) khi đang chơi thì hạ độ phân giải canvas một bậc (số điểm ảnh phải vẽ giảm mạnh)
-      if (this.man === 'play' && !document.hidden && this.fps < FPS_THAP && this.dpr > DPR_SAN) {
-        if (++this.fpsThap >= 3) {
-          this.fpsThap = 0;
-          this.dprTran = Math.max(DPR_SAN, this.dpr - DPR_BUOC);
-          this.datKhung();
-        }
-      } else this.fpsThap = 0;
+      this.chinhDoPhanGiai(now);
     }
     this.lanCuoi = now;
     this.docTayCam();
@@ -4187,6 +4247,7 @@ export class Game {
           else if (moi(g, 1) && this.choiLaiChoB) { this.choiLaiChoB = false; this.batDau(); }
         }
       } else if (moi(g, 9)) this.tamDung();
+      else if (moi(g, 3) && this.man === 'pause') this.doiMatMay();
       else if (moi(g, 8) && ds.length === 1 && this.man === 'play') this.doiTayCam();
     }
 

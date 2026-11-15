@@ -1675,9 +1675,10 @@ export class VeCanvas {
     ctx.font = `600 22px ${FONT}`;
     ctx.lineWidth = 4;
     ctx.strokeStyle = '#1d2b3a';
-    ctx.strokeText(`${c.fps} FPS`, 14, 34);
+    const fpsChu = `${c.fps} FPS${c.matMay ? ' · mát máy' : ''}`;
+    ctx.strokeText(fpsChu, 14, 34);
     ctx.fillStyle = '#fff';
-    ctx.fillText(`${c.fps} FPS`, 14, 34);
+    ctx.fillText(fpsChu, 14, 34);
     ctx.lineJoin = 'miter';
   }
 
