@@ -596,25 +596,6 @@ export class VeCanvas {
       ctx.restore();
     }
 
-    // Điểm đến của nhân vật đang chạy
-    const nhay = c.dichNhay();
-    for (const nv of c.nguoi) {
-      if (!nv.dich) continue;
-      ctx.save();
-      ctx.translate(nv.dich.x, nv.dich.y);
-      ctx.strokeStyle = nv.mau;
-      ctx.lineWidth = 4;
-      ctx.globalAlpha = dongHe(1 - nhay * 0.6);
-      duongElip(ctx, 10 + 22 * nhay, 5 + 11 * nhay);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-      duongElip(ctx, 6, 3);
-      ctx.fillStyle = nv.mau;
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-    }
-
     // Mũi tên chỉ hướng về gà tướng
     const P = duong();
     ctx.lineWidth = 6;

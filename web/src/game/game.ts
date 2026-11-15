@@ -4739,10 +4739,6 @@ export class Game {
     };
   }
 
-  dichNhay(): number {
-    return 1 - ((this.t * 2) % 1);
-  }
-
   // ─── Khởi tạo ───
 
   private taoNguoiChoi(): NguoiChoi[] {
