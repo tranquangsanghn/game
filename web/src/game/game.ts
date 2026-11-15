@@ -1427,12 +1427,12 @@ export class Game {
           ga.hp += hoiGa;
           ga.suc = Math.min(SOCOLA_SUC_TOI_DA, (ga.suc ?? 1) + SOCOLA_SUC_GA);
           ga.to = Math.min(ga.loai === 'boss' ? SOCOLA_TO_TOI_DA_ME : SOCOLA_TO_TOI_DA, (ga.to ?? 1) + SOCOLA_TO_GA);
-          this.chu.push({ id: this.id++, x: ga.x, y: this.tamGa(ga).y - 60, text: `🍫 +${hoiGa} ❤ SỨC MẠNH x${ga.suc}`, mau: '#c98a4b', t: 0 });
+          this.chuGa({ id: this.id++, x: ga.x, y: this.tamGa(ga).y - 60, text: `🍫 +${hoiGa} ❤ SỨC MẠNH x${ga.suc}`, mau: '#c98a4b', t: 0 });
         } else {
           ga.hp += VP_HOI;
-          this.chu.push({ id: this.id++, x: ga.x, y: this.tamGa(ga).y - 60, text: `+${VP_HOI} ❤`, mau: '#ff6b6b', t: 0 });
+          this.chuGa({ id: this.id++, x: ga.x, y: this.tamGa(ga).y - 60, text: `+${VP_HOI} ❤`, mau: '#ff6b6b', t: 0 });
         }
-        this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
+        this.vetGa({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
         continue;
       }
       conLai.push(v);
@@ -1619,7 +1619,7 @@ export class Game {
         g.nhay = Math.max(0, g.nhay - dt);
         if (g.socola <= 0) {
           g.socola = 0;
-          this.chu.push({ id: this.id++, x: g.x, y: this.tamGa(g).y - 60, text: 'HOÁ GIẢI!', mau: '#9be7ff', t: 0 });
+          this.chuGa({ id: this.id++, x: g.x, y: this.tamGa(g).y - 60, text: 'HOÁ GIẢI!', mau: '#9be7ff', t: 0 });
         }
         conLai.push(g);
         continue;
@@ -1659,7 +1659,7 @@ export class Game {
           if (g.hp > 0 && g.hp < hpToiDa(g)) g.hp = Math.min(hpToiDa(g), g.hp + HOI_MAU_VUA * dt);
           // Đẻ đủ số lượng, không đẻ nữa: tự tăng máu và sát thương, không giới hạn
           if (g.hp > 0 && this.dayCon && this.dayPhu) {
-            if (!g.satThem) this.chu.push({ id: this.id++, x: g.x, y: g.y - 400, text: '👑 VUA GÀ ĐẺ ĐỦ: TĂNG SỨC!', mau: '#ffd23f', t: 0 });
+            if (!g.satThem) this.chuGa({ id: this.id++, x: g.x, y: g.y - 400, text: '👑 VUA GÀ ĐẺ ĐỦ: TĂNG SỨC!', mau: '#ffd23f', t: 0 });
             g.hp += VUA_DU_MAU * dt;
             g.satThem = (g.satThem ?? 0) + VUA_DU_SAT * dt;
           }
@@ -1668,7 +1668,7 @@ export class Game {
           if (!g.gd2 && g.hp < hpToiDa(g) * GD2_MAU) {
             g.gd2 = true;
             g.de = Math.min(g.de ?? 0, 1.5);
-            this.chu.push({ id: this.id++, x: g.x, y: g.y - 400, text: '🔥 GIAI ĐOẠN 2!', mau: '#ff6a3c', t: 0 });
+            this.chuGa({ id: this.id++, x: g.x, y: g.y - 400, text: '🔥 GIAI ĐOẠN 2!', mau: '#ff6a3c', t: 0 });
           }
           if ((g.de ?? 0) <= 0) {
             g.de = choDeTrung(this.soMePhu) * (g.gd2 ? GD2_DE : 1);
@@ -1684,7 +1684,7 @@ export class Game {
         // Gọi gà con bảo vệ khi máu dưới GOI_MAU
         g.hoiGoi = Math.max(0, (g.hoiGoi ?? 0) - dt);
         g.dangGoi = Math.max(0, (g.dangGoi ?? 0) - dt);
-        if (g.hp < hpToiDa(g) * GOI_MAU && g.hoiGoi <= 0 && !g.chieu && this.soGaCon < GA_CON_TOI_DA) this.goiGaCon(g);
+        if (g.hp < hpToiDa(g) * GOI_MAU && g.hoiGoi <= 0 && !g.chieu && !this.dayCon && this.gaTrenCam(g)) this.goiGaCon(g);
         if (g.goc) this.dieuTuongGoc(g, dt);
         else this.dieuTuong(g, dt);
       }
@@ -2246,10 +2246,29 @@ export class Game {
   /** Gà ngủ đông nhẹ: không có trên màn hình (ngoài khung nhìn + GA_THUA_LE), xa mọi nhân vật hơn GA_THUA_XA và không đang làm gì gấp (chết, lao / bay, gà đen đang báo hiệu / nhào, trốn chạy, choáng, socola) */
   private gaThua(g: Ga): boolean {
     if (g.chet || g.chieu || (g.nhao && g.nhao.pha !== 'vong') || g.tron || (g.choang ?? 0) > 0 || (g.socola ?? 0) > 0) return false;
-    const k = this.khungNhin;
-    if (g.x > k.x0 - GA_THUA_LE && g.x < k.x1 + GA_THUA_LE && g.y > k.y0 - GA_THUA_LE && g.y < k.y1 + GA_THUA_LE) return false;
+    if (this.trenCam(g.x, g.y, GA_THUA_LE)) return false;
     for (const n of this.nguoi) if (!n.vang && Math.abs(n.x - g.x) < GA_THUA_XA && Math.abs(n.y - g.y) < GA_THUA_XA && Math.hypot(n.x - g.x, n.y - g.y) < GA_THUA_XA) return false;
     return true;
+  }
+
+  /** Điểm (x, y) có nằm trên camera (khung nhìn của lần capNhatView() gần nhất, cộng lề) không */
+  private trenCam(x: number, y: number, le = 300): boolean {
+    const k = this.khungNhin;
+    return x > k.x0 - le && x < k.x1 + le && y > k.y0 - le && y < k.y1 + le;
+  }
+
+  /** Gà (gà con, tướng gà, vua gà) đang trên camera: chỉ khi đó mới dùng chiêu / hiệu ứng (đổi màu, thế phòng thủ, Lao / Bay, gọi gà con, trốn chạy nhanh, gà đen nhào, gà đỏ khựng, chữ bay, nổ, âm thanh) */
+  private gaTrenCam(g: { x: number; y: number; loai?: LoaiGa }): boolean {
+    return this.trenCam(g.x, g.y, g.loai === 'boss' ? 450 : 150);
+  }
+
+  /** Hiệu ứng (vụ nổ, bụi) và chữ bay sinh ra từ gà: ngoài camera thì bỏ, không tạo vật thừa */
+  private vetGa(v: Vet): void {
+    if (this.trenCam(v.x, v.y)) this.vet.push(v);
+  }
+
+  private chuGa(c: Chu): void {
+    if (this.trenCam(c.x, c.y + 300)) this.chu.push(c);
   }
 
   private thay(x: number, y: number): boolean {
@@ -2359,7 +2378,7 @@ export class Game {
 
   // Gà tướng đẻ một lượt trứng quanh mình
   private deTrung(boss: { id: number; x: number; y: number }): void {
-    this.am.phat('deTrung');
+    if (this.trenCam(boss.x, boss.y, 450)) this.am.phat('deTrung');
     // Đủ GA_CON_TOI_DA gà con (tính cả trứng thường đang ấp) thì không đẻ trứng thường
     const choCon = GA_CON_TOI_DA - this.soGaCon - this.trungDe.filter((e) => !e.db).length;
     for (const loai of DAN_TRUNG.slice(0, Math.max(0, choCon))) {
@@ -2400,7 +2419,7 @@ export class Game {
       };
       giuTrongMap(g, leCuaGa(g), false, 'vuon');
       this.ga.push(g);
-      this.vet.push({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'bui' });
+      this.vetGa({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'bui' });
     }
     this.trungDe = conLai;
   }
@@ -2440,6 +2459,7 @@ export class Game {
     }
     this.ga.push(this.taoTuong(x, y, x > mx, true));
     const chuTuong = lan === 0 ? '🐔 GÀ TƯỚNG XUẤT HIỆN!' : `🐔 GÀ TƯỚNG HỒI SINH LẦN ${lan}!`;
+    // Chữ báo hiện ngay trên đầu nhân vật (luôn trên camera), không phải hiệu ứng tại chỗ gà
     this.chu.push({ id: this.id++, x: mx, y: my - 330, text: chuTuong, mau: '#ff9f1a', t: 0 });
     this.rung = Math.max(this.rung, 0.4);
   }
@@ -2472,9 +2492,9 @@ export class Game {
       };
       giuTrongMap(c, leCuaGa(c));
       this.ga.push(c);
-      this.vet.push({ id: this.id++, x: c.x, y: c.y, t: 0, loai: 'chay', co: 0.6 });
+      this.vetGa({ id: this.id++, x: c.x, y: c.y, t: 0, loai: 'chay', co: 0.6 });
     });
-    this.chu.push({ id: this.id++, x: g.x, y: g.y - 360, text: '📣 GỌI GÀ CON!', mau: '#ffd23f', t: 0 });
+    this.chuGa({ id: this.id++, x: g.x, y: g.y - 360, text: '📣 GỌI GÀ CON!', mau: '#ffd23f', t: 0 });
     this.rung = Math.max(this.rung, 0.2);
   }
 
@@ -2487,7 +2507,7 @@ export class Game {
     giuTrongMap(v, LE_TRUNG_DB, false, 'vuon');
     const { x, y } = v;
     this.trungDe.push({ id: this.id++, loai: 'hen', t: 0, x, y, db: true, no: 0, me: boss.id, ap: apTrungDb(this.soMePhu) });
-    this.chu.push({ id: this.id++, x: boss.x, y: boss.y - 360, text: '🥚 TRỨNG ĐỎ!', mau: '#ff4d4d', t: 0 });
+    this.chuGa({ id: this.id++, x: boss.x, y: boss.y - 360, text: '🥚 TRỨNG ĐỎ!', mau: '#ff4d4d', t: 0 });
   }
 
   // Trứng đỏ nở gà con ở nhịp k (0 → gà con thường, 1 → x2 to gấp đôi, 2 → x3, 3 → x4)
@@ -2505,8 +2525,8 @@ export class Game {
     };
     giuTrongMap(g, leCuaGa(g), false, 'vuon');
     this.ga.push(g);
-    this.vet.push({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'chay', co: 0.6 + 0.2 * k });
-    if (k > 0) this.chu.push({ id: this.id++, x: g.x, y: g.y - 160, text: `GÀ CON x${suc}!`, mau: '#ff6a3c', t: 0 });
+    this.vetGa({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'chay', co: 0.6 + 0.2 * k });
+    if (k > 0) this.chuGa({ id: this.id++, x: g.x, y: g.y - 160, text: `GÀ CON x${suc}!`, mau: '#ff6a3c', t: 0 });
   }
 
   // Trứng đỏ nở ra gà mẹ phụ: đi đánh nhân vật thay gà mẹ gốc
@@ -2516,8 +2536,8 @@ export class Game {
     giuTrongMap(g, LE_TUONG, false, 'vuon');
     this.ga.push(g);
     this.daNoPhu++;
-    this.vet.push({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'chay', co: 2 });
-    this.chu.push({ id: this.id++, x: g.x, y: g.y - 360, text: '🐔 GÀ MẸ MỚI RA ĐỜI!', mau: '#ff9f1a', t: 0 });
+    this.vetGa({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'chay', co: 2 });
+    this.chuGa({ id: this.id++, x: g.x, y: g.y - 360, text: '🐔 GÀ MẸ MỚI RA ĐỜI!', mau: '#ff9f1a', t: 0 });
     this.rung = Math.max(this.rung, 0.3);
   }
 
@@ -2558,14 +2578,14 @@ export class Game {
     const ux = (g.x - muc.x) / d;
     const uy = (g.y - muc.y) / d;
     let toc = TOC_TRON;
-    if ((g.daTron ?? 0) < TRON_LAN) {
+    if ((g.daTron ?? 0) < TRON_LAN && this.gaTrenCam(g)) {
       // Trốn chạy nhanh (tối đa TRON_LAN lần): khoá hướng ra xa nhân vật gần nhất, bất tử trong lúc chạy
       g.daTron = (g.daTron ?? 0) + 1;
       g.tron = TRON_QUANG;
       g.tronX = ux;
       g.tronY = uy;
       toc *= TRON_TOC;
-      this.chu.push({ id: this.id++, x: g.x, y: g.y - 380, text: '🏃 VUA GÀ TRỐN CHẠY!', mau: '#ffd23c', t: 0 });
+      this.chuGa({ id: this.id++, x: g.x, y: g.y - 380, text: '🏃 VUA GÀ TRỐN CHẠY!', mau: '#ffd23c', t: 0 });
     }
     g.vx = ux * toc;
     g.vy = uy * toc;
@@ -2664,8 +2684,17 @@ export class Game {
     }
     if (!muc) return false;
     if (g.loai === 'flyer' && laNguoi) {
-      this.denNhao(g, muc as NguoiChoi, dt);
-      return true;
+      // Nhào chỉ dùng trên camera (đang báo hiệu / nhào / nghỉ thì làm nốt); ngoài camera chỉ bay thẳng tới nhân vật với tốc độ bay thường
+      if (this.gaTrenCam(g) || (g.nhao && g.nhao.pha !== 'vong')) {
+        this.denNhao(g, muc as NguoiChoi, dt);
+        return true;
+      }
+      if (g.nhao) {
+        g.nhao = null;
+        const v = ngauNhien(110, 130);
+        g.vx = v;
+        g.vy = 0;
+      }
     }
     let tx = muc.x;
     let ty = muc.y;
@@ -2679,7 +2708,7 @@ export class Game {
     const dy = ty - g.y;
     const d = Math.hypot(dx, dy) || 1;
     // Gà đỏ lao DO_CHAY giây rồi khựng DO_KHUNG giây (thở dốc, nhận thêm sát thương)
-    if (g.loai === 'rooster' && laNguoi) {
+    if (g.loai === 'rooster' && laNguoi && ((g.kiet ?? 0) > 0 || this.gaTrenCam(g))) {
       g.kiet = Math.max(0, (g.kiet ?? 0) - dt);
       if (g.kiet > 0) {
         g.vx = g.vy = 0;
@@ -2753,6 +2782,14 @@ export class Game {
     g.hoiBay = Math.max(0, (g.hoiBay ?? 0) - dt);
     g.nghiChung = Math.max(0, (g.nghiChung ?? 0) - dt);
     g.soHo = Math.max(0, (g.soHo ?? 0) - dt);
+    // Ngoài camera: không dùng chiêu / hiệu ứng nào (màu, thế phòng thủ, đốt cháy); đang bật thì tắt luôn. Đồng hồ hồi vẫn chạy để vào camera là dùng được
+    if (!this.gaTrenCam(g)) {
+      g.hoiThe = Math.max(0, (g.hoiThe ?? THE_CHU_KY) - dt);
+      g.hoiMau = Math.max(0, (g.hoiMau ?? MAU_CHU_KY) - dt);
+      if (g.mau) { g.mau = null; g.conMau = 0; }
+      g.the = 0;
+      return;
+    }
     if (g.mau) {
       g.conMau = (g.conMau ?? 0) - dt;
       if (g.conMau <= 0) {
@@ -2767,7 +2804,7 @@ export class Game {
     else if (g.hoiThe <= 0 && !g.chieu && !g.mau) {
       g.hoiThe = THE_CHU_KY;
       g.the = THE_KEO_DAI;
-      this.chu.push({ id: this.id++, x: g.x, y: g.y - 360, text: '🛡 THẾ PHÒNG THỦ!', mau: '#7fd4ff', t: 0 });
+      this.chuGa({ id: this.id++, x: g.x, y: g.y - 360, text: '🛡 THẾ PHÒNG THỦ!', mau: '#7fd4ff', t: 0 });
     }
     g.hoiMau = Math.max(0, (g.hoiMau ?? MAU_CHU_KY) - dt);
     // Màu chỉ bật khi đến lượt, không đang Lao / Bay, không đang đổi màu khác và đã nghỉ đủ; chưa bật được thì chờ. Gà mẹ phụ chuyên Lao / Bay không có màu.
@@ -2778,7 +2815,7 @@ export class Game {
       g.luotMau = (g.luotMau ?? 0) + 1;
       g.conMau = MAU_KEO_DAI;
       g.dot = 0;
-      this.chu.push({
+      this.chuGa({
         id: this.id++, x: g.x, y: g.y - 360, t: 0,
         text: g.mau === 'den' ? '⚫ PHẢN ĐÒN!' : g.mau === 'vang' ? '🟡 MIỄN ĐÒN!' : '🔥 ĐỐT CHÁY!',
         mau: g.mau === 'den' ? '#c77dff' : g.mau === 'vang' ? '#ffd23f' : '#ff6a3c',
@@ -2810,12 +2847,12 @@ export class Game {
     g.vx = g.vy = 0;
     // Mệt sau khi lao / bay: lộ sơ hở, không né được đòn nào trong SO_HO giây
     g.soHo = SO_HO;
-    this.chu.push({ id: this.id++, x: g.x, y: g.y - 360, t: 0, text: '😵 SƠ HỞ!', mau: '#7ee787' });
+    this.chuGa({ id: this.id++, x: g.x, y: g.y - 360, t: 0, text: '😵 SƠ HỞ!', mau: '#7ee787' });
   }
 
   // Chọn chiêu lao / bay khi thấy mục tiêu đủ xa; bắt đầu từ pha báo hiệu. Trả về true nếu đã bắt đầu.
   private batDauChieu(g: Ga, muc: NguoiChoi, d: number): boolean {
-    if (!g.daDe || (g.choChieu ?? 0) > 0 || (g.nghiChung ?? 0) > 0 || g.mau || (dsMauCua(g).length && (g.hoiMau ?? 1) <= 0)) return false;
+    if (!this.gaTrenCam(g) || !g.daDe || (g.choChieu ?? 0) > 0 || (g.nghiChung ?? 0) > 0 || g.mau || (dsMauCua(g).length && (g.hoiMau ?? 1) <= 0)) return false;
     const sanLao = duocLao(g) && (g.hoiLao ?? 0) <= 0;
     const sanBay = duocBay(g) && (g.hoiBay ?? 0) <= 0;
     let loai: 'lao' | 'bay' | null = null;
