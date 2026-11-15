@@ -231,7 +231,6 @@ kbd {
 .o-ten { display: flex; gap: 8px; align-items: center; justify-content: center; margin: 10px 0 2px; font-size: 14px; }
 .o-ten input { padding: 6px 12px; border: 2px solid #d9cbb3; border-radius: 999px; font-size: 15px; width: 180px; text-align: center; }
 .luu-tin { margin: 8px 0; padding: 8px 12px; border-radius: 10px; background: #eef7ee; border: 1px solid #b7dbb7; font-size: 14px; }
-.luu-tin.tam { background: #fff6e0; border-color: #f0d28a; }
 .thong-bao { min-height: 20px; margin: 6px 0 0; font-size: 14px; color: #1e7a3c; }
 .thong-bao.loi { color: #c0392b; }
 .xep-hang { margin: 8px auto 0; border-collapse: collapse; font-size: 14px; text-align: left; }

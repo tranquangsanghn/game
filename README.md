@@ -1,30 +1,25 @@
 # Dragon Ball
 
-Game 2 nhân vật, chơi bằng chuột + Tab hoặc tay cầm kiểu Xbox (chọn ở màn bắt đầu), viết bằng TypeScript thuần (Vite) + máy chủ Java / MySQL để lưu ván và điểm, tách ra từ dự án EORM.
+Game 2 nhân vật, chơi bằng chuột + Tab hoặc tay cầm kiểu Xbox (chọn ở màn bắt đầu), viết bằng TypeScript thuần (Vite), chỉ có giao diện (không có máy chủ), chạy trên GitHub Pages.
 
 - Chơi online: https://tranquangsanghn.github.io/game/
-- Mỗi lần push lên `main`, GitHub Actions tự build `web/` và deploy lên GitHub Pages (bản này không có máy chủ nên ván lưu tạm trong trình duyệt).
+- Mỗi lần push lên `main`, GitHub Actions tự build `web/` và deploy lên GitHub Pages.
 
-## Chạy game + lưu vào MySQL
+## Chạy trên máy
 
-Cần: Node 20+, Java 17+, Maven, MySQL 8 (đang chạy). Cấu trúc: `web/` (giao diện + game), `server/` (Java Spring Boot + MySQL).
+Cần Node 20+. Chỉ có giao diện (`web/`), không có máy chủ: ván đang chơi và bảng điểm lưu trong `localStorage` của trình duyệt.
 
-1. **Máy chủ** (cổng 8091). Tự tạo database `dragonball` và 2 bảng nếu chưa có (user MySQL cần quyền CREATE):
-   ```bash
-   cd server
-   DB_USER=root DB_PASS=matkhau mvn spring-boot:run
-   ```
-   Muốn khỏi gõ mật khẩu mỗi lần: tạo file `server/application.properties` (đã nằm trong `.gitignore`) chứa `spring.datasource.username=...` và `spring.datasource.password=...`.
-   Hoặc đổi cấu hình bằng biến môi trường: `DB_URL` (mặc định `jdbc:mysql://localhost:3306/dragonball?createDatabaseIfNotExist=true...`), `DB_USER` (mặc định `root`), `DB_PASS` (mặc định rỗng), `PORT`, `CORS_ORIGINS`.
-2. **Giao diện** (cổng 5173, tự chuyển `/api` sang máy chủ):
-   ```bash
-   cd web
-   npm install
-   npm run dev
-   ```
-3. Mở http://localhost:5173, nhập **tên người chơi** ở màn bắt đầu. Bấm ❚❚ **Tạm dừng → 💾 Lưu game** để lưu; lần sau mở lại, màn bắt đầu có nút **▶ Chơi tiếp ván đã lưu**. Hết ván thì điểm được ghi vào bảng điểm cao nhất.
+```bash
+cd web
+npm install
+npm run dev
+```
 
-API: `GET/PUT/DELETE /api/saves/{tên}` (ván đang chơi) · `POST /api/scores`, `GET /api/scores?limit=5` (điểm). Test máy chủ: `cd server && mvn test` (dùng H2 trong bộ nhớ).
+Mở http://localhost:5173, nhập **tên người chơi** ở màn bắt đầu. Bấm ❚❚ **Tạm dừng → 💾 Lưu game** để lưu; lần sau mở lại (cùng trình duyệt), màn bắt đầu có nút **▶ Chơi tiếp ván đã lưu**. Hết ván thì điểm được ghi vào bảng điểm cao nhất (của trình duyệt đó).
+
+## Đưa lên GitHub Pages
+
+Mỗi lần push lên `main`, GitHub Actions (`.github/workflows/deploy.yml`) tự build `web/` và deploy lên GitHub Pages. Lần đầu cần bật: GitHub → repo → **Settings → Pages → Source: GitHub Actions**.
 
 ## Điều khiển
 
@@ -80,15 +75,6 @@ Sprite gà lấy từ `tools/ga-goc.png`; chạy `python3 tools/tao-atlas-ga.py`
 - **Táo**: chỉ rơi từ cây bị đánh đổ (30% một quả; cây to chắc chắn rơi 2 táo đỏ + 2 táo xanh). Táo đỏ +100 máu, táo xanh +30 mana. Gà đi qua cũng mổ ăn táo đỏ
 
 Kỷ lục lưu trong `localStorage` của trình duyệt.
-
-## Chạy trên máy
-
-```bash
-npm install
-npm start
-```
-
-Mở http://localhost:4200
 
 ## Nhúng vào trang khác (iframe)
 

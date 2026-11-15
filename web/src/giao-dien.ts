@@ -1,6 +1,6 @@
 import { Game } from './game/game';
 import { MABU, ZINBU } from './game/nhan-vat-du-lieu';
-import { BanLuu, DiemCao, bangDiem, guiDiem, layLuu, luuGame, nhoTen, tenDaNho, xoaLuu } from './may-chu';
+import { BanLuu, DiemCao, bangDiem, guiDiem, layLuu, luuGame, nhoTen, tenDaNho, xoaLuu } from './luu-tru';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const phut = (g: number) => `${Math.floor(g / 60)}:${String(Math.floor(g % 60)).padStart(2, '0')}`;
@@ -11,7 +11,7 @@ const luc = (iso: string) => {
 
 /**
  * Phần HTML bao quanh game: canvas, nút Đóng / Tạm dừng và các màn phủ (bắt đầu, tạm dừng, kết thúc).
- * Toàn bộ logic game nằm trong Game; ở đây chỉ dựng giao diện và nói chuyện với máy chủ lưu game.
+ * Toàn bộ logic game nằm trong Game; ở đây chỉ dựng giao diện và lưu ván / điểm trong trình duyệt (localStorage).
  */
 export class GiaoDien {
   onDong: () => void = () => {};
@@ -33,7 +33,6 @@ export class GiaoDien {
   // Trạng thái nói chuyện với máy chủ
   private ten = tenDaNho();
   private luu: BanLuu | null = null;
-  private mayChuOk: boolean | null = null;
   private thongBao = { text: '', loi: false };
   private bang: DiemCao[] | null = null;
   private dangLuu = false;
@@ -145,7 +144,7 @@ export class GiaoDien {
       case 'luuGame': await this.luuVan(); break;
       case 'matMay': g.doiMatMay(); break;
       case 'xoaLuu':
-        await xoaLuu(this.ten);
+        xoaLuu(this.ten);
         this.luu = null;
         this.thongBao = { text: 'Đã xoá ván đã lưu.', loi: false };
         break;
@@ -155,10 +154,8 @@ export class GiaoDien {
   }
 
   private async taiLuu(): Promise<void> {
-    const r = await layLuu(this.ten);
-    this.luu = r.luu;
-    this.mayChuOk = r.mayChuOk;
-    const top = await bangDiem(1);
+    this.luu = layLuu(this.ten);
+    const top = bangDiem(1);
     if (top && top[0] && top[0].diem > this.game.kyLuc) this.game.kyLuc = top[0].diem;
     this.veManPhu(true);
   }
@@ -168,23 +165,22 @@ export class GiaoDien {
     if (!tt || this.dangLuu) return;
     this.dangLuu = true;
     this.veManPhu(true);
-    const noi = await luuGame(this.ten, this.game.tongDiem, Math.round(this.game.tGame), tt);
+    const ban = luuGame(this.ten, this.game.tongDiem, Math.round(this.game.tGame), tt);
     this.dangLuu = false;
-    this.mayChuOk = noi === 'may-chu';
-    this.thongBao = noi === 'may-chu'
-      ? { text: '✔ Đã lưu vào cơ sở dữ liệu (MySQL).', loi: false }
-      : { text: 'Chưa nối được máy chủ nên chỉ lưu tạm trong trình duyệt này. Bật server Java rồi lưu lại.', loi: true };
-    this.luu = { nguoiChoi: this.ten, diem: this.game.tongDiem, thoiGian: Math.round(this.game.tGame), luuLuc: new Date().toISOString(), trangThai: tt, nguon: noi };
+    this.thongBao = ban
+      ? { text: '✔ Đã lưu ván trong trình duyệt này.', loi: false }
+      : { text: 'Không lưu được: trình duyệt chặn hoặc hết bộ nhớ lưu trữ.', loi: true };
+    if (ban) this.luu = ban;
     this.veManPhu(true);
   }
 
   private async ketThuc(kq: Parameters<Game['onKetThuc']>[0]): Promise<void> {
     // Ván xong thì bỏ ván lưu (không còn gì để chơi tiếp), ghi điểm và lấy bảng xếp hạng
     this.bang = null;
-    await xoaLuu(this.ten);
+    xoaLuu(this.ten);
     this.luu = null;
-    await guiDiem({ nguoiChoi: this.ten, ...kq });
-    this.bang = await bangDiem(5);
+    guiDiem({ nguoiChoi: this.ten, ...kq });
+    this.bang = bangDiem(5);
     this.veManPhu(true);
   }
 
@@ -265,11 +261,9 @@ export class GiaoDien {
 
   private htmlLuu(): string {
     if (this.luu) {
-      const tam = this.luu.nguon === 'tam';
-      return `<div class="luu-tin ${tam ? 'tam' : ''}">💾 Có ván đã lưu của <b>${esc(this.ten)}</b>: ${this.luu.diem} điểm · ${phut(this.luu.thoiGian)} · ${esc(luc(this.luu.luuLuc))}${tam ? ' (lưu tạm trong trình duyệt)' : ''}
+      return `<div class="luu-tin">💾 Có ván đã lưu của <b>${esc(this.ten)}</b>: ${this.luu.diem} điểm · ${phut(this.luu.thoiGian)} · ${esc(luc(this.luu.luuLuc))}
         <button type="button" tabindex="-1" class="nut-phu" data-act="xoaLuu" style="margin:0 0 0 8px;padding:2px 12px;font-size:12px">Xoá</button></div>`;
     }
-    if (this.mayChuOk === false) return '<p class="phu">⚠ Chưa nối được máy chủ lưu game (Java + MySQL) — vẫn chơi được, nhưng không lưu được vào cơ sở dữ liệu.</p>';
     return '';
   }
 
@@ -278,7 +272,6 @@ export class GiaoDien {
   }
 
   private htmlTamDung(): string {
-    const nho = this.mayChuOk === false ? '<p class="phu">Máy chủ chưa chạy: ván sẽ lưu tạm trong trình duyệt.</p>' : '';
     return `<div class="man-phu"><div class="hop nho">
       <h2>Tạm dừng</h2>
       <p class="phu">${esc(this.ten)} · ${this.game.tongDiem} điểm · ${phut(this.game.tGame)}</p>
@@ -288,7 +281,7 @@ export class GiaoDien {
         <button type="button" tabindex="-1" class="nut-phu" data-act="matMay">🌡 Mát máy: ${this.game.matMay ? 'Bật' : 'Tắt'}${this.game.cheDo === 'tayCam' ? ' (Y)' : ''}</button>
       </div>
       <p class="phu">Mát máy: giới hạn 30 FPS và độ nét, máy đỡ nóng khi chơi lâu / đông gà.</p>
-      ${nho}${this.htmlThongBao()}
+      ${this.htmlThongBao()}
     </div></div>`;
   }
 
