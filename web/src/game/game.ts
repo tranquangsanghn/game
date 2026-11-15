@@ -25,6 +25,8 @@ export interface Ga {
   // Riêng gà tướng: đếm ngược tới lượt đẻ trứng kế tiếp
   de?: number;
   // Riêng gà tướng: lần hồi sinh (0 = lần đầu), chiêu lao / bay đang dùng, thời gian hồi từng chiêu, màu đang đổi
+  // Thời gian dồn lại khi gà ở xa / ngoài màn hình được cập nhật thưa (gaThua())
+  dtThua?: number;
   daDe?: boolean; choChieu?: number; nghiChung?: number; soHo?: number;
   chieu?: ChieuTuong | null; hoiLao?: number; hoiBay?: number;
   mau?: MauTuong | null; conMau?: number; hoiMau?: number; luotMau?: number; dot?: number;
@@ -414,6 +416,10 @@ const TAM_DANH_XA = Math.max(TAM_DAM_XA, TAM_DA_XA);
 const TAM_NHIN = TAM_DANH_XA * 1.5;
 // Gà tướng nhìn xa gấp 3 lần nhân vật: thấy nhân vật trong tầm này thì đuổi đánh, không thì đi loanh quanh
 const TAM_NHIN_TUONG = 1500;
+// Gà ngoài màn hình (thêm lề GA_THUA_LE) và cách mọi nhân vật quá GA_THUA_XA (hơn tầm nhìn gà mẹ / tầm tránh vây) chỉ cập nhật mỗi GA_THUA_NHIP khung
+const GA_THUA_NHIP = 4;
+const GA_THUA_LE = 400;
+const GA_THUA_XA = 1900;
 /** Hiệu năng + lối chơi: chỉ VAY_TOI_DA tướng gà (gà mẹ phụ) gần nhân vật nhất được đuổi / vây đánh cùng lúc (chọn lại mỗi VAY_NHIP giây);
  *  số còn lại lang thang và giữ cách nhân vật ít nhất VAY_TRANH (ngoài khung nhìn), nên không bao giờ cả 40 con cùng chen trên màn hình */
 const VAY_TOI_DA = 12;
@@ -840,6 +846,10 @@ export class Game {
   // Lần hồi sinh của gà tướng gần nhất (để bảng vẫn hiện khi chờ hồi sinh)
   lanTuong = 0;
   private soLanTuong = 0;
+  /** Khung nhìn thế giới của lần capNhatView() gần nhất (dùng để biết gà nào đang ngoài màn hình, gaThua()) */
+  private khungNhin = { x0: 0, x1: 0, y0: 0, y1: 0 };
+  /** Đếm khung logic, để so le các gà cập nhật thưa */
+  private khungSo = 0;
   // Vườn gà ngủ khi máy bay bay ra ngoài vườn (không gà, không trứng); khi máy bay về thì tổ trứng ẩn đẻ / ấp đủ ME_PHU_HIEN_VUA gà mẹ phụ rồi vua gà mới xuất hiện
   private vuonNgu = false;
   private toTrung: { x: number; y: number } | null = null;
@@ -1585,9 +1595,17 @@ export class Game {
     n.nv.tiepDat();
   }
 
-  private capNhatGa(dt: number): void {
+  private capNhatGa(dtKhung: number): void {
     const conLai: Ga[] = [];
+    this.khungSo++;
     for (const g of this.ga) {
+      // Gà ngoài màn hình và xa mọi nhân vật chỉ là "một chấm": cập nhật thưa (mỗi GA_THUA_NHIP khung, so le theo id) với dt dồn lại
+      let dt = dtKhung;
+      if (this.gaThua(g)) {
+        g.dtThua = (g.dtThua ?? 0) + dtKhung;
+        if ((this.khungSo + g.id) % GA_THUA_NHIP !== 0) { conLai.push(g); continue; }
+      }
+      if (g.dtThua) { dt += g.dtThua; g.dtThua = 0; }
       if (g.chet) {
         g.tChet += dt;
         g.h = Math.max(0, g.h0 + 180 * g.tChet - 600 * g.tChet * g.tChet);
@@ -2123,11 +2141,14 @@ export class Game {
     if (Math.hypot(ddx, ddy) > 2) this.mbHuong = Math.atan2(ddy, ddx);
     this.mbCu = { x: mbv.x, y: mbv.y };
     this.banDoNho = banDoHt === 'sa' && this.nguoi.some((_, i) => this.trongMb(i)) ? { x: mbv.x, y: mbv.y, huong: this.mbHuong } : null;
+    // Kiểm tra khung nhìn (so sánh số, rẻ nhất) trước; vật nằm ngoài màn hình bị loại ngay, không tính tiếp sương mù (thay / doRo lặp theo mọi nguồn nhìn)
+    const nuaW = this.W / 2 / z, tren = -TAM_VIEW_Y / z, duoi = (H - TAM_VIEW_Y) / z;
+    this.khungNhin = { x0: this.camX - nuaW, x1: this.camX + nuaW, y0: this.camY + tren, y1: this.camY + duoi };
     const trong = (x: number, y: number, le: number) =>
-      (trongVuon(x, y) ? this.thayVuon : this.thayDao) &&
-      Math.abs(x - this.camX) < this.W / 2 / z + le && y - this.camY > -TAM_VIEW_Y / z - le && y - this.camY < (H - TAM_VIEW_Y) / z + le;
+      Math.abs(x - this.camX) < nuaW + le && y - this.camY > tren - le && y - this.camY < duoi + le &&
+      (trongVuon(x, y) ? this.thayVuon : this.thayDao);
     this.vatPhamView = this.vatPham.filter((v) => trong(v.x, v.y, 100) && this.doRo(v.x, v.y) > 0);
-    this.trungView = this.trungDe.filter((e) => this.thay(e.x, e.y) && trong(e.x, e.y, e.db ? 300 : 100));
+    this.trungView = this.trungDe.filter((e) => trong(e.x, e.y, e.db ? 300 : 100) && this.thay(e.x, e.y));
     this.huongView = this.huongToiTuong(trong);
     this.nhinNguon = [
       ...this.nguoi.filter((n) => !n.het).map((n) => ({ x: n.x, y: n.y })),
@@ -2135,25 +2156,24 @@ export class Game {
     ];
     const xep: VatXep[] = [];
     for (const g of this.ga) {
-      if (g.loai === 'flyer' || !this.thay(g.x, g.y) || !trong(g.x, g.y, g.loai === 'boss' ? 450 : 80)) continue;
+      if (g.loai === 'flyer' || !trong(g.x, g.y, g.loai === 'boss' ? 450 : 80) || !this.thay(g.x, g.y)) continue;
       xep.push({ loai: 'ga', y: g.y, ga: g });
     }
     for (const g of this.keoGa) if (trong(g.x, g.y, 120)) xep.push({ loai: 'ga', y: g.y, ga: g });
     // Cell, bánh sinh nhật, chưởng tiệc: bị sương mù (chỉ vẽ trong tầm nhìn, mờ dần ở dải MO_RO cuối, doRo()) và lọc theo khung nhìn. Lề theo kích thước sprite thật.
-    this.cellView = this.cell.filter((c) => this.doRo(c.x, c.y) > 0 && trong(c.x, c.y - 32 * cellK(c.cap), (c.cap === SO_CAP - 1 ? 58 : 40) * cellK(c.cap) + 60));
+    this.cellView = this.cell.filter((c) => trong(c.x, c.y - 32 * cellK(c.cap), (c.cap === SO_CAP - 1 ? 58 : 40) * cellK(c.cap) + 60) && this.doRo(c.x, c.y) > 0);
     for (const c of this.cellView) xep.push({ loai: 'cell', y: c.y, ce: c });
-    this.banhView = this.tiec.filter((tc) => !tc.vo && this.doRo(tc.x, tc.y) > 0 && trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to));
+    this.banhView = this.tiec.filter((tc) => !tc.vo && trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to) && this.doRo(tc.x, tc.y) > 0);
     for (const tc of this.banhView) xep.push({ loai: 'banh', y: tc.y, tc });
     this.chuongTiecView = this.chuongTiec.filter((q) => {
       const dai = Math.hypot(q.x1 - q.x0, q.y1 - q.y0);
       // Chưởng hiện theo con Cell bắn ra nó (đầu x0, y0)
-      if (this.doRo(q.x0, q.y0) <= 0) return false;
-      return trong((q.x0 + q.x1) / 2, (q.y0 + q.y1) / 2, dai / 2 + 60 * q.k);
+      return trong((q.x0 + q.x1) / 2, (q.y0 + q.y1) / 2, dai / 2 + 60 * q.k) && this.doRo(q.x0, q.y0) > 0;
     });
     // Người đang được mây / socola phủ lên thì thân được thay bằng mây / socola (cuuView)
     this.cuuView = this.cuu.filter((c) => trong(c.x, c.y, 500));
     for (const c of this.cuuView) xep.push({ loai: 'cuu', y: c.y, cu: c });
-    this.cauView = this.cauTron.filter((q) => this.doRo(q.x, q.y) > 0 && (q.pha !== 'moc' || q.t > CAU_MOC - 1) && trong(q.x, q.y, 400));
+    this.cauView = this.cauTron.filter((q) => (q.pha !== 'moc' || q.t > CAU_MOC - 1) && trong(q.x, q.y, 400) && this.doRo(q.x, q.y) > 0);
     for (const q of this.cauView) xep.push({ loai: 'cau', y: q.y, cau: q });
     // Máy bay: đang bay thì luôn nằm trên mọi vật
     const mb = this.mbHinh();
@@ -2162,10 +2182,10 @@ export class Game {
     const dem = this.mbDem();
     this.mbDemView = dem && trong(dem.x, dem.y, 300) ? dem : null;
     this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && !this.trongMb(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
-    for (const t of this.trangTri) if (!t.mat && this.doRo(t.x, t.y) > 0 && trong(t.x, t.y, t.to ? 700 : 400)) xep.push({ loai: 'td', y: t.y, td: t });
+    for (const t of this.trangTri) if (!t.mat && trong(t.x, t.y, t.to ? 700 : 400) && this.doRo(t.x, t.y) > 0) xep.push({ loai: 'td', y: t.y, td: t });
     xep.sort((a, b) => a.y - b.y);
     this.xep = xep;
-    this.gaBayView = this.ga.filter((g) => g.loai === 'flyer' && this.thay(g.x, g.y) && trong(g.x, g.y, 400));
+    this.gaBayView = this.ga.filter((g) => g.loai === 'flyer' && trong(g.x, g.y, 400) && this.thay(g.x, g.y));
     this.vetView = this.vet.filter((v) => trong(v.x, v.y, 200));
     this.danView = this.dan.filter((d) => {
       const vt = this.danHienTai(d);
@@ -2178,8 +2198,18 @@ export class Game {
     const cacTuong = this.ga.filter((g) => g.loai === 'boss' && !g.chet);
     this.tuongSong = cacTuong.find((g) => g.goc) ?? null;
     const song = this.nguoi.filter((n) => !n.het);
-    const gan = (g: Ga) => Math.min(...song.map((n) => Math.hypot(n.x - g.x, n.y - g.y)), Infinity);
-    this.tuongBang = cacTuong.filter(laMePhu).sort((a, b) => gan(a) - gan(b))[0] ?? this.tuongSong;
+    // Tướng gà gần nhân vật nhất: một lượt tìm min, không sort (sort gọi hàm khoảng cách nhiều lần mỗi khung)
+    let tuongGan: Ga | null = null;
+    let dGan = Infinity;
+    for (const g of cacTuong) {
+      if (!laMePhu(g)) continue;
+      for (const n of song) {
+        const d = Math.hypot(n.x - g.x, n.y - g.y);
+        if (d < dGan || !tuongGan) { dGan = d; tuongGan = g; }
+      }
+      if (!song.length && !tuongGan) tuongGan = g;
+    }
+    this.tuongBang = tuongGan ?? this.tuongSong;
     this.vachView = [];
     for (const t of cacTuong) {
       if (t.chieu?.pha !== 'bao' || !this.thay(t.x, t.y)) continue;
@@ -2200,7 +2230,7 @@ export class Game {
         this.vachView.push({ x1: g.x, y1: g.y, x2, y2, a: 0.25 + 0.2 * Math.abs(Math.sin(nh.t * 12)), w: 40 });
       }
     }
-    this.tuongView = cacTuong.filter((t) => this.thay(t.x, t.y) && trong(t.x, t.y, 450));
+    this.tuongView = cacTuong.filter((t) => trong(t.x, t.y, 450) && this.thay(t.x, t.y));
   }
 
   /** Sương mù trên đảo: độ rõ 0..1 của một điểm, rõ hẳn trong TAM_NHIN − MO_RO, mờ dần tới TAM_NHIN (Cell, bánh, trang trí đảo hiện dần khi đi tới) */
@@ -2213,6 +2243,15 @@ export class Game {
   }
 
   // Điểm có nằm trong tầm nhìn của nhân vật hoặc chưởng nào không
+  /** Gà ngủ đông nhẹ: không có trên màn hình (ngoài khung nhìn + GA_THUA_LE), xa mọi nhân vật hơn GA_THUA_XA và không đang làm gì gấp (chết, lao / bay, gà đen đang báo hiệu / nhào, trốn chạy, choáng, socola) */
+  private gaThua(g: Ga): boolean {
+    if (g.chet || g.chieu || (g.nhao && g.nhao.pha !== 'vong') || g.tron || (g.choang ?? 0) > 0 || (g.socola ?? 0) > 0) return false;
+    const k = this.khungNhin;
+    if (g.x > k.x0 - GA_THUA_LE && g.x < k.x1 + GA_THUA_LE && g.y > k.y0 - GA_THUA_LE && g.y < k.y1 + GA_THUA_LE) return false;
+    for (const n of this.nguoi) if (!n.vang && Math.abs(n.x - g.x) < GA_THUA_XA && Math.abs(n.y - g.y) < GA_THUA_XA && Math.hypot(n.x - g.x, n.y - g.y) < GA_THUA_XA) return false;
+    return true;
+  }
+
   private thay(x: number, y: number): boolean {
     return this.nhinNguon.some((o) => Math.hypot(o.x - x, o.y - y) < TAM_NHIN);
   }
@@ -3641,12 +3680,14 @@ export class Game {
 
   // Quái chạm nhân vật thì đánh (mỗi con có thời gian chờ riêng). Nhân vật dạng mây, đang ngã hoặc đã hết máu thì bỏ qua.
   private gaDanhNguoi(): void {
+    // Nhân vật đánh được tính một lần cho cả khung (không gọi khuat() cho từng con gà)
+    const muc = this.nguoi.filter((n) => !this.khuat(n) && !n.nv.khoa);
+    if (!muc.length) return;
     for (const g of this.ga) {
-      // Gà mẹ gốc không đi đánh; gà mẹ đang là socola thì đứng yên không đánh
-      if (g.chet || g.chieu || g.goc || (g.socola ?? 0) > 0 || (g.choang ?? 0) > 0 || (g.choDanh ?? 0) > this.t) continue;
-      for (let p = 0; p < 2; p++) {
-        const n = this.nguoi[p];
-        if (this.khuat(n) || n.nv.khoa) continue;
+      // Gà mẹ gốc không đi đánh; gà mẹ đang là socola thì đứng yên không đánh; gà đang cập nhật thưa (dtThua) ở xa mọi nhân vật nên bỏ qua
+      if (g.chet || g.chieu || g.goc || g.dtThua || (g.socola ?? 0) > 0 || (g.choang ?? 0) > 0 || (g.choDanh ?? 0) > this.t) continue;
+      for (const n of muc) {
+        if (n.het) continue;
         if (Math.hypot(n.x - g.x, n.y - g.y) >= CHAM_GA[g.loai] * (g.to ?? 1)) continue;
         g.choDanh = this.t + HOI_DANH_GA[g.loai];
         g.mo = MO_THOI_GIAN;
@@ -4456,7 +4497,8 @@ export class Game {
     let tot: Ga | null = null;
     let dm = tam;
     for (const g of this.ga) {
-      if (g.chet) continue;
+      // Gà đang cập nhật thưa (ở xa) hoặc nằm ngoài hộp tầm ngắm (cộng lề thân gà to) thì bỏ qua, khỏi tính tâm gà
+      if (g.chet || g.dtThua || Math.abs(g.x - n.x) > dm + 700 || Math.abs(g.y - n.y) > dm + 700) continue;
       const t = this.tamGa(g);
       // Gà tướng rất to: tính khoảng cách tới mép thân chứ không phải tới tâm
       const d = Math.hypot(t.x - n.x, t.y - n.y) - (g.loai === 'boss' ? 125 : 0);
