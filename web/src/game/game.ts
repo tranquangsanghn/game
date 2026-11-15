@@ -4318,7 +4318,7 @@ export class Game {
     if (typeof navigator !== 'undefined' && navigator.getGamepads) {
       for (const g of navigator.getGamepads()) if (g && g.connected) ds.push(g);
     }
-    const ten = ds.map((g) => g.id.replace(/\s*\(.*$/, '').slice(0, 40));
+    const ten = ds.map((g) => g.id.replace(/\s*\(.*$/, '').slice(0, 40) + (g.mapping === 'standard' ? '' : ' [không chuẩn]'));
     if (ten.join('|') !== this.tayCamTen.join('|')) this.tayCamTen = ten;
     const cu = (g: Gamepad) => this.nutCu.get(g.index) ?? [];
     const duoc = (g: Gamepad, i: number) => !!g.buttons[i]?.pressed;
