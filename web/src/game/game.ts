@@ -40,6 +40,8 @@ export interface Ga {
   suc?: number; to?: number; db?: boolean;
   // Vua gà đã đẻ đủ (hết đẻ): sát thương cộng thêm (tăng VUA_DU_SAT mỗi giây, không giới hạn)
   satThem?: number;
+  // Tướng gà lúc đẻ đủ: độ to tối đa được to dần tới (PHU_DU_TO_MAX × độ to lúc bắt đầu)
+  toMax?: number;
   // Gà mẹ phụ: kiểu chuyên (0 Lao · 1 Bay · 2 đen · 3 vàng · 4 đỏ), cũng là màu riêng của con đó
   kieuPhu?: number;
   // Gà con bị đòn ăn (quất râu Zinbu / bắn chưởng Mabu) đang bị kéo về nhân vật p; hong = socola hồng (Mabu); an = máu / mana nhận được khi ăn
@@ -301,6 +303,12 @@ const HOI_MAU_VUA = 2;
 // VUA_DU_MAU máu / giây và VUA_DU_SAT sát thương / giây, không giới hạn (đang hoá socola thì không tăng)
 const VUA_DU_MAU = 5;
 const VUA_DU_SAT = 3;
+// Đẻ đủ thì mỗi tướng gà (gà mẹ phụ) cũng tự tăng PHU_DU_MAU máu / giây và PHU_DU_SAT sát thương / giây (không giới hạn),
+// và to dần PHU_DU_TO mỗi giây tới tối đa PHU_DU_TO_MAX × độ to lúc bắt đầu tăng (Ga.toMax)
+const PHU_DU_MAU = 2;
+const PHU_DU_SAT = 2;
+const PHU_DU_TO = 0.02;
+const PHU_DU_TO_MAX = 1.5;
 const TRON_TOC = 4;
 // Vua gà không hồi sinh nên được trốn chạy nhanh TRON_LAN lần; trong lúc chạy thì bất tử; mỗi lần đều khi máu dưới TRON_MAU và còn bị đuổi
 const TRON_LAN = 2;
@@ -434,8 +442,8 @@ const TAM_NGUI_NV = 800;
 const TAM_NGUI_TAO = 500;
 // Giới hạn số gà (hiệu năng): đủ ME_PHU_TOI_DA tướng gà thì trứng đỏ không nở thêm tướng gà; đủ GA_CON_TOI_DA gà con thì không nở / gọi thêm gà con.
 // Khi đã đủ, loại gà đó bỏ giới hạn tầm ngửi: đi ăn táo đỏ / socola và tìm Mabu / Zinbu (đang ở trong vườn gà) khắp vườn (dayCon / dayPhu).
-const ME_PHU_TOI_DA = 40;
-const GA_CON_TOI_DA = 120;
+const ME_PHU_TOI_DA = 15;
+const GA_CON_TOI_DA = 50;
 // Tốc độ gà lao vào nhân vật (gà bay giữ nguyên tốc độ bay, chỉ đổi hướng)
 // Hệ số nhân tốc độ di chuyển thật của mọi loại gà (kể cả gà tướng): 1/4 tốc độ gốc ghi trong các hằng số
 const HE_SO_TOC_GA = 0.25;
@@ -1679,6 +1687,12 @@ export class Game {
               g.choChieu = TRUNG_NO;
             }
           }
+        } else if (g.hp > 0 && this.dayCon && this.dayPhu) {
+          // Tướng gà khi đã đẻ đủ: tăng máu, sát thương (không giới hạn) và to dần tới PHU_DU_TO_MAX lần
+          g.hp += PHU_DU_MAU * dt;
+          g.satThem = (g.satThem ?? 0) + PHU_DU_SAT * dt;
+          if (g.toMax === undefined) g.toMax = (g.to ?? 1) * PHU_DU_TO_MAX;
+          if ((g.to ?? 1) < g.toMax) g.to = Math.min(g.toMax, (g.to ?? 1) + PHU_DU_TO * dt);
         }
         g.choChieu = Math.max(0, (g.choChieu ?? 0) - dt);
         // Gọi gà con bảo vệ khi máu dưới GOI_MAU
