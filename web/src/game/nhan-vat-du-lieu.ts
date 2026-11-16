@@ -126,11 +126,11 @@ export const ZINBU: NhanVatSprite = {
 
 
 // Vegeta: dựng bằng tools/tao-atlas-vegeta.py từ sheet người dùng gửi (nền tím, khung đứng 50px nguồn, Scale2x 2 lần = PNG ×4, không nội suy).
-// Khung đứng cao 125 logic, to gấp đôi Mabu (`to: 2`; chân dung / avatar thu lại); PNG 3440×2960 = 1,6 × logic.
+// Khung đứng cao 62,5 logic, bằng Mabu; PNG 3440×2960 = 3,2 × logic (nét khi phóng).
 // Chỉ có 3 nhóm đòn (không có chiêu riêng thứ 4); chưởng vẽ bằng quả chưởng / vụ nổ trong vegeta_chuong.png.
 export const VEGETA: NhanVatSprite = {
-  ten: 'Vegeta', atlas: 'assets/game/vegeta_atlas.png', atlasW: 2150, atlasH: 1850, w: 215, h: 185, cot: 10,
-  neoX: 115, neoY: 180, to: 2,
+  ten: 'Vegeta', atlas: 'assets/game/vegeta_atlas.png', atlasW: 1075, atlasH: 925, w: 107.5, h: 92.5, cot: 10,
+  neoX: 57.5, neoY: 90,
   anim: {
     idle: { f: [0, 1, 2, 3], ms: 180, lap: true },
     taunt_flex: { f: [5, 6, 7, 8, 7], ms: 140, lap: false },
@@ -166,7 +166,7 @@ export const VEGETA: NhanVatSprite = {
     kick_arc: { f: [84, 85, 80], ms: 83, lap: false },
     kick_high: { f: [86, 87, 88], ms: 83, lap: false },
     roll: { f: [89, 90, 91, 92, 93, 94, 95], ms: 67, lap: false, tien: { tu: 0, den: 5, v: 3.0 } },
-    energy_ball: { f: [96, 97, 97, 97, 97, 96], ms: 83, lap: false, ban: { o: 3, dx: 62, dy: -93 } },
+    energy_ball: { f: [96, 97, 97, 97, 97, 96], ms: 83, lap: false, ban: { o: 3, dx: 31, dy: -46 } },
   },
   khieuKhich: ['taunt_flex', 'taunt_wave', 'taunt_stretch', 'taunt_antenna', 'taunt_puff'],
   nhomDon: [

@@ -207,7 +207,7 @@ export class GiaoDien {
   /** Ảnh nhân vật (khung đứng yên đầu tiên của animation idle, cắt sát hình) để hiện trên thẻ chọn */
   private anhNv(i: number, tiLe: number): string {
     const sp = NHAN_VAT[i]!;
-    const [x0, y0, x1, y1] = i === 0 ? [54, 22, 89, 83] : i === 1 ? [29, 24, 66, 70] : [64, 52, 164, 182];
+    const [x0, y0, x1, y1] = i === 0 ? [54, 22, 89, 83] : i === 1 ? [29, 24, 66, 70] : [32, 26, 82, 91];
     tiLe /= sp.to ?? 1; // sprite logic to gấp `to` lần thì thu lại cho thẻ bằng cỡ các nhân vật khác
     const k = sp.anim['idle'].f[0];
     const gx = (k % sp.cot) * sp.w + x0;

@@ -270,7 +270,7 @@ const SAT_THUONG = [[50, 50, 50], [70, 100, 85], [130, 190, 160]];
 /** Màu riêng mỗi nhân vật (theo ki) */
 const MAU_NV = ['#e84393', '#8e44ad', '#2f6fe0'];
 /** Độ cao thanh máu trên đầu theo nhân vật (ki) */
-const DAU_NV = [195, 150, 380];
+const DAU_NV = [195, 150, 210];
 /** Lựa chọn ở màn bắt đầu → nhân vật (ki) ở ô trái / phải; null = ô đó vắng */
 export type CheNguoi = 'mabu' | 'zinbu' | 'vegeta' | 'ca2' | 'mabuVegeta' | 'vegetaZinbu';
 export const DOI_HINH: Record<CheNguoi, [number | null, number | null]> = {

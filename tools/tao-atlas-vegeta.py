@@ -3,7 +3,7 @@ Dùng: python3 tools/tao-atlas-vegeta.py <vegeta-sheet.png>
   - vegeta-sheet: sheet Vegeta 920×1478 (ripped by Dazz & Fret), nền tím nhạt (128,128,255), lưới 10 cột,
     nhân vật quay mặt sang phải (như Mabu / Zinbu)
 Ra: web/public/assets/game/vegeta_atlas.png: mỗi điểm ảnh nguồn = đúng 4 điểm ảnh PNG (Scale2x ×2, không nội suy nên nét),
-    khung đứng cao 50 × TL = 125 logic (gấp đôi Mabu, khai báo `to: 2` trong nhan-vat-du-lieu.ts)
+    khung đứng cao 50 × TL = 62,5 logic (bằng Mabu ~61)
 In ra kích thước khung và danh sách khung theo tên animation để chép vào nhan-vat-du-lieu.ts.
 Ảnh chưởng / vụ nổ giữ nguyên (tools/tao-chuong-vegeta.py, từ sheet cũ)."""
 import sys
@@ -126,9 +126,9 @@ def scale2x(a):
     return o
 
 
-# Tỉ lệ logic: khung đứng (cao 50 điểm ảnh nguồn) cao 125 logic ≈ gấp đôi Mabu (~61)
+# Tỉ lệ logic: khung đứng (cao 50 điểm ảnh nguồn) cao 62,5 logic ≈ Mabu (~61)
 h_dung = ds[so[(0, 0)]][0].shape[0]
-TL = 2.5  # điểm ảnh nguồn → logic
+TL = 1.25  # điểm ảnh nguồn → logic
 P = 4  # điểm ảnh nguồn → PNG (Scale2x ×2, không thu phóng thêm)
 PNG_TL = P / TL
 
@@ -136,7 +136,7 @@ trai = max(d for _, d in ds)
 phai = max(o.shape[1] - d for o, d in ds)
 cao = max(o.shape[0] for o, _ in ds)
 # Khung tính theo điểm ảnh nguồn rồi đổi ra logic; giữ số nguyên ở cả logic lẫn PNG
-chan = lambda v: int(np.ceil(v / 2)) * 2  # số chẵn để logic (× 2,5) là số nguyên
+chan = lambda v: int(np.ceil(v / 2)) * 2  # số chẵn để toạ độ PNG (× 4) và logic gọn
 KWn, KHn = chan(trai + phai + 2), chan(cao + 2)
 NXn = chan(trai + 1)
 COT = 10
