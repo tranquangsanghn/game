@@ -20,7 +20,8 @@ export const CELL_SO_DAO = [1, 3, 5, 8, 10];
  * - Cell cấp 3 (đảo 4, 10 con): máu / sát thương bằng 1/2 Zinbu (75 máu, đấm đá 25, chưởng 95) ⇒ yếu từng con, mạnh nhờ đông.
  * - Cell cấp 2 (đảo 3, 8 con): máu / sát thương bằng 2/3 Zinbu (100 máu, đấm đá 33, chưởng 127), né 35%, 2 con tách đàn.
  * - Cell cấp 1 (đảo 2, 5 con): máu / sát thương bằng Zinbu (150 máu, đấm đá 50, chưởng 190), không né, 1 con tách đàn.
- * - Cell cấp 0: sức `CELL_LUC` = 0,75 nhân vật → đánh 1 chọi 1 nhân vật thắng sát nút, 1 người chọi 2 Cell là thua
+ * - Cell cấp 0 (đảo 1, 3 con): máu / sát thương bằng 1,5 lần Zinbu (225 máu, đấm đá 75, chưởng 285), né 60%, 1 con tách đàn.
+ * - (cũ) Cell cấp 0: sức `CELL_LUC` = 0,75 nhân vật → đánh 1 chọi 1 nhân vật thắng sát nút, 1 người chọi 2 Cell là thua
  *   (2² × 0,75 = 3 > 1) ⇒ phải dồn cả hai đánh con tách đàn trước.
  * - Cell cấp 4 (bạo nộ): có giáp `CELL_GIAP`; đánh thường sức ≈ 8,5 nhân vật (> 4 = Mabu + Zinbu cộng lại) nên đánh chưởng / đấm đá thường là thua;
  *   phá giáp bằng combo (`CELL_PHA_GIAP`, socola + mây) thì sức còn ≈ 2,5 < 4 ⇒ hai người dùng combo mới thắng.
@@ -33,11 +34,12 @@ export const CELL_LUC = [0.75, 0.75, 0.75, 0.125, 2.5];
 // Cấp 3 (đảo 4, đàn đông nhất 10 con): máu và sát thương bằng 1/2 Zinbu lúc vào ván (150 máu → 75; Đấm 50 → 25; chưởng 190 → 95)
 // Cấp 2 (đảo 3, 8 con): máu và sát thương bằng 2/3 Zinbu (150 máu → 100; Đấm 50 → 33; chưởng 190 → 127)
 // Cấp 1 (đảo 2, 5 con): máu và sát thương bằng Zinbu (150 máu; Đấm 50; chưởng 190)
-export const CELL_HP = [600, 150, 100, 75, 1500];
+// Cấp 0 (đảo 1, 3 con): máu và sát thương bằng 1,5 lần Zinbu (225 máu; Đấm 75; chưởng 285)
+export const CELL_HP = [225, 150, 100, 75, 1500];
 /** Sát thương gốc một đòn đấm / đá (nhân vật nhận sau giảm 50%, vẫn né 25%) */
-export const CELL_SAT = [45, 50, 33, 25, 60];
-/** Tỉ lệ né đòn của nhân vật (cấp 2, đảo 3: 35%; cấp 3, đảo 4: 25% như Mabu / Zinbu) */
-export const CELL_NE = [0, 0, 0.35, 0.25, 0];
+export const CELL_SAT = [75, 50, 33, 25, 60];
+/** Tỉ lệ né đòn của nhân vật (cấp 0, đảo 1: 60%; cấp 2, đảo 3: 35%; cấp 3, đảo 4: 25% như Mabu / Zinbu) */
+export const CELL_NE = [0.6, 0, 0.35, 0.25, 0];
 /** Số con tách đàn khi xuất trận (cấp 2 và 3, đảo 3 và 4: 2 con tách đàn cùng đuổi một người, cả đàn còn lại đuổi người kia) */
 export const CELL_TACH_SO = [1, 1, 2, 2, 1];
 /** Tốc độ thật (px/s) */
@@ -45,11 +47,11 @@ export const CELL_TOC = [70, 85, 100, 120, 150];
 /** Số giây giữa 2 đòn đấm / đá */
 export const CELL_HOI = [0.9, 0.9, 0.9, 0.9, 0.9];
 /** Chưởng chiến đấu (3 loại như tiệc): sát thương gốc, hồi chiêu (giây), tầm xa nhất, bề rộng chùm (× độ to sprite) */
-export const CELL_CHUONG_SAT = [100, 190, 127, 95, 150];
-// Cấp 1–3 (đảo 2 / 3 / 4: 5 / 8 / 10 con): hồi chưởng 2s
-export const CELL_CHUONG_HOI = [8, 2, 2, 2, 6];
-/** Combo chưởng (cấp 1–3): chưởng thứ 2 trở đi trúng cùng một người trong `CELL_COMBO_CUA` giây kể từ phát trúng trước thì sát thương × hệ số */
-export const CELL_COMBO_CHUONG = [1, 3, 3, 3, 1];
+export const CELL_CHUONG_SAT = [285, 190, 127, 95, 150];
+// Cấp 0–3 (đảo 1 / 2 / 3 / 4: 3 / 5 / 8 / 10 con): hồi chưởng 2s
+export const CELL_CHUONG_HOI = [2, 2, 2, 2, 6];
+/** Combo chưởng (cấp 0–3): chưởng thứ 2 trở đi trúng cùng một người trong `CELL_COMBO_CUA` giây kể từ phát trúng trước thì sát thương × hệ số */
+export const CELL_COMBO_CHUONG = [3, 3, 3, 3, 1];
 export const CELL_COMBO_CUA = 0.5;
 export const CELL_CHUONG_TAM = 1100;
 export const CELL_CHUONG_RONG = 14;
