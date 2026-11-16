@@ -3978,7 +3978,7 @@ export class Game {
     }
   }
 
-  /** Mabu / Zinbu đánh nhau trên núi đá: đòn của p trúng người còn lại (cả hai đứng trên núi) trong bán kính r quanh thân. Trả về true nếu trúng */
+  /** Đối kháng 3 bên trên núi đá (Mabu, Zinbu, bóng ma): đòn của p trúng người còn lại (cả hai đứng trên núi) trong bán kính r quanh thân. Trả về true nếu trúng */
   private danTrungDongDoi(d: Dan, x: number, y: number, r: number, sat = d.sat): boolean {
     const a = this.nguoi[d.p];
     if (!a || !trongNui(a.x, a.y, GY_NUI_LE)) return false;
@@ -3987,7 +3987,10 @@ export class Game {
       if (q === d.p || !this.gyHopLe(q) || d.da?.includes(-10 - q)) return;
       if (Math.hypot(n.x - x, n.y - 80 - y) >= r) return;
       (d.da ??= []).push(-10 - q);
+      const songTruoc = !n.het;
       this.nhanSatThuong(n, sat * (a.suc ?? 1) + (a.satDau ?? 0), false, '#ff9f43');
+      // Đối kháng: mất máu và gục như bị quái đánh (đồng đội còn sống thì cứu như thường, cả hai gục là thua)
+      if (songTruoc && n.het) this.chu.push({ id: this.id++, x: n.x, y: n.y - 320, text: `💀 ${a.ten.toUpperCase()} HẠ GỤC ${n.ten.toUpperCase()}!`, mau: '#ff4d4d', t: 0 });
       trung = true;
     });
     return trung;
