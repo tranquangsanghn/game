@@ -1,8 +1,8 @@
 // Bóng ma Goku (tên biến / ván lưu vẫn là `ginyu`): quái canh núi đá (đảo hình elip phía nam đảo 0). Một con duy nhất, lơ lửng giữa núi.
-// Sức mạnh SAO CHÉP: lúc gặp (nhìn thấy) Mabu / Zinbu / Vegeta, nó lấy đúng sức mạnh của nhân vật đầu tiên và gần nó nhất lúc đó
-// (máu hiện có, sát thương Đấm / Đá / Chiêu đặc biệt × sức mạnh `suc` + đậu thần `satDau`, né 25%, giảm 50% sát thương như nhân vật). Mỗi lần chạm trán mới lại sao chép lại,
-// giữ nguyên tỉ lệ máu đang có (đánh dở rồi chạy ra rồi quay lại không hồi đầy máu cho nó).
-// Chỉ có MỘT chiêu: gồng `GY_NAP` giây rồi bay thẳng vào người nó đang đuổi (bám theo mục tiêu, không né được), sát thương = Chiêu đặc biệt sao chép được.
+// Vòng lặp: dạng BÓNG MA (không đánh ai, không ai đánh được) gặp Mabu / Zinbu thì đứng khiêu khích `GY_KHIEU_T` giây → lao (bám theo, tốc độ `GY_LAO_TOC`,
+// quãng tối đa `GY_LAO_QUANG` = 3 × quãng bay của nhân vật) vào người nhiều máu × sức mạnh nhất → trúng thì thành BẢN SAO y hệt người đó `GY_SAO_T` giây
+// (sprite / animation / thanh máu như nhân vật thật, chỉ số = `GY_SAO_TI_LE` = 80% người đó, nhận sát thương như nhân vật), cứ 1–4s ngẫu nhiên đánh Mabu hoặc Zinbu
+// → hết giờ trở lại bóng ma, lại khiêu khích rồi lao. Chỉ chết khi đang là bản sao và bị đánh hết máu.
 // File này chỉ có dữ liệu + hàm thuần; logic chạy trong Game (`capNhatGinyu()`), vẽ trong ve-canvas.ts (`veGinyu()`).
 // Sprite: web/public/assets/game/goku_ma_atlas.png (dựng bằng tools/tao-atlas-goku-ma.py), 10 cột × 3 hàng khung 200×200, neo đáy giữa, quay mặt TRÁI.
 import type { KhungSprite } from './sprite';
@@ -39,6 +39,18 @@ export const GY_LAO_TOI_DA = 2.5;
 export const GY_LAO_HOI = 3;
 export const GY_LUI_T = 0.35;
 export const GY_LUI_TOC = 900;
+/** Khiêu khích (đứng yên, dùng các animation của bóng ma) trước mỗi lần lao */
+export const GY_KHIEU_T = 3;
+/** Quãng lao tối đa = 3 × quãng bay của Mabu / Zinbu (BAY_CAN = 600) */
+export const GY_LAO_QUANG = 1800;
+/** Lao hụt (hết quãng / mục tiêu mất) thì nghỉ giây rồi khiêu khích lại */
+export const GY_NGHI_T = 1.2;
+/** Bản sao: tồn tại GY_SAO_T giây, chỉ số = GY_SAO_TI_LE người bị sao chép; đánh mỗi 1..4 giây (số nguyên ngẫu nhiên) */
+export const GY_SAO_T = 15;
+export const GY_SAO_TI_LE = 0.8;
+export const GY_SAO_DANH = [1, 2, 3, 4];
+/** Tâm thân bản sao cao hơn chân (trúng đòn) */
+export const GY_SAO_TAM = 80;
 /** Thời gian quay người tạo dáng lúc mới gặp (vẫn bị đánh được) */
 export const GY_DANG_T = 1.4;
 /** Không thấy ai trong chừng này giây thì thôi chạm trán, về giữa núi (lần gặp sau sao chép lại) */
@@ -83,6 +95,11 @@ export interface Ginyu {
   nhay: number; thuongLuc: number;
   chet: boolean; tChet: number;
   socola?: number; chamMay?: number;
+  /** Đang khiêu khích: giây còn lại; nghỉ = giây còn nghỉ sau lần lao hụt; quang = quãng đã lao */
+  khieu?: number; nghi?: number; quang?: number;
+  /** Đang là bản sao của người chơi ô `p` (ki = nhân vật): con = giây còn lại; danh = giây tới đòn kế; muc = người sắp bị đánh; nhom = đòn sắp ra;
+   *  dich = chỗ đang đi tới (lảng vảng cạnh đồng đội như người thật); doi = giây tới lúc đổi chỗ đi */
+  sao?: { p: number; con: number; danh: number; muc?: number; nhom: number; dich?: { x: number; y: number }; doi: number; di: boolean };
 }
 
 export function taoGinyu(): Ginyu {

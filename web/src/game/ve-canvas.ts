@@ -6,7 +6,7 @@ import { CELL_HP, CELL_SO_DAO, CELL_TEN, capCuaDao, cellK, CELL_CHET_T, CELL_KHU
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { MABU } from './nhan-vat-du-lieu';
-import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_NAP, GY_LO_LUNG } from './ginyu';
+import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_LO_LUNG } from './ginyu';
 import { DAO, doSau, duongBo, NUI, TG } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
@@ -960,7 +960,8 @@ export class VeCanvas {
         this.veCell(ctx, c, o.ce);
         ctx.globalAlpha = 1;
       } else if (o.loai === 'gy') {
-        ctx.globalAlpha = c.doRo(c.ginyu.x, c.ginyu.y);
+        // Bản sao vẽ rõ như nhân vật thật (nhân vật không bị sương mù làm mờ)
+        ctx.globalAlpha = c.gyNv ? 1 : c.doRo(c.ginyu.x, c.ginyu.y);
         this.veGinyu(ctx, c);
         ctx.globalAlpha = 1;
       } else if (o.loai === 'banh') {
@@ -993,7 +994,7 @@ export class VeCanvas {
     }
     // Thanh máu bóng ma Goku (lượt riêng sau mọi vật để không bị che)
     if (c.gyView && !c.ginyu.chet) {
-      ctx.globalAlpha = c.doRo(c.ginyu.x, c.ginyu.y);
+      ctx.globalAlpha = c.gySao ? 1 : c.doRo(c.ginyu.x, c.ginyu.y);
       this.veMauGinyu(ctx, c);
       ctx.globalAlpha = 1;
     }
@@ -1511,12 +1512,23 @@ export class VeCanvas {
   // gồng thì hào quang xanh bùng lên + rung; lao thì kéo 3 bóng mờ phía sau; hoá socola nhuộm nâu, trúng đòn nháy sáng; xác mờ dần
   private veGinyu(ctx: CanvasRenderingContext2D, c: Game): void {
     const g = c.ginyu;
+    // Bản sao: vẽ y hệt nhân vật bị sao chép (cùng sprite, animation, cỡ); bản sao bị hạ thì ngã rồi mờ dần
+    if (c.gyNv) {
+      const t = c.gyNvViTri();
+      ctx.save();
+      if (g.chet) ctx.globalAlpha *= Math.max(0, 1 - g.tChet / GY_CHET_T);
+      ctx.translate(t.x, t.y);
+      ctx.scale(t.k, t.k);
+      this.sprite(ctx, c.gyNv.sp, c.gyNv.khung, c.gyNv.lat, false, c.gyLoc());
+      ctx.restore();
+      return;
+    }
     ctx.save();
     if (g.chet) ctx.globalAlpha *= Math.max(0, 1 - g.tChet / GY_CHET_T);
     ctx.translate(g.x, g.y);
     // Quầng sáng dưới chân (bóng ma không có bóng đổ); gồng thì to và sáng hơn
-    const gong = g.nap !== undefined && !g.chet ? Math.min(1, g.nap / GY_NAP) : 0;
-    const dang = g.dang > 0 && !g.chet;
+    const gong = c.gyGong;
+    const dang = g.khieu !== undefined && !g.chet;
     ctx.save();
     ctx.scale(1, 0.35);
     const R = 150 + 90 * gong + (dang ? 40 : 0);
@@ -1564,25 +1576,24 @@ export class VeCanvas {
   // Thanh máu bóng ma Goku trên đầu (xanh lơ), kèm số máu và tên nhân vật nó đang sao chép
   private veMauGinyu(ctx: CanvasRenderingContext2D, c: Game): void {
     const g = c.ginyu;
-    const toiDa = Math.max(g.hpMax, g.hp, 1);
+    if (c.gySao) {
+      // Bản sao: thanh máu giống hệt của nhân vật thật (không tên, không số) để không ai phân biệt được
+      const t = c.gyThanh();
+      this.veThanhNv(ctx, t.x, t.y, t.mau);
+      return;
+    }
+    // Bóng ma: không đánh được nên không có thanh máu, chỉ có tên
     ctx.save();
     ctx.translate(g.x, g.y - GY_THANH_CAO);
     ctx.scale(2.2, 2.2);
-    tronCD(ctx, -34, -6, 68, 12, 6);
-    ctx.fillStyle = 'rgba(20,12,30,0.75)';
-    ctx.fill();
-    tronCD(ctx, -31, -3, Math.min(62, Math.max(0, (62 * g.hp) / toiDa)), 6, 3);
-    ctx.fillStyle = '#6fd6ff';
-    ctx.fill();
     ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.lineWidth = 3;
     ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-    const chu = `${c.gyTen}  ${Math.round(g.hp)}`;
-    ctx.strokeText(chu, 0, -9);
-    ctx.fillStyle = '#fff';
-    ctx.fillText(chu, 0, -9);
+    ctx.strokeText(`👻 ${c.gyTen}`, 0, -2);
+    ctx.fillStyle = '#bff0ff';
+    ctx.fillText(`👻 ${c.gyTen}`, 0, -2);
     ctx.restore();
   }
 
@@ -1700,21 +1711,26 @@ export class VeCanvas {
     ctx.restore();
   }
 
+  /** Thanh máu xanh trên đầu nhân vật (dùng chung cho bản sao bóng ma Goku) */
+  private veThanhNv(ctx: CanvasRenderingContext2D, x: number, y: number, mau: number): void {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(1.3, 1.3);
+    tronCD(ctx, -34, -6, 68, 12, 6);
+    ctx.fillStyle = 'rgba(13,27,18,0.75)';
+    ctx.fill();
+    tronCD(ctx, -31, -3, 62 * mau, 6, 3);
+    ctx.fillStyle = '#35d96a';
+    ctx.fill();
+    ctx.restore();
+  }
+
   // Thanh máu trên đầu nhân vật; dạng mây thì không có
   private veThanhTrenDau(ctx: CanvasRenderingContext2D, c: Game, p: number): void {
     const n = c.nguoi[p];
     if (n.vang || n.nv.laMay || c.dangCuu(p) || c.trongCau(p) || c.trongMb(p)) return;
     const t = c.thanhTrenDau(p);
-    ctx.save();
-    ctx.translate(t.x, t.y);
-    ctx.scale(1.3, 1.3);
-    tronCD(ctx, -34, -6, 68, 12, 6);
-    ctx.fillStyle = 'rgba(13,27,18,0.75)';
-    ctx.fill();
-    tronCD(ctx, -31, -3, 62 * c.mauNv(p), 6, 3);
-    ctx.fillStyle = '#35d96a';
-    ctx.fill();
-    ctx.restore();
+    this.veThanhNv(ctx, t.x, t.y, c.mauNv(p));
     // Combo đang chạy (từ 3 đòn); combo đủ cao thì chưởng hồi nhanh (⚡)
     if (n.het) return;
     const dong: string[] = [];
@@ -2016,9 +2032,23 @@ export class VeCanvas {
       ctx.stroke();
       ctx.restore();
     }
+    // Bản sao bóng ma Goku cũng có dây buộc với đồng đội của người bị sao chép (giống hệt người thật)
+    const day = c.gyDay();
+    if (day && day.tet > 0.7) {
+      ctx.save();
+      ctx.globalAlpha = dongHe(c.kepTet(day.tet));
+      ctx.strokeStyle = '#ff4d4d';
+      ctx.lineWidth = 5;
+      ctx.setLineDash([14, 10]);
+      ctx.beginPath();
+      ctx.moveTo(day.a.x, day.a.y);
+      ctx.lineTo(day.b.x, day.b.y);
+      ctx.stroke();
+      ctx.restore();
+    }
     ctx.lineJoin = 'round';
     ctx.textAlign = 'center';
-    if (tet > 0.9) {
+    if (tet > 0.9 || (day && day.tet > 0.9)) {
       ctx.font = `800 30px ${FONT}`;
       ctx.lineWidth = 6;
       ctx.strokeStyle = '#fff';
@@ -2027,6 +2057,18 @@ export class VeCanvas {
       ctx.fillText('⚠ Đừng bỏ xa đồng đội!', c.GIUA, c.H - 40);
     }
     ctx.textAlign = 'start';
+    const mtGy = c.gyMuiTen();
+    if (mtGy) {
+      ctx.save();
+      ctx.translate(mtGy.x, mtGy.y);
+      ctx.rotate(rad(mtGy.goc));
+      ctx.fillStyle = mtGy.mau;
+      ctx.fill(P.muiTen);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 4;
+      ctx.stroke(P.muiTen);
+      ctx.restore();
+    }
     for (const p of [0, 1]) {
       if (c.nguoi[p].vang) continue;
       const mt = c.muiTen(p);
