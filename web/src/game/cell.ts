@@ -62,6 +62,10 @@ export const CELL_MB_TAM = 1500;
 export const CELL_MB_CHUONG_TAM = 2200;
 /** `Cell.muc` = MUC_MB: Cell đang bắn máy bay */
 export const MUC_MB = -2;
+/** Cell ngoài màn hình (thêm lề CELL_THUA_LE × độ to) và cách mọi nhân vật quá CELL_THUA_XA chỉ cập nhật mỗi CELL_THUA_NHIP khung (như gà, `cellThua()`) */
+export const CELL_THUA_NHIP = 4;
+export const CELL_THUA_LE = 60;
+export const CELL_THUA_XA = 1900;
 /** Nhân vật ở ngoài vòng tròn đảo quá lề này thì Cell thôi đuổi (Cell thì không bao giờ ra khỏi vòng) */
 export const CELL_VONG_LE = 250;
 export const CELL_CHUONG_RONG = 14;
@@ -119,6 +123,8 @@ export interface Cell {
   chien?: boolean;
   /** giờ game được dịch chuyển / chưởng lần tới */
   choDich?: number; choChuong?: number;
+  /** Thời gian dồn lại khi Cell ở ngoài màn hình và xa mọi nhân vật (cập nhật thưa, `cellThua()` trong game.ts) */
+  dtThua?: number;
   /** Cell bạo nộ đang hoá socola (giây còn lại) và đã ăn combo mây trong lần hoá này chưa */
   socola?: number; comboSoc?: boolean;
 }

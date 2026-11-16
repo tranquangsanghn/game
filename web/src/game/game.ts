@@ -4,7 +4,7 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { chuanBiSaMac, daoCua, doSau, trongVuon, trongVongDao, veDat, DAO, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, MUC_MB, CELL_VONG_LE, type Cell } from './cell';
+import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_CHU_KY, TIEC_DI, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -2315,6 +2315,27 @@ export class Game {
     if (this.nvThay(c.x, c.y + 300, 300, 150)) this.chu.push(c);
   }
 
+  /** Cell đang được nhân vật nhìn thấy (như gà: trên camera, khối đất đang thấy, trong TAM_NHIN + nửa thân của một nhân vật chưa gục, kể cả người trên máy bay) */
+  private cellTrenCam(c: Cell): boolean {
+    const k = cellK(c.cap);
+    return this.nvThay(c.x, c.y - 32 * k, 60 * k + 150, 20 * k);
+  }
+
+  /** Mục tiêu (x, y) nằm trong tầm nhìn của Cell (đối xứng với tầm nhìn nhân vật: TAM_NHIN + nửa thân) và Cell đang được nhìn thấy: chỉ khi đó Cell mới bắn chưởng / dịch chuyển */
+  private cellThayMuc(c: Cell, x: number, y: number): boolean {
+    const r = TAM_NHIN + 20 * cellK(c.cap);
+    const dx = x - c.x, dy = y - c.y;
+    return dx * dx + dy * dy < r * r && this.cellTrenCam(c);
+  }
+
+  /** Cell "một chấm": ngoài màn hình (lề theo độ to) và xa mọi nhân vật hơn CELL_THUA_XA, không đang vận chưởng / hoá socola / chết */
+  private cellThua(c: Cell): boolean {
+    if (c.chet || (c.nap !== undefined && c.chien) || (c.socola ?? 0) > 0) return false;
+    if (this.trenCam(c.x, c.y - 32 * cellK(c.cap), CELL_THUA_LE * cellK(c.cap) + 300)) return false;
+    for (const n of this.nguoi) if (!n.vang && Math.abs(n.x - c.x) < CELL_THUA_XA && Math.abs(n.y - c.y) < CELL_THUA_XA && Math.hypot(n.x - c.x, n.y - c.y) < CELL_THUA_XA) return false;
+    return true;
+  }
+
   private thay(x: number, y: number): boolean {
     return this.nhinNguon.some((o) => Math.hypot(o.x - x, o.y - y) < TAM_NHIN);
   }
@@ -3459,7 +3480,7 @@ export class Game {
     const tc = this.tiec.find((t) => t.dao === dao);
     const c0 = this.cell.find((c) => !c.chet && this.daoCell(c) === dao);
     const x = tc?.x ?? c0?.x, y = tc?.y ?? c0?.y;
-    if (x !== undefined && y !== undefined) this.chu.push({ id: this.id++, x, y: y - 300, text: '⚔ CELL XUẤT TRẬN!', mau: '#ff6b6b', t: 0 });
+    if (x !== undefined && y !== undefined) this.chuGa({ id: this.id++, x, y: y - 300, text: '⚔ CELL XUẤT TRẬN!', mau: '#ff6b6b', t: 0 });
   }
 
   /**
@@ -3511,7 +3532,7 @@ export class Game {
         }
         if (!chon) break;
         tach.push(chon);
-        if (ds.length > 1) this.chu.push({ id: this.id++, x: chon.x, y: chon.y - 60 * cellK(chon.cap), text: '❗ TÁCH ĐÀN', mau: '#ffd166', t: 0 });
+        if (ds.length > 1) this.chuGa({ id: this.id++, x: chon.x, y: chon.y - 60 * cellK(chon.cap), text: '❗ TÁCH ĐÀN', mau: '#ffd166', t: 0 });
       }
       doi.tach = tach.map((c) => c.id);
       if (!ke.includes(doi.muc)) doi.muc = ke[0]!;
@@ -3536,8 +3557,16 @@ export class Game {
   // Cell: đội hình theo `doiHinhCell()`; có mục tiêu thì đánh (đấm đá, chưởng, dịch chuyển tức thời); không có thì về vòng tiệc (hoặc lang thang nếu đảo không có tiệc)
   private capNhatCell(dt: number): void {
     this.doiHinhCell();
+    const dtKhung = dt;
     for (const c of this.cell) {
-      if (c.chet) { c.tChet += dt; continue; }
+      if (c.chet) { c.tChet += dtKhung; continue; }
+      // Cell ngoài màn hình và xa mọi nhân vật chỉ là "một chấm": cập nhật thưa (mỗi CELL_THUA_NHIP khung, so le theo id) với dt dồn lại
+      if (this.cellThua(c)) {
+        c.dtThua = (c.dtThua ?? 0) + dtKhung;
+        if ((this.khungSo + c.id) % CELL_THUA_NHIP !== 0) continue;
+        dt = c.dtThua;
+      } else dt = dtKhung + (c.dtThua ?? 0);
+      c.dtThua = 0;
       c.phase += dt;
       c.nhay = Math.max(0, c.nhay - dt);
       c.danh = Math.max(0, c.danh - dt);
@@ -3628,7 +3657,7 @@ export class Game {
     const t = this.tamMb();
     const d = Math.hypot(t.x - c.x, t.y - c.y);
     c.lat = t.x < c.x;
-    if ((c.choChuong ?? 0) <= this.t && d < CELL_MB_CHUONG_TAM && Math.random() < dt * 3) { this.cellVanChuong(c); return; }
+    if ((c.choChuong ?? 0) <= this.t && d < CELL_MB_CHUONG_TAM && this.cellThayMuc(c, this.mayBay.x, this.mayBay.y) && Math.random() < dt * 3) { this.cellVanChuong(c); return; }
     if (d > CELL_MB_CHUONG_TAM * 0.6) this.cellDiToi(c, this.mayBay.x, this.mayBay.y, dt, 1);
     else c.chay = false;
     c.lat = t.x < c.x;
@@ -3646,13 +3675,14 @@ export class Game {
     c.lat = ke.x < c.x;
     const doi = this.cellDoi[this.daoCell(c)];
     // Dịch chuyển tức thời tới sát mục tiêu
-    if (d > cham + CELL_DICH_XA && (c.choDich ?? 0) <= this.t && (c.vai === 'tach' || (doi?.dichDan ?? 0) <= this.t)) {
+    const thay = this.cellThayMuc(c, ke.x, ke.y);
+    if (thay && d > cham + CELL_DICH_XA && (c.choDich ?? 0) <= this.t && (c.vai === 'tach' || (doi?.dichDan ?? 0) <= this.t)) {
       if (c.vai === 'dan' && doi) doi.dichDan = this.t + CELL_DICH_DAN;
       this.cellDichChuyen(c, ke);
       return;
     }
     // Vận chưởng khi mục tiêu trong tầm (không quá sát)
-    if ((c.choChuong ?? 0) <= this.t && d > cham * 0.5 && d < CELL_CHUONG_TAM && Math.random() < dt * 1.5) {
+    if (thay && (c.choChuong ?? 0) <= this.t && d > cham * 0.5 && d < CELL_CHUONG_TAM && Math.random() < dt * 1.5) {
       this.cellVanChuong(c);
       return;
     }
@@ -3703,7 +3733,7 @@ export class Game {
         x1: hx + ((tx - hx) / dd) * dai, y1: hy + ((ty - hy) / dd) * dai, t: 0,
         sat: CELL_CHUONG_SAT[c.cap]!, cap: c.cap,
       });
-      this.vet.push({ id: this.id++, x: hx, y: hy, t: 0, loai: 'chay', co: 0.25 + 0.05 * k });
+      this.vetGa({ id: this.id++, x: hx, y: hy, t: 0, loai: 'chay', co: 0.25 + 0.05 * k });
     }
     if (c.nap >= luc + TIEC_PHONG) {
       c.nap = undefined;
@@ -3727,13 +3757,13 @@ export class Game {
     }
     c.choDich = this.t + CELL_DICH_HOI[c.cap]!;
     if (!duoc) return;
-    this.vet.push({ id: this.id++, x: c.x, y: c.y - 25 * k, t: 0, loai: 'no' });
+    this.vetGa({ id: this.id++, x: c.x, y: c.y - 25 * k, t: 0, loai: 'no' });
     c.x = x; c.y = y;
     giuTrongMap(c, leCell(c.cap), false, 'dao');
     c.lat = ke.x < c.x;
     c.chay = false;
-    this.vet.push({ id: this.id++, x: c.x, y: c.y - 25 * k, t: 0, loai: 'no' });
-    this.chu.push({ id: this.id++, x: c.x, y: c.y - 55 * k, text: '⚡ DỊCH CHUYỂN!', mau: '#7fe0ff', t: 0 });
+    this.vetGa({ id: this.id++, x: c.x, y: c.y - 25 * k, t: 0, loai: 'no' });
+    this.chuGa({ id: this.id++, x: c.x, y: c.y - 55 * k, text: '⚡ DỊCH CHUYỂN!', mau: '#7fe0ff', t: 0 });
     if ((c.choChuong ?? 0) <= this.t && Math.random() < 0.5) this.cellVanChuong(c);
     else c.choDanh = this.t + 0.3;
   }
@@ -3761,13 +3791,18 @@ export class Game {
     const k = cellK(c.cap);
     c.lat = tc.x < c.x;
     const u = tc.t % TIEC_CHU_KY;
-    if (u < TIEC_DI) {
-      c.nap = undefined;
-      c.goc = (c.goc ?? 0) + ((TIEC_TOC * k) / tc.bk) * dt;
+    // Thời gian đã đi vòng trong (tc.t − dt, tc.t] (đúng cả khi Cell cập nhật thưa với dt dồn lại, nên các Cell vẫn cách đều nhau)
+    const daDi = (T: number) => Math.floor(T / TIEC_CHU_KY) * TIEC_DI + Math.min(((T % TIEC_CHU_KY) + TIEC_CHU_KY) % TIEC_CHU_KY, TIEC_DI);
+    const di = Math.max(0, daDi(tc.t) - daDi(tc.t - dt));
+    if (di > 0) {
+      c.goc = (c.goc ?? 0) + ((TIEC_TOC * k) / tc.bk) * di;
       const p = viTriVong(tc, c.goc);
       c.x = p.x; c.y = p.y;
+    }
+    if (u < TIEC_DI) {
+      c.nap = undefined;
       c.chay = true;
-      c.lat = Math.sin(c.goc) > 0;
+      c.lat = Math.sin(c.goc ?? 0) > 0;
       return;
     }
     c.chay = false;
@@ -3775,7 +3810,8 @@ export class Game {
     c.nap = u - TIEC_DI;
     if (truoc === undefined) c.loaiChuong = Math.floor(Math.random() * CHUONG_LOAI.length);
     const luc = TIEC_BIEN + TIEC_AURA;
-    if ((truoc ?? 0) < luc && c.nap >= luc) {
+    // Chưởng vào bánh chỉ để đẹp: không ai nhìn thấy Cell thì không tạo chùm / vụ nổ
+    if ((truoc ?? 0) < luc && c.nap >= luc && this.cellTrenCam(c)) {
       const l = CHUONG_LOAI[c.loaiChuong ?? 0]!;
       const hx = c.x + (c.lat ? -1 : 1) * l.tayX * k, hy = c.y - l.tayY * k;
       this.chuongTiec.push({
@@ -3783,7 +3819,7 @@ export class Game {
         x0: hx, y0: hy,
         x1: tc.x + ngauNhien(-50, 50) * tc.to / 0.6, y1: tc.y - 150 * tc.to + ngauNhien(-60, 60) * tc.to / 0.6, t: 0,
       });
-      this.vet.push({ id: this.id++, x: hx, y: hy, t: 0, loai: 'chay', co: 0.25 + 0.05 * k });
+      this.vetGa({ id: this.id++, x: hx, y: hy, t: 0, loai: 'chay', co: 0.25 + 0.05 * k });
     }
   }
 
@@ -3800,7 +3836,7 @@ export class Game {
     for (const q of this.chuongTiec) {
       q.t += dt;
       if (q.t < TIEC_CHUONG_T) continue;
-      this.vet.push({ id: this.id++, x: q.x1, y: q.y1, t: 0, loai: 'chay', co: q.sat ? 0.6 : 0.35 });
+      this.vetGa({ id: this.id++, x: q.x1, y: q.y1, t: 0, loai: 'chay', co: q.sat ? 0.6 : 0.35 });
       if (q.sat) this.chuongCellTrung(q);
     }
     this.chuongTiec = this.chuongTiec.filter((q) => q.t < TIEC_CHUONG_T);
