@@ -850,6 +850,8 @@ export class Game {
   cauView: CauTron[] = [];
   // Máy bay trong vườn gà (mayBay) và hình / số giây hồi phục để vẽ (chỉ lấy khi nằm trong khung nhìn)
   mayBay: MayBay = taoMayBay(MAP / 2, MAP / 2);
+  /** Máy bay đang bay trên đảo cát (khu vực Cell) ở khung trước; null = chưa biết (vừa vào ván / tải ván, không tính là vừa tới) */
+  private mbTrenDao: boolean | null = null;
   readonly SP_MB = SP_MB;
   mbView: MbHinh | null = null;
   mbDemView: { x: number; y: number; con: number } | null = null;
@@ -1063,6 +1065,7 @@ export class Game {
     this.chonNguoiDau();
     // Máy bay đậu trong vườn gà, gần chỗ xuất phát (phía trong vườn)
     this.mayBay = taoMayBay(kep(gx + vao * 700, TUONG + MB_LE, MAP - TUONG - MB_LE), kep(gy + xuong * 380, TUONG + MB_LE, MAP - TUONG - MB_LE));
+    this.mbTrenDao = null;
     this.ga = [];
     this.keoGa = [];
     this.cell = taoCell(() => this.id++);
@@ -1153,6 +1156,7 @@ export class Game {
     this.cellDoi = [];
     for (const c of this.cell) { c.vai = undefined; c.muc = undefined; c.nap = undefined; c.chien = false; if (!this.tiecCua(c)) c.tiec = false; }
     if (d.mayBay) this.mayBay = { ...taoMayBay(d.mayBay.x, d.mayBay.y), ...d.mayBay };
+    this.mbTrenDao = null;
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
     this.nguoi = d.nguoi.map((o, p) => {
@@ -3916,6 +3920,19 @@ export class Game {
       // Máy bay bay được khắp thế giới (qua biển, qua tường vườn), chỉ không ra khỏi bản đồ
       m.x = kep(m.x, TG.x0 + MB_LE, TG.x1 - MB_LE);
       m.y = kep(m.y, TG.y0 + MB_LE, TG.y1 - MB_LE);
+      // Bay tới khu vực Cell (trên đảo cát): máu / mana người trên máy bay đặt lại như lúc vào ván nhưng đầy bình (HP_NV, MANA_TOI_DA)
+      const tren = banDoHt === 'sa' && doSau(m.x, m.y) > 0;
+      if (tren && this.mbTrenDao === false) {
+        for (const p of m.ngoi) {
+          const n = this.nguoi[p];
+          if (n.vang || n.het) continue;
+          n.hp = HP_NV;
+          n.mana = MANA_TOI_DA;
+          n.bayKhoa = 0;
+          this.chu.push({ id: this.id++, x: m.x, y: m.y - 380 - 50 * m.ngoi.indexOf(p), text: `❤ ${n.ten} ĐẦY MÁU & MANA!`, mau: n.mau, t: 0 });
+        }
+      }
+      this.mbTrenDao = tren;
     } else if (m.pha === 'trung') {
       if (m.t >= MB_LUNG) this.noMb();
     } else if (m.pha === 'no' && m.t >= MB_HOI) {
