@@ -4,7 +4,7 @@ import type { KhungSprite } from './sprite';
 import { CELL_SO_DAO, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
-import { DAO, duongBo, TG } from './ban-do';
+import { DAO, duongBo, NUI, TG, trongNui } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
 // Toạ độ vẽ giữ nguyên như bản SVG cũ: viewBox (-SIDE, -BAR, W + 2·SIDE, H + BAR), căn giữa, giữ tỉ lệ.
@@ -108,6 +108,26 @@ const SA_VACH_CAO = 120;
 const SA_VACH_SAU = 190;
 const SA_VIEN = 26;
 const SA_O_DOAN = 1600;
+/** Núi đá (cắt từ ảnh người dùng gửi bằng tools/tao-atlas-nui-da.py): mặt đá lặp, vách lặp, atlas tảng đá (neo giữa đáy, loai 1..8).
+ *  Cả khối là một elip (NUI trong ban-do.ts) vẽ bằng vài lệnh ellipse: vách dời xuống NUI_VACH_CAO (mesa cao hơn đảo), dưới nữa sẫm tới NUI_VACH_SAU */
+const NUI_A = 'assets/game/nui/';
+const NUI_DAT = NUI_A + 'dat.png';
+const NUI_VACH = NUI_A + 'vach.png';
+const NUI_DA = NUI_A + 'da.png';
+const NUI_O_DAT = 900;
+const NUI_O_VACH = 520;
+const NUI_VACH_CAO = 300;
+const NUI_VACH_SAU = 430;
+const DA_NUI = [
+  { sx: 0, sy: 0, w: 120, h: 109, k: 3.4 },
+  { sx: 122, sy: 0, w: 123, h: 120, k: 3.4 },
+  { sx: 247, sy: 0, w: 68, h: 57, k: 3 },
+  { sx: 317, sy: 0, w: 50, h: 46, k: 3 },
+  { sx: 369, sy: 0, w: 46, h: 45, k: 3 },
+  { sx: 417, sy: 0, w: 48, h: 38, k: 3 },
+  { sx: 467, sy: 0, w: 45, h: 42, k: 3 },
+  { sx: 0, sy: 122, w: 44, h: 25, k: 3 },
+];
 /** Bản đồ nhỏ khi ngồi máy bay: rộng BDN_W (đơn vị khung nhìn), cách mép BDN_LE */
 const BDN_W = 220;
 const BDN_LE = 14;
@@ -122,6 +142,7 @@ export class VeCanvas {
   /** Đường bờ cắt thành từng đoạn theo ô SA_O_DOAN (kèm khung bao): stroke chỉ ghép các đoạn trong khung nhìn (stroke cả đường bờ mỗi khung rất tốn) */
   private doanBo: { p: Path2D; x0: number; y0: number; x1: number; y1: number }[] = [];
   private mauSa: { cat: CanvasPattern; vach: CanvasPattern; vien: CanvasPattern } | null = null;
+  private mauNui: { dat: CanvasPattern; vach: CanvasPattern } | null = null;
   private mauTuong: { mat: CanvasPattern; gach: CanvasPattern; vienNgang: CanvasPattern; vienDoc: CanvasPattern } | null = null;
   private anh = new Map<string, HTMLImageElement>();
   // Atlas đã nhuộm sẵn theo bộ lọc màu (nháy sáng, đen, vàng, đỏ…): nhuộm cả atlas MỘT lần rồi dùng lại.
@@ -136,7 +157,7 @@ export class VeCanvas {
   napTruoc(...atlas: string[]): void {
     atlas.forEach((a) => this.lay(a));
     // Ảnh của đảo sa mạc (nhỏ) nạp luôn để chọn map nào cũng có ngay
-    [SA_CAT, SA_VACH, SA_TRANG_TRI].forEach((a) => this.lay(a));
+    [SA_CAT, SA_VACH, SA_TRANG_TRI, NUI_DAT, NUI_VACH, NUI_DA].forEach((a) => this.lay(a));
   }
 
   /** Nhuộm sẵn atlas theo các bộ lọc ngay khi ảnh nạp xong, để lần đầu cần dùng không bị khựng */
@@ -344,6 +365,19 @@ export class VeCanvas {
   }
 
   private veTrangTri(ctx: CanvasRenderingContext2D, t: TrangTri, now: number, sa: boolean): void {
+    if (t.nui) {
+      // Tảng đá núi: ảnh điểm ảnh, không đổ
+      const d = DA_NUI[t.loai - 1], img = this.lay(NUI_DA);
+      if (!d || !img) return;
+      const w = d.w * d.k, h = d.h * d.k;
+      ctx.save();
+      ctx.translate(t.x, t.y);
+      if (t.lat) ctx.scale(-1, 1);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, d.sx, d.sy, d.w, d.h, -w / 2, -h, w, h);
+      ctx.restore();
+      return;
+    }
     const spSa = sa ? TRANG_TRI_SA[t.loai] : undefined;
     const sp = sa ? undefined : TRANG_TRI_SPRITE[t.loai];
     const img = this.lay(spSa ? SA_TRANG_TRI : MAP_CO);
@@ -397,6 +431,8 @@ export class VeCanvas {
     if (!this.bo) {
       const p = new Path2D();
       for (const v of duongBo()) {
+        // Bờ núi đá là elip, vẽ riêng (veNui)
+        if (trongNui(v[0]!, v[1]!, 300)) continue;
         p.moveTo(v[0]!, v[1]!);
         for (let i = 2; i < v.length; i += 2) p.lineTo(v[i]!, v[i + 1]!);
         p.closePath();
@@ -446,6 +482,7 @@ export class VeCanvas {
       else ctx.fillRect(0, 0, M, M);
       ctx.restore();
     };
+    if (c.thayNui) this.veNui(ctx, x0, y0, x1, y1);
     const lop: [boolean, boolean][] = [[c.thayDao, true], [c.thayVuon, false]];
     for (const [hien, dao] of lop) {
       if (!hien) continue;
@@ -473,6 +510,45 @@ export class VeCanvas {
     ctx.lineCap = 'butt';
   }
 
+  /** Núi đá: khối mesa hình elip, chỉ vẽ khi elip (kể cả vách) chạm khung nhìn; 4 lệnh ellipse (vách sẫm, vách, mặt đá, viền) */
+  private veNui(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number): void {
+    if (NUI.x + NUI.rx < x0 || NUI.x - NUI.rx > x1 || NUI.y + NUI.ry + NUI_VACH_SAU < y0 || NUI.y - NUI.ry > y1) return;
+    if (!this.mauNui) {
+      const dat = this.lay(NUI_DAT), vach = this.lay(NUI_VACH);
+      if (dat && vach) {
+        const mau = (src: HTMLImageElement, o: number) => {
+          const p = ctx.createPattern(src, 'repeat')!;
+          p.setTransform(new DOMMatrix().scale(o / src.naturalWidth));
+          return p;
+        };
+        this.mauNui = { dat: mau(dat, NUI_O_DAT), vach: mau(vach, NUI_O_VACH) };
+      }
+    }
+    const m = this.mauNui;
+    const elip = (dy: number) => {
+      ctx.beginPath();
+      ctx.ellipse(NUI.x, NUI.y + dy, NUI.rx, NUI.ry, 0, 0, Math.PI * 2);
+    };
+    ctx.imageSmoothingEnabled = false;
+    elip(NUI_VACH_SAU);
+    ctx.fillStyle = '#1e0f16';
+    ctx.fill();
+    elip(NUI_VACH_CAO);
+    ctx.fillStyle = m?.vach ?? '#4a2a30';
+    ctx.fill();
+    elip(0);
+    ctx.fillStyle = m?.dat ?? '#e0903a';
+    ctx.fill();
+    // Mép trên sáng + nét viền tối như ảnh mesa
+    ctx.lineWidth = 22;
+    ctx.strokeStyle = '#f2a54a';
+    ctx.stroke();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#2a1410';
+    ctx.stroke();
+    ctx.imageSmoothingEnabled = true;
+  }
+
   /** Bản đồ nhỏ góc trên phải (chỉ khi ngồi máy bay): cả thế giới (đảo + vườn gà) dựng sẵn một lần, máy bay là mũi tên vàng theo hướng bay */
   private veBanDoNho(ctx: CanvasRenderingContext2D, c: Game, b: { x: number; y: number; huong: number }): void {
     const RX = TG.x1 - TG.x0, RY = TG.y1 - TG.y0;
@@ -493,6 +569,11 @@ export class VeCanvas {
       }
       x.fillStyle = '#f0c75a';
       x.fill(p, 'evenodd');
+      // Núi đá (cũng nằm trong duongBo, tô đè màu đá)
+      x.beginPath();
+      x.ellipse(NUI.x, NUI.y, NUI.rx, NUI.ry, 0, 0, Math.PI * 2);
+      x.fillStyle = '#c8682a';
+      x.fill();
       x.lineWidth = 160;
       x.strokeStyle = '#a8641e';
       x.stroke(p);
@@ -1510,8 +1591,8 @@ export class VeCanvas {
     ctx.rect(-35, 0, 70, 70);
     ctx.clip();
     if (c.trenDao) {
-      // Đang ở đảo: avatar là Cell của đảo đó, đứng nhún nhảy
-      ctx.globalAlpha = 1;
+      // Đang ở đảo: avatar là Cell của đảo đó, đứng nhún nhảy (núi đá không có Cell: để trống)
+      ctx.globalAlpha = c.trenNui ? 0 : 1;
       ctx.translate(0, 66);
       ctx.scale(1.3, 1.3);
       this.sprite(ctx, SP_CELL, capCuaDao(c.daoHienTai) * SP_CELL.cot + CELL_KHUNG.dung[Math.floor(c.t * 2.5) % CELL_KHUNG.dung.length], false, false);
@@ -1530,7 +1611,7 @@ export class VeCanvas {
       ctx.font = `700 36px ${FONT}`;
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffd27a';
-      ctx.fillText(`${c.soCellDao}`, c.GIUA, -16);
+      if (!c.trenNui) ctx.fillText(`${c.soCellDao}`, c.GIUA, -16);
       ctx.restore();
       return;
     }

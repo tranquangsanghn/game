@@ -3,7 +3,7 @@ import { VeCanvas } from './ve-canvas';
 import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
-import { chuanBiSaMac, daoCua, doSau, trongVuon, trongVongDao, veDat, DAO, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
+import { chuanBiSaMac, daoCua, doSau, trongNui, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
@@ -171,7 +171,7 @@ const taoMayBay = (x: number, y: number): MayBay => ({ x, y, pha: 'dau', t: 0, z
 export interface Cuu { p: number; kieu: 'may' | 'socola'; x: number; y: number; cho: number; t: number; tach: number; }
 
 /** Vật trang trí nền cỏ (cây, bụi, đá): chỉ để đẹp, không cản đường. loai là chỉ số trong TRANG_TRI_SPRITE (ve-canvas.ts) */
-export interface TrangTri { x: number; y: number; loai: number; lat: boolean; /** thời điểm (`t` của game) bị đánh đổ; chỉ cây (loai 0), chưa đổ thì không có */ doLuc?: number; /** hướng đổ: 1 = sang phải, -1 = sang trái */ huongDo?: number; /** cây đã rơi táo thì biến mất, chỉ còn quả táo */ mat?: boolean; /** cây to: đổ thì chắc chắn rơi CAY_TO_MAU táo đỏ + CAY_TO_MANA táo xanh */ to?: boolean; /** trang trí của đảo cát (ảnh sa mạc) */ sa?: boolean }
+export interface TrangTri { x: number; y: number; loai: number; lat: boolean; /** thời điểm (`t` của game) bị đánh đổ; chỉ cây (loai 0), chưa đổ thì không có */ doLuc?: number; /** hướng đổ: 1 = sang phải, -1 = sang trái */ huongDo?: number; /** cây đã rơi táo thì biến mất, chỉ còn quả táo */ mat?: boolean; /** cây to: đổ thì chắc chắn rơi CAY_TO_MAU táo đỏ + CAY_TO_MANA táo xanh */ to?: boolean; /** trang trí của đảo cát (ảnh sa mạc) */ sa?: boolean; /** tảng đá của núi đá (atlas DA_NUI) */ nui?: boolean }
 /** Bán kính (quanh gốc cây) mà đòn / chưởng quét qua thì cây đổ */
 // Cây đổ xong CAY_MOC_LAI giây thì mọc lại. Cây to (to gấp CAY_TO_HE_SO) đổ thì chắc chắn rơi CAY_TO_MAU táo đỏ + CAY_TO_MANA táo xanh
 const CAY_MOC_LAI = 10;
@@ -648,7 +648,7 @@ function taoTrangTriSa(): TrangTri[] {
       const k = r();
       let loai = k < 0.05 ? 0 : 1 + Math.floor(r() * (SO_TRANG_TRI_SA - 1));
       const lat = r() < 0.5;
-      if (trongVuon(x, y) || doSau(x, y) < (loai === 0 ? 260 : 120)) continue;
+      if (trongVuon(x, y) || trongNui(x, y, 300) || doSau(x, y) < (loai === 0 ? 260 : 120)) continue;
       // Để trống quanh chỗ xuất phát
       if (Math.hypot(x - XUAT_PHAT.x, y - XUAT_PHAT.y) < 500) continue;
       if (loai === 0) {
@@ -657,6 +657,32 @@ function taoTrangTriSa(): TrangTri[] {
         else soCay[d]!++;
       }
       kq.push({ x, y, loai, lat, sa: true, to: loai === 0 && soCay[daoCua(x, y)] === 1 });
+    }
+  }
+  return kq;
+}
+
+/** Số loại tảng đá trên núi đá (atlas DA_NUI trong ve-canvas.ts) */
+export const SO_DA_NUI = 8;
+/** Tảng đá trên núi đá (đánh dấu `nui`, `loai` = 1..SO_DA_NUI, không phải cây nên không đổ): thưa, cách bờ đủ xa.
+ *  Ít vật (~30) để nhẹ khung hình; hai loại đầu là khối đá to, hiếm hơn. */
+function taoTrangTriNui(): TrangTri[] {
+  let h = 424243;
+  const r = () => {
+    h = (h + 0x6d2b79f5) | 0;
+    let t = Math.imul(h ^ (h >>> 15), 1 | h);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const kq: TrangTri[] = [];
+  const O = 700;
+  for (let gx = NUI.x - NUI.rx; gx < NUI.x + NUI.rx; gx += O) {
+    for (let gy = NUI.y - NUI.ry; gy < NUI.y + NUI.ry; gy += O) {
+      if (r() > 0.5) continue;
+      const x = gx + r() * O, y = gy + r() * O;
+      if (!trongNui(x, y, -250)) continue;
+      const loai = r() < 0.2 ? 1 + Math.floor(r() * 2) : 3 + Math.floor(r() * (SO_DA_NUI - 2));
+      kq.push({ x, y, loai, lat: r() < 0.5, nui: true });
     }
   }
   return kq;
@@ -840,6 +866,8 @@ export class Game {
   /** Camera đã vào hẳn trong vườn gà (kẹp cứng theo tường) */
   private camVuon = false;
   thayDao = true;
+  /** Thấy núi đá: có người đứng trên núi hoặc ngồi máy bay (như thayVuon / thayDao) */
+  thayNui = true;
   // Gà mẹ GỐC còn sống (không lọc theo khung nhìn): avatar, số mạng, mũi tên chỉ hướng
   tuongSong: Ga | null = null;
   /** Ngọc rồng đã nhặt (số sao, theo thứ tự nhặt) xếp ở thanh đen trên, bên trái; ngocBay = viên đang bay từ chỗ nhặt lên thanh đen */
@@ -1070,7 +1098,8 @@ export class Game {
     banDoHt = this.banDo;
     this.banDoVan = this.banDo;
     if (this.banDo === 'sa') chuanBiSaMac();
-    this.trangTri = this.banDo === 'sa' ? [...taoTrangTri(), ...taoTrangTriSa()] : taoTrangTri();
+    // Đá núi nối cuối danh sách: chỉ số cây (cayDo của ván lưu) không đổi
+    this.trangTri = this.banDo === 'sa' ? [...taoTrangTri(), ...taoTrangTriSa(), ...taoTrangTriNui()] : taoTrangTri();
     this.nguoi = this.taoNguoiChoi();
     // Nhân vật xuất phát ở góc vườn gà xa vua gà nhất: chốt chỗ vua gà xuất hiện trước, rồi chọn góc xa nó nhất
     this.viTriVua = { x: ngauNhien(600, MAP - 600), y: ngauNhien(600, MAP - 600) };
@@ -1349,7 +1378,7 @@ export class Game {
       else this.nguoi.forEach((n) => this.capNhatNhanVat(n, dt));
       this.capNhatView(dt);
     }
-    this.am.nhacNen(this.man === 'play', this.trenDao);
+    this.am.nhacNen(this.man === 'play', this.trenDao && !this.trenNui);
     if (this.ctx) this.ve.ve(this.ctx, this, this.dpr, this.ctxNen, NEN_TL);
     // Màn chơi chỉ vẽ canvas; phần HTML (màn bắt đầu / tạm dừng / kết thúc, nút) chỉ cập nhật khi cần
     if (this.man !== 'play' || this.manDaVe !== this.man) this.onManPhu();
@@ -2130,6 +2159,13 @@ export class Game {
     return song.length > 0 && song.every((n) => !trongVuon(n.x, n.y));
   }
 
+  /** Nhân vật còn sống nào cũng đang trên núi đá (không Cell, không tiệc): avatar trên thanh đen để trống, nhạc nền thường */
+  get trenNui(): boolean {
+    if (banDoHt !== 'sa') return false;
+    const song = this.nguoi.filter((n) => !n.vang && !n.het);
+    return song.length > 0 && song.every((n) => trongNui(n.x, n.y, 300));
+  }
+
   rungTrung(e: TrungGa): number {
     // Trứng đỏ rung mạnh dần theo thời gian
     if (e.db) return Math.sin(e.t * 30) * (2 + e.t * 1.2);
@@ -2207,7 +2243,8 @@ export class Game {
     const ngoai = banDoHt !== 'sa' || this.nguoi.some((_, i) => this.trongMb(i));
     this.thayVuon = ngoai || !dung.length || dung.some((n) => trongVuon(n.x, n.y));
     this.vuonRo = banDoHt !== 'sa' || dung.some((n) => trongVuon(n.x, n.y));
-    this.thayDao = ngoai || !dung.length || dung.some((n) => !trongVuon(n.x, n.y));
+    this.thayDao = ngoai || !dung.length || dung.some((n) => !trongVuon(n.x, n.y) && !trongNui(n.x, n.y, 300));
+    this.thayNui = ngoai || !dung.length || dung.some((n) => trongNui(n.x, n.y, 300));
     // Bản đồ nhỏ góc trên phải khi có người ngồi máy bay: vị trí + hướng bay (theo quãng vừa đi)
     const mbv = this.mayBay;
     const ddx = mbv.x - this.mbCu.x, ddy = mbv.y - this.mbCu.y;
@@ -2219,7 +2256,7 @@ export class Game {
     this.khungNhin = { x0: this.camX - nuaW, x1: this.camX + nuaW, y0: this.camY + tren, y1: this.camY + duoi };
     const trong = (x: number, y: number, le: number) =>
       Math.abs(x - this.camX) < nuaW + le && y - this.camY > tren - le && y - this.camY < duoi + le &&
-      (trongVuon(x, y) ? this.thayVuon : this.thayDao);
+      this.thayKhoi(x, y);
     this.vatPhamView = this.vatPham.filter((v) => trong(v.x, v.y, 100) && this.doRo(v.x, v.y) > 0);
     this.trungView = this.trungDe.filter((e) => trong(e.x, e.y, e.db ? 300 : 100) && this.thay(e.x, e.y));
     this.huongView = this.huongToiTuong(trong);
@@ -2330,12 +2367,17 @@ export class Game {
     return x > k.x0 - le && x < k.x1 + le && y > k.y0 - le && y < k.y1 + le;
   }
 
+  /** Khối đất chứa (x, y) (vườn gà / núi đá / vòng đảo) đang thấy: không lên máy bay thì chỉ thấy khối mình đứng */
+  thayKhoi(x: number, y: number): boolean {
+    return trongVuon(x, y) ? this.thayVuon : trongNui(x, y, 300) ? this.thayNui : this.thayDao;
+  }
+
   /**
    * Điểm (x, y) được nhân vật nhìn thấy: trên camera (so sánh số, rẻ, kiểm tra trước), khối đất đó đang thấy (thayVuon / thayDao)
    * và nằm trong tầm nhìn TAM_NHIN (+ lề) của một nhân vật đang chơi chưa gục (sương mù; chưởng bay không tính)
    */
   private nvThay(x: number, y: number, leCam: number, le = 0): boolean {
-    if (!this.trenCam(x, y, leCam) || !(trongVuon(x, y) ? this.thayVuon : this.thayDao)) return false;
+    if (!this.trenCam(x, y, leCam) || !this.thayKhoi(x, y)) return false;
     const r = TAM_NHIN + le;
     for (const n of this.nguoi) {
       if (n.vang || n.het) continue;

@@ -40,10 +40,29 @@ const CAU_NOI: [number, number][] = DAO.map((_, i) => [i, (i + 1) % DAO.length])
 /** Nửa bề rộng dải cát nối */
 const NUA_RONG_NOI = 260;
 
-/** Giới hạn thế giới (bao hết các đảo + một dải biển) */
+/** Núi đá: một khối mesa hình elip (diện tích 2/3 vườn gà, rộng gấp 1,5 cao) nằm riêng giữa vực ở góc dưới phải,
+ *  ngoài vòng đảo (cách đảo / dải cát ≥ 2000): chỉ tới được bằng máy bay. Bờ là elip đúng (không nhiễu) để vẽ bằng một lệnh ellipse. */
+const NUI_DT = (2 / 3) * VUON * VUON;
+const NUI_RX = Math.sqrt((NUI_DT / Math.PI) * 1.5);
+export const NUI = { x: 13800, y: 17600, rx: NUI_RX, ry: NUI_RX / 1.5 };
+/** Điểm nằm trong elip núi đá (nới thêm `le`) */
+export function trongNui(x: number, y: number, le = 0): boolean {
+  const dx = (x - NUI.x) / (NUI.rx + le), dy = (y - NUI.y) / (NUI.ry + le);
+  return dx * dx + dy * dy <= 1;
+}
+/** Khoảng cách có dấu (theo tia từ tâm) tới bờ núi đá: dương = trên núi */
+function doSauNui(x: number, y: number): number {
+  const dx = x - NUI.x, dy = y - NUI.y;
+  const kc = Math.hypot(dx, dy);
+  if (kc < 1) return NUI.ry;
+  const c = dx / kc, s = dy / kc;
+  return (NUI.rx * NUI.ry) / Math.hypot(NUI.ry * c, NUI.rx * s) - kc;
+}
+
+/** Giới hạn thế giới (bao hết các đảo, núi đá + một dải biển) */
 const LE_BIEN = 1400;
 export const TG = (() => {
-  let x0 = 0, y0 = 0, x1 = VUON, y1 = VUON;
+  let x0 = Math.min(0, NUI.x - NUI.rx), y0 = Math.min(0, NUI.y - NUI.ry), x1 = Math.max(VUON, NUI.x + NUI.rx), y1 = Math.max(VUON, NUI.y + NUI.ry);
   for (const d of DAO) {
     x0 = Math.min(x0, d.x - d.r * 1.25); x1 = Math.max(x1, d.x + d.r * 1.25);
     y0 = Math.min(y0, d.y - d.r * 1.25); y1 = Math.max(y1, d.y + d.r * 1.25);
@@ -103,7 +122,7 @@ function doSauGoc(x: number, y: number): number {
     noi = Math.max(noi, NUA_RONG_NOI - Math.hypot(x - px, y - py));
   }
   if (noi > -2000) noi += (nhieu(x / 500 + 7, y / 500) - 0.5) * 90;
-  return maxMem(s, noi, 380);
+  return Math.max(maxMem(s, noi, 380), doSauNui(x, y));
 }
 
 /** Khoảng cách tới vườn gà (âm ngoài vườn, đơn vị thế giới): chỉ để tô biển nông / bọt quanh tường */
@@ -126,14 +145,14 @@ function layLuoiSau(): Float32Array {
   for (let j = 0; j < NY_SAU; j++) {
     for (let i = 0; i < NX_SAU; i++) {
       const x = TG.x0 + i * O_SAU, y = TG.y0 + j * O_SAU;
-      // Cộng thêm nhiễu nhỏ (khấc bờ)
-      luoiSau[j * NX_SAU + i] = doSauGoc(x, y) + (nhieu(x / 130 + 50, y / 130) - 0.5) * 40;
+      // Cộng thêm nhiễu nhỏ (khấc bờ); núi đá giữ đúng elip (vẽ bằng ellipse) nên không cộng
+      luoiSau[j * NX_SAU + i] = doSauGoc(x, y) + (trongNui(x, y, 400) ? 0 : (nhieu(x / 130 + 50, y / 130) - 0.5) * 40);
     }
   }
   return luoiSau;
 }
 
-/** Khoảng cách có dấu tới bờ đảo tại (x, y): dương = trên cát, âm = dưới biển (vườn gà tính là biển) */
+/** Khoảng cách có dấu tới bờ đảo / núi đá tại (x, y): dương = trên cát / đá, âm = dưới biển (vườn gà tính là biển) */
 export function doSau(x: number, y: number): number {
   const L = layLuoiSau();
   const fx = Math.max(0, Math.min(NX_SAU - 1.001, (x - TG.x0) / O_SAU)), fy = Math.max(0, Math.min(NY_SAU - 1.001, (y - TG.y0) / O_SAU));
