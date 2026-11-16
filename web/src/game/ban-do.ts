@@ -332,3 +332,10 @@ function luocDiem(p: [number, number][]): number[] {
   p.forEach((q, i) => { if (giu[i]) kq.push(q[0], q[1]); });
   return kq;
 }
+
+/** Vòng tròn của đảo i (tâm, bán kính gốc × VONG_DAO): Cell không ra khỏi vòng này, chỉ đuổi nhân vật trong vòng (cộng `them`) */
+export const VONG_DAO = 1.0;
+export function trongVongDao(x: number, y: number, i: number, them = 0): boolean {
+  const d = DAO[i];
+  return !!d && Math.hypot(x - d.x, y - d.y) <= d.r * VONG_DAO + them;
+}

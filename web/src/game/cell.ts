@@ -56,6 +56,14 @@ export const CELL_COMBO_CHUONG = [3, 3, 3, 3, 3];
 // Cấp 4 (Cell bạo nộ, chỉ 1 con): cửa 4s nên phát kế tiếp của chính nó trúng liền cũng tính combo
 export const CELL_COMBO_CUA = [0.5, 0.5, 0.5, 0.5, 4];
 export const CELL_CHUONG_TAM = 1100;
+/** Máy bay có người ngồi bay vào vòng tròn đảo cộng lề này thì Cell của đảo bắn máy bay (`mbChoCell()`) */
+export const CELL_MB_TAM = 1500;
+/** Tầm chùm chưởng khi bắn máy bay (dài hơn chưởng thường) */
+export const CELL_MB_CHUONG_TAM = 2200;
+/** `Cell.muc` = MUC_MB: Cell đang bắn máy bay */
+export const MUC_MB = -2;
+/** Nhân vật ở ngoài vòng tròn đảo quá lề này thì Cell thôi đuổi (Cell thì không bao giờ ra khỏi vòng) */
+export const CELL_VONG_LE = 250;
 export const CELL_CHUONG_RONG = 14;
 /** Dịch chuyển tức thời tới sát nhân vật khi nhân vật xa hơn tầm đấm + `CELL_DICH_XA`; hồi chiêu riêng từng con theo cấp */
 export const CELL_DICH_XA = 450;
@@ -105,7 +113,7 @@ export interface Cell {
   loaiChuong?: number;
   /** Chiến đấu theo đội: 'tach' = con tách đàn (đuổi một người), 'dan' = cả đàn (đuổi người còn lại); không có = dự tiệc / về tiệc */
   vai?: 'tach' | 'dan';
-  /** nhân vật đang đuổi (chỉ số người chơi) */
+  /** nhân vật đang đuổi (chỉ số người chơi); MUC_MB = bắn máy bay có Mabu / Zinbu ngồi */
   muc?: number;
   /** đang vận chưởng chiến đấu (c.nap chạy như tiệc nhưng bắn vào nhân vật) */
   chien?: boolean;

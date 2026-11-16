@@ -3,8 +3,8 @@ import { VeCanvas } from './ve-canvas';
 import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
-import { chuanBiSaMac, daoCua, doSau, trongVuon, veDat, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, type Cell } from './cell';
+import { chuanBiSaMac, daoCua, doSau, trongVuon, trongVongDao, veDat, DAO, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
+import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, MUC_MB, CELL_VONG_LE, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_CHU_KY, TIEC_DI, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -854,6 +854,9 @@ export class Game {
   mayBay: MayBay = taoMayBay(MAP / 2, MAP / 2);
   /** Máy bay đang bay trên đảo cát (khu vực Cell) ở khung trước; null = chưa biết (vừa vào ván / tải ván, không tính là vừa tới) */
   private mbTrenDao: boolean | null = null;
+  /** vận tốc máy bay khung trước (Cell bắn đón đầu) */
+  private mbVx = 0;
+  private mbVy = 0;
   readonly SP_MB = SP_MB;
   mbView: MbHinh | null = null;
   mbDemView: { x: number; y: number; con: number } | null = null;
@@ -3431,7 +3434,15 @@ export class Game {
   /** Nhân vật p là mục tiêu hợp lệ của đội Cell đảo `dao`: đang chơi, không ẩn / gục / mây, đứng trên đảo đó (không ở vườn gà) */
   private cellThay(p: number, dao: number): boolean {
     const n = this.nguoi[p];
-    return !!n && !n.vang && !this.khuat(n) && !trongVuon(n.x, n.y) && daoCua(n.x, n.y) === dao;
+    return !!n && !n.vang && !this.khuat(n) && !trongVuon(n.x, n.y) && daoCua(n.x, n.y) === dao && trongVongDao(n.x, n.y, dao, CELL_VONG_LE);
+  }
+
+  /** Máy bay có Mabu / Zinbu ngồi (đậu, cất cánh hay đang bay) ở trong / gần vòng tròn đảo `dao`: Cell của đảo bắn rơi nó */
+  private mbChoCell(dao: number): boolean {
+    const m = this.mayBay;
+    // Pha 'trung' (sắp nổ) vẫn tính để đội không giải tán: nổ xong người rơi xuống là đuổi luôn
+    if (m.pha === 'no' || !m.ngoi.some((p) => !this.nguoi[p]?.het)) return false;
+    return !trongVuon(m.x, m.y) && trongVongDao(m.x, m.y, dao, CELL_MB_TAM);
   }
 
   /** Cell bị đánh: cả đội của đảo xuất trận; nếu đang chỉ có 1 người để đánh mà con bị đánh không phải con tách đàn thì nó thành con tách đàn (con cũ về tiệc) */
@@ -3463,7 +3474,13 @@ export class Game {
       const doi = (this.cellDoi[dao] ??= { chien: false, tach: [], muc: -1, dichDan: 0 });
       const ds = this.cell.filter((c) => !c.chet && this.daoCell(c) === dao);
       const ke = [0, 1].filter((p) => this.cellThay(p, dao));
-      if (doi.chien && (!ds.length || !ke.length)) doi.chien = false;
+      const mb = ds.length > 0 && this.mbChoCell(dao);
+      if (doi.chien && (!ds.length || (!ke.length && !mb))) doi.chien = false;
+      if (!doi.chien && mb) {
+        doi.chien = true;
+        this.cellXuatTran(dao);
+        this.chu.push({ id: this.id++, x: this.mayBay.x, y: this.mayBay.y - 420, text: '🎯 CELL NHẮM BẮN MÁY BAY!', mau: '#ff6b6b', t: 0 });
+      }
       if (!doi.chien && ds.length && ke.some((p) => ds.some((c) => Math.hypot(this.nguoi[p].x - c.x, this.nguoi[p].y - c.y) < (c.tiec ? TIEC_NGUI : CELL_NGUI)))) {
         doi.chien = true;
         this.cellXuatTran(dao);
@@ -3471,6 +3488,12 @@ export class Game {
       if (!doi.chien) {
         doi.tach = [];
         for (const c of ds) { c.vai = undefined; c.muc = undefined; }
+        continue;
+      }
+      // Chỉ có máy bay (mọi người đều ngồi trên máy bay): cả đội bắn máy bay
+      if (!ke.length) {
+        doi.tach = [];
+        for (const c of ds) this.cellRaTran(c, 'dan', MUC_MB);
         continue;
       }
       const tach = ds.filter((c) => doi.tach.includes(c.id));
@@ -3493,13 +3516,21 @@ export class Game {
       doi.tach = tach.map((c) => c.id);
       if (!ke.includes(doi.muc)) doi.muc = ke[0]!;
       const khac = ke.find((p) => p !== doi.muc);
+      // Người kia ngồi máy bay (đậu chờ): cả đàn bắn máy bay
+      const muc2 = khac ?? (mb ? MUC_MB : undefined);
       for (const c of ds) {
-        const vai = tach.includes(c) ? 'tach' : khac !== undefined ? 'dan' : undefined;
-        if (vai && c.tiec) { c.tiec = false; c.nap = undefined; c.choDich ??= 0; c.choChuong ??= this.t + 1 + Math.random() * 3; }
-        c.vai = vai;
-        c.muc = vai === 'tach' ? doi.muc : vai === 'dan' ? khac : undefined;
+        const vai = tach.includes(c) ? 'tach' : muc2 !== undefined ? 'dan' : undefined;
+        this.cellRaTran(c, vai, vai === 'tach' ? doi.muc : vai === 'dan' ? muc2 : undefined);
       }
     }
+  }
+
+  /** Giao vai cho Cell (rời vòng tiệc nếu có vai) */
+  private cellRaTran(c: Cell, vai: 'tach' | 'dan' | undefined, muc: number | undefined): void {
+    if (vai && c.tiec) { c.tiec = false; c.nap = undefined; c.choDich ??= 0; c.choChuong ??= this.t + 0.5 + Math.random() * 2; }
+    if (c.muc !== muc && c.nap !== undefined && c.chien && (c.muc === MUC_MB || muc === MUC_MB)) { c.nap = undefined; c.chien = false; }
+    c.vai = vai;
+    c.muc = muc;
   }
 
   // Cell: đội hình theo `doiHinhCell()`; có mục tiêu thì đánh (đấm đá, chưởng, dịch chuyển tức thời); không có thì về vòng tiệc (hoặc lang thang nếu đảo không có tiệc)
@@ -3519,6 +3550,7 @@ export class Game {
       }
       const tcc = this.tiecCua(c);
       if (c.tiec && tcc?.on) { this.cellTiec(c, tcc, dt); continue; }
+      if (c.muc === MUC_MB) { this.cellBanMb(c, dt); continue; }
       const ke = c.muc !== undefined ? this.nguoi[c.muc] : undefined;
       if (ke) { this.cellChien(c, ke, dt); continue; }
       c.nap = undefined;
@@ -3560,12 +3592,46 @@ export class Game {
     const dx = x - c.x, dy = y - c.y, dd = Math.hypot(dx, dy);
     c.chay = dd > 20 && c.danh <= 0;
     if (!c.chay) return dd;
+    const cx = c.x, cy = c.y;
     const b = Math.min(dd, CELL_TOC[c.cap]! * he * dt);
     c.x += (dx / dd) * b;
     c.y += (dy / dd) * b;
     c.lat = dx < 0;
     giuTrongMap(c, leCell(c.cap), false, 'dao');
+    this.cellTrongVong(c, cx, cy);
     return dd - b;
+  }
+
+  /** Cell không bao giờ ra khỏi vòng tròn đảo của mình (kéo về mép vòng; vẫn lọt ra / sang đảo khác / xuống biển thì đứng lại chỗ cũ (cx, cy)) */
+  private cellTrongVong(c: Cell, cx: number, cy: number): void {
+    const dao = this.daoCell(c);
+    const d = DAO[dao];
+    if (!d) return;
+    if (trongVongDao(cx, cy, dao) && !trongVongDao(c.x, c.y, dao)) {
+      const kc = Math.hypot(c.x - d.x, c.y - d.y) || 1;
+      const r = d.r * 0.999;
+      c.x = d.x + ((c.x - d.x) / kc) * r;
+      c.y = d.y + ((c.y - d.y) / kc) * r;
+    }
+    // Đang ở ngoài vòng sẵn (ván lưu cũ): chỉ cho đi vào trong
+    const ngoai = !trongVongDao(cx, cy, dao);
+    const xa = (x: number, y: number) => Math.hypot(x - d.x, y - d.y);
+    if (doSau(c.x, c.y) <= 0 || daoCua(c.x, c.y) !== dao || (!ngoai && !trongVongDao(c.x, c.y, dao)) || (ngoai && xa(c.x, c.y) > xa(cx, cy))) { c.x = cx; c.y = cy; }
+  }
+
+  /**
+   * Cell bắn máy bay có Mabu / Zinbu ngồi: đứng trong vòng đảo, quay về máy bay, máy bay xa thì đi tới (không ra khỏi vòng),
+   * trong tầm thì vận chưởng (chùm dài CELL_MB_CHUONG_TAM, nhắm đón đầu); chùm chạm máy bay là máy bay nổ, người rơi xuống thì cả đội đuổi đánh.
+   */
+  private cellBanMb(c: Cell, dt: number): void {
+    if (c.nap !== undefined && c.chien) { this.cellBanChien(c, dt); return; }
+    const t = this.tamMb();
+    const d = Math.hypot(t.x - c.x, t.y - c.y);
+    c.lat = t.x < c.x;
+    if ((c.choChuong ?? 0) <= this.t && d < CELL_MB_CHUONG_TAM && Math.random() < dt * 3) { this.cellVanChuong(c); return; }
+    if (d > CELL_MB_CHUONG_TAM * 0.6) this.cellDiToi(c, this.mayBay.x, this.mayBay.y, dt, 1);
+    else c.chay = false;
+    c.lat = t.x < c.x;
   }
 
   /**
@@ -3619,7 +3685,10 @@ export class Game {
     const truoc = c.nap!;
     c.nap = truoc + dt;
     c.chay = false;
-    const ke = c.muc !== undefined ? this.nguoi[c.muc] : undefined;
+    const banMb = c.muc === MUC_MB;
+    // Bắn máy bay: nhắm đón đầu chỗ máy bay sẽ tới khi chùm bay tới (TIEC_CHUONG_T)
+    const tMb = banMb ? this.tamMb() : null;
+    const ke = tMb ? { x: tMb.x + this.mbVx * TIEC_CHUONG_T, y: tMb.y + this.mbVy * TIEC_CHUONG_T + 70 } : c.muc !== undefined ? this.nguoi[c.muc] : undefined;
     const luc = TIEC_BIEN + TIEC_AURA;
     if (ke && truoc < luc) c.lat = ke.x < c.x;
     if (ke && truoc < luc && c.nap >= luc) {
@@ -3628,7 +3697,7 @@ export class Game {
       const hx = c.x + (c.lat ? -1 : 1) * l.tayX * k, hy = c.y - l.tayY * k;
       const tx = ke.x, ty = ke.y - 70;
       const dd = Math.hypot(tx - hx, ty - hy) || 1;
-      const dai = Math.min(CELL_CHUONG_TAM, Math.max(dd + 250, 500));
+      const dai = Math.min(banMb ? CELL_MB_CHUONG_TAM : CELL_CHUONG_TAM, Math.max(dd + 250, 500));
       this.chuongTiec.push({
         id: this.id++, k, loai: c.loaiChuong ?? 0, x0: hx, y0: hy,
         x1: hx + ((tx - hx) / dd) * dai, y1: hy + ((ty - hy) / dd) * dai, t: 0,
@@ -3654,7 +3723,7 @@ export class Game {
     for (let i = 0; i < 10 && !duoc; i++) {
       const g = g0 + (i / 10) * Math.PI * 2;
       x = ke.x + Math.cos(g) * r; y = ke.y + Math.sin(g) * r * 0.6;
-      duoc = doSau(x, y) > 60 && !trongVuon(x, y) && daoCua(x, y) === dao;
+      duoc = doSau(x, y) > 60 && !trongVuon(x, y) && daoCua(x, y) === dao && trongVongDao(x, y, dao);
     }
     c.choDich = this.t + CELL_DICH_HOI[c.cap]!;
     if (!duoc) return;
@@ -3745,6 +3814,16 @@ export class Game {
   private chuongCellTrung(q: ChuongTiec): void {
     const rong = CELL_CHUONG_RONG * q.k;
     const vx = q.x1 - q.x0, vy = q.y1 - q.y0, L2 = vx * vx + vy * vy || 1;
+    // Chùm chạm máy bay (có người ngồi hay không) thì máy bay trúng rồi nổ: người trên máy bay rơi xuống (trên cát đứng dậy, xuống biển thì chết)
+    const m = this.mayBay;
+    if (m.pha !== 'trung' && m.pha !== 'no') {
+      const t = this.tamMb();
+      const u = Math.max(0, Math.min(1, ((t.x - q.x0) * vx + (t.y - q.y0) * vy) / L2));
+      if (Math.hypot(t.x - (q.x0 + vx * u), t.y - (q.y0 + vy * u)) < rong + MB_TRUNG_BK * 0.7) {
+        if (m.ngoi.length) this.chu.push({ id: this.id++, x: t.x, y: t.y - 260, text: '🎯 CELL BẮN RƠI MÁY BAY!', mau: '#ff6b6b', t: 0 });
+        this.trungMb();
+      }
+    }
     for (const n of this.nguoi) {
       if (n.vang || this.khuat(n)) continue;
       const px = n.x, py = n.y - 70;
@@ -3930,6 +4009,7 @@ export class Game {
     } else if (m.pha === 'bay') {
       const pl = this.nguoi[m.ngoi[0]];
       m.chay = false;
+      const x0 = m.x, y0 = m.y;
       if (pl?.dich) {
         const dx = pl.dich.x - m.x;
         const dy = pl.dich.y - m.y;
@@ -3946,6 +4026,7 @@ export class Game {
       // Máy bay bay được khắp thế giới (qua biển, qua tường vườn), chỉ không ra khỏi bản đồ
       m.x = kep(m.x, TG.x0 + MB_LE, TG.x1 - MB_LE);
       m.y = kep(m.y, TG.y0 + MB_LE, TG.y1 - MB_LE);
+      if (dt > 0) { this.mbVx = (m.x - x0) / dt; this.mbVy = (m.y - y0) / dt; }
       // Bay tới khu vực Cell (trên đảo cát): máu / mana người trên máy bay đặt lại như lúc vào ván nhưng đầy bình (HP_NV, MANA_TOI_DA)
       const tren = banDoHt === 'sa' && doSau(m.x, m.y) > 0;
       if (tren && this.mbTrenDao === false) {
