@@ -99,15 +99,11 @@ const TRANG_TRI_SA = [
   { sx: 102, sy: 402, w: 75, h: 68, k: 1.8 }, // sỏi
   { sx: 179, sy: 402, w: 44, h: 37, k: 1.8 }, // cành khô
 ];
-/** Ô cát lặp (128px phủ SA_O_CAT đơn vị) và vách đá lặp (128px rộng phủ SA_O_VACH đơn vị) */
-const SA_CAT = SA + 'cat.png';
-const SA_VACH = SA + 'vach.png';
-const SA_O_CAT = 520;
-const SA_O_VACH = 260;
-/** Đảo là khối nổi giữa vực đen: vách đá cao SA_VACH_CAO lộ ra ở bờ phía nam, dưới nữa tới SA_VACH_SAU sẫm màu chìm vào vực; viền đá SA_VIEN quanh mép */
+/** Đảo là khối nổi giữa vực đen, cùng địa hình với núi đá (mặt đá dat.png, vách vach.png của núi): vách cao SA_VACH_CAO lộ ra ở bờ phía nam,
+ *  dưới nữa tới SA_VACH_SAU sẫm màu chìm vào vực; viền sáng SA_VIEN quanh mép */
 const SA_VACH_CAO = 120;
 const SA_VACH_SAU = 190;
-const SA_VIEN = 26;
+const SA_VIEN = 22;
 const SA_O_DOAN = 1600;
 /** Núi đá (cắt từ ảnh người dùng gửi bằng tools/tao-atlas-nui-da.py): mặt đá lặp, vách lặp, atlas tảng đá (neo giữa đáy, loai 1..8).
  *  Cả khối là một elip (NUI trong ban-do.ts) vẽ bằng vài lệnh ellipse: vách dời xuống NUI_VACH_CAO (mesa cao hơn đảo), dưới nữa sẫm tới NUI_VACH_SAU */
@@ -144,7 +140,6 @@ export class VeCanvas {
   private anhBdn: HTMLCanvasElement | null = null;
   /** Đường bờ cắt thành từng đoạn theo ô SA_O_DOAN (kèm khung bao): stroke chỉ ghép các đoạn trong khung nhìn (stroke cả đường bờ mỗi khung rất tốn) */
   private doanBo: { p: Path2D; x0: number; y0: number; x1: number; y1: number }[] = [];
-  private mauSa: { cat: CanvasPattern; vach: CanvasPattern; vien: CanvasPattern } | null = null;
   private mauNui: { dat: CanvasPattern; vach: CanvasPattern } | null = null;
   private mauTuong: { mat: CanvasPattern; gach: CanvasPattern; vienNgang: CanvasPattern; vienDoc: CanvasPattern } | null = null;
   private anh = new Map<string, HTMLImageElement>();
@@ -160,7 +155,7 @@ export class VeCanvas {
   napTruoc(...atlas: string[]): void {
     atlas.forEach((a) => this.lay(a));
     // Ảnh của đảo sa mạc (nhỏ) nạp luôn để chọn map nào cũng có ngay
-    [SA_CAT, SA_VACH, SA_TRANG_TRI, NUI_DAT, NUI_VACH, NUI_DA].forEach((a) => this.lay(a));
+    [SA_TRANG_TRI, NUI_DAT, NUI_VACH, NUI_DA].forEach((a) => this.lay(a));
   }
 
   /** Nhuộm sẵn atlas theo các bộ lọc ngay khi ảnh nạp xong, để lần đầu cần dùng không bị khựng */
@@ -446,25 +441,16 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  /** Mẫu lặp của đảo (dựng một lần khi ảnh đã nạp): cát, vách đá, viền đá sáng hơn */
-  private taoMauSa(ctx: CanvasRenderingContext2D): void {
-    const cat = this.lay(SA_CAT), vach = this.lay(SA_VACH);
-    if (!cat || !vach) return;
-    const mau = (src: CanvasImageSource, o: number, w: number) => {
+  /** Mẫu lặp mặt đá / vách của núi đá (dựng một lần khi ảnh đã nạp), dùng chung cho đảo và núi */
+  private taoMauNui(ctx: CanvasRenderingContext2D): void {
+    const dat = this.lay(NUI_DAT), vach = this.lay(NUI_VACH);
+    if (!dat || !vach) return;
+    const mau = (src: HTMLImageElement, o: number) => {
       const p = ctx.createPattern(src, 'repeat')!;
-      p.setTransform(new DOMMatrix().scale(o / w));
+      p.setTransform(new DOMMatrix().scale(o / src.naturalWidth));
       return p;
     };
-    // Viền đá: vách đá sáng lên một chút để tách mặt cát với vách
-    const vien = document.createElement('canvas');
-    vien.width = vach.naturalWidth;
-    vien.height = vach.naturalHeight;
-    const v = vien.getContext('2d')!;
-    v.drawImage(vach, 0, 0);
-    v.globalCompositeOperation = 'soft-light';
-    v.fillStyle = '#fff3c0';
-    v.fillRect(0, 0, vien.width, vien.height);
-    this.mauSa = { cat: mau(cat, SA_O_CAT, cat.naturalWidth), vach: mau(vach, SA_O_VACH, vach.naturalWidth), vien: mau(vien, SA_O_VACH, vien.width) };
+    this.mauNui = { dat: mau(dat, NUI_O_DAT), vach: mau(vach, NUI_O_VACH) };
   }
 
   /** Nền đảo sa mạc, vẽ thẳng mỗi khung từ đường bờ dựng sẵn (vài lệnh fill / stroke, không giữ ảnh mảnh nào):
@@ -503,8 +489,8 @@ export class VeCanvas {
       }
       this.bo = p;
     }
-    if (!this.mauSa) this.taoMauSa(ctx);
-    const m = this.mauSa;
+    if (!this.mauNui) this.taoMauNui(ctx);
+    const m = this.mauNui;
     const bo = this.bo;
     const cam = c.gocCamera();
     const x0 = -cam.x / cam.k - 40, x1 = (c.W - cam.x) / cam.k + 40;
@@ -525,12 +511,14 @@ export class VeCanvas {
     const lop: [boolean, boolean][] = [[c.thayDao, true], [c.thayVuon, false]];
     for (const [hien, dao] of lop) {
       if (!hien) continue;
-      vach(SA_VACH_SAU, '#2a1808', dao);
-      vach(SA_VACH_CAO, m?.vach ?? '#b8742a', dao);
+      vach(SA_VACH_SAU, '#1e0f16', dao);
+      vach(SA_VACH_CAO, m?.vach ?? '#4a2a30', dao);
     }
     if (!c.thayDao) return;
-    ctx.fillStyle = m?.cat ?? '#f2c94c';
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = m?.dat ?? '#e0903a';
     ctx.fill(bo, 'evenodd');
+    ctx.imageSmoothingEnabled = true;
     // Viền đá quanh mép: chỉ stroke các đoạn bờ chạm khung nhìn (lấn thêm nửa nét)
     const LE = 60;
     const vien = new Path2D();
@@ -540,10 +528,10 @@ export class VeCanvas {
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     ctx.lineWidth = SA_VIEN;
-    ctx.strokeStyle = m?.vien ?? '#d99a3c';
+    ctx.strokeStyle = '#f2a54a';
     ctx.stroke(vien);
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#5a2d0a';
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#2a1410';
     ctx.stroke(vien);
     ctx.lineJoin = 'miter';
     ctx.lineCap = 'butt';
@@ -554,17 +542,7 @@ export class VeCanvas {
   /** Núi đá: khối mesa hình elip, chỉ vẽ khi elip (kể cả vách) chạm khung nhìn; 4 lệnh ellipse (vách sẫm, vách, mặt đá, viền) */
   private veNui(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number): void {
     if (NUI.x + NUI.rx < x0 || NUI.x - NUI.rx > x1 || NUI.y + NUI.ry + NUI_VACH_SAU < y0 || NUI.y - NUI.ry > y1) return;
-    if (!this.mauNui) {
-      const dat = this.lay(NUI_DAT), vach = this.lay(NUI_VACH);
-      if (dat && vach) {
-        const mau = (src: HTMLImageElement, o: number) => {
-          const p = ctx.createPattern(src, 'repeat')!;
-          p.setTransform(new DOMMatrix().scale(o / src.naturalWidth));
-          return p;
-        };
-        this.mauNui = { dat: mau(dat, NUI_O_DAT), vach: mau(vach, NUI_O_VACH) };
-      }
-    }
+    if (!this.mauNui) this.taoMauNui(ctx);
     const m = this.mauNui;
     const elip = (dy: number) => {
       ctx.beginPath();

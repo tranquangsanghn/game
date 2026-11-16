@@ -677,7 +677,8 @@ function taoTrangTriSa(): TrangTri[] {
         if (soCay[d]! >= (d % 2 ? 1 : 2)) loai = 1;
         else soCay[d]!++;
       }
-      kq.push({ x, y, loai, lat, sa: true, to: loai === 0 && soCay[daoCua(x, y)] === 1 });
+      // Chỉ giữ cây: đá / xương rồng / cỏ / sọ bò / sỏi / cành khô của sa mạc đã bỏ (vẫn rút số như cũ để vị trí cây không đổi)
+      if (loai === 0) kq.push({ x, y, loai, lat, sa: true, to: soCay[daoCua(x, y)] === 1 });
     }
   }
   return kq;
