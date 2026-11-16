@@ -1530,7 +1530,6 @@ export class VeCanvas {
       ctx.font = `700 18px ${FONT}`;
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffd27a';
-      ctx.fillText('Cell còn lại', c.GIUA, -42);
       ctx.fillText(`${c.soCellDao}`, c.GIUA, -20);
       ctx.restore();
       return;
