@@ -1923,37 +1923,33 @@ export class VeCanvas {
     }
   }
 
-  // ─── Bảng tên quái ngay dưới nửa vòng tròn avatar: vườn gà = vua gà, đảo = Cell của đảo, núi đá = bóng ma Goku ───
+  // ─── Tên quái trên thanh đen, ngay trên đầu avatar: vườn gà = vua gà, đảo = Cell của đảo, núi đá = bóng ma Goku ───
 
   private veBangTen(ctx: CanvasRenderingContext2D, c: Game, tg: Ga | null): void {
     let ten: string;
     let mo: boolean;
+    let so: number | null = null;
     if (c.trenNui) { ten = GY_TEN; mo = c.ginyu.chet; }
-    else if (c.trenDao) { ten = CELL_TEN[capCuaDao(c.daoHienTai)] ?? 'Cell'; mo = c.soCellDao <= 0; }
+    else if (c.trenDao) { ten = CELL_TEN[capCuaDao(c.daoHienTai)] ?? 'Cell'; so = c.soCellDao; mo = so <= 0; }
     else { ten = 'Vua gà'; mo = !tg; }
     ctx.save();
-    ctx.font = `700 17px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const w = ctx.measureText(ten).width + 24;
-    const y = c.R_TUONG + 4;
-    ctx.globalAlpha = mo ? 0.45 : 0.9;
-    ctx.beginPath();
-    ctx.roundRect(c.GIUA - w / 2, y, w, 26, 13);
-    ctx.fillStyle = '#000';
-    ctx.fill();
-    ctx.strokeStyle = '#ffd27a';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
     ctx.fillStyle = '#ffd27a';
-    ctx.fillText(ten, c.GIUA, y + 14);
+    ctx.globalAlpha = mo ? 0.45 : 1;
+    // Hàng 1: tên to; hàng 2 (chỉ Cell): số Cell còn lại, chữ nhỏ
+    ctx.font = `800 ${so === null ? 30 : 26}px ${FONT}`;
+    ctx.fillText(ten, c.GIUA, so === null ? -c.BAR / 2 : -c.BAR + 28);
+    if (so !== null) {
+      ctx.font = `700 16px ${FONT}`;
+      ctx.fillText(`${so}`, c.GIUA, -c.BAR + 58);
+    }
     ctx.restore();
   }
 
   // ─── Thanh đen phía trên: chiêu của gà mẹ ───
 
   private veThanhTuong(ctx: CanvasRenderingContext2D, c: Game): void {
-    const P = duong();
     const tg = c.tuongSong;
     duongTron(ctx, c.R_TUONG, c.GIUA, 0);
     ctx.fillStyle = '#000';
@@ -1987,17 +1983,8 @@ export class VeCanvas {
     ctx.restore();
     this.veBangTen(ctx, c, tg);
 
-    // Ở đảo: không có số lượng gà, không có chiêu của gà (chỉ còn avatar Cell)
-    if (c.trenDao) {
-      // Số Cell còn lại trên đảo hiện tại, ngay trên đầu avatar
-      ctx.save();
-      ctx.font = `700 36px ${FONT}`;
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#ffd27a';
-      if (!c.trenNui) ctx.fillText(`${c.soCellDao}`, c.GIUA, -16);
-      ctx.restore();
-      return;
-    }
+    // Ở đảo / núi: không có số lượng gà
+    if (c.trenDao) return;
     ctx.font = `700 18px ${FONT}`;
     ctx.fillStyle = '#ffd27a';
     ctx.fillText('Gà con', c.GIUA + 175, -42);
@@ -2008,88 +1995,6 @@ export class VeCanvas {
     ctx.fillText('Tướng gà', c.GIUA - 175, -42);
     ctx.fillText(`${c.soMePhu}`, c.GIUA - 175, -20);
     ctx.restore();
-
-    for (const b of c.bangTuong()) {
-      ctx.save();
-      ctx.translate(b.x, b.y);
-      ctx.scale(0.5333, 0.5333);
-      ctx.globalAlpha = b.op;
-      if (b.dung) this.sang(ctx, '#ffb347');
-      duongTron(ctx, c.R_NUT);
-      ctx.fillStyle = b.k === 3 ? '#15151c' : b.k === 4 ? '#7a5d00' : b.k === 5 ? '#7a1d10' : '#0d1b12';
-      ctx.fill();
-      ctx.strokeStyle = b.dung ? '#ffb347' : '#555';
-      ctx.lineWidth = 4;
-      ctx.stroke();
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
-      if (b.k >= 1 && b.tien > 0) {
-        ctx.beginPath();
-        ctx.arc(0, 0, c.R_NUT + 6, -Math.PI / 2, -Math.PI / 2 + TAU * b.tien);
-        ctx.strokeStyle = '#ffb347';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-      }
-      ctx.scale(1.35, 1.35);
-      ctx.fillStyle = '#fff';
-      ctx.strokeStyle = '#0d1b12';
-      ctx.lineWidth = 1.2;
-      ctx.lineJoin = 'round';
-      switch (b.k) {
-        case 0:
-          ctx.fillStyle = '#ffb347';
-          ctx.fill(P.tuMo);
-          ctx.stroke(P.tuMo);
-          ctx.strokeStyle = '#fff';
-          ctx.lineWidth = 2;
-          ctx.lineCap = 'round';
-          ctx.stroke(P.tuMoVach);
-          break;
-        case 1:
-          ctx.strokeStyle = '#fff';
-          ctx.lineWidth = 3.5;
-          ctx.lineCap = 'round';
-          ctx.stroke(P.tuLao);
-          break;
-        case 2:
-          ctx.fill(P.tuBay);
-          ctx.stroke(P.tuBay);
-          break;
-        case 3:
-          duongTron(ctx, 8);
-          ctx.fillStyle = '#1a1a22';
-          ctx.fill();
-          ctx.strokeStyle = '#c77dff';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-          break;
-        case 4:
-          duongTron(ctx, 8);
-          ctx.fillStyle = '#ffd23f';
-          ctx.fill();
-          ctx.stroke();
-          break;
-        case 6:
-          // Gọi gà con: gà con vàng có mỏ cam
-          duongTron(ctx, 7, 0, 3);
-          ctx.fillStyle = '#ffd23f';
-          ctx.fill();
-          ctx.stroke();
-          duongTron(ctx, 4.5, 0, -6);
-          ctx.fill();
-          ctx.stroke();
-          ctx.fillStyle = '#ff7a2f';
-          ctx.beginPath();
-          ctx.moveTo(-2, -5); ctx.lineTo(2, -5); ctx.lineTo(0, -2);
-          ctx.fill();
-          break;
-        default:
-          ctx.fillStyle = '#ff6a3c';
-          ctx.fill(P.tuDo);
-          ctx.stroke(P.tuDo);
-      }
-      ctx.restore();
-    }
   }
 
   // ─── HUD: dây buộc, cảnh báo, mũi tên chỉ đồng đội, FPS ───
