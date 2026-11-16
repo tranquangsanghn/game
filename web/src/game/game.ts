@@ -4,7 +4,7 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, NHAN_VAT } from './nhan-vat-du-lieu';
 import { chuanBiSaMac, daoCua, doSau, trongNui, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, type Cell } from './cell';
+import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -3874,12 +3874,13 @@ export class Game {
   /** Đang vận chưởng chiến đấu: quay theo mục tiêu tới lúc phóng; phóng thì chùm bay thẳng về chỗ mục tiêu đang đứng (chạy ngang để né) */
   private cellBanChien(c: Cell, dt: number): void {
     const truoc = c.nap!;
-    c.nap = truoc + dt;
+    const nhanh = c.cap === 4 ? CELL_DO_NHANH : 1; // Cell đỏ: tung chưởng nhanh hơn ~30%
+    c.nap = truoc + dt * nhanh;
     c.chay = false;
     const banMb = c.muc === MUC_MB;
     // Bắn máy bay: nhắm đón đầu chỗ máy bay sẽ tới khi chùm bay tới (TIEC_CHUONG_T)
     const tMb = banMb ? this.tamMb() : null;
-    const ke = tMb ? { x: tMb.x + this.mbVx * TIEC_CHUONG_T, y: tMb.y + this.mbVy * TIEC_CHUONG_T + 70 } : c.muc !== undefined ? this.nguoi[c.muc] : undefined;
+    const ke = tMb ? { x: tMb.x + this.mbVx * TIEC_CHUONG_T / nhanh, y: tMb.y + this.mbVy * TIEC_CHUONG_T / nhanh + 70 } : c.muc !== undefined ? this.nguoi[c.muc] : undefined;
     const luc = TIEC_BIEN + TIEC_AURA;
     if (ke && truoc < luc) c.lat = ke.x < c.x;
     if (ke && truoc < luc && c.nap >= luc) {
@@ -3994,7 +3995,7 @@ export class Game {
   /** Chưởng của tiệc bay tới bánh thì nổ; đếm giờ tiệc */
   private capNhatTiec(dt: number): void {
     for (const q of this.chuongTiec) {
-      q.t += dt;
+      q.t += dt * (q.cap === 4 ? CELL_DO_NHANH : 1);
       if (q.t < TIEC_CHUONG_T) continue;
       this.vetGa({ id: this.id++, x: q.x1, y: q.y1, t: 0, loai: 'chay', co: q.sat ? 0.6 : 0.35 });
       if (q.sat) this.chuongCellTrung(q);

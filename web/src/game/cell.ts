@@ -44,7 +44,10 @@ export const CELL_NE = [0.6, 0, 0.35, 0.25, 0.7];
 /** Số con tách đàn khi xuất trận (cấp 2 và 3, đảo 3 và 4: 2 con tách đàn cùng đuổi một người, cả đàn còn lại đuổi người kia) */
 export const CELL_TACH_SO = [1, 1, 2, 2, 1];
 /** Tốc độ thật (px/s) */
-export const CELL_TOC = [70, 85, 100, 120, 150];
+/** Tốc độ chạy theo cấp: Cell thường nhanh gấp 1,5 so với gốc (70, 85, 100, 120), Cell đỏ gấp 2 (150) */
+export const CELL_TOC = [105, 127.5, 150, 180, 300];
+/** Cell đỏ tung chưởng (hào quang → phóng, chùm bay) nhanh hơn 30% */
+export const CELL_DO_NHANH = 1.3;
 /** Số giây giữa 2 đòn đấm / đá */
 export const CELL_HOI = [0.9, 0.9, 0.9, 0.9, 0.9];
 /** Chưởng chiến đấu (3 loại như tiệc): sát thương gốc, hồi chiêu (giây), tầm xa nhất, bề rộng chùm (× độ to sprite) */
