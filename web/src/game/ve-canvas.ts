@@ -2,7 +2,7 @@ import type { ChuongTiec, Tiec } from './tiec';
 import { HN } from './do-hieu-nang';
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
-import { CELL_SO_DAO, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
+import { CELL_HP, CELL_SO_DAO, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { MABU } from './nhan-vat-du-lieu';
@@ -112,6 +112,8 @@ const O_NEN_MAX = 24;
 const O_NEN_TAO = 2;
 /** Núi đá (cắt từ ảnh người dùng gửi bằng tools/tao-atlas-nui-da.py): mặt đá lặp, vách lặp, atlas tảng đá (neo giữa đáy, loai 1..8).
  *  Cả khối là một elip (NUI trong ban-do.ts) vẽ bằng vài lệnh ellipse: vách dời xuống NUI_VACH_CAO (mesa cao hơn đảo), dưới nữa sẫm tới NUI_VACH_SAU */
+/** Thanh máu Cell đỏ: cao hơn chân bấy nhiêu đơn vị khung sprite (× độ to), ngay trên đầu */
+const CELL_THANH_CAO = 56;
 const NUI_A = 'assets/game/nui/';
 const NUI_DAT = NUI_A + 'dat.png';
 const NUI_VACH = NUI_A + 'vach.png';
@@ -1439,6 +1441,20 @@ export class VeCanvas {
       ctx.fillText(ce.id % 2 ? '♪' : '♫', Math.sin(ph) * 6, -64 - 4 * Math.abs(Math.sin(ph)));
     }
     ctx.restore();
+    // Chỉ Cell đỏ (cấp cao nhất) có thanh máu trên đầu, kiểu như gà tướng; ăn quá máu tối đa thì thanh tính theo máu hiện có
+    if (ce.cap === SO_CAP - 1 && !ce.chet) {
+      const toiDa = Math.max(CELL_HP[ce.cap]!, ce.hp);
+      ctx.save();
+      ctx.translate(ce.x, ce.y - (c.cellNgoiNgoc(ce) ? CELL_NGOI_NANG : 0) - CELL_THANH_CAO * k);
+      ctx.scale(3, 3);
+      tronCD(ctx, -34, -6, 68, 12, 6);
+      ctx.fillStyle = 'rgba(13,27,18,0.75)';
+      ctx.fill();
+      tronCD(ctx, -31, -3, Math.min(62, Math.max(0, (62 * ce.hp) / toiDa)), 6, 3);
+      ctx.fillStyle = '#ff4a2e';
+      ctx.fill();
+      ctx.restore();
+    }
   }
 
   // Bánh sinh nhật giữa vòng Cell: sprite 8 khung lửa lặp, quầng sáng cam
