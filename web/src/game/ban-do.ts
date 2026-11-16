@@ -95,22 +95,31 @@ const duongNui = (() => {
   return duongNuiTheo(lo);
 })();
 export const NUI = { x: duongNui.nx, y: duongNui.ny, rx: NUI_RX, ry: NUI_RY };
-/** Đường cát nối đảo 0 → núi đá: các điểm lấy mẫu (từ tâm đảo 0 tới tâm núi) và khung bao để bỏ qua nhanh */
+/** Đường cát nối đảo 0 → núi đá: các điểm lấy mẫu (từ tâm đảo 0 tới tâm núi), gom thành từng cụm DUONG_CUM đoạn kèm khung bao
+ *  để chỉ tính khoảng cách tới các cụm ở gần (xa hơn DUONG_LE thì giá trị không cần chính xác: chắc chắn là vực) */
 const DUONG_NUI: [number, number][] = Array.from({ length: 121 }, (_, k) => duongNui.diem(k / 120));
-const DUONG_NUI_KHUNG = DUONG_NUI.reduce(
-  (b, [x, y]) => ({ x0: Math.min(b.x0, x), y0: Math.min(b.y0, y), x1: Math.max(b.x1, x), y1: Math.max(b.y1, y) }),
-  { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity },
-);
-/** Khoảng cách từ (x, y) tới đường giữa của dải cát lên núi (xa khung bao thì trả số lớn) */
+const DUONG_CUM = 8;
+const DUONG_LE = 2500;
+const CUM_NUI = Array.from({ length: Math.ceil((DUONG_NUI.length - 1) / DUONG_CUM) }, (_, c) => {
+  const a = c * DUONG_CUM, b = Math.min(DUONG_NUI.length - 1, a + DUONG_CUM);
+  const pts = DUONG_NUI.slice(a, b + 1);
+  return {
+    a, b,
+    x0: Math.min(...pts.map((p) => p[0])) - DUONG_LE, x1: Math.max(...pts.map((p) => p[0])) + DUONG_LE,
+    y0: Math.min(...pts.map((p) => p[1])) - DUONG_LE, y1: Math.max(...pts.map((p) => p[1])) + DUONG_LE,
+  };
+});
+/** Khoảng cách từ (x, y) tới đường giữa của dải cát lên núi (xa mọi cụm thì trả số lớn) */
 function kcDuongNui(x: number, y: number): number {
-  const K = DUONG_NUI_KHUNG, le = 2500;
-  if (x < K.x0 - le || x > K.x1 + le || y < K.y0 - le || y > K.y1 + le) return 1e9;
-  let m = Infinity;
-  for (let k = 1; k < DUONG_NUI.length; k++) {
-    const [ax, ay] = DUONG_NUI[k - 1]!, [bx, by] = DUONG_NUI[k]!;
-    const vx = bx - ax, vy = by - ay;
-    const t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy)));
-    m = Math.min(m, Math.hypot(x - ax - vx * t, y - ay - vy * t));
+  let m = 1e9;
+  for (const c of CUM_NUI) {
+    if (x < c.x0 || x > c.x1 || y < c.y0 || y > c.y1) continue;
+    for (let k = c.a + 1; k <= c.b; k++) {
+      const [ax, ay] = DUONG_NUI[k - 1]!, [bx, by] = DUONG_NUI[k]!;
+      const vx = bx - ax, vy = by - ay;
+      const t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy)));
+      m = Math.min(m, Math.hypot(x - ax - vx * t, y - ay - vy * t));
+    }
   }
   return m;
 }
@@ -165,6 +174,15 @@ const maxMem = (a: number, b: number, k: number) => {
   return Math.max(a, b) + (h * h * k) / 4;
 };
 
+/** Khung bao (nới DUONG_LE) của từng dải cát nối hai đảo */
+const KHUNG_NOI = CAU_NOI.map(([i, j]) => {
+  const pts = Array.from({ length: 41 }, (_, k) => diemNoi(i, j, k / 40));
+  return {
+    x0: Math.min(...pts.map((p) => p[0])) - DUONG_LE, x1: Math.max(...pts.map((p) => p[0])) + DUONG_LE,
+    y0: Math.min(...pts.map((p) => p[1])) - DUONG_LE, y1: Math.max(...pts.map((p) => p[1])) + DUONG_LE,
+  };
+});
+
 /** Khoảng cách có dấu tới bờ: đảo (nhiễu to cho bờ lượn) và dải cát nối (nhiễu nhỏ để không bị đứt) hợp mềm với nhau */
 function doSauGoc(x: number, y: number): number {
   let s = -1e9;
@@ -179,7 +197,11 @@ function doSauGoc(x: number, y: number): number {
   }
   if (s > -2000) s += (nhieu(x / 1100, y / 1100) - 0.5) * 600 + (nhieu(x / 380 + 20, y / 380) - 0.5) * 180;
   let noi = -1e9;
-  for (const [i, j] of CAU_NOI) {
+  for (let c = 0; c < CAU_NOI.length; c++) {
+    // Xa khung bao của dải cát này thì bỏ qua (chắc chắn là vực)
+    const K = KHUNG_NOI[c]!;
+    if (x < K.x0 || x > K.x1 || y < K.y0 || y > K.y1) continue;
+    const [i, j] = CAU_NOI[c]!;
     const a = DAO[i]!, b = DAO[j]!;
     const vx = b.x - a.x, vy = b.y - a.y;
     const t = Math.max(0, Math.min(1, ((x - a.x) * vx + (y - a.y) * vy) / (vx * vx + vy * vy)));
@@ -207,17 +229,34 @@ const O_SAU = 40;
 const NX_SAU = (TG.x1 - TG.x0) / O_SAU + 1;
 const NY_SAU = (TG.y1 - TG.y0) / O_SAU + 1;
 let luoiSau: Float32Array | null = null;
+// Vực xa: ô cách mọi bờ quá VUC_XA chỉ ghi -VUC_XA (không ai cần số thật ở đó, mọi chỗ dùng doSau chỉ xét dấu / ngưỡng nhỏ).
+// Dò thô theo khối VUC_KHOI × VUC_KHOI ô: tính doSauGoc ở tâm khối, độ dốc của doSauGoc ≤ VUC_DOC (khoảng cách 1 + các lớp nhiễu)
+// cộng VUC_NHAY (nhiễu bờ đảo bật / tắt ở -2000) nên tâm khối sâu hơn ngưỡng thì cả khối chắc chắn sâu hơn VUC_XA: bỏ qua cả khối.
+// Phần lớn thế giới (vực quanh vòng đảo, quanh đường lên núi) là vực xa nên lưới nhanh hơn hẳn.
+const VUC_XA = 1000;
+const VUC_KHOI = 8;
+const VUC_DOC = 3;
+const VUC_NHAY = 420;
 function layLuoiSau(): Float32Array {
   if (luoiSau) return luoiSau;
-  luoiSau = new Float32Array(NX_SAU * NY_SAU);
-  for (let j = 0; j < NY_SAU; j++) {
-    for (let i = 0; i < NX_SAU; i++) {
-      const x = TG.x0 + i * O_SAU, y = TG.y0 + j * O_SAU;
-      // Cộng thêm nhiễu nhỏ (khấc bờ); núi đá giữ đúng elip (vẽ bằng ellipse) nên không cộng
-      luoiSau[j * NX_SAU + i] = doSauGoc(x, y) + (trongNui(x, y, 400) ? 0 : (nhieu(x / 130 + 50, y / 130) - 0.5) * 40);
+  const L = (luoiSau = new Float32Array(NX_SAU * NY_SAU));
+  const nuaCheo = (VUC_KHOI * O_SAU * Math.SQRT2) / 2;
+  const nguong = -(VUC_XA + VUC_DOC * nuaCheo + VUC_NHAY);
+  for (let bj = 0; bj < NY_SAU; bj += VUC_KHOI) {
+    for (let bi = 0; bi < NX_SAU; bi += VUC_KHOI) {
+      const i1 = Math.min(NX_SAU, bi + VUC_KHOI), j1 = Math.min(NY_SAU, bj + VUC_KHOI);
+      const xa = doSauGoc(TG.x0 + (bi + VUC_KHOI / 2) * O_SAU, TG.y0 + (bj + VUC_KHOI / 2) * O_SAU) < nguong;
+      for (let j = bj; j < j1; j++) {
+        for (let i = bi; i < i1; i++) {
+          if (xa) { L[j * NX_SAU + i] = -VUC_XA; continue; }
+          const x = TG.x0 + i * O_SAU, y = TG.y0 + j * O_SAU;
+          // Cộng thêm nhiễu nhỏ (khấc bờ); núi đá giữ đúng elip (vẽ bằng ellipse) nên không cộng
+          L[j * NX_SAU + i] = Math.max(-VUC_XA, doSauGoc(x, y) + (trongNui(x, y, 400) ? 0 : (nhieu(x / 130 + 50, y / 130) - 0.5) * 40));
+        }
+      }
     }
   }
-  return luoiSau;
+  return L;
 }
 
 /** Khoảng cách có dấu tới bờ đảo / núi đá tại (x, y): dương = trên cát / đá, âm = dưới biển (vườn gà tính là biển) */
