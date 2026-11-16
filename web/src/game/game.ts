@@ -4,7 +4,7 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { chuanBiSaMac, daoCua, doSau, trongVuon, trongVongDao, veDat, DAO, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, type Cell } from './cell';
+import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_CHU_KY, TIEC_DI, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -78,7 +78,7 @@ export interface TrungGa {
 interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn hồi SOCOLA_GA_TI_LE máu tối đa */
-export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; /** ngọc: số sao (thiếu = 1) */ sao?: number; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; }
+export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; /** ngọc: số sao (thiếu = 1) */ sao?: number; /** ngọc: độ to khi vẽ (thiếu = 0,55) */ to?: number; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; }
 interface Chu { id: number; x: number; y: number; text: string; mau: string; t: number; }
 interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay: number; vxoay: number; t: number; mau: string; }
 /** chay = cháy nổ (lửa + tia lửa); co = hệ số kích thước */
@@ -856,6 +856,8 @@ export class Game {
   private mbTrenDao: boolean | null = null;
   /** vận tốc máy bay khung trước (Cell bắn đón đầu) */
   private mbVx = 0;
+  /** giờ game được báo lại chữ "Cell đang ngồi trên ngọc" */
+  private baoGiuNgoc = 0;
   private mbVy = 0;
   readonly SP_MB = SP_MB;
   mbView: MbHinh | null = null;
@@ -1088,6 +1090,7 @@ export class Game {
     this.trungDe = [];
     this.vatPham = [];
     this.ngocNhat = [];
+    this.datNgocCellNgoi();
     this.ngocBay = [];
     this.cuu = [];
     // Quả cầu trốn nằm trong vườn gà (giữa thế giới mở)
@@ -1158,7 +1161,10 @@ export class Game {
     // Tiệc không còn tan hẳn (ván lưu cũ có thể có on = false): Cell về vòng tiệc, đội hình dựng lại từ đầu
     for (const tc of this.tiec) tc.on = true;
     // Ngọc 2 sao chỉ hiện khi đã hạ hết Cell (ván lưu bản trước có thể đặt sẵn ngọc giữa tiệc khi Cell còn sống)
-    if (this.cell.some((c) => !c.chet)) for (const tc of this.tiec) delete tc.ngoc;
+    // Ngọc 2 sao giờ nằm dưới Cell giữ ngọc giữa đảo 0 (ván lưu cũ: bánh hoá ngọc / tiệc đảo 0 thì bỏ, Cell đảo 0 thành Cell giữ ngọc)
+    for (const tc of this.tiec) delete tc.ngoc;
+    this.tiec = this.tiec.filter((tc) => tc.dao !== CELL_NGOI_DAO);
+    this.datNgocCellNgoi();
     this.cellDoi = [];
     this.cellChuongLuc = [];
     for (const c of this.cell) { c.vai = undefined; c.muc = undefined; c.nap = undefined; c.chien = false; if (!this.tiecCua(c)) c.tiec = false; }
@@ -1409,6 +1415,27 @@ export class Game {
     this.ngocNhat.push(sao);
   }
 
+  /**
+   * Cell giữ ngọc (đảo CELL_NGOI_DAO) ngồi giữa đảo trên viên ngọc rồng 2 sao. Gọi lúc tạo ván / tải ván: Cell đảo đó thành Cell giữ ngọc (không tiệc),
+   * ngọc 2 sao chưa nhặt mà chưa nằm đâu thì đặt ở chỗ ngồi.
+   */
+  private datNgocCellNgoi(): void {
+    let cho = choNgoiCell();
+    for (const c of this.cell) {
+      if (this.daoCell(c) !== CELL_NGOI_DAO) continue;
+      if (!c.ngoi) { c.ngoi = true; c.hx = cho.x; c.hy = cho.y; }
+      c.tiec = false;
+      cho = { x: c.hx, y: c.hy };
+    }
+    if (this.ngocNhat.includes(NGOC_TIEC_SAO) || this.vatPham.some((v) => v.loai === 'ngoc' && v.sao === NGOC_TIEC_SAO)) return;
+    this.vatPham.push({ id: this.id++, x: cho.x, y: cho.y, t: 0, loai: 'ngoc', sao: NGOC_TIEC_SAO, to: CELL_NGOI_NGOC_TO });
+  }
+
+  /** Cell giữ ngọc đang ngồi trên viên ngọc (còn sống, ở đúng chỗ ngồi, không chạy, ngọc chưa ai nhặt) */
+  cellNgoiNgoc(c: Cell): boolean {
+    return !!c.ngoi && !c.chet && !c.chay && c.danh <= 0 && c.nap === undefined && Math.hypot(c.x - c.hx, c.y - c.hy) < 5 && !this.ngocNhat.includes(NGOC_TIEC_SAO);
+  }
+
   /** Ngọc rồng giữa vòng tiệc của Cell: nhân vật (không ẩn / gục / mây, không đang bay) chạm vào thì nhặt; chỗ đó thành bánh sinh nhật thường */
   private capNhatNgocTiec(): void {
     for (const tc of this.tiec) {
@@ -1434,8 +1461,16 @@ export class Game {
       const ngoc = v.loai === 'ngoc';
       if (!ngoc && v.t >= VP_TON_TAI) continue;
       if (ngoc) {
-        const m = this.nguoi.find((q) => !this.khuat(q) && !q.bay && Math.hypot(q.x - v.x, q.y - v.y) < NGOC_BAN_KINH);
-        if (m) this.nhatNgoc(m, v.x, v.y, v.sao ?? 1);
+        const m = this.nguoi.find((q) => !this.khuat(q) && !q.bay && Math.hypot(q.x - v.x, q.y - v.y) < NGOC_BAN_KINH * (v.to ? v.to / 0.55 : 1));
+        // Cell giữ ngọc đang ngồi trên viên ngọc thì không lấy được: phải dụ / đánh nó rời chỗ (hoặc hạ nó)
+        const giu = m && this.cell.find((c) => this.cellNgoiNgoc(c) && Math.hypot(c.x - v.x, c.y - v.y) < 40);
+        if (giu) {
+          if (this.t >= this.baoGiuNgoc) {
+            this.baoGiuNgoc = this.t + 2;
+            this.chu.push({ id: this.id++, x: v.x, y: v.y - 120, text: '🛡 CELL ĐANG NGỒI TRÊN NGỌC!', mau: '#ff6b6b', t: 0 });
+          }
+          conLai.push(v);
+        } else if (m) this.nhatNgoc(m, v.x, v.y, v.sao ?? 1);
         else conLai.push(v);
         continue;
       }
@@ -3584,6 +3619,13 @@ export class Game {
         c.nap = undefined;
         continue;
       }
+      // Cell giữ ngọc không có ai để đánh: đi về chỗ ngồi giữa đảo rồi ngồi im trên viên ngọc
+      if (c.ngoi && c.muc === undefined) {
+        c.nap = undefined;
+        c.chien = false;
+        if (this.cellDiToi(c, c.hx, c.hy, dt, 0.8) < 20) { c.x = c.hx; c.y = c.hy; c.chay = false; }
+        continue;
+      }
       const tcc = this.tiecCua(c);
       if (c.tiec && tcc?.on) { this.cellTiec(c, tcc, dt); continue; }
       if (c.muc === MUC_MB) { this.cellBanMb(c, dt); continue; }
@@ -4110,7 +4152,7 @@ export class Game {
   // Chưởng (Chiêu đặc biệt / socola, không tính chưởng tự bắn lên trời) bay qua thân máy bay thì máy bay trúng (người ngồi trên máy bay bắn chưởng thì máy bay nổ ngay, xem ban())
   /**
    * Chưởng (Chiêu đặc biệt / socola) của nhân vật quét qua bánh sinh nhật. Còn Cell sống thì bánh không hề hấn (chữ "CÒN n CELL!").
-   * Hạ hết sạch Cell rồi: mỗi phát làm nổ một bánh; bánh cuối cùng không nổ mà hoá ngọc rồng 2 sao (nhặt như ngọc thường, capNhatNgocTiec()).
+   * Hạ hết sạch Cell rồi: mỗi phát làm nổ một bánh (ngọc 2 sao không còn từ bánh mà nằm dưới Cell giữ ngọc ở đảo 0).
    */
   private danTrungBanh(d: Dan, t0: number): void {
     const k0 = Math.min(1, t0 / d.T), k1 = Math.min(1, d.t / d.T);
@@ -4136,14 +4178,9 @@ export class Game {
       const conBanh = this.tiec.filter((t) => !t.vo && !t.ngoc).length;
       this.vet.push({ id: this.id++, x: tc.x, y: yTam, t: 0, loai: 'chay', co: 1.4 });
       this.rungMan(0.2, 10);
-      if (conBanh > 1 || this.ngocNhat.includes(NGOC_TIEC_SAO)) {
-        tc.vo = true;
-        this.chu.push({ id: this.id++, x: tc.x, y: yTam - 120, text: conBanh > 1 ? `🎂 BÙM! CÒN ${conBanh - 1} BÁNH` : '🎂 BÙM!', mau: '#ffd166', t: 0 });
-      } else {
-        tc.ngoc = NGOC_TIEC_SAO;
-        this.vet.push({ id: this.id++, x: tc.x, y: yTam, t: 0, loai: 'no' });
-        this.chu.push({ id: this.id++, x: tc.x, y: yTam - 160, text: `✨ BÁNH CUỐI CÙNG HOÁ NGỌC RỒNG ${NGOC_TIEC_SAO} SAO!`, mau: '#ffb347', t: 0 });
-      }
+      // Ngọc 2 sao giờ do Cell giữ ngọc ngồi lên (đảo 0): bánh nào (kể cả bánh cuối) cũng chỉ nổ
+      tc.vo = true;
+      this.chu.push({ id: this.id++, x: tc.x, y: yTam - 120, text: conBanh > 1 ? `🎂 BÙM! CÒN ${conBanh - 1} BÁNH` : '🎂 BÙM!', mau: '#ffd166', t: 0 });
     }
   }
 

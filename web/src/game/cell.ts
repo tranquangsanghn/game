@@ -3,7 +3,7 @@
 // Sprite: web/public/assets/game/cell_atlas.png, 10 cột × 5 hàng (hàng = cấp), khung 80×64, neo ở đáy giữa chân.
 // Ảnh gốc: Cell từ Dragon Ball Z: Legendary Super Warriors (GBC); cấp 0 Cell Junior, 1 Imperfect 1, 2 Imperfect 2, 3 Perfect, 4 Perfect nhuộm đỏ + hào quang.
 import type { KhungSprite } from './sprite';
-import { daoCua, diemTrenDao, doSau, SO_DAO } from './ban-do';
+import { DAO, daoCua, diemTrenDao, doSau, SO_DAO } from './ban-do';
 
 export const SP_CELL: KhungSprite = { atlas: 'assets/game/cell_atlas.png', atlasW: 800, atlasH: 320, w: 80, h: 64, cot: 10, neoX: 40, neoY: 60 };
 /** Khung trong hàng của mỗi cấp */
@@ -127,8 +127,21 @@ export interface Cell {
   choDich?: number; choChuong?: number;
   /** Thời gian dồn lại khi Cell ở ngoài màn hình và xa mọi nhân vật (cập nhật thưa, `cellThua()` trong game.ts) */
   dtThua?: number;
+  /** Cell giữ ngọc (đảo CELL_NGOI_DAO): không dự tiệc, ngồi im giữa đảo trên viên ngọc rồng 2 sao (chỗ ngồi = hx, hy), có người tới thì đánh, xong về ngồi lại */
+  ngoi?: boolean;
   /** Cell bạo nộ đang hoá socola (giây còn lại) và đã ăn combo mây trong lần hoá này chưa */
   socola?: number; comboSoc?: boolean;
+}
+
+/** Đảo có Cell giữ ngọc (1 con, Cell bạo nộ): ngồi im giữa đảo trên viên ngọc rồng 2 sao */
+export const CELL_NGOI_DAO = 0;
+/** Cell giữ ngọc ngồi trên ngọc: thân nâng lên CELL_NGOI_NANG (đơn vị thế giới) cho thấy ngồi trên viên ngọc to CELL_NGOI_NGOC_TO */
+export const CELL_NGOI_NANG = 150;
+export const CELL_NGOI_NGOC_TO = 0.86;
+/** Chỗ ngồi của Cell giữ ngọc: giữa đảo (tâm không phải cát thì một chỗ trên cát cách bờ xa) */
+export function choNgoiCell(): { x: number; y: number } {
+  const d = DAO[CELL_NGOI_DAO]!;
+  return doSau(d.x, d.y) > 300 ? { x: d.x, y: d.y } : diemTrenDao(CELL_NGOI_DAO, 600);
 }
 
 /** Cấp Cell của đảo `i`: đảo 0 (lớn nhất) cấp 4, đảo 1..4 cấp 0..3 */
@@ -148,6 +161,15 @@ export function taoCell(layId: () => number): Cell[] {
     const cap = capCuaDao(i);
     const n = CELL_SO_DAO[i]!;
     const k = cellK(cap);
+    // Đảo giữ ngọc: một con ngồi im giữa đảo
+    if (i === CELL_NGOI_DAO) {
+      const p = choNgoiCell();
+      kq.push({
+        id: layId(), cap, dao: i, x: p.x, y: p.y, hx: p.x, hy: p.y, hp: CELL_HP[cap]!, lat: Math.random() < 0.5, phase: Math.random() * 10,
+        chay: false, dx: p.x, dy: p.y, doi: 0, choDanh: 0, danh: 0, nhay: 0, chet: false, tChet: 0, ngoi: true,
+      });
+      continue;
+    }
     const tam = diemTrenDao(i, 500 + 40 * k);
     const bk = 100 + n * 18 * k;
     const cua: { x: number; y: number }[] = [];

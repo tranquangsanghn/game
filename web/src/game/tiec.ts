@@ -65,7 +65,8 @@ export const TIEC_TOC = 12;
 export function taoTiec(cell: Cell[]): Tiec[] {
   const kq: Tiec[] = [];
   for (let dao = 0; dao < SO_DAO; dao++) {
-    const ds = cell.filter((c) => daoCua(c.x, c.y) === dao && !c.chet);
+    // Cell giữ ngọc (ngồi im giữa đảo) không dự tiệc: đảo đó không có bánh
+    const ds = cell.filter((c) => daoCua(c.x, c.y) === dao && !c.chet && !c.ngoi);
     if (!ds.length) continue;
     const d = DAO[dao]!;
     const k = cellK(ds[0]!.cap);

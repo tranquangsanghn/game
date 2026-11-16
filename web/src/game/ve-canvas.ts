@@ -1,7 +1,7 @@
 import type { ChuongTiec, Tiec } from './tiec';
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
-import { capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, SO_CAP, SP_CELL, type Cell } from './cell';
+import { capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { duongBo, TG } from './ban-do';
@@ -661,7 +661,7 @@ export class VeCanvas {
     ctx.lineCap = 'butt';
 
     for (const v of c.vatPhamView) {
-      if (v.loai === 'ngoc') this.veNgoc(ctx, c.SP_NGOC, v.x, v.y, v.t, 0.55, v.sao ?? 1);
+      if (v.loai === 'ngoc') this.veNgoc(ctx, c.SP_NGOC, v.x, v.y, v.t, v.to ?? 0.55, v.sao ?? 1);
       else if (v.loai === 'socola') this.veSocola(ctx, v);
       else this.veVatPham(ctx, v);
     }
@@ -1102,7 +1102,8 @@ export class VeCanvas {
     const k = cellK(ce.cap);
     ctx.save();
     ctx.globalAlpha = ce.chet ? Math.max(0, 1 - ce.tChet / CELL_CHET_T) : 1;
-    ctx.translate(ce.x, ce.y);
+    // Cell giữ ngọc ngồi trên viên ngọc 2 sao: thân nâng lên trên viên ngọc
+    ctx.translate(ce.x, ce.y - (c.cellNgoiNgoc(ce) ? CELL_NGOI_NANG : 0));
     ctx.scale(k, k);
     // Dự tiệc: ngồi (hơi thấp xuống), bay nốt nhạc ♪ trên đầu
     const tcc = ce.tiec ? c.tiecCua(ce) : undefined;
