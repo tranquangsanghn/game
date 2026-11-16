@@ -1514,15 +1514,15 @@ export class VeCanvas {
       ctx.fillStyle = an ? '#5fd13a' : '#ff4a2e';
       ctx.fill();
       const suc = ce.suc ?? 1;
-      ctx.font = 'bold 11px sans-serif';
+      ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       ctx.lineWidth = 3;
       ctx.strokeStyle = 'rgba(0,0,0,0.85)';
       const chu = `${an ? '🫘 ' : ''}${Math.round(ce.hp)}${suc > 1.001 ? `  ⚔x${suc.toFixed(1)}` : ''}`;
-      ctx.strokeText(chu, 0, -8);
+      ctx.strokeText(chu, 0, -9);
       ctx.fillStyle = '#fff';
-      ctx.fillText(chu, 0, -8);
+      ctx.fillText(chu, 0, -9);
       ctx.restore();
     }
   }
