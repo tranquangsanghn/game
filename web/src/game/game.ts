@@ -7,7 +7,7 @@ import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, trongNui, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
-import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_GIU_XA, GY_NUI_LE, GY_NAP, GY_LAO_TOC, GY_LAO_CHAM, GY_LAO_TOI_DA, GY_LAO_HOI, GY_LUI_T, GY_LUI_TOC, GY_DANG_T, GY_QUEN, GY_NHAY_T, GY_DANH_T, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, type Ginyu } from './ginyu';
+import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_DANH, GY_SAO_TAM, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
@@ -77,7 +77,7 @@ export interface TrungGa {
   ap?: number;
 }
 /** soc = chưởng biến socola của Zinbu · troi = chưởng tự bắn lên trời (chỉ để đẹp, không gây sát thương) */
-interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; /** chưởng của Vegeta (vẽ bằng quả chưởng sao chổi) */ vg?: boolean; }
+interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; /** chưởng của Vegeta (vẽ bằng quả chưởng sao chổi) */ vg?: boolean; /** đòn của bản sao bóng ma Goku (p = người bị sao chép, chỉ trúng nhân vật) */ gy?: boolean; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn hồi SOCOLA_GA_TI_LE máu tối đa */
 export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc' | 'dau'; /** ngọc: số sao (thiếu = 1) */ sao?: number; /** ngọc: độ to khi vẽ (thiếu = 0,55) */ to?: number; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; /** socola: sức mạnh (nhân sát thương) người / Cell ăn được cộng thêm (thiếu thì `CELL_AN_SUC`) */ sucAn?: number; }
@@ -878,6 +878,8 @@ export class Game {
   /** Bóng ma Goku canh núi đá (một con, biến vẫn tên `ginyu`); gyView = có vẽ không (trong khung nhìn + tầm nhìn) */
   ginyu: Ginyu = taoGinyu();
   gyView = false;
+  /** Animation của bản sao (nhân vật bị sao chép); không lưu ván */
+  gyNv: NhanVat | null = null;
   banhView: Tiec[] = [];
   trungDe: TrungGa[] = [];
   trungView: TrungGa[] = [];
@@ -1162,6 +1164,7 @@ export class Game {
     this.cell = taoCell(() => this.id++);
     this.tiec = taoTiec(this.cell);
     this.ginyu = taoGinyu();
+    this.gyNv = null;
     this.cellDoi = [];
     this.cellChuongLuc = [];
     this.chuongTiec = [];
@@ -1255,7 +1258,10 @@ export class Game {
     for (const c of this.cell) { c.vai = undefined; c.muc = undefined; c.cay = undefined; c.nap = undefined; c.chien = false; if (!this.tiecCua(c)) c.tiec = false; }
     if (d.mayBay) this.mayBay = { ...taoMayBay(d.mayBay.x, d.mayBay.y), ...d.mayBay };
     // Bóng ma Goku: thôi chạm trán / gồng / lao dở (lần gặp sau sao chép lại, giữ tỉ lệ máu)
-    if (d.ginyu) this.ginyu = { ...taoGinyu(), ...d.ginyu, gap: false, quen: 0, muc: undefined, nap: undefined, lao: undefined, lui: undefined, dang: 0 };
+    if (d.ginyu) this.ginyu = { ...taoGinyu(), ...d.ginyu, gap: false, quen: 0, muc: undefined, nap: undefined, lao: undefined, lui: undefined, dang: 0, khieu: undefined, nghi: undefined, quang: undefined, sao: undefined, socola: undefined };
+    this.gyNv = null;
+    // Bản sao dở / xác bản sao không khôi phục: về dạng bóng ma
+    if (this.ginyu.chet) this.ginyu.tChet = GY_CHET_T;
     this.mbCatVuon = false;
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
@@ -1488,6 +1494,7 @@ export class Game {
     this.rangBuoc(truoc);
     // Nhân vật đi bộ / bay không đổi vùng: đang trong vườn gà thì ở lại trong vườn, đang ở đảo thì ở lại đảo (chỉ máy bay mới ra / vào vườn)
     this.nguoi.forEach((n, p) => { if (!this.trongMb(p)) giuTrongMap(n, leNhanVat(n.nv.heSoTo), !!n.bay, vungCua(truoc[p])); });
+    this.chanNuiMotNguoi(truoc);
     HN.moc('cn.nhanVat');
     this.capNhatMb(dt);
     HN.moc('cn.mayBay');
@@ -1961,6 +1968,15 @@ export class Game {
     for (const d of this.dan) {
       const t0 = d.t;
       d.t += dt;
+      if (d.gy) {
+        // Đòn của bản sao bóng ma: chỉ trúng nhân vật (chưởng xuyên dọc đường bay), vẫn làm đổ cây / vỡ đá như đòn thật
+        this.danDoCay(d, t0);
+        if (d.t < d.T) {
+          if (d.to) this.danGy(d, false);
+          conLai.push(d);
+        } else this.danGy(d, true);
+        continue;
+      }
       if (!d.troi) this.danDoCay(d, t0);
       if (d.to && !d.troi) this.danTrungMb(d, t0);
       if (d.to && !d.soc && !d.troi && d.t < d.T) this.chuongXuyen(d);
@@ -1995,6 +2011,8 @@ export class Game {
       (d.da ??= []).push(-1);
       if (this.trungGy(d.p, d.sat)) this.dungKhung(0.03);
     }
+    // Trên núi đá Mabu / Zinbu đánh được nhau (đánh dấu trong `da` bằng -10 - ô)
+    if (this.danTrungDongDoi(d, vt.x, vt.y, CHUONG_XUYEN + 70)) this.dungKhung(0.03);
   }
 
   // Đòn / chưởng bay tới đâu thì cây dọc đường bay đổ tới đó (quét đoạn từ lần cập nhật trước tới giờ)
@@ -2087,6 +2105,11 @@ export class Game {
         }
         return;
       }
+      // Trên núi đá: đòn trúng đồng đội (Mabu đánh được Zinbu và ngược lại)
+      if (this.danTrungDongDoi(d, x, y, 110)) {
+        if (d.nhom === 1) this.dungKhung(0.04);
+        return;
+      }
     }
     if (g) {
       if (this.danAn(d, g)) return;
@@ -2165,6 +2188,7 @@ export class Game {
     ceTrung.forEach((c) => this.trungCell(c, d.p, d.sat));
     const gyTrung = !this.ginyu.chet && !d.da?.includes(-1) && this.gyGan(d.x1, d.y1, BAN_KINH_NO + GY_BK);
     if (gyTrung) this.trungGy(d.p, d.sat);
+    const dongDoi = this.danTrungDongDoi(d, d.x1, d.y1, BAN_KINH_NO + 60);
     if (d.vg) this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 1, vg: true });
     else {
       this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'no' });
@@ -2172,7 +2196,7 @@ export class Game {
     }
     this.rungMan(0.15, 9);
     this.dungKhung(0.05);
-    if (!trung.length && !ceTrung.length && !gyTrung && !d.da?.length) {
+    if (!trung.length && !ceTrung.length && !gyTrung && !dongDoi && !d.da?.length) {
       this.nguoi[d.p].combo = 0;
       this.nguoi[d.p].banTruot++;
     }
@@ -2195,8 +2219,9 @@ export class Game {
     ceTrung.forEach((c) => { if (this.trungCell(c, d.p, SAT_SOCOLA, false, true)) this.socolaCell(c); });
     // Ginyu: đủ giết thì thành thanh socola, không thì hoá socola GY_SOCOLA_T giây (đứng yên)
     const gyTrung = !this.ginyu.chet && this.gyGan(d.x1, d.y1, BAN_KINH_SOCOLA + GY_BK * 0.5);
-    if (gyTrung && this.trungGy(d.p, SAT_SOCOLA, false, true) && !this.ginyu.chet) { this.ginyu.socola = GY_SOCOLA_T; this.ginyu.nap = undefined; this.ginyu.lao = undefined; this.ginyu.lui = undefined; }
-    if (!trung.length && !ceTrung.length && !gyTrung) {
+    if (gyTrung) this.trungGy(d.p, SAT_SOCOLA, false, true);
+    const dongDoi = this.danTrungDongDoi(d, d.x1, d.y1, BAN_KINH_SOCOLA, SAT_SOCOLA);
+    if (!trung.length && !ceTrung.length && !gyTrung && !dongDoi) {
       this.nguoi[d.p].combo = 0;
       this.nguoi[d.p].banTruot++;
     }
@@ -2574,6 +2599,25 @@ export class Game {
   private thay(x: number, y: number): boolean {
     return this.nhinNguon.some((o) => Math.hypot(o.x - x, o.y - y) < TAM_NHIN);
   }
+
+  /** Núi đá (bóng ma Goku) chỉ vào được khi chơi 2 người: chơi 1 người thì bước vào núi bị chặn lại (đang ở trong sẵn, ví dụ rơi máy bay, thì được đi ra) */
+  private chanNuiMotNguoi(truoc: { x: number; y: number }[]): void {
+    if (!this.nguoi.some((n) => n.vang)) return;
+    this.nguoi.forEach((n, p) => {
+      if (n.vang || this.trongMb(p) || !trongNui(n.x, n.y) || trongNui(truoc[p]!.x, truoc[p]!.y)) return;
+      n.x = truoc[p]!.x;
+      n.y = truoc[p]!.y;
+      n.dich = null;
+      if (n.bay) { n.bay = null; n.nv.tiepDat(); }
+      if (this.t - this.nuiBaoLuc > 3) {
+        this.nuiBaoLuc = this.t;
+        this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: '⛰ NÚI ĐÁ CHỈ VÀO ĐƯỢC KHI CHƠI 2 NGƯỜI!', mau: '#ffd27a', t: 0 });
+      }
+    });
+  }
+
+  /** Lần cuối báo "núi đá chỉ cho 2 người" (giây `t`) */
+  private nuiBaoLuc = -99;
 
   // Dây buộc: 2 nhân vật không xa nhau quá mức camera chứa nổi. Người vừa di chuyển nhiều hơn là người bị chặn lại.
   private rangBuoc(truoc: { x: number; y: number }[]): void {
@@ -3652,27 +3696,37 @@ export class Game {
     this.nguoi.forEach((_, q) => this.chuongLenTroi(q));
   }
 
-  // ─── Ginyu canh núi đá ───
+  // ─── Bóng ma Goku canh núi đá (biến `ginyu`) ───
+  // Vòng lặp: bóng ma (bất khả xâm phạm, không đánh ai) gặp Mabu / Zinbu → khiêu khích GY_KHIEU_T giây → lao vào người nhiều máu × sức mạnh nhất
+  // (bám theo, quãng tối đa GY_LAO_QUANG) → trúng thì thành bản sao y hệt người đó GY_SAO_T giây (80% chỉ số, đánh Mabu / Zinbu mỗi 1–4s)
+  // → trở lại bóng ma, lặp lại. Chỉ chết khi đang là bản sao và bị đánh hết máu.
 
-  /** Tâm thân Ginyu (trúng đòn, chữ bay) */
-  tamGy() {
-    return { x: this.ginyu.x, y: this.ginyu.y - GY_TAM_CAO };
+  /** Đang là bản sao của một nhân vật (còn sống) */
+  get gySao(): boolean {
+    return !!this.ginyu.sao && !this.ginyu.chet;
   }
 
-  /** Điểm (x, y) cách tâm thân Ginyu dưới r (so hộp trước cho rẻ) */
+  /** Tâm thân (trúng đòn, chữ bay): bản sao đứng dưới đất như nhân vật, bóng ma lơ lửng cao hơn */
+  tamGy() {
+    const g = this.ginyu;
+    return { x: g.x, y: g.y - (g.sao ? GY_SAO_TAM : GY_TAM_CAO) };
+  }
+
+  /** Điểm (x, y) cách tâm thân dưới r (so hộp trước cho rẻ). Dạng bóng ma thì mọi đòn xuyên qua (không ai đánh được) */
   private gyGan(x: number, y: number, r: number): boolean {
+    if (!this.ginyu.sao) return false;
     const t = this.tamGy();
     const dx = x - t.x, dy = y - t.y;
     return Math.abs(dx) < r && Math.abs(dy) < r && dx * dx + dy * dy < r * r;
   }
 
-  /** Nhân vật p là mục tiêu hợp lệ của Ginyu: đang chơi, không gục / mây / trong cầu / trên máy bay, đứng trong núi đá (cộng lề GY_NUI_LE) */
+  /** Nhân vật p là mục tiêu hợp lệ: đang chơi, không gục / mây / trong cầu / trên máy bay, đứng trong núi đá (cộng lề GY_NUI_LE) */
   private gyHopLe(p: number): boolean {
     const n = this.nguoi[p];
     return !!n && !n.vang && !this.khuat(n) && trongNui(n.x, n.y, GY_NUI_LE);
   }
 
-  /** Ginyu nhìn thấy nhân vật p: hợp lệ và trong tầm nhìn TAM_NHIN của Ginyu (đối xứng với tầm nhìn nhân vật) */
+  /** Bóng ma nhìn thấy nhân vật p: hợp lệ và trong tầm nhìn TAM_NHIN */
   private gyThay(p: number): boolean {
     if (!this.gyHopLe(p)) return false;
     const n = this.nguoi[p], g = this.ginyu;
@@ -3680,149 +3734,265 @@ export class Game {
     return dx * dx + dy * dy < TAM_NHIN * TAM_NHIN;
   }
 
-  /** Ginyu đang được nhân vật nhìn thấy: chỉ khi đó mới vận chưởng */
+  /** Đang được nhân vật nhìn thấy: chỉ khi đó mới bắt đầu khiêu khích / lao / ra đòn */
   private gyTrenCam(): boolean {
     return this.nvThay(this.ginyu.x, this.ginyu.y - GY_TAM_CAO, 300, 60);
   }
 
-  /**
-   * Sao chép sức mạnh nhân vật p (người đầu tiên và gần nhất Ginyu thấy, hoặc người đánh nó trước): máu tối đa = máu hiện có của người đó,
-   * sát thương Đấm / Đá / Chiêu đặc biệt = của người đó × sức mạnh `suc` + đậu thần `satDau`. Lần chạm trán sau thì giữ tỉ lệ máu đang có.
-   */
-  private gySaoChep(p: number): void {
-    const g = this.ginyu, n = this.nguoi[p];
-    if (!n) return;
-    const tiLe = g.ki === undefined ? 1 : Math.min(1, Math.max(0, g.hp / Math.max(1, g.hpMax)));
-    const suc = n.suc ?? 1;
-    g.ki = n.ki;
-    g.hpMax = Math.max(1, Math.round(n.hp));
-    g.hp = Math.max(1, Math.round(g.hpMax * tiLe));
-    // Như trungGa(): nhân sức mạnh `suc`, cộng thẳng sát thương đậu thần `satDau`
-    g.sat = [0, 1, 2].map((i) => Math.round(SAT_THUONG[i]![n.ki]! * suc + (n.satDau ?? 0))) as [number, number, number];
-    g.gap = true;
-    g.quen = 0;
-    g.muc = p;
-    g.dang = GY_DANG_T;
-    g.nap = undefined;
-    g.choChuong = Math.max(g.choChuong, this.t + GY_DANG_T + 1);
-    const tam = this.tamGy();
-    this.chuGa({ id: this.id++, x: tam.x, y: tam.y - 200, text: `👻 BÓNG MA GOKU SAO CHÉP SỨC MẠNH CỦA ${n.ten.toUpperCase()}!`, mau: '#c39bff', t: 0 });
-    this.vetGa({ id: this.id++, x: tam.x, y: tam.y, t: 0, loai: 'no' });
+  /** "Sức" để chọn người lao vào: máu × sức mạnh (đậu thần tính thêm theo tỉ lệ với đòn Đấm) */
+  private gySuc(p: number): number {
+    const n = this.nguoi[p];
+    return Math.max(0, n.hp) * ((n.suc ?? 1) + (n.satDau ?? 0) / 50);
   }
 
-  // Bóng ma Goku: lơ lửng giữa núi; thấy nhân vật trên núi thì sao chép sức mạnh (quay người) rồi lượn quanh người gần nhất,
-  // chỉ có một chiêu: gồng rồi bay thẳng vào người đó (bám theo, không né được). Không thấy ai GY_QUEN giây thì về giữa núi.
+  /** Đồng đội của người bị sao chép (bản sao bám theo người này như người thật, có dây buộc khi xa) */
+  private gyDongDoi(): NguoiChoi | undefined {
+    const s = this.ginyu.sao;
+    const b = s ? this.nguoi[1 - s.p] : undefined;
+    return b && !b.vang ? b : undefined;
+  }
+
+  /** Trúng người p: thành bản sao y hệt người đó (animation, thanh máu), chỉ số = GY_SAO_TI_LE của người đó */
+  private gyBienSao(p: number): void {
+    const g = this.ginyu, n = this.nguoi[p];
+    const suc = n.suc ?? 1;
+    g.ki = n.ki;
+    g.hpMax = Math.max(1, Math.round(Math.max(1, n.hp) * GY_SAO_TI_LE));
+    g.hp = g.hpMax;
+    g.sat = [0, 1, 2].map((i) => Math.round((SAT_THUONG[i]![n.ki]! * suc + (n.satDau ?? 0)) * GY_SAO_TI_LE)) as [number, number, number];
+    g.lao = undefined;
+    g.quang = undefined;
+    g.khieu = undefined;
+    g.socola = undefined;
+    // Đứng chồng lên người thật (lệch rất ít) để không ai biết ai là ai
+    g.x = n.x + ngauNhien(-30, 30);
+    g.y = n.y + ngauNhien(-10, 10);
+    giuTrongMap(g, LE_NV, false, 'dao');
+    g.sao = { p, con: GY_SAO_T, danh: GY_SAO_DANH[Math.floor(Math.random() * GY_SAO_DANH.length)]!, nhom: 0, doi: 0, di: false };
+    const nv = new NhanVat(NHAN_VAT[n.ki]!);
+    nv.lat = n.nv.lat;
+    this.gyNv = nv;
+    this.vetGa({ id: this.id++, x: n.x, y: n.y - 80, t: 0, loai: 'no' });
+    this.vetGa({ id: this.id++, x: n.x, y: n.y, t: 0, loai: 'bui' });
+    this.chuGa({ id: this.id++, x: n.x, y: n.y - 330, text: `👻 BÓNG MA NHẬP VÀO ${n.ten.toUpperCase()}! AI LÀ THẬT?`, mau: '#c39bff', t: 0 });
+    this.rungMan(0.25, 9);
+  }
+
+  /** Hết GY_SAO_T giây: bản sao tan ra, trở lại hình bóng ma (bất khả xâm phạm) rồi lại khiêu khích */
+  private gyHetSao(): void {
+    const g = this.ginyu;
+    g.sao = undefined;
+    g.socola = undefined;
+    g.nhay = 0;
+    this.gyNv = null;
+    g.nghi = GY_NGHI_T;
+    const tam = this.tamGy();
+    this.vetGa({ id: this.id++, x: g.x, y: g.y - 80, t: 0, loai: 'no' });
+    this.chuGa({ id: this.id++, x: tam.x, y: tam.y - 200, text: '👻 BÓNG MA GOKU HIỆN HÌNH!', mau: '#9fe8ff', t: 0 });
+  }
+
   private capNhatGinyu(dt: number): void {
     const g = this.ginyu;
-    if (g.chet) { g.tChet += dt; return; }
+    if (g.chet) {
+      g.tChet += dt;
+      if (this.gyNv) this.gyNv.capNhat(dt, false);
+      return;
+    }
     g.nhay = Math.max(0, g.nhay - dt);
     g.danh = Math.max(0, g.danh - dt);
-    g.dang = Math.max(0, g.dang - dt);
-    // Tự hồi như nhân vật: không bị thương HP_HOI_CHO giây thì hồi HP_HOI máu / giây tới máu tối đa
-    if (g.hp < g.hpMax && this.t - g.thuongLuc > HP_HOI_CHO) g.hp = Math.min(g.hpMax, g.hp + HP_HOI * dt);
-    if ((g.socola ?? 0) > 0) {
-      g.socola = Math.max(0, g.socola! - dt);
-      g.chay = false;
-      return;
-    }
-    // Đang lao / bật lùi: làm nốt (chiêu đang dở thì chạy đủ dù không ai thấy)
+    if (g.sao) { this.gyCapNhatSao(dt); return; }
+    // ── Dạng bóng ma ──
     if (g.lao !== undefined) { this.gyLao(dt); return; }
-    if ((g.lui ?? 0) > 0) {
-      g.lui = Math.max(0, g.lui! - dt);
-      const v = Math.hypot(g.vx ?? 0, g.vy ?? 0) || 1;
-      g.x -= ((g.vx ?? 0) / v) * GY_LUI_TOC * dt;
-      g.y -= ((g.vy ?? 0) / v) * GY_LUI_TOC * dt;
-      giuTrongMap(g, LE_GY, false, 'dao');
-      if (g.lui <= 0) g.lui = undefined;
-      return;
-    }
-    // "Một chấm": chưa chạm trán, đang ở nhà và không ai ở gần thì không tính gì thêm
-    if (!g.gap && Math.abs(g.x - g.hx) + Math.abs(g.y - g.hy) < 30 && !this.nguoi.some((n) => !n.vang && Math.abs(n.x - g.x) < TAM_NHIN + 200 && Math.abs(n.y - g.y) < TAM_NHIN + 200)) {
+    // "Một chấm": ở nhà và không ai ở gần thì không tính gì thêm
+    if (g.khieu === undefined && Math.abs(g.x - g.hx) + Math.abs(g.y - g.hy) < 30 && !this.nguoi.some((n) => !n.vang && Math.abs(n.x - g.x) < TAM_NHIN + 200 && Math.abs(n.y - g.y) < TAM_NHIN + 200)) {
       g.chay = false;
       return;
     }
     g.phase += dt;
-    // Mục tiêu: người nó thấy, gần nhất (đang đuổi ai mà còn thấy thì giữ người đó)
-    let muc = -1, best = Infinity;
-    this.nguoi.forEach((n, p) => {
-      if (!this.gyThay(p)) return;
-      const d = Math.hypot(n.x - g.x, n.y - g.y);
-      if (d < best) { best = d; muc = p; }
-    });
-    if (muc >= 0) {
-      if (!g.gap) this.gySaoChep(muc);
-      g.quen = 0;
-      if (g.muc === undefined || !this.gyThay(g.muc)) g.muc = muc;
-    } else {
-      g.muc = undefined;
-      if (g.gap && (g.quen += dt) > GY_QUEN) g.gap = false;
-    }
-    const ke = g.muc !== undefined ? this.nguoi[g.muc] : undefined;
-    if (g.nap !== undefined) {
-      // Gồng: đứng yên quay mặt về mục tiêu; mục tiêu mất (ẩn / rời núi) thì bỏ
+    const thay = this.nguoi.map((_, p) => p).filter((p) => this.gyThay(p));
+    if (g.nghi !== undefined) {
       g.chay = false;
-      if (!ke) { g.nap = undefined; return; }
-      g.lat = ke.x > g.x;
-      if ((g.nap += dt) >= GY_NAP) {
-        g.nap = undefined;
-        g.lao = 0;
-        this.chuGa({ id: this.id++, x: g.x, y: g.y - GY_TAM_CAO - 160, text: '👻 BÓNG MA LAO TỚI!', mau: '#9fe8ff', t: 0 });
-      }
+      if ((g.nghi -= dt) <= 0) g.nghi = undefined;
       return;
     }
-    if (g.dang > 0) { g.chay = false; return; }
-    if (!ke) {
-      if (Math.hypot(g.hx - g.x, g.hy - g.y) > 20) this.gyDiToi(g.hx, g.hy, dt);
-      else g.chay = false;
-      return;
-    }
-    g.lat = ke.x > g.x;
-    // Hết hồi và nhân vật đang nhìn thấy nó thì bắt đầu gồng (chiêu chỉ dùng khi nhân vật nhìn thấy)
-    if (g.choChuong <= this.t && this.gyTrenCam()) {
-      g.nap = 0;
+    if (g.khieu !== undefined) {
+      // Khiêu khích: đứng yên quay mặt về người gần nhất; ai cũng mất dạng thì thôi
       g.chay = false;
+      if (!thay.length) { g.khieu = undefined; return; }
+      const gan = this.nguoi[thay.reduce((a, b) => (Math.hypot(this.nguoi[a]!.x - g.x, this.nguoi[a]!.y - g.y) <= Math.hypot(this.nguoi[b]!.x - g.x, this.nguoi[b]!.y - g.y) ? a : b))]!;
+      g.lat = gan.x > g.x;
+      if ((g.khieu -= dt) > 0) return;
+      g.khieu = undefined;
+      // Lao vào người nhiều máu và sức mạnh hơn
+      g.muc = thay.reduce((a, b) => (this.gySuc(b) > this.gySuc(a) ? b : a));
+      g.lao = 0;
+      g.quang = 0;
+      this.chuGa({ id: this.id++, x: g.x, y: g.y - GY_TAM_CAO - 160, text: `👻 BÓNG MA LAO VÀO ${this.nguoi[g.muc]!.ten.toUpperCase()}!`, mau: '#9fe8ff', t: 0 });
       return;
     }
-    // Giữa 2 lần lao: lượn quanh mục tiêu ở khoảng GY_GIU_XA (xa thì tới gần, gần thì lùi, vừa thì lượn ngang)
-    const dx = ke.x - g.x, dy = ke.y - g.y, d = Math.hypot(dx, dy) || 1;
-    const lech = d - GY_GIU_XA;
-    const xoay = Math.sin(g.phase * 0.7) > 0 ? 1 : -1;
-    const tx = g.x + (dx / d) * lech - (dy / d) * 200 * xoay;
-    const ty = g.y + (dy / d) * lech + (dx / d) * 200 * xoay;
-    this.gyDiToi(tx, ty, dt);
-    g.lat = ke.x > g.x;
+    if (thay.length && this.gyTrenCam()) {
+      g.khieu = GY_KHIEU_T;
+      g.gap = true;
+      g.chay = false;
+      this.chuGa({ id: this.id++, x: g.x, y: g.y - GY_TAM_CAO - 160, text: '👻 BÓNG MA GOKU KHIÊU KHÍCH!', mau: '#c39bff', t: 0 });
+      return;
+    }
+    // Không thấy ai: lượn về giữa núi
+    if (Math.hypot(g.hx - g.x, g.hy - g.y) > 20) this.gyDiToi(g.hx, g.hy, dt);
+    else g.chay = false;
   }
 
-  /** Đang lao: bay bám theo mục tiêu (không né được), chạm thì gây sát thương Chiêu đặc biệt sao chép được rồi bật lùi; mục tiêu ẩn / lao quá lâu thì thôi */
+  /** Đang lao (bóng ma, không bị thương): bám theo mục tiêu tốc độ GY_LAO_TOC, quãng tối đa GY_LAO_QUANG; chạm là thành bản sao người đó */
   private gyLao(dt: number): void {
     const g = this.ginyu;
     g.lao! += dt;
     g.chay = false;
-    const ke = g.muc !== undefined ? this.nguoi[g.muc] : undefined;
-    const ketThuc = () => { g.lao = undefined; g.choChuong = this.t + GY_LAO_HOI; };
-    if (!ke || ke.vang || this.khuat(ke) || g.lao! > GY_LAO_TOI_DA) { ketThuc(); return; }
-    // Nhắm vào thân nhân vật (tâm thân bóng ma tới tâm thân người)
+    const p = g.muc;
+    const ke = p !== undefined ? this.nguoi[p] : undefined;
+    if (p === undefined || !ke || !this.gyHopLe(p) || (g.quang ?? 0) >= GY_LAO_QUANG) {
+      g.lao = undefined;
+      g.quang = undefined;
+      g.nghi = GY_NGHI_T;
+      return;
+    }
     const dx = ke.x - g.x, dy = ke.y - g.y, d = Math.hypot(dx, dy) || 1;
     g.vx = (dx / d) * GY_LAO_TOC;
     g.vy = (dy / d) * GY_LAO_TOC;
     g.lat = dx > 0;
-    const b = Math.min(d, GY_LAO_TOC * dt);
+    const b = Math.min(d, GY_LAO_TOC * dt, GY_LAO_QUANG - (g.quang ?? 0));
     g.x += (dx / d) * b;
     g.y += (dy / d) * b;
+    g.quang = (g.quang ?? 0) + b;
     giuTrongMap(g, LE_GY, false, 'dao');
     if (Math.hypot(ke.x - g.x, ke.y - g.y) > GY_LAO_CHAM) return;
-    // Trúng: không né được (khongNe), nhân vật vẫn giảm 50% như mọi đòn
-    ketThuc();
-    g.lui = GY_LUI_T;
-    g.danh = GY_DANH_T;
-    this.nhanSatThuong(ke, g.sat[2], true, '#9fe8ff');
-    ke.combo = 0;
-    this.rungMan(0.2, 9);
-    this.dungKhung(0.06);
-    this.vetGa({ id: this.id++, x: ke.x, y: ke.y - 100, t: 0, loai: 'chay', co: 0.7 });
+    this.gyBienSao(p);
   }
 
-  /** Bóng ma đi tới (x, y) với tốc độ GY_TOC; bước nào ra khỏi núi đá thì thử từng trục, vẫn ra thì đứng lại (đang ở ngoài núi, ví dụ sau khi lao, thì đi tự do để về) */
+  /** Bản sao: lảng vảng cạnh đồng đội như người thật, cứ 1–4s (ngẫu nhiên) đánh Mabu hoặc Zinbu bằng đòn của người bị sao chép; hết GY_SAO_T giây thì trở lại bóng ma */
+  private gyCapNhatSao(dt: number): void {
+    const g = this.ginyu, s = g.sao!, nv = this.gyNv!;
+    if ((s.con -= dt) <= 0) { this.gyHetSao(); return; }
+    let dangDi = false;
+    if ((g.socola ?? 0) > 0) {
+      g.socola = Math.max(0, g.socola! - dt);
+    } else if (!nv.khoa) {
+      s.danh -= dt;
+      const hopLe = [0, 1].filter((q) => this.gyHopLe(q));
+      // Tới lượt đánh: chọn ngẫu nhiên Mabu hoặc Zinbu (người còn đánh được) và đòn; đến đủ gần thì ra đòn
+      if (s.danh <= 0 && s.muc === undefined && hopLe.length) {
+        s.muc = hopLe[Math.floor(Math.random() * hopLe.length)]!;
+        const r = Math.random();
+        s.nhom = r < 0.4 ? 0 : r < 0.75 ? 1 : 2;
+      }
+      if (s.muc !== undefined && !this.gyHopLe(s.muc)) s.muc = undefined;
+      let tx: number | undefined, ty: number | undefined;
+      if (s.muc !== undefined) {
+        const ke = this.nguoi[s.muc]!;
+        const tam = s.nhom === 2 ? TAM_CHIEU * 0.7 : s.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN;
+        const d = Math.hypot(ke.x - g.x, ke.y - g.y);
+        if (d <= tam * 0.85 || s.danh < -3) this.gyRaDon(ke);
+        else { tx = ke.x; ty = ke.y; }
+      } else {
+        // Lảng vảng cạnh đồng đội của người bị sao chép (đi theo như người thật), thỉnh thoảng đứng yên
+        s.doi -= dt;
+        const b = this.gyDongDoi() ?? this.nguoi[s.p];
+        if (s.doi <= 0 && b) {
+          s.doi = ngauNhien(1.2, 3);
+          if (Math.random() < 0.3) s.dich = undefined;
+          else {
+            const goc = ngauNhien(0, Math.PI * 2), r = ngauNhien(180, 480);
+            const v = { x: b.x + Math.cos(goc) * r, y: b.y + Math.sin(goc) * r };
+            s.dich = trongNui(v.x, v.y) ? v : { x: b.x, y: b.y };
+          }
+        }
+        if (s.dich) { tx = s.dich.x; ty = s.dich.y; }
+      }
+      if (tx !== undefined && ty !== undefined) {
+        const dx = tx - g.x, dy = ty - g.y, d = Math.hypot(dx, dy);
+        if (d > 8) {
+          dangDi = true;
+          const b = Math.min(d, TOC_DO_DI * dt);
+          const nx = g.x + (dx / d) * b, ny = g.y + (dy / d) * b;
+          if (trongNui(nx, ny) || !trongNui(g.x, g.y)) { g.x = nx; g.y = ny; }
+          else if (trongNui(nx, g.y)) g.x = nx;
+          else if (trongNui(g.x, ny)) g.y = ny;
+          else dangDi = false;
+          // Đi như nhân vật thật: chủ yếu theo chiều dọc thì quay lên / xuống
+          if (Math.abs(dy) > Math.abs(dx) * 1.2) nv.huong = dy < 0 ? 'len' : 'xuong';
+          else {
+            nv.huong = 'ngang';
+            if (Math.abs(dx) > d * 0.2) nv.lat = dx < 0;
+          }
+        } else if (s.dich) s.dich = undefined;
+      }
+    }
+    s.di = dangDi;
+    const truot = nv.capNhat(dt, dangDi);
+    if (truot) g.x += truot * S_NV;
+    // Dây buộc như người thật: không đi xa đồng đội quá mức camera chứa nổi
+    const b = this.gyDongDoi();
+    if (b) {
+      g.x = kep(g.x, b.x - MAX_DX, b.x + MAX_DX);
+      g.y = kep(g.y, b.y - MAX_DY, b.y + MAX_DY);
+    }
+    giuTrongMap(g, LE_NV, false, 'dao');
+    g.lat = !nv.lat;
+  }
+
+  /** Bản sao ra đòn vào nhân vật `ke`: animation đòn của người bị sao chép, đạn bay như đòn thật (đánh dấu `gy`, chỉ trúng nhân vật) */
+  private gyRaDon(ke: NguoiChoi): void {
+    const g = this.ginyu, s = g.sao!, nv = this.gyNv!;
+    const nhom = s.nhom;
+    nv.lat = ke.x < g.x;
+    nv.huong = 'ngang';
+    nv.datNhom(nhom, this.t);
+    nv.raDon(this.t);
+    if (this.gyTrenCam()) this.am.phat(nhom === 2 ? 'chuong' : nhom === 1 ? 'da' : 'dam');
+    const { dx, dy } = nv.diemBan;
+    const tay = { x: g.x + (nv.lat ? -dx : dx) * S_NV, y: g.y + (dy - nv.cao) * S_NV };
+    const x1 = ke.x, y1 = ke.y - 80;
+    const chieu = nhom === 2;
+    const T = Math.hypot(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
+    this.dan.push({ id: this.id++, p: s.p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: false, to: chieu, sat: g.sat[nhom]!, nhom, vg: g.ki === 2 && chieu, gy: true });
+    s.muc = undefined;
+    s.danh = GY_SAO_DANH[Math.floor(Math.random() * GY_SAO_DANH.length)]!;
+  }
+
+  /** Đạn của bản sao: chưởng xuyên qua mọi nhân vật trên đường bay, chạm đích thì nổ / đánh trúng nhân vật (né / giảm như đòn quái) */
+  private danGy(d: Dan, cuoi: boolean): void {
+    const vt = cuoi ? { x: d.x1, y: d.y1 } : this.danHienTai(d);
+    const r = cuoi ? (d.to ? BAN_KINH_NO + 60 : 110) : CHUONG_XUYEN + 70;
+    this.nguoi.forEach((n, q) => {
+      if (!this.gyHopLe(q) || d.da?.includes(-10 - q)) return;
+      if (Math.hypot(n.x - vt.x, n.y - 80 - vt.y) >= r) return;
+      (d.da ??= []).push(-10 - q);
+      if (this.nhanSatThuong(n, d.sat, false, '#ff4d4d') && d.to) n.combo = 0;
+    });
+    if (!cuoi) return;
+    if (d.to) {
+      if (d.vg) this.vetGa({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 1, vg: true });
+      else {
+        this.vetGa({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'no' });
+        this.vetGa({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 0.9 });
+      }
+    }
+  }
+
+  /** Mabu / Zinbu đánh nhau trên núi đá: đòn của p trúng người còn lại (cả hai đứng trên núi) trong bán kính r quanh thân. Trả về true nếu trúng */
+  private danTrungDongDoi(d: Dan, x: number, y: number, r: number, sat = d.sat): boolean {
+    const a = this.nguoi[d.p];
+    if (!a || !trongNui(a.x, a.y, GY_NUI_LE)) return false;
+    let trung = false;
+    this.nguoi.forEach((n, q) => {
+      if (q === d.p || !this.gyHopLe(q) || d.da?.includes(-10 - q)) return;
+      if (Math.hypot(n.x - x, n.y - 80 - y) >= r) return;
+      (d.da ??= []).push(-10 - q);
+      this.nhanSatThuong(n, sat * (a.suc ?? 1) + (a.satDau ?? 0), false, '#ff9f43');
+      trung = true;
+    });
+    return trung;
+  }
+
   private gyDiToi(x: number, y: number, dt: number): void {
     const g = this.ginyu;
     const dx = x - g.x, dy = y - g.y, d = Math.hypot(dx, dy);
@@ -3838,35 +4008,34 @@ export class Game {
   }
 
   /**
-   * Ginyu nhận đòn của nhân vật p: né 25% và giảm 50% sát thương như nhân vật (sát thương nhân `suc` người đánh). Chưa chạm trán thì sao chép luôn người đánh.
-   * `soc`: Biến socola đủ giết thì thành thanh socola. Trả về true nếu đòn trúng.
+   * Bản sao nhận đòn của nhân vật p như Mabu / Zinbu: né 25%, giảm 50% (sát thương nhân `suc` người đánh, cộng đậu thần). Dạng bóng ma thì không ai đánh được.
+   * `soc`: Biến socola đủ giết thì thành thanh socola, không thì hoá socola. Trả về true nếu đòn trúng.
    */
   private trungGy(p: number, sat: number, khongNe = false, soc = false): boolean {
     const g = this.ginyu;
-    if (g.chet) return false;
+    if (g.chet || !g.sao) return false;
     const n = this.nguoi[p];
-    if (!g.gap) this.gySaoChep(p);
-    g.quen = 0;
-    if (g.muc === undefined && this.gyHopLe(p)) g.muc = p;
     const tam = this.tamGy();
     if (!khongNe && Math.random() < NE_NV) {
-      this.chu.push({ id: this.id++, x: tam.x + ngauNhien(-40, 40), y: tam.y - 60, text: 'NÉ!', mau: '#9be7ff', t: 0 });
+      this.chu.push({ id: this.id++, x: g.x, y: g.y - 220, text: 'NÉ!', mau: '#9be7ff', t: 0 });
       return false;
     }
     const mat = Math.max(1, Math.round((sat * (n?.suc ?? 1) + (n?.satDau ?? 0)) * (1 - GIAM_NV)));
     g.hp -= mat;
-    g.nhay = GY_NHAY_T;
     g.thuongLuc = this.t;
-    this.chu.push({ id: this.id++, x: tam.x + ngauNhien(-40, 40), y: tam.y - 60, text: `-${mat}`, mau: '#ffffff', t: 0 });
+    // Chữ sát thương giống hệt khi nhân vật thật bị đánh (không lộ là bản sao)
+    this.chu.push({ id: this.id++, x: g.x, y: g.y - 220, text: `-${mat}`, mau: '#ff9f43', t: 0 });
     if (n) n.banTrung++;
-    if (g.hp > 0) return true;
+    if (g.hp > 0) {
+      if (soc) g.socola = GY_SOCOLA_T;
+      return true;
+    }
     g.hp = 0;
     g.chet = true;
     g.tChet = 0;
-    g.nap = undefined;
     g.lao = undefined;
-    g.lui = undefined;
     g.socola = undefined;
+    this.gyNv?.nga();
     if (soc) {
       const v = { x: g.x, y: g.y };
       giuTrongMap(v, LE_VP);
@@ -3876,7 +4045,7 @@ export class Game {
     for (let i = 0; i < 3; i++) this.vet.push({ id: this.id++, x: g.x + ngauNhien(-80, 80), y: tam.y + ngauNhien(-80, 60), t: 0, loai: 'chay', co: 0.8 + i * 0.2 });
     this.rungMan(0.3, 12);
     this.dungKhung(0.15);
-    this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 220, text: '💥 BÓNG MA GOKU BỊ HẠ!', mau: '#ffd27a', t: 0 });
+    this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 220, text: '💥 BẢN SAO LÀ BÓNG MA GOKU! ĐÃ BỊ HẠ!', mau: '#ffd27a', t: 0 });
     if (n) {
       n.combo++;
       const hs = this.heSo(p);
@@ -3887,29 +4056,72 @@ export class Game {
     return true;
   }
 
-  /** Khung hình bóng ma Goku: ngã · lao (và ngay sau khi đâm trúng) · gồng / socola · trúng đòn giữ khung · quay người tạo dáng · bay lượn · đứng (quay chậm) */
+  /** Khung hình bóng ma: ngã · lao · khiêu khích (quay người → gồng → bay lượn) · bay lượn · đứng / xoay chậm ở nhà */
   gyKhung(): number {
     const g = this.ginyu;
     if (g.chet) return GY_KHUNG.nga;
-    if (g.lao !== undefined || (g.lui ?? 0) > 0 || g.danh > 0) return GY_KHUNG.lao;
-    if (g.nap !== undefined || (g.socola ?? 0) > 0) return GY_KHUNG.gong;
-    if (g.dang > 0) return GY_KHUNG.quay[Math.floor(((GY_DANG_T - g.dang) / GY_DANG_T) * GY_KHUNG.quay.length * 2) % GY_KHUNG.quay.length]!;
+    if (g.lao !== undefined || g.danh > 0) return GY_KHUNG.lao;
+    if (g.khieu !== undefined) {
+      const k = 1 - g.khieu / GY_KHIEU_T;
+      if (k < 0.4) return GY_KHUNG.quay[Math.floor(k * 2.5 * GY_KHUNG.quay.length * 2) % GY_KHUNG.quay.length]!;
+      if (k < 0.7) return GY_KHUNG.gong;
+      return GY_KHUNG.bay[Math.floor(this.t * 6) % GY_KHUNG.bay.length]!;
+    }
+    if (g.nghi !== undefined) return GY_KHUNG.dung[Math.floor(this.t * 1.5) % GY_KHUNG.dung.length]!;
     if (g.chay) return GY_KHUNG.bay[Math.floor(g.phase * 3) % GY_KHUNG.bay.length]!;
-    // Ở nhà chưa gặp ai: xoay người chầm chậm như hồn ma; đang chạm trán thì đứng thủ
-    if (!g.gap) return GY_KHUNG.quay[Math.floor(this.t * 2) % GY_KHUNG.quay.length]!;
-    return GY_KHUNG.dung[Math.floor(this.t * 1.5) % GY_KHUNG.dung.length]!;
+    return GY_KHUNG.quay[Math.floor(this.t * 2) % GY_KHUNG.quay.length]!;
   }
 
-  /** Bộ lọc màu Ginyu: socola nâu, trúng đòn nháy sáng */
+  /** Tiến độ gồng khi khiêu khích (0..1, hào quang) */
+  get gyGong(): number {
+    const g = this.ginyu;
+    if (g.khieu === undefined || g.chet) return 0;
+    const k = 1 - g.khieu / GY_KHIEU_T;
+    return k < 0.4 ? 0 : k < 0.7 ? (k - 0.4) / 0.3 : 1 - (k - 0.7) / 0.3;
+  }
+
+  /** Bộ lọc màu: socola nâu (bản sao không nháy sáng, như nhân vật thật) */
   gyLoc(): string | null {
     const g = this.ginyu;
-    return (g.socola ?? 0) > 0 ? LOC_SOCOLA : g.nhay > 0 ? MAU_SANG : null;
+    return (g.socola ?? 0) > 0 ? LOC_SOCOLA : !g.sao && g.nhay > 0 ? MAU_SANG : null;
   }
 
-  /** Tên nhân vật Ginyu đang sao chép (thanh máu) */
+  /** Vị trí chân + hệ số phóng của bản sao (vẽ như nhân vật, `nvViTri()`) */
+  gyNvViTri(): { x: number; y: number; k: number } {
+    const g = this.ginyu, nv = this.gyNv;
+    return { x: g.x, y: g.y - ((nv?.cao ?? 0) - (nv?.nhun ?? 0)) * S_NV, k: S_NV };
+  }
+
+  /** Thanh máu bản sao: vị trí và tỉ lệ đầy như của nhân vật thật */
+  gyThanh(): { x: number; y: number; mau: number } {
+    const g = this.ginyu, nv = this.gyNv;
+    return { x: g.x, y: g.y - ((nv?.cao ?? 0) - (nv?.nhun ?? 0)) * S_NV - (DAU_NV[g.ki ?? 0] ?? 170), mau: Math.min(1, Math.max(0, g.hp) / Math.max(HP_NV, g.hp)) };
+  }
+
+  /** Dây buộc của bản sao với đồng đội người bị sao chép (giống hệt dây buộc 2 nhân vật thật): mức căng và 2 đầu trên màn hình */
+  gyDay(): { tet: number; a: { x: number; y: number }; b: { x: number; y: number } } | null {
+    if (!this.gySao) return null;
+    const g = this.ginyu, b = this.gyDongDoi();
+    if (!b || b.het) return null;
+    const tet = Math.max(Math.abs(g.x - b.x) / MAX_DX, Math.abs(g.y - b.y) / MAX_DY);
+    const man = (x: number, y: number) => ({ x: this.W / 2 + (x - this.camX) * this.camZ, y: TAM_VIEW_Y + (y - this.camY) * this.camZ });
+    return { tet, a: man(g.x, g.y), b: man(b.x, b.y) };
+  }
+
+  /** Mũi tên ở mép màn hình chỉ bản sao khi nó ra ngoài khung nhìn (như nhân vật thật), màu của người bị sao chép */
+  gyMuiTen(): { x: number; y: number; goc: number; mau: string } | null {
+    if (!this.gySao) return null;
+    const g = this.ginyu;
+    const v = { x: this.W / 2 + (g.x - this.camX) * this.camZ, y: TAM_VIEW_Y + (g.y - this.camY) * this.camZ };
+    const x = kep(v.x, 70, this.W - 70);
+    const y = kep(v.y, 130, H - 70);
+    if (x === v.x && y === v.y) return null;
+    return { x, y, goc: (Math.atan2(v.y - y, v.x - x) * 180) / Math.PI, mau: this.nguoi[g.sao!.p]!.mau };
+  }
+
+  /** Tên hiển thị (bóng ma; bản sao không có tên để khỏi lộ) */
   get gyTen(): string {
-    const k = this.ginyu.ki;
-    return k === undefined ? GY_TEN : `${GY_TEN} = ${NHAN_VAT[k]?.ten ?? ''}`;
+    return GY_TEN;
   }
 
   // ─── Cell canh đảo ───
