@@ -131,6 +131,8 @@ const DPR_CHO_TOI_DA = 120000;
 /** Chế độ mát máy (tự động): giới hạn FPS_MAT khung / giây và độ phân giải tối đa DPR_MAT (máy đỡ nóng khi đông gà).
  *  Đang chơi mà FPS đo được dưới MAT_BAT_FPS liền MAT_BAT_DEM lần đo (0,5s / lần) thì tự bật trong MAT_THOI_GIAN giây rồi tự tắt */
 const FPS_MAT = 30;
+/** Trần FPS lúc chơi bình thường: màn 120 / 144Hz cũng chỉ vẽ tối đa 60 khung / giây (đỡ nóng máy, logic giữ đúng dt) */
+const FPS_TOI_DA = 60;
 const DPR_MAT = 1;
 const MAT_BAT_FPS = 30;
 const MAT_BAT_DEM = 2;
@@ -1305,12 +1307,17 @@ export class Game {
     this.datKhung();
   }
 
+  /** Mốc thời gian (ms) sớm nhất được vẽ khung kế tiếp (giới hạn FPS) */
+  private khungTiep = 0;
+
   private vongLap = (now: number) => {
-    // Chế độ mát máy: bỏ qua khung hình tới khi đủ ~1/FPS_MAT giây (trừ hao 4ms cho lệch nhịp màn hình)
-    if (this.matMay && now - this.lanCuoi < 1000 / FPS_MAT - 4) {
+    // Giới hạn FPS (tối đa FPS_TOI_DA, mát máy thì FPS_MAT): bỏ qua khung hình tới hạn tiếp theo (cộng dồn theo lịch để màn 120 / 144Hz vẫn đều 60, trừ hao 1ms cho lệch nhịp)
+    const cach = 1000 / (this.matMay ? FPS_MAT : FPS_TOI_DA);
+    if (now < this.khungTiep - 1) {
       this.rafId = requestAnimationFrame(this.vongLap);
       return;
     }
+    this.khungTiep = Math.max(this.khungTiep + cach, now);
     const dt = Math.min(0.05, (now - this.lanCuoi) / 1000);
     // Đếm FPS thật (số khung hình vẽ ra mỗi giây), cập nhật mỗi 0.5 giây
     this.fpsDem++;
