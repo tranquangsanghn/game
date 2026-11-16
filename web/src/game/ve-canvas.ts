@@ -4,7 +4,7 @@ import type { KhungSprite } from './sprite';
 import { CELL_SO_DAO, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
-import { DAO, duongBo, NUI, TG, trongNui } from './ban-do';
+import { DAO, duongBo, NUI, TG } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
 // Toạ độ vẽ giữ nguyên như bản SVG cũ: viewBox (-SIDE, -BAR, W + 2·SIDE, H + BAR), căn giữa, giữ tỉ lệ.
@@ -472,8 +472,6 @@ export class VeCanvas {
     if (!this.bo) {
       const p = new Path2D();
       for (const v of duongBo()) {
-        // Bờ núi đá là elip, vẽ riêng (veNui)
-        if (trongNui(v[0]!, v[1]!, 300)) continue;
         p.moveTo(v[0]!, v[1]!);
         for (let i = 2; i < v.length; i += 2) p.lineTo(v[i]!, v[i + 1]!);
         p.closePath();
@@ -523,7 +521,6 @@ export class VeCanvas {
       else ctx.fillRect(0, 0, M, M);
       ctx.restore();
     };
-    if (c.thayNui) this.veNui(ctx, x0, y0, x1, y1);
     const lop: [boolean, boolean][] = [[c.thayDao, true], [c.thayVuon, false]];
     for (const [hien, dao] of lop) {
       if (!hien) continue;
@@ -549,6 +546,8 @@ export class VeCanvas {
     ctx.stroke(vien);
     ctx.lineJoin = 'miter';
     ctx.lineCap = 'butt';
+    // Núi đá nối liền với đảo 0 (cùng vòng bờ cát): vẽ đè lên mặt cát / viền của vòng bờ đó
+    this.veNui(ctx, x0, y0, x1, y1);
   }
 
   /** Núi đá: khối mesa hình elip, chỉ vẽ khi elip (kể cả vách) chạm khung nhìn; 4 lệnh ellipse (vách sẫm, vách, mặt đá, viền) */

@@ -1,5 +1,5 @@
 // Bản đồ "Đảo sa mạc": nguyên map đồng cỏ (vườn gà, 0..VUON, có tường gạch) nằm giữa biển; quanh nó là 5 đảo cát
-// xếp thành vòng tròn, mỗi đảo nối với 2 đảo bên cạnh bằng dải cát. Vườn gà không nối với đảo nào: nhân vật không vào được, gà không ra được.
+// xếp thành vòng tròn, mỗi đảo nối với 2 đảo bên cạnh bằng dải cát; phía nam đảo 0 có dải cát dài nối lên núi đá (elip). Vườn gà không nối với đảo nào: nhân vật không vào được, gà không ra được.
 // Chỉ có dữ liệu / logic (không đụng canvas): `doSau()` = khoảng cách có dấu tới bờ đảo (dương = cát, âm = biển, đơn vị thế giới),
 // lưới đi được để đẩy vật đang đứng dưới nước lên bờ gần nhất (`veDat()`). Phần vẽ nằm trong ve-canvas.ts.
 
@@ -40,11 +40,80 @@ const CAU_NOI: [number, number][] = DAO.map((_, i) => [i, (i + 1) % DAO.length])
 /** Nửa bề rộng dải cát nối */
 const NUA_RONG_NOI = 260;
 
-/** Núi đá: một khối mesa hình elip (diện tích 2/3 vườn gà, rộng gấp 1,5 cao) nằm riêng giữa vực ở góc dưới phải,
- *  ngoài vòng đảo (cách đảo / dải cát ≥ 2000): chỉ tới được bằng máy bay. Bờ là elip đúng (không nhiễu) để vẽ bằng một lệnh ellipse. */
+/** Đường cong của dải cát nối đảo i → j (cong ra phía ngoài vòng), t = 0..1 */
+function diemNoi(i: number, j: number, t: number): [number, number] {
+  const a = DAO[i]!, b = DAO[j]!;
+  const mx = (a.x + b.x) / 2 - TAM, my = (a.y + b.y) / 2 - TAM;
+  const ml = Math.hypot(mx, my);
+  const lech = Math.sin(t * Math.PI) * 900 + Math.sin(t * Math.PI * 3) * 120;
+  return [a.x + (b.x - a.x) * t + (mx / ml) * lech, a.y + (b.y - a.y) * t + (my / ml) * lech];
+}
+/** Độ dài phần cát của một đường (lấy mẫu `diem(t)`), bỏ đoạn nằm trong vùng `trong` (đảo / núi ở hai đầu) */
+function doDaiCat(diem: (t: number) => [number, number], trong: (x: number, y: number) => boolean): number {
+  let L = 0, cu = diem(0);
+  for (let k = 1; k <= 2000; k++) {
+    const p = diem(k / 2000);
+    if (!trong(p[0], p[1])) L += Math.hypot(p[0] - cu[0], p[1] - cu[1]);
+    cu = p;
+  }
+  return L;
+}
+const trongDaoTron = (x: number, y: number, i: number) => Math.hypot(x - DAO[i]!.x, y - DAO[i]!.y) <= DAO[i]!.r;
+
+/** Núi đá: một khối mesa hình elip (diện tích 2/3 vườn gà, rộng gấp 1,5 cao) nằm phía nam đảo 0 (đảo Cell đỏ), nối với đảo 0
+ *  bằng một dải cát cong chữ S (`DUONG_NUI`) dài gấp DUONG_NUI_GAP = 3 lần dải cát nối giữa hai đảo sa mạc (trung bình phần cát).
+ *  Bờ núi là elip đúng (không nhiễu) để vẽ bằng một lệnh ellipse. Vị trí tính lúc nạp: dò khoảng cách cho đủ độ dài. */
 const NUI_DT = (2 / 3) * VUON * VUON;
 const NUI_RX = Math.sqrt((NUI_DT / Math.PI) * 1.5);
-export const NUI = { x: 13800, y: 17600, rx: NUI_RX, ry: NUI_RX / 1.5 };
+const NUI_RY = NUI_RX / 1.5;
+const DUONG_NUI_GAP = 3;
+/** Hướng từ tâm đảo 0 tới núi (70°: xuống dưới, lệch phải, tránh dải cát nối đảo 0 – đảo 4) và độ uốn chữ S */
+const DUONG_NUI_HUONG = (70 * Math.PI) / 180;
+const DUONG_NUI_UON = 1400;
+const trongElip = (x: number, y: number, cx: number, cy: number) => ((x - cx) / NUI_RX) ** 2 + ((y - cy) / NUI_RY) ** 2 <= 1;
+function duongNuiTheo(kc: number) {
+  const d0 = DAO[0]!, ux = Math.cos(DUONG_NUI_HUONG), uy = Math.sin(DUONG_NUI_HUONG);
+  const rr = (NUI_RX * NUI_RY) / Math.hypot(NUI_RY * ux, NUI_RX * uy);
+  const dai = d0.r + kc + rr;
+  const nx = d0.x + ux * dai, ny = d0.y + uy * dai;
+  const diem = (t: number): [number, number] => {
+    const o = DUONG_NUI_UON * Math.sin(2 * Math.PI * t);
+    return [d0.x + ux * dai * t - uy * o, d0.y + uy * dai * t + ux * o];
+  };
+  return { nx, ny, diem, L: doDaiCat(diem, (x, y) => trongDaoTron(x, y, 0) || trongElip(x, y, nx, ny)) };
+}
+const DUONG_NUI_DAI =
+  (DUONG_NUI_GAP * CAU_NOI.reduce((t, [i, j]) => t + doDaiCat((k) => diemNoi(i, j, k), (x, y) => trongDaoTron(x, y, i) || trongDaoTron(x, y, j)), 0)) /
+  CAU_NOI.length;
+const duongNui = (() => {
+  let lo = 0, hi = 60000;
+  for (let k = 0; k < 40; k++) {
+    const m = (lo + hi) / 2;
+    if (duongNuiTheo(m).L < DUONG_NUI_DAI) lo = m;
+    else hi = m;
+  }
+  return duongNuiTheo(lo);
+})();
+export const NUI = { x: duongNui.nx, y: duongNui.ny, rx: NUI_RX, ry: NUI_RY };
+/** Đường cát nối đảo 0 → núi đá: các điểm lấy mẫu (từ tâm đảo 0 tới tâm núi) và khung bao để bỏ qua nhanh */
+const DUONG_NUI: [number, number][] = Array.from({ length: 121 }, (_, k) => duongNui.diem(k / 120));
+const DUONG_NUI_KHUNG = DUONG_NUI.reduce(
+  (b, [x, y]) => ({ x0: Math.min(b.x0, x), y0: Math.min(b.y0, y), x1: Math.max(b.x1, x), y1: Math.max(b.y1, y) }),
+  { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity },
+);
+/** Khoảng cách từ (x, y) tới đường giữa của dải cát lên núi (xa khung bao thì trả số lớn) */
+function kcDuongNui(x: number, y: number): number {
+  const K = DUONG_NUI_KHUNG, le = 2500;
+  if (x < K.x0 - le || x > K.x1 + le || y < K.y0 - le || y > K.y1 + le) return 1e9;
+  let m = Infinity;
+  for (let k = 1; k < DUONG_NUI.length; k++) {
+    const [ax, ay] = DUONG_NUI[k - 1]!, [bx, by] = DUONG_NUI[k]!;
+    const vx = bx - ax, vy = by - ay;
+    const t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy)));
+    m = Math.min(m, Math.hypot(x - ax - vx * t, y - ay - vy * t));
+  }
+  return m;
+}
 /** Điểm nằm trong elip núi đá (nới thêm `le`) */
 export function trongNui(x: number, y: number, le = 0): boolean {
   const dx = (x - NUI.x) / (NUI.rx + le), dy = (y - NUI.y) / (NUI.ry + le);
@@ -115,12 +184,11 @@ function doSauGoc(x: number, y: number): number {
     const vx = b.x - a.x, vy = b.y - a.y;
     const t = Math.max(0, Math.min(1, ((x - a.x) * vx + (y - a.y) * vy) / (vx * vx + vy * vy)));
     // Dải cát cong ra phía ngoài vòng (xa vườn gà) cho giống vành tròn
-    const mx = (a.x + b.x) / 2 - TAM, my = (a.y + b.y) / 2 - TAM;
-    const ml = Math.hypot(mx, my);
-    const lech = Math.sin(t * Math.PI) * 900 + Math.sin(t * Math.PI * 3) * 120;
-    const px = a.x + vx * t + (mx / ml) * lech, py = a.y + vy * t + (my / ml) * lech;
+    const [px, py] = diemNoi(i, j, t);
     noi = Math.max(noi, NUA_RONG_NOI - Math.hypot(x - px, y - py));
   }
+  // Dải cát chữ S từ đảo 0 lên núi đá
+  noi = Math.max(noi, NUA_RONG_NOI - kcDuongNui(x, y));
   if (noi > -2000) noi += (nhieu(x / 500 + 7, y / 500) - 0.5) * 90;
   return Math.max(maxMem(s, noi, 380), doSauNui(x, y));
 }

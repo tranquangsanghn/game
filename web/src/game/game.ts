@@ -870,8 +870,6 @@ export class Game {
   /** Camera đã vào hẳn trong vườn gà (kẹp cứng theo tường) */
   private camVuon = false;
   thayDao = true;
-  /** Thấy núi đá: có người đứng trên núi hoặc ngồi máy bay (như thayVuon / thayDao) */
-  thayNui = true;
   // Gà mẹ GỐC còn sống (không lọc theo khung nhìn): avatar, số mạng, mũi tên chỉ hướng
   tuongSong: Ga | null = null;
   /** Ngọc rồng đã nhặt (số sao, theo thứ tự nhặt) xếp ở thanh đen trên, bên trái; ngocBay = viên đang bay từ chỗ nhặt lên thanh đen */
@@ -2263,8 +2261,7 @@ export class Game {
     const ngoai = banDoHt !== 'sa' || this.nguoi.some((_, i) => this.trongMb(i));
     this.thayVuon = ngoai || !dung.length || dung.some((n) => trongVuon(n.x, n.y));
     this.vuonRo = banDoHt !== 'sa' || dung.some((n) => trongVuon(n.x, n.y));
-    this.thayDao = ngoai || !dung.length || dung.some((n) => !trongVuon(n.x, n.y) && !trongNui(n.x, n.y, 300));
-    this.thayNui = ngoai || !dung.length || dung.some((n) => trongNui(n.x, n.y, 300));
+    this.thayDao = ngoai || !dung.length || dung.some((n) => !trongVuon(n.x, n.y));
     // Bản đồ nhỏ góc trên phải khi có người ngồi máy bay: vị trí + hướng bay (theo quãng vừa đi)
     const mbv = this.mayBay;
     const ddx = mbv.x - this.mbCu.x, ddy = mbv.y - this.mbCu.y;
@@ -2387,9 +2384,9 @@ export class Game {
     return x > k.x0 - le && x < k.x1 + le && y > k.y0 - le && y < k.y1 + le;
   }
 
-  /** Khối đất chứa (x, y) (vườn gà / núi đá / vòng đảo) đang thấy: không lên máy bay thì chỉ thấy khối mình đứng */
+  /** Khối đất chứa (x, y) (vườn gà / vòng đảo + núi đá nối liền) đang thấy: không lên máy bay thì chỉ thấy khối mình đứng */
   thayKhoi(x: number, y: number): boolean {
-    return trongVuon(x, y) ? this.thayVuon : trongNui(x, y, 300) ? this.thayNui : this.thayDao;
+    return trongVuon(x, y) ? this.thayVuon : this.thayDao;
   }
 
   /**
