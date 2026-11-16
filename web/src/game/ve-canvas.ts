@@ -819,7 +819,10 @@ export class VeCanvas {
     const trongVuon =
       -cam.x / cam.k >= -e && -cam.y / cam.k >= -e && (c.W - cam.x) / cam.k <= c.MAP + e && (c.H - cam.y) / cam.k <= c.MAP + e;
     if (c.banDoVan !== 'sa' || trongVuon) return;
-    // Vực đen là màu nền CSS của canvas (canvas.canvas-nen), không tô
+    // Vực đen là màu nền CSS của canvas (canvas.canvas-nen), không tô.
+    // clip() phải nằm trong save / restore: clip không tự mất khi setTransform / clearRect, Chrome giữ cả danh sách clip
+    // đã đặt và phát lại mỗi khung ⇒ thiếu restore thì danh sách dài thêm mỗi khung, FPS trên đảo tụt dần theo thời gian
+    ctx.save();
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
     ctx.beginPath();
     ctx.rect(0, 0, c.W, c.H);
@@ -827,6 +830,7 @@ export class VeCanvas {
     ctx.translate(cam.x, cam.y);
     ctx.scale(cam.k, cam.k);
     this.veNenSa(ctx, c);
+    ctx.restore();
   }
 
   private veTheGioi(ctx: CanvasRenderingContext2D, c: Game): void {
