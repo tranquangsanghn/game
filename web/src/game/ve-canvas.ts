@@ -586,15 +586,11 @@ export class VeCanvas {
         for (let i = 2; i < v.length; i += 2) p.lineTo(v[i]!, v[i + 1]!);
         p.closePath();
       }
-      x.fillStyle = '#f0c75a';
-      x.fill(p, 'evenodd');
-      // Núi đá (cũng nằm trong duongBo, tô đè màu đá)
-      x.beginPath();
-      x.ellipse(NUI.x, NUI.y, NUI.rx, NUI.ry, 0, 0, Math.PI * 2);
+      // Đảo, đường và núi cùng địa hình đá: tô chung một màu đá, viền sẫm
       x.fillStyle = '#c8682a';
-      x.fill();
+      x.fill(p, 'evenodd');
       x.lineWidth = 160;
-      x.strokeStyle = '#a8641e';
+      x.strokeStyle = '#7a3a1a';
       x.stroke(p);
       x.fillStyle = '#4caf50';
       x.fillRect(0, 0, c.MAP, c.MAP);
