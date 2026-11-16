@@ -4,7 +4,7 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { chuanBiSaMac, daoCua, doSau, trongVuon, veDat, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, type Cell } from './cell';
+import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_CHU_KY, TIEC_DI, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -794,6 +794,8 @@ export class Game {
   cellView: Cell[] = [];
   /** Đội Cell từng đảo (không lưu ván): đang xuất trận, id con tách đàn, người nó đuổi, giờ đàn được dịch chuyển lần tới */
   cellDoi: { chien: boolean; tach: number[]; muc: number; dichDan: number }[] = [];
+  /** Lúc (this.t) mỗi nhân vật bị chưởng Cell trúng gần nhất, để tính combo chưởng (không lưu ván) */
+  cellChuongLuc: number[] = [];
   /** Tiệc sinh nhật Cell: bánh ở giữa vòng Cell; chưởng Cell bắn vào bánh (chỉ để đẹp, không lưu); banhView = bánh nằm trong khung nhìn */
   tiec: Tiec[] = [];
   chuongTiec: ChuongTiec[] = [];
@@ -1071,6 +1073,7 @@ export class Game {
     this.cell = taoCell(() => this.id++);
     this.tiec = taoTiec(this.cell);
     this.cellDoi = [];
+    this.cellChuongLuc = [];
     this.chuongTiec = [];
     this.dan = [];
     this.vet = [];
@@ -1154,6 +1157,7 @@ export class Game {
     // Ngọc 2 sao chỉ hiện khi đã hạ hết Cell (ván lưu bản trước có thể đặt sẵn ngọc giữa tiệc khi Cell còn sống)
     if (this.cell.some((c) => !c.chet)) for (const tc of this.tiec) delete tc.ngoc;
     this.cellDoi = [];
+    this.cellChuongLuc = [];
     for (const c of this.cell) { c.vai = undefined; c.muc = undefined; c.nap = undefined; c.chien = false; if (!this.tiecCua(c)) c.tiec = false; }
     if (d.mayBay) this.mayBay = { ...taoMayBay(d.mayBay.x, d.mayBay.y), ...d.mayBay };
     this.mbTrenDao = null;
@@ -3734,7 +3738,10 @@ export class Game {
     for (const tc of this.tiec) if (tc.on) tc.t += dt;
   }
 
-  /** Chưởng chiến đấu của Cell tới nơi: ai (không ẩn / gục / mây) nằm trên chùm thì trúng (vẫn né / giảm 50%); chưởng Cell bạo nộ còn phá combo người trúng */
+  /**
+   * Chưởng chiến đấu của Cell tới nơi: ai (không ẩn / gục / mây) nằm trên chùm thì trúng (vẫn né / giảm 50%); chưởng Cell bạo nộ còn phá combo người trúng.
+   * Combo chưởng (cấp có CELL_COMBO_CHUONG > 1): chưởng thứ 2 trở đi trúng cùng một người trong CELL_COMBO_CUA giây (kể từ phát trúng trước) thì sát thương × hệ số.
+   */
   private chuongCellTrung(q: ChuongTiec): void {
     const rong = CELL_CHUONG_RONG * q.k;
     const vx = q.x1 - q.x0, vy = q.y1 - q.y0, L2 = vx * vx + vy * vy || 1;
@@ -3743,7 +3750,11 @@ export class Game {
       const px = n.x, py = n.y - 70;
       const u = Math.max(0, Math.min(1, ((px - q.x0) * vx + (py - q.y0) * vy) / L2));
       if (Math.hypot(px - (q.x0 + vx * u), py - (q.y0 + vy * u)) > rong) continue;
-      this.nhanSatThuong(n, q.sat!);
+      const p = this.nguoi.indexOf(n);
+      const he = CELL_COMBO_CHUONG[q.cap ?? 0] ?? 1;
+      const combo = he > 1 && this.t - (this.cellChuongLuc[p] ?? -99) <= CELL_COMBO_CUA;
+      if (combo) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: `💥 COMBO CHƯỞNG CELL x${he}!`, mau: '#ff9f1a', t: 0 });
+      if (this.nhanSatThuong(n, q.sat! * (combo ? he : 1)) && he > 1) this.cellChuongLuc[p] = this.t;
       if (q.cap === SO_CAP - 1 && n.combo > 0) {
         n.combo = 0;
         this.chu.push({ id: this.id++, x: n.x, y: n.y - 270, text: 'MẤT COMBO!', mau: '#ff6b6b', t: 0 });
@@ -3787,11 +3798,12 @@ export class Game {
   }
 
   // khongNe: đòn phản / đốt cháy không né được; mauChu: màu chữ bay
-  private nhanSatThuong(n: NguoiChoi, sat: number, khongNe = false, mauChu = '#ff4d4d'): void {
-    if (this.trongCau(this.nguoi.indexOf(n)) || this.trongMb(this.nguoi.indexOf(n))) return;
+  // Trả về true nếu thật sự trúng (không né, không trong cầu / máy bay)
+  private nhanSatThuong(n: NguoiChoi, sat: number, khongNe = false, mauChu = '#ff4d4d'): boolean {
+    if (this.trongCau(this.nguoi.indexOf(n)) || this.trongMb(this.nguoi.indexOf(n))) return false;
     if (!khongNe && Math.random() < NE_NV) {
       this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: 'NÉ!', mau: '#9be7ff', t: 0 });
-      return;
+      return false;
     }
     const nhan = Math.round(sat * (1 - GIAM_NV));
     n.thuongLuc = this.tGame;
@@ -3799,7 +3811,7 @@ export class Game {
     n.hp = Math.max(0, n.hp - nhan);
     this.rung = Math.max(this.rung, 0.15);
     this.rungTayCam(this.nguoi.indexOf(n), n.hp <= 0 ? 600 : 180, n.hp <= 0 ? 1 : 0.6);
-    if (n.hp > 0) return;
+    if (n.hp > 0) return true;
     n.het = true;
     this.am.phat('nvChet');
     n.dich = null;
@@ -3809,6 +3821,7 @@ export class Game {
     n.nv.nga();
     if (this.nguoi.every((m) => m.het)) this.ketThuc(false);
     else this.batDauCuu(n);
+    return true;
   }
 
   // Một nhân vật ngã mà người kia còn sống: bắt đầu cứu (Mabu phủ mây lên Zinbu, Zinbu phủ socola lên Mabu)

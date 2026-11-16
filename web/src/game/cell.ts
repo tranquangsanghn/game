@@ -46,7 +46,11 @@ export const CELL_TOC = [70, 85, 100, 120, 150];
 export const CELL_HOI = [0.9, 0.9, 0.9, 0.9, 0.9];
 /** Chưởng chiến đấu (3 loại như tiệc): sát thương gốc, hồi chiêu (giây), tầm xa nhất, bề rộng chùm (× độ to sprite) */
 export const CELL_CHUONG_SAT = [100, 190, 127, 95, 150];
-export const CELL_CHUONG_HOI = [8, 8, 8, 8, 6];
+// Cấp 1–3 (đảo 2 / 3 / 4: 5 / 8 / 10 con): hồi chưởng 2s
+export const CELL_CHUONG_HOI = [8, 2, 2, 2, 6];
+/** Combo chưởng (cấp 1–3): chưởng thứ 2 trở đi trúng cùng một người trong `CELL_COMBO_CUA` giây kể từ phát trúng trước thì sát thương × hệ số */
+export const CELL_COMBO_CHUONG = [1, 3, 3, 3, 1];
+export const CELL_COMBO_CUA = 0.5;
 export const CELL_CHUONG_TAM = 1100;
 export const CELL_CHUONG_RONG = 14;
 /** Dịch chuyển tức thời tới sát nhân vật khi nhân vật xa hơn tầm đấm + `CELL_DICH_XA`; hồi chiêu riêng từng con theo cấp */
