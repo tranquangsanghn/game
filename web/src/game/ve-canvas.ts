@@ -108,7 +108,7 @@ const SA_VIEN = 22;
 const SA_O_DOAN = 1600;
 /** Ô ảnh nền đảo dựng sẵn (veDaoO): cạnh O_NEN_PX điểm ảnh, giữ tối đa O_NEN_MAX ô, mỗi khung dựng tối đa O_NEN_TAO ô mới */
 const O_NEN_PX = 512;
-const O_NEN_MAX = 24;
+const O_NEN_MAX = 48;
 const O_NEN_TAO = 2;
 /** Núi đá (cắt từ ảnh người dùng gửi bằng tools/tao-atlas-nui-da.py): mặt đá lặp, vách lặp, atlas tảng đá (neo giữa đáy, loai 1..8).
  *  Cả khối là một elip (NUI trong ban-do.ts) vẽ bằng vài lệnh ellipse: vách dời xuống NUI_VACH_CAO (mesa cao hơn đảo), dưới nữa sẫm tới NUI_VACH_SAU */
@@ -520,11 +520,9 @@ export class VeCanvas {
     const x0 = -cam.x / cam.k - 40, x1 = (c.W - cam.x) / cam.k + 40;
     const y0 = -cam.y / cam.k - 40, y1 = (c.H - cam.y) / cam.k + 40;
     const M = c.MAP;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
     ctx.imageSmoothingEnabled = true;
     // Đảo + đường + núi: dán các ô ảnh dựng sẵn (thiếu ô / chưa nạp ảnh thì vẽ vector như cũ cho khung này)
-    if (c.thayDao && !this.veDaoO(ctx, x0, y0, x1, y1)) this.veLopDao(ctx, x0, y0, x1, y1);
+    if (c.thayDao && !this.veDaoO(ctx, x0, y0, x1, y1, c.zoomGoc / cam.k)) this.veLopDao(ctx, x0, y0, x1, y1);
     // Vườn gà cũng là khối nổi: vách rơi xuống vực ở bờ nam (không chồng lên đảo vì cách xa CACH_VUON)
     if (c.thayVuon) {
       ctx.save();
@@ -580,14 +578,16 @@ export class VeCanvas {
   /** Dán lớp đảo từ các ô ảnh dựng sẵn (O_NEN_PX điểm ảnh mỗi cạnh, cỡ ô theo bậc √2 của tỉ lệ phóng hiện tại):
    *  mỗi khung chỉ vài drawImage thay vì fill / stroke đường bờ cả thế giới (GPU phải dựng lại path mỗi khung, máy yếu tụt FPS dần).
    *  Mỗi khung dựng tối đa O_NEN_TAO ô mới; còn thiếu thì trả false để vẽ vector cho khung đó. */
-  private veDaoO(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number): boolean {
+  private veDaoO(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, heZoom: number): boolean {
     if (!this.mauNui) return false;
     const mt = ctx.getTransform();
     const A = mt.a;
     if (!(A > 0) || mt.b !== 0 || mt.c !== 0) return false;
     // Bậc tỉ lệ có trễ: chỉ đổi khi lệch hẳn sang bậc khác, tránh dựng lại liên tục khi zoom dao động quanh ranh giới.
     // Đổi bậc: bộ ô cũ giữ lại làm nền tạm (phóng lên dán) cho tới khi bộ ô mới dựng đủ, không vẽ vector cả thế giới
-    const bac = Math.log2(A) * 2;
+    // Bậc theo zoom gốc lúc đi bộ (heZoom = zoomGoc / zoom hiện tại): máy bay zoom ra chỉ thu nhỏ ô đã dựng, không dựng lại;
+    // chỉ đổi bậc khi độ phân giải canvas (dpr) đổi hẳn
+    const bac = Math.log2(A * heZoom) * 2;
     if (this.oNenBac === null || Math.abs(bac - this.oNenBac) > 0.75) {
       if (this.oNenBac !== null && this.oNen.size) {
         if (this.oNenCu) this.traO(this.oNenCu.o);
@@ -819,9 +819,7 @@ export class VeCanvas {
     const trongVuon =
       -cam.x / cam.k >= -e && -cam.y / cam.k >= -e && (c.W - cam.x) / cam.k <= c.MAP + e && (c.H - cam.y) / cam.k <= c.MAP + e;
     if (c.banDoVan !== 'sa' || trongVuon) return;
-    // Vực đen phủ cả canvas (kể cả hàng điểm ảnh lẻ ở mép do làm tròn)
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    // Vực đen là màu nền CSS của canvas (canvas.canvas-nen), không tô
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
     ctx.beginPath();
     ctx.rect(0, 0, c.W, c.H);
