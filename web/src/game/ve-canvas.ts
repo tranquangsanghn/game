@@ -1519,7 +1519,7 @@ export class VeCanvas {
       ctx.textBaseline = 'bottom';
       ctx.lineWidth = 3;
       ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-      const chu = `${an ? '🫘 ' : ''}${Math.round(ce.hp)}${suc > 1.001 ? `  ⚔x${suc.toFixed(1)}` : ''}${ce.satDau ? `  ⚔+${ce.satDau}` : ''}`;
+      const chu = `${an ? '🫘 ' : ''}${Math.round(ce.hp)}${suc > 1.001 ? `  ⚔x${suc.toFixed(2)}` : ''}${ce.satDau ? `  ⚔+${ce.satDau}` : ''}`;
       ctx.strokeText(chu, 0, -9);
       ctx.fillStyle = '#fff';
       ctx.fillText(chu, 0, -9);

@@ -53,8 +53,8 @@ export const CELL_TOC = [105, 127.5, 150, 180, 300];
  */
 /** Mọi Cell ăn một hạt đậu thần: +CELL_DAU_SAT sát thương cộng thẳng vào mỗi đòn đấm / đá / chưởng (Cell không có mana nên hơn Mabu / Zinbu 2) */
 export const CELL_DAU_SAT = 12;
-/** Mỗi hạt đậu thần còn cộng sức mạnh `suc` +CELL_DAU_SUC (nhân sát thương gốc đấm / đá / chưởng, cộng dồn, không giới hạn) */
-export const CELL_DAU_SUC = 0.1;
+/** Mỗi hạt đậu thần còn cộng sức mạnh `suc` +CELL_DAU_SUC theo cấp (nhân sát thương gốc đấm / đá / chưởng, cộng dồn, không giới hạn): Cell đỏ (cấp 4) 0,15, còn lại 0,1 */
+export const CELL_DAU_SUC = [0.1, 0.1, 0.1, 0.1, 0.15];
 export const CELL_AN_TAM = 700;
 export const CELL_AN_TRON = 1500;
 /** Con đi ăn đậu gặp nhân vật (gần hơn `CELL_AN_GAP`, nhân vật nhìn thấy nó) thì dịch chuyển tức thời tới chỗ trên đảo xa mọi nhân vật nhất để trốn; hồi `CELL_AN_DICH_HOI` giây */

@@ -1640,9 +1640,9 @@ export class Game {
           // Như Mabu / Zinbu: +DAU_MAU máu; Cell không có mana nên sát thương cộng thêm nhiều hơn (CELL_DAU_SAT mỗi đòn, không giới hạn)
           ce.hp += DAU_MAU;
           ce.satDau = (ce.satDau ?? 0) + CELL_DAU_SAT;
-          ce.suc = (ce.suc ?? 1) + CELL_DAU_SUC;
+          ce.suc = (ce.suc ?? 1) + CELL_DAU_SUC[ce.cap]!;
           const t = this.tamCell(ce);
-          this.chu.push({ id: this.id++, x: t.x, y: t.y - 90, text: `🫘 CELL ĂN ĐẬU THẦN +${DAU_MAU} ❤ +${CELL_DAU_SAT} ⚔ SỨC MẠNH x${ce.suc.toFixed(1)}`, mau: '#7be04a', t: 0 });
+          this.chu.push({ id: this.id++, x: t.x, y: t.y - 90, text: `🫘 CELL ĂN ĐẬU THẦN +${DAU_MAU} ❤ +${CELL_DAU_SAT} ⚔ SỨC MẠNH x${ce.suc.toFixed(2)}`, mau: '#7be04a', t: 0 });
           this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
           continue;
         }
