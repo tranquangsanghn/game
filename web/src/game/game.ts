@@ -2117,6 +2117,12 @@ export class Game {
     return daoCua(song.reduce((t, n) => t + n.x, 0) / song.length, song.reduce((t, n) => t + n.y, 0) / song.length);
   }
 
+  /** Số Cell còn sống trên đảo hiện tại (`daoHienTai`) */
+  get soCellDao(): number {
+    const d = this.daoHienTai;
+    return this.cell.filter((c) => !c.chet && this.daoCell(c) === d).length;
+  }
+
   /** Nhân vật còn sống nào cũng đang ngoài vườn gà (ở đảo / trên biển): hiệu ứng của vườn gà tắt, avatar trên thanh đen là Cell đỏ */
   get trenDao(): boolean {
     if (banDoHt !== 'sa') return false;

@@ -1524,7 +1524,17 @@ export class VeCanvas {
     ctx.restore();
 
     // Ở đảo: không có số lượng gà, không có chiêu của gà (chỉ còn avatar Cell)
-    if (c.trenDao) return;
+    if (c.trenDao) {
+      // Số Cell còn lại trên đảo hiện tại, ngay trên đầu avatar
+      ctx.save();
+      ctx.font = `700 18px ${FONT}`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffd27a';
+      ctx.fillText('Cell còn lại', c.GIUA, -42);
+      ctx.fillText(`${c.soCellDao}`, c.GIUA, -20);
+      ctx.restore();
+      return;
+    }
     ctx.font = `700 18px ${FONT}`;
     ctx.fillStyle = '#ffd27a';
     ctx.fillText('Gà con', c.GIUA + 175, -42);
