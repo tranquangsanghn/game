@@ -32,6 +32,10 @@ export const CELL_LUC = [0.75, 0.75, 0.75, 0.125, 2.5];
 export const CELL_HP = [600, 600, 600, 75, 1500];
 /** Sát thương gốc một đòn đấm / đá (nhân vật nhận sau giảm 50%, vẫn né 25%) */
 export const CELL_SAT = [45, 45, 45, 25, 60];
+/** Tỉ lệ né đòn của nhân vật (cấp 3, đảo 4: né 25% như Mabu / Zinbu) */
+export const CELL_NE = [0, 0, 0, 0.25, 0];
+/** Số con tách đàn khi xuất trận (cấp 3, đảo 4: 2 con tách đàn cùng đuổi một người, cả đàn còn lại đuổi người kia) */
+export const CELL_TACH_SO = [1, 1, 1, 2, 1];
 /** Tốc độ thật (px/s) */
 export const CELL_TOC = [70, 85, 100, 120, 150];
 /** Số giây giữa 2 đòn đấm / đá */
