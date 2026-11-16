@@ -239,9 +239,6 @@ const VUNG_Y = 660;
 // Khoảng cách tối đa giữa 2 nhân vật (đơn vị bản đồ), vượt quá thì bị chặn lại như dây buộc
 const MAX_DX = VUNG_X / ZOOM_MIN;
 const MAX_DY = VUNG_Y / ZOOM_MIN;
-// Đi bộ ngoài vườn gà (đảo, núi): camera giữ cố định ZOOM (chỉ máy bay mới đổi zoom) nên dây buộc ngắn lại cho vừa khung nhìn
-const MAX_DX_DAO = VUNG_X / ZOOM;
-const MAX_DY_DAO = VUNG_Y / ZOOM;
 // Sprite pixel art phóng to S_NV lần, không ép dẹt để giữ nét
 const S_NV = 2.8;
 const S_GA = 0.9;
@@ -2311,10 +2308,8 @@ export class Game {
     const ty = (a.y + b.y) / 2 - MB_NANG * zb * 0.5;
     const dx = Math.abs(a.x - b.x);
     const dy = Math.abs(a.y - b.y);
-    // Đi bộ ngoài vườn gà: zoom cố định (ô nền đảo không phải dựng lại); trong vườn hai người xa nhau thì thu nhỏ như cũ; máy bay lùi ra
-    const tz = this.zoomCoDinh()
-      ? ZOOM
-      : kep(Math.min(ZOOM, dx > 1 ? VUNG_X / dx : ZOOM, dy > 1 ? VUNG_Y / dy : ZOOM), ZOOM_MIN, ZOOM) * (1 - (1 - MB_ZOOM) * zb);
+    // Hai người xa nhau thì thu nhỏ (cả vườn gà lẫn đảo), máy bay lùi ra; ô nền đảo dựng theo zoom gốc nên đổi zoom không phải dựng lại
+    const tz = kep(Math.min(ZOOM, dx > 1 ? VUNG_X / dx : ZOOM, dy > 1 ? VUNG_Y / dy : ZOOM), ZOOM_MIN, ZOOM) * (1 - (1 - MB_ZOOM) * zb);
     const kv = ngay ? 1 : 1 - Math.exp(-dt * 6);
     const kz = ngay ? 1 : 1 - Math.exp(-dt * 3);
     this.camZ += (tz - this.camZ) * kz;
@@ -2536,7 +2531,7 @@ export class Game {
     const ma = Math.hypot(a.x - truoc[0].x, a.y - truoc[0].y);
     const mb = Math.hypot(b.x - truoc[1].x, b.y - truoc[1].y);
     const sa = ma + mb > 0.01 ? ma / (ma + mb) : 0.5;
-    for (const [k, max] of [['x', this.dayX()], ['y', this.dayY()]] as const) {
+    for (const [k, max] of [['x', MAX_DX], ['y', MAX_DY]] as const) {
       const d = a[k] - b[k];
       const thua = Math.abs(d) - max;
       if (thua <= 0) continue;
@@ -2546,17 +2541,6 @@ export class Game {
     }
   }
 
-  /** Đang đi bộ ngoài vườn gà (đảo / núi), không ai ngồi máy bay: zoom cố định ZOOM */
-  private zoomCoDinh(): boolean {
-    if (banDoHt !== 'sa' || this.nguoi.some((_, i) => this.trongMb(i))) return false;
-    return this.nguoi.some((n) => !n.vang && !trongVuon(n.x, n.y));
-  }
-  private dayX(): number {
-    return this.zoomCoDinh() ? MAX_DX_DAO : MAX_DX;
-  }
-  private dayY(): number {
-    return this.zoomCoDinh() ? MAX_DY_DAO : MAX_DY;
-  }
   /** Zoom gốc khi đi bộ (ve-canvas dựng ô nền đảo theo mức này, máy bay zoom ra chỉ thu nhỏ ô đã dựng) */
   readonly zoomGoc = ZOOM;
 
@@ -2568,7 +2552,7 @@ export class Game {
   get tetDo(): number {
     const [a, b] = this.nguoi;
     if (a.vang || b.vang) return 0;
-    return Math.max(Math.abs(a.x - b.x) / this.dayX(), Math.abs(a.y - b.y) / this.dayY());
+    return Math.max(Math.abs(a.x - b.x) / MAX_DX, Math.abs(a.y - b.y) / MAX_DY);
   }
 
   // Vị trí nhân vật trên màn hình (toạ độ khung W×H)
@@ -4963,8 +4947,8 @@ export class Game {
     const le = leNhanVat(n.nv.heSoTo);
     // Dây buộc chỉ áp khi người kia có mặt (chơi 1 người thì không bị giữ quanh nhân vật vắng mặt)
     let dich = o.vang ? { x, y } : {
-      x: kep(x, o.x - this.dayX(), o.x + this.dayX()),
-      y: kep(y, o.y - this.dayY(), o.y + this.dayY()),
+      x: kep(x, o.x - MAX_DX, o.x + MAX_DX),
+      y: kep(y, o.y - MAX_DY, o.y + MAX_DY),
     };
     giuTrongMap(dich, le, false, vungCua(n));
     let d = Math.hypot(dich.x - n.x, dich.y - n.y);
