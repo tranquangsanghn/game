@@ -130,6 +130,8 @@ export class DoHieuNang {
     if (cu && cu.s > 0) {
       if (ram !== undefined && cu.ram !== undefined && ram - cu.ram > 40) canh.push(`RAM tăng ${tron(ram - cu.ram)}MB trong 60s (${cu.ram} → ${ram}MB)`);
       for (const k in dem) {
+        // Toạ độ / độ phân giải / FPS mục tiêu không phải cỡ mảng
+        if (k === 'x' || k === 'y' || k === 'dpr' || k === 'fpsMucTieu') continue;
         const a = cu.dem[k], b = dem[k];
         if (typeof a === 'number' && typeof b === 'number' && b > 100 && b > a * 2) canh.push(`mảng ${k} tăng ${a} → ${b} trong 60s`);
       }

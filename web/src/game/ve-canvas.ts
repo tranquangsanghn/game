@@ -6,7 +6,7 @@ import { CELL_SO_DAO, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG,
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { MABU } from './nhan-vat-du-lieu';
-import { DAO, duongBo, NUI, TG } from './ban-do';
+import { DAO, doSau, duongBo, NUI, TG } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
 // Toạ độ vẽ giữ nguyên như bản SVG cũ: viewBox (-SIDE, -BAR, W + 2·SIDE, H + BAR), căn giữa, giữ tỉ lệ.
@@ -106,6 +106,10 @@ const SA_VACH_CAO = 120;
 const SA_VACH_SAU = 190;
 const SA_VIEN = 22;
 const SA_O_DOAN = 1600;
+/** Ô ảnh nền đảo dựng sẵn (veDaoO): cạnh O_NEN_PX điểm ảnh, giữ tối đa O_NEN_MAX ô, mỗi khung dựng tối đa O_NEN_TAO ô mới */
+const O_NEN_PX = 512;
+const O_NEN_MAX = 24;
+const O_NEN_TAO = 2;
 /** Núi đá (cắt từ ảnh người dùng gửi bằng tools/tao-atlas-nui-da.py): mặt đá lặp, vách lặp, atlas tảng đá (neo giữa đáy, loai 1..8).
  *  Cả khối là một elip (NUI trong ban-do.ts) vẽ bằng vài lệnh ellipse: vách dời xuống NUI_VACH_CAO (mesa cao hơn đảo), dưới nữa sẫm tới NUI_VACH_SAU */
 const NUI_A = 'assets/game/nui/';
@@ -142,6 +146,10 @@ export class VeCanvas {
   /** Đường bờ cắt thành từng đoạn theo ô SA_O_DOAN (kèm khung bao): stroke chỉ ghép các đoạn trong khung nhìn (stroke cả đường bờ mỗi khung rất tốn) */
   private doanBo: { p: Path2D; x0: number; y0: number; x1: number; y1: number }[] = [];
   private mauNui: { dat: CanvasPattern; vach: CanvasPattern } | null = null;
+  /** Ô ảnh nền đảo theo khoá i·100003 + j (cv null = ô trống), bậc tỉ lệ hiện tại (2·log2) và số khung để bỏ ô cũ */
+  private oNen = new Map<number, { cv: HTMLCanvasElement | null; dung: number }>();
+  private oNenBac: number | null = null;
+  private oNenKhung = 0;
   private mauTuong: { mat: CanvasPattern; gach: CanvasPattern; vienNgang: CanvasPattern; vienDoc: CanvasPattern } | null = null;
   private anh = new Map<string, HTMLImageElement>();
   // Atlas đã nhuộm sẵn theo bộ lọc màu (nháy sáng, đen, vàng, đỏ…): nhuộm cả atlas MỘT lần rồi dùng lại.
@@ -276,7 +284,7 @@ export class VeCanvas {
 
   /** Cỡ các bộ nhớ đệm ảnh (cho bộ đo hiệu năng) */
   thongKe(): Record<string, number> {
-    return { dmAnh: this.anh.size, dmNhuom: this.nhuom.size, dmMip: this.mip.size, dmElip: this.elip.size };
+    return { dmAnh: this.anh.size, dmNhuom: this.nhuom.size, dmMip: this.mip.size, dmElip: this.elip.size, dmONen: this.oNen.size };
   }
 
   // ─── Thế giới (trong nhóm camera) ───
@@ -502,7 +510,6 @@ export class VeCanvas {
     }
     if (!this.mauNui) this.taoMauNui(ctx);
     const m = this.mauNui;
-    const bo = this.bo;
     const cam = c.gocCamera();
     const x0 = -cam.x / cam.k - 40, x1 = (c.W - cam.x) / cam.k + 40;
     const y0 = -cam.y / cam.k - 40, y1 = (c.H - cam.y) / cam.k + 40;
@@ -510,27 +517,41 @@ export class VeCanvas {
     ctx.fillStyle = '#000';
     ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
     ctx.imageSmoothingEnabled = true;
-    // Vách đá rơi xuống vực: phần dưới sẫm dần (một lớp nâu tối dời sâu hơn), chỉ lộ ở bờ phía nam; vườn gà cũng là khối nổi
-    const vach = (dy: number, mau: CanvasPattern | string, dao: boolean) => {
+    // Đảo + đường + núi: dán các ô ảnh dựng sẵn (thiếu ô / chưa nạp ảnh thì vẽ vector như cũ cho khung này)
+    if (c.thayDao && !this.veDaoO(ctx, x0, y0, x1, y1)) this.veLopDao(ctx, x0, y0, x1, y1);
+    // Vườn gà cũng là khối nổi: vách rơi xuống vực ở bờ nam (không chồng lên đảo vì cách xa CACH_VUON)
+    if (c.thayVuon) {
+      ctx.save();
+      ctx.translate(0, SA_VACH_SAU);
+      ctx.fillStyle = '#1e0f16';
+      ctx.fillRect(0, 0, M, M);
+      ctx.translate(0, SA_VACH_CAO - SA_VACH_SAU);
+      ctx.fillStyle = m?.vach ?? '#4a2a30';
+      ctx.fillRect(0, 0, M, M);
+      ctx.restore();
+    }
+  }
+
+  /** Lớp đảo bằng vector (vực trong suốt): vách đá rơi xuống vực (phần dưới sẫm dần, chỉ lộ ở bờ nam) → mặt đá → viền đá → núi.
+   *  Dùng để dựng từng ô ảnh nền (veDaoO), hoặc vẽ thẳng khi ô chưa sẵn */
+  private veLopDao(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number): void {
+    const m = this.mauNui;
+    const bo = this.bo!;
+    ctx.imageSmoothingEnabled = true;
+    const vach = (dy: number, mau: CanvasPattern | string) => {
       ctx.save();
       ctx.translate(0, dy);
       ctx.fillStyle = mau;
-      if (dao) ctx.fill(bo, 'evenodd');
-      else ctx.fillRect(0, 0, M, M);
+      ctx.fill(bo, 'evenodd');
       ctx.restore();
     };
-    const lop: [boolean, boolean][] = [[c.thayDao, true], [c.thayVuon, false]];
-    for (const [hien, dao] of lop) {
-      if (!hien) continue;
-      vach(SA_VACH_SAU, '#1e0f16', dao);
-      vach(SA_VACH_CAO, m?.vach ?? '#4a2a30', dao);
-    }
-    if (!c.thayDao) return;
+    vach(SA_VACH_SAU, '#1e0f16');
+    vach(SA_VACH_CAO, m?.vach ?? '#4a2a30');
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = m?.dat ?? '#e0903a';
     ctx.fill(bo, 'evenodd');
     ctx.imageSmoothingEnabled = true;
-    // Viền đá quanh mép: chỉ stroke các đoạn bờ chạm khung nhìn (lấn thêm nửa nét)
+    // Viền đá quanh mép: chỉ stroke các đoạn bờ chạm khung (lấn thêm nửa nét)
     const LE = 60;
     const vien = new Path2D();
     for (const d of this.doanBo) {
@@ -548,6 +569,82 @@ export class VeCanvas {
     ctx.lineCap = 'butt';
     // Núi đá nối liền với đảo 0 (cùng vòng bờ cát): vẽ đè lên mặt cát / viền của vòng bờ đó
     this.veNui(ctx, x0, y0, x1, y1);
+  }
+
+  /** Dán lớp đảo từ các ô ảnh dựng sẵn (O_NEN_PX điểm ảnh mỗi cạnh, cỡ ô theo bậc √2 của tỉ lệ phóng hiện tại):
+   *  mỗi khung chỉ vài drawImage thay vì fill / stroke đường bờ cả thế giới (GPU phải dựng lại path mỗi khung, máy yếu tụt FPS dần).
+   *  Mỗi khung dựng tối đa O_NEN_TAO ô mới; còn thiếu thì trả false để vẽ vector cho khung đó. */
+  private veDaoO(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number): boolean {
+    if (!this.mauNui) return false;
+    const mt = ctx.getTransform();
+    const A = mt.a;
+    if (!(A > 0) || mt.b !== 0 || mt.c !== 0) return false;
+    // Bậc tỉ lệ có trễ: chỉ đổi khi lệch hẳn sang bậc khác, tránh dựng lại liên tục khi zoom dao động quanh ranh giới
+    const bac = Math.log2(A) * 2;
+    if (this.oNenBac === null || Math.abs(bac - this.oNenBac) > 0.75) {
+      this.oNenBac = Math.round(bac);
+      this.oNen.clear();
+    }
+    const q = 2 ** (this.oNenBac / 2);
+    const T = O_NEN_PX / q;
+    const i0 = Math.floor(x0 / T), i1 = Math.floor(x1 / T), j0 = Math.floor(y0 / T), j1 = Math.floor(y1 / T);
+    const khung = ++this.oNenKhung;
+    let tao = 0, du = true;
+    for (let j = j0; j <= j1; j++) {
+      for (let i = i0; i <= i1; i++) {
+        const khoa = i * 100003 + j;
+        let o = this.oNen.get(khoa);
+        if (!o) {
+          if (tao >= O_NEN_TAO) { du = false; continue; }
+          o = { cv: this.taoONen(i, j, T, q), dung: 0 };
+          this.oNen.set(khoa, o);
+          if (o.cv) tao++;
+        }
+        o.dung = khung;
+      }
+    }
+    // Bỏ bớt ô lâu không dùng
+    if (this.oNen.size > O_NEN_MAX) {
+      const cu = [...this.oNen.entries()].filter(([, o]) => o.dung !== khung).sort((a, b) => a[1].dung - b[1].dung);
+      for (let k = 0; k < cu.length && this.oNen.size > O_NEN_MAX; k++) this.oNen.delete(cu[k]![0]);
+    }
+    if (!du) return false;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    const ex = mt.e, ey = mt.f;
+    for (let j = j0; j <= j1; j++) {
+      const py0 = Math.round(A * j * T + ey), py1 = Math.round(A * (j + 1) * T + ey);
+      for (let i = i0; i <= i1; i++) {
+        const cv = this.oNen.get(i * 100003 + j)?.cv;
+        if (!cv) continue;
+        const px0 = Math.round(A * i * T + ex), px1 = Math.round(A * (i + 1) * T + ex);
+        ctx.drawImage(cv, px0, py0, px1 - px0, py1 - py0);
+      }
+    }
+    ctx.restore();
+    return true;
+  }
+
+  /** Dựng một ô nền đảo (ô (i, j), cạnh T đơn vị thế giới, q điểm ảnh / đơn vị); ô không có đất / vách nào thì null (không giữ ảnh) */
+  private taoONen(i: number, j: number, T: number, q: number): HTMLCanvasElement | null {
+    const x0 = i * T, y0 = j * T, x1 = x0 + T, y1 = y0 + T;
+    const LE = SA_VIEN;
+    let co = false;
+    for (const d of this.doanBo) {
+      if (d.x1 > x0 - LE && d.x0 < x1 + LE && d.y1 > y0 - SA_VACH_SAU - LE && d.y0 < y1 + LE) { co = true; break; }
+    }
+    if (!co && NUI.x + NUI.rx > x0 && NUI.x - NUI.rx < x1 && NUI.y + NUI.ry + NUI_VACH_SAU > y0 && NUI.y - NUI.ry < y1) co = true;
+    // Không chạm đoạn bờ nào: cả ô cùng là đất hoặc cùng là vực
+    if (!co && doSau(x0 + T / 2, y0 + T / 2) <= 0) return null;
+    const cv = document.createElement('canvas');
+    cv.width = O_NEN_PX;
+    cv.height = O_NEN_PX;
+    const x = cv.getContext('2d');
+    if (!x) return null;
+    x.setTransform(q, 0, 0, q, -x0 * q, -y0 * q);
+    this.veLopDao(x, x0, y0, x1, y1);
+    return cv;
   }
 
   /** Núi đá: khối mesa hình elip, chỉ vẽ khi elip (kể cả vách) chạm khung nhìn; 4 lệnh ellipse (vách sẫm, vách, mặt đá, viền) */
