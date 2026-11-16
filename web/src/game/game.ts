@@ -920,8 +920,8 @@ export class Game {
   cauView: CauTron[] = [];
   // Máy bay trong vườn gà (mayBay) và hình / số giây hồi phục để vẽ (chỉ lấy khi nằm trong khung nhìn)
   mayBay: MayBay = taoMayBay(MAP / 2, MAP / 2);
-  /** Máy bay đang trong vườn gà ở khung trước (tên cũ mbTrenDao); null = chưa biết (vừa vào ván / tải ván, không tính là vừa tới) */
-  private mbTrenDao: boolean | null = null;
+  /** Máy bay cất cánh từ trong vườn gà và chưa bay ra khỏi vườn: lần đầu bay ra thì đặt lại máu / mana rồi tắt cờ (bay ngang qua vườn không tính) */
+  private mbCatVuon = false;
   /** vận tốc máy bay khung trước (Cell bắn đón đầu) */
   private mbVx = 0;
   /** giờ game được báo lại chữ "Cell đang ngồi trên ngọc" */
@@ -1142,7 +1142,7 @@ export class Game {
     this.chonNguoiDau();
     // Máy bay đậu trong vườn gà, gần chỗ xuất phát (phía trong vườn)
     this.mayBay = taoMayBay(kep(gx + vao * 700, TUONG + MB_LE, MAP - TUONG - MB_LE), kep(gy + xuong * 380, TUONG + MB_LE, MAP - TUONG - MB_LE));
-    this.mbTrenDao = null;
+    this.mbCatVuon = false;
     this.ga = [];
     this.keoGa = [];
     this.cell = taoCell(() => this.id++);
@@ -1239,7 +1239,7 @@ export class Game {
     this.cellChuongLuc = [];
     for (const c of this.cell) { c.vai = undefined; c.muc = undefined; c.cay = undefined; c.nap = undefined; c.chien = false; if (!this.tiecCua(c)) c.tiec = false; }
     if (d.mayBay) this.mayBay = { ...taoMayBay(d.mayBay.x, d.mayBay.y), ...d.mayBay };
-    this.mbTrenDao = null;
+    this.mbCatVuon = false;
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
     // Đội hình theo nhân vật đã lưu (ván lưu cũ thiếu ki: ô trái Mabu, ô phải Zinbu)
@@ -4391,6 +4391,7 @@ export class Game {
       if (m.ngoi.length >= co && m.ngoi.length > 0) {
         m.pha = 'cat';
         m.t = 0;
+        this.mbCatVuon = banDoHt === 'sa' && trongVuon(m.x, m.y);
         this.am.phat('chuong');
         this.rungMan(0.4, 5);
         this.chu.push({ id: this.id++, x: m.x, y: m.y - 330, text: '✈ CẤT CÁNH!', mau: '#ffd23f', t: 0 });
@@ -4421,10 +4422,10 @@ export class Game {
       m.x = kep(m.x, TG.x0 + MB_LE, TG.x1 - MB_LE);
       m.y = kep(m.y, TG.y0 + MB_LE, TG.y1 - MB_LE);
       if (dt > 0) { this.mbVx = (m.x - x0) / dt; this.mbVy = (m.y - y0) / dt; }
-      // Bay từ vườn gà ra ngoài (qua tường vườn): máu / mana người trên máy bay đặt lại như lúc vào ván nhưng đầy bình (HP_NV, MANA_TOI_DA).
-      // Bay giữa các đảo (hay về vườn rồi bay ra lại thì tính lần mới) thì giữ nguyên máu / mana.
-      const tren = banDoHt === 'sa' && trongVuon(m.x, m.y);
-      if (!tren && this.mbTrenDao === true && banDoHt === 'sa') {
+      // Cất cánh từ trong vườn gà rồi bay ra ngoài (qua tường vườn): máu / mana người trên máy bay đặt lại đầy bình (HP_NV, MANA_TOI_DA), một lần mỗi lần cất cánh.
+      // Bay ngang qua vườn gà (không hạ cánh rồi cất cánh lại trong vườn) hay bay giữa các đảo thì giữ nguyên máu / mana.
+      if (this.mbCatVuon && !trongVuon(m.x, m.y)) {
+        this.mbCatVuon = false;
         for (const p of m.ngoi) {
           const n = this.nguoi[p];
           if (n.vang || n.het) continue;
@@ -4434,7 +4435,6 @@ export class Game {
           this.chu.push({ id: this.id++, x: m.x, y: m.y - 380 - 50 * m.ngoi.indexOf(p), text: `❤ ${n.ten} ĐẦY MÁU & MANA!`, mau: n.mau, t: 0 });
         }
       }
-      this.mbTrenDao = tren;
     } else if (m.pha === 'trung') {
       if (m.t >= MB_LUNG) this.noMb();
     } else if (m.pha === 'no' && m.t >= MB_HOI) {
