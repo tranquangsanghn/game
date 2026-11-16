@@ -23,11 +23,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: web/package-lock.json
       - run: npm ci
-      - run: npx ng build --base-href /${{ github.event.repository.name }}/
+        working-directory: web
+      - run: npm run build
+        working-directory: web
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: web/dist
 
   deploy:
     needs: build
