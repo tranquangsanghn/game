@@ -178,6 +178,8 @@ const CAY_MOC_LAI = 10;
 const CAY_TO_HE_SO = 1.8;
 const CAY_TO_MAU = 2;
 const CAY_TO_MANA = 2;
+// Cây trên đảo cát rơi táo (máu / mana) nhiều gấp từng này lần cây trong vườn gà
+const SA_TAO_NHAN = 3;
 const CAY_DO_KINH = 90;
 /** Chiều cao thân cây tính từ gốc: đòn trúng trong khoảng này phía trên gốc là trúng cây */
 const CAY_DO_CAO = 220;
@@ -1863,13 +1865,16 @@ export class Game {
         const dx = d.x1 - d.x0;
         c.huongDo = Math.abs(dx) > 20 ? Math.sign(dx) : c.lat ? -1 : 1;
         // Cây đổ có TAO_ROI cơ hội rơi 1 quả táo; rơi táo thì cây biến mất, chỉ còn quả táo ở gốc
+        // Cây trên đảo cát (`sa`): cùng hiệu ứng, nhưng táo rơi nhiều gấp SA_TAO_NHAN = 3 lần
+        const nhan = c.sa ? SA_TAO_NHAN : 1;
         if (c.to) {
           // Cây to: chắc chắn rơi 2 táo đỏ (máu) + 2 táo xanh (mana)
           c.mat = true;
-          for (let k = 0; k < CAY_TO_MAU + CAY_TO_MANA; k++) this.themVatPham(c.x + ngauNhien(-70, 70), c.y + ngauNhien(0, 50), k < CAY_TO_MAU ? 'do' : 'xanh');
+          for (let k = 0; k < CAY_TO_MAU * nhan; k++) this.themVatPham(c.x + ngauNhien(-70, 70), c.y + ngauNhien(0, 50), 'do');
+          for (let k = 0; k < CAY_TO_MANA * nhan; k++) this.themVatPham(c.x + ngauNhien(-70, 70), c.y + ngauNhien(0, 50), 'xanh');
         } else if (Math.random() < TAO_ROI) {
           c.mat = true;
-          this.themVatPham(c.x + ngauNhien(-30, 30), c.y + ngauNhien(0, 30));
+          for (let k = 0; k < nhan; k++) this.themVatPham(c.x + ngauNhien(-30, 30), c.y + ngauNhien(0, 30));
         }
         break;
       }
