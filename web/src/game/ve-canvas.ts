@@ -2,11 +2,11 @@ import type { ChuongTiec, Tiec } from './tiec';
 import { HN } from './do-hieu-nang';
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
-import { CELL_HP, CELL_SO_DAO, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
+import { CELL_HP, CELL_SO_DAO, CELL_TEN, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { MABU } from './nhan-vat-du-lieu';
-import { SP_GINYU, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_NAP, GY_LO_LUNG } from './ginyu';
+import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_NAP, GY_LO_LUNG } from './ginyu';
 import { DAO, doSau, duongBo, NUI, TG } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
@@ -1923,6 +1923,33 @@ export class VeCanvas {
     }
   }
 
+  // ─── Bảng tên quái ngay dưới nửa vòng tròn avatar: vườn gà = vua gà, đảo = Cell của đảo, núi đá = bóng ma Goku ───
+
+  private veBangTen(ctx: CanvasRenderingContext2D, c: Game, tg: Ga | null): void {
+    let ten: string;
+    let mo: boolean;
+    if (c.trenNui) { ten = GY_TEN; mo = c.ginyu.chet; }
+    else if (c.trenDao) { ten = CELL_TEN[capCuaDao(c.daoHienTai)] ?? 'Cell'; mo = c.soCellDao <= 0; }
+    else { ten = 'Vua gà'; mo = !tg; }
+    ctx.save();
+    ctx.font = `700 17px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const w = ctx.measureText(ten).width + 24;
+    const y = c.R_TUONG + 4;
+    ctx.globalAlpha = mo ? 0.45 : 0.9;
+    ctx.beginPath();
+    ctx.roundRect(c.GIUA - w / 2, y, w, 26, 13);
+    ctx.fillStyle = '#000';
+    ctx.fill();
+    ctx.strokeStyle = '#ffd27a';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = '#ffd27a';
+    ctx.fillText(ten, c.GIUA, y + 14);
+    ctx.restore();
+  }
+
   // ─── Thanh đen phía trên: chiêu của gà mẹ ───
 
   private veThanhTuong(ctx: CanvasRenderingContext2D, c: Game): void {
@@ -1958,6 +1985,7 @@ export class VeCanvas {
       this.sprite(ctx, c.SP_TUONG, tg ? c.gaKhung(tg) : 8, tg ? tg.lat : false, true, tg ? c.locGa(tg) : null);
     }
     ctx.restore();
+    this.veBangTen(ctx, c, tg);
 
     // Ở đảo: không có số lượng gà, không có chiêu của gà (chỉ còn avatar Cell)
     if (c.trenDao) {
