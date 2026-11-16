@@ -1146,7 +1146,7 @@ export class Game {
     this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham; this.ngocNhat = d.ngocNhat ?? []; this.ngocBay = []; this.cuu = d.cuu ?? [];
     this.cauTron = d.cauTron?.length ? d.cauTron.map((q, i) => ({ ...q, cua: q.cua ?? i })) : taoCauTron();
     if (d.vuon) { this.vuonNgu = d.vuon.ngu; this.toTrung = d.vuon.to; this.toDe = d.vuon.toDe; this.daNoPhu = d.vuon.daNoPhu; this.choVua = d.vuon.choVua; }
-    if (d.cell?.length) this.cell = d.cell;
+    if (d.cell?.length) this.cell = d.cell.map((c) => ({ ...c, hp: Math.min(c.hp, CELL_HP[c.cap]!) }));
     this.tiec = Array.isArray(d.tiec) ? d.tiec : [];
     this.chuongTiec = [];
     // Tiệc không còn tan hẳn (ván lưu cũ có thể có on = false): Cell về vòng tiệc, đội hình dựng lại từ đầu
