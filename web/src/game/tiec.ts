@@ -50,7 +50,7 @@ export interface Tiec {
 /** Hạ hết sạch Cell rồi bắn chưởng vào các bánh sinh nhật: mỗi phát làm nổ một bánh, bánh cuối cùng hoá ngọc rồng 2 sao */
 export const NGOC_TIEC_SAO = 2;
 /** Chưởng đang bay từ Cell tới bánh (chỉ để đẹp) hoặc tới nhân vật (chưởng chiến đấu: có `sat`, `cap`; đầu chùm tới nơi thì ai nằm trên chùm bị trúng). Không lưu ván. */
-export interface ChuongTiec { id: number; x0: number; y0: number; x1: number; y1: number; t: number; k: number; loai: number; sat?: number; cap?: number }
+export interface ChuongTiec { id: number; x0: number; y0: number; x1: number; y1: number; t: number; k: number; loai: number; sat?: number; cap?: number; /** chưởng của Cell đi ăn đậu: chỉ số cây đích, tới nơi thì cây đổ */ cay?: number }
 
 /** Vị trí Cell trên vòng quanh bánh (vòng gần tròn, hơi dẹt theo chiều dọc) */
 export const viTriVong = (tc: Tiec, goc: number) => ({ x: tc.x + Math.cos(goc) * tc.bk, y: tc.y + Math.sin(goc) * tc.bk * 0.9 });

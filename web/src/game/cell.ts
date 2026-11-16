@@ -46,6 +46,14 @@ export const CELL_TACH_SO = [1, 1, 2, 2, 1];
 /** Tốc độ thật (px/s) */
 /** Tốc độ chạy theo cấp: Cell thường nhanh gấp 1,5 so với gốc (70, 85, 100, 120), Cell đỏ gấp 2 (150) */
 export const CELL_TOC = [105, 127.5, 150, 180, 300];
+/**
+ * Con đi ăn đậu (Cell cấp 0–3, `vai: 'an'`): đội xuất trận thì ngoài con tách đàn, cả đàn cử 1 con trốn đi bắn cây trên đảo cho rơi đậu thần rồi ăn
+ * (mỗi hạt +DAU_MAU máu như Mabu / Zinbu và sức mạnh +`CELL_DAU_SUC`); chỉ khi trên đảo không còn Cell nào khác nó mới đi đánh.
+ * `CELL_AN_TAM`: đứng cách cây trong tầm này thì bắn; `CELL_AN_TRON`: nhân vật gần hơn tầm này thì nó chạy ra xa.
+ */
+export const CELL_DAU_SUC = 0.2;
+export const CELL_AN_TAM = 700;
+export const CELL_AN_TRON = 1500;
 /** Cell đỏ tung chưởng (hào quang → phóng, chùm bay) nhanh hơn 30% */
 export const CELL_DO_NHANH = 1.3;
 /** Số giây giữa 2 đòn đấm / đá */
@@ -122,8 +130,10 @@ export interface Cell {
   nap?: number;
   /** loại chưởng sắp phóng trong chu trình hiện tại (0 xanh · 1 vàng · 2 tím) */
   loaiChuong?: number;
-  /** Chiến đấu theo đội: 'tach' = con tách đàn (đuổi một người), 'dan' = cả đàn (đuổi người còn lại); không có = dự tiệc / về tiệc */
-  vai?: 'tach' | 'dan';
+  /** Chiến đấu theo đội: 'tach' = con tách đàn (đuổi một người), 'dan' = cả đàn (đuổi người còn lại), 'an' = con đi bắn cây ăn đậu thần (trốn, không đánh); không có = dự tiệc / về tiệc */
+  vai?: 'tach' | 'dan' | 'an';
+  /** con 'an': chỉ số cây (trong `trangTri`) đang nhắm bắn */
+  cay?: number;
   /** nhân vật đang đuổi (chỉ số người chơi); MUC_MB = bắn máy bay có Mabu / Zinbu ngồi */
   muc?: number;
   /** đang vận chưởng chiến đấu (c.nap chạy như tiệc nhưng bắn vào nhân vật) */

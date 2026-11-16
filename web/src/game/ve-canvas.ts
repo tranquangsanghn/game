@@ -1489,8 +1489,10 @@ export class VeCanvas {
       ctx.fillText(ce.id % 2 ? '♪' : '♫', Math.sin(ph) * 6, -64 - 4 * Math.abs(Math.sin(ph)));
     }
     ctx.restore();
-    // Chỉ Cell đỏ (cấp cao nhất) có thanh máu trên đầu, kiểu như gà tướng; ăn quá máu tối đa thì thanh tính theo máu hiện có
-    if (ce.cap === SO_CAP - 1 && !ce.chet) {
+    // Thanh máu trên đầu (kiểu như gà tướng) chỉ có ở Cell đỏ (cấp cao nhất) và con đi ăn đậu thần (`vai: 'an'`, thanh xanh lá), kèm số máu
+    // (và sức mạnh khi đã ăn thêm); ăn quá máu tối đa thì thanh tính theo máu hiện có
+    const an = ce.vai === 'an';
+    if ((ce.cap === SO_CAP - 1 || an) && !ce.chet) {
       const toiDa = Math.max(CELL_HP[ce.cap]!, ce.hp);
       ctx.save();
       ctx.translate(ce.x, ce.y - (c.cellNgoiNgoc(ce) ? CELL_NGOI_NANG : 0) - CELL_THANH_CAO * k);
@@ -1499,8 +1501,18 @@ export class VeCanvas {
       ctx.fillStyle = 'rgba(13,27,18,0.75)';
       ctx.fill();
       tronCD(ctx, -31, -3, Math.min(62, Math.max(0, (62 * ce.hp) / toiDa)), 6, 3);
-      ctx.fillStyle = '#ff4a2e';
+      ctx.fillStyle = an ? '#5fd13a' : '#ff4a2e';
       ctx.fill();
+      const suc = ce.suc ?? 1;
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+      const chu = `${an ? '🫘 ' : ''}${Math.round(ce.hp)}${suc > 1.001 ? `  ⚔x${suc.toFixed(1)}` : ''}`;
+      ctx.strokeText(chu, 0, -8);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(chu, 0, -8);
       ctx.restore();
     }
   }
