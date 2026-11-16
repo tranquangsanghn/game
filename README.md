@@ -78,6 +78,10 @@ Sprite gà lấy từ `tools/ga-goc.png`; chạy `python3 tools/tao-atlas-ga.py`
 
 Kỷ lục lưu trong `localStorage` của trình duyệt.
 
+## Đo hiệu năng
+
+Mở game với `?doHieuNang` ở cuối đường dẫn (ví dụ `…/game/?doHieuNang`). Góc trên phải hiện bảng đo (bấm để thu gọn): FPS, thời gian từng phần logic / vẽ, số vật, RAM, cảnh báo bất thường. Log mỗi giây được giữ khoảng 10 phút gần nhất (còn cả khi tải lại trang); bấm **Tải log** để lấy file JSON.
+
 ## Nhúng vào trang khác (iframe)
 
 Khi người chơi bấm Đóng, game gửi `postMessage('chicken-shooting-game:dong')` lên trang cha để trang cha tự đóng khung iframe.

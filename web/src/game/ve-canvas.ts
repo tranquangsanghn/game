@@ -1,4 +1,5 @@
 import type { ChuongTiec, Tiec } from './tiec';
+import { HN } from './do-hieu-nang';
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
 import { CELL_SO_DAO, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
@@ -233,7 +234,9 @@ export class VeCanvas {
     ctx.filter = 'none';
     ctx.lineJoin = 'miter';
     ctx.lineCap = 'butt';
+    HN.moc('ve.xoa');
     if (ctxNen) this.veNenRieng(ctxNen, c, dprNen);
+    HN.moc('ve.nenDao');
     // Canvas chính trong suốt trong map (nền cát / biển ở canvas riêng bên dưới); chỉ tô đen thanh trên và hai thanh bên
     ctx.fillStyle = '#000';
     if (ctxNen) {
@@ -252,7 +255,9 @@ export class VeCanvas {
     ctx.scale(cam.k, cam.k);
     this.veTheGioi(ctx, c);
     ctx.restore();
+    HN.moc('ve.theGioi');
     if (c.banDoNho) this.veBanDoNho(ctx, c, c.banDoNho);
+    HN.moc('ve.banDoNho');
 
     if (c.doHoangHon > 0) {
       ctx.globalAlpha = c.doHoangHon * 0.6;
@@ -266,6 +271,12 @@ export class VeCanvas {
     this.veThanhTuong(ctx, c);
     this.veNgocTrenBang(ctx, c);
     if (c.man === 'play' || c.man === 'pause') this.veHud(ctx, c);
+    HN.moc('ve.hud');
+  }
+
+  /** Cỡ các bộ nhớ đệm ảnh (cho bộ đo hiệu năng) */
+  thongKe(): Record<string, number> {
+    return { dmAnh: this.anh.size, dmNhuom: this.nhuom.size, dmMip: this.mip.size, dmElip: this.elip.size };
   }
 
   // ─── Thế giới (trong nhóm camera) ───
@@ -684,6 +695,7 @@ export class VeCanvas {
       this.veTuong(ctx, c);
     }
 
+    HN.moc('ve.nenVuon');
     for (const v of c.vetView) {
       const k = v.t / (v.loai === 'chay' ? 0.7 : 0.45);
       ctx.save();
@@ -783,6 +795,7 @@ export class VeCanvas {
       else this.veVatPham(ctx, v);
     }
 
+    HN.moc('ve.vetTrungVp');
     // Gà dưới đất + nhân vật, xếp theo y
     for (const o of c.xep) {
       if (o.loai === 'ga') this.veGa(ctx, c, o.ga);
@@ -808,6 +821,7 @@ export class VeCanvas {
       else if (o.loai === 'mb') this.veMayBay(ctx, c);
       else this.veNhanVat(ctx, c, o.p);
     }
+    HN.moc('ve.xep');
     for (const g of c.gaBayView) this.veGa(ctx, c, g);
     this.veMbDem(ctx, c);
 
@@ -821,6 +835,7 @@ export class VeCanvas {
     for (let p = 0; p < c.nguoi.length; p++) this.veThanhTrenDau(ctx, c, p);
     for (const g of c.tuongView) this.veMauTuong(ctx, c, g);
 
+    HN.moc('ve.gaBayTiecThanh');
     // Đạn / chưởng
     for (const d of c.danView) {
       if (!d.to) continue;

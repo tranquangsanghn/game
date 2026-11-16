@@ -3,6 +3,7 @@ import { VeCanvas } from './ve-canvas';
 import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, NHAN_VAT } from './nhan-vat-du-lieu';
+import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, doSau, trongNui, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
@@ -1382,6 +1383,7 @@ export class Game {
       return;
     }
     this.khungTiep = Math.max(this.khungTiep + cach, now);
+    HN.batDauKhung(now);
     const dt = Math.min(0.05, (now - this.lanCuoi) / 1000);
     // Đếm FPS thật (số khung hình vẽ ra mỗi giây), cập nhật mỗi 0.5 giây
     this.fpsDem++;
@@ -1393,6 +1395,7 @@ export class Game {
     }
     this.lanCuoi = now;
     this.docTayCam();
+    HN.moc('tayCam');
     if (this.man !== 'pause') {
       this.t += dt;
       if (this.man === 'play') {
@@ -1403,16 +1406,36 @@ export class Game {
       }
       else this.nguoi.forEach((n) => this.capNhatNhanVat(n, dt));
       this.capNhatView(dt);
+      HN.moc('view');
     }
     this.am.nhacNen(this.man === 'play', this.trenDao && !this.trenNui);
     if (this.ctx) this.ve.ve(this.ctx, this, this.dpr, this.ctxNen, NEN_TL);
     // Màn chơi chỉ vẽ canvas; phần HTML (màn bắt đầu / tạm dừng / kết thúc, nút) chỉ cập nhật khi cần
     if (this.man !== 'play' || this.manDaVe !== this.man) this.onManPhu();
     this.manDaVe = this.man;
+    HN.moc('manPhu');
+    HN.ketKhung(now, () => this.thongKeHieuNang());
     this.rafId = requestAnimationFrame(this.vongLap);
   };
 
+  /** Số liệu cho bộ đo hiệu năng (HN, chỉ gọi mỗi giây khi bật ?doHieuNang): cỡ mọi mảng của game (tự bắt mảng mới), bộ nhớ đệm ảnh, vùng */
+  private thongKeHieuNang(): Record<string, number | string | boolean> {
+    const kq: Record<string, number | string | boolean> = {};
+    for (const [k, v] of Object.entries(this)) if (Array.isArray(v)) kq[k] = v.length;
+    Object.assign(kq, this.ve.thongKe());
+    kq['dpr'] = this.dpr;
+    kq['matMay'] = this.matMay;
+    kq['fpsMucTieu'] = this.matMay ? FPS_MAT : FPS_TOI_DA;
+    kq['man'] = this.man;
+    kq['vung'] = this.mayBay.ngoi.length && this.mayBay.pha !== 'dau' ? 'mayBay' : this.trenNui ? 'nui' : this.trenDao ? `dao${this.daoHienTai}` : 'vuon';
+    const n = this.nguoi.find((x) => !x.vang);
+    if (n) { kq['x'] = Math.round(n.x); kq['y'] = Math.round(n.y); }
+    kq['canvas'] = `${this.canvasEl.width}x${this.canvasEl.height}`;
+    return kq;
+  }
+
   private capNhat(dt: number): void {
+    HN.moc('cn.khac');
     this.tGame += dt;
     const k = kep(this.tGame / THOI_GIAN_HOANG_HON, 0, 1);
     this.mauHoangHon = tronMau([255, 220, 140], [255, 110, 60], k);
@@ -1425,7 +1448,9 @@ export class Game {
     this.dayCon = this.soGaCon >= GA_CON_TOI_DA;
     this.dayPhu = this.soMePhu >= ME_PHU_TOI_DA;
     this.capNhatVuon(dtE);
+    HN.moc('cn.vuon');
     this.capNhatTrungGa(dt);
+    HN.moc('cn.trung');
     this.henTuong -= dtE;
     if (this.vuonNgu || this.choVua) this.henTuong = Math.max(this.henTuong, 0.1);
     else if (this.henTuong <= 0) {
@@ -1437,24 +1462,41 @@ export class Game {
     }
     const truoc = this.nguoi.map((n) => ({ x: n.x, y: n.y }));
     this.dieuKhien(dt);
+    HN.moc('cn.dieuKhien');
     this.rangBuoc(truoc);
     // Nhân vật đi bộ / bay không đổi vùng: đang trong vườn gà thì ở lại trong vườn, đang ở đảo thì ở lại đảo (chỉ máy bay mới ra / vào vườn)
     this.nguoi.forEach((n, p) => { if (!this.trongMb(p)) giuTrongMap(n, leNhanVat(n.nv.heSoTo), !!n.bay, vungCua(truoc[p])); });
+    HN.moc('cn.nhanVat');
     this.capNhatMb(dt);
+    HN.moc('cn.mayBay');
     this.nguoi.forEach((n, p) => this.mayQuet(n, p));
+    HN.moc('cn.may');
     this.chonVay(dtE);
+    HN.moc('cn.chonVay');
     this.capNhatGa(dtE);
+    HN.moc('cn.ga');
     this.gaDanhNguoi();
+    HN.moc('cn.gaDanh');
     this.capNhatCell(dtE);
+    HN.moc('cn.cell');
     this.capNhatTiec(dtE);
+    HN.moc('cn.tiec');
     this.capNhatDan(dt);
+    HN.moc('cn.dan');
     this.capNhatKeo(dt);
+    HN.moc('cn.keo');
     this.capNhatCuu(dt);
+    HN.moc('cn.cuu');
     this.capNhatCau(dt);
+    HN.moc('cn.cau');
     this.capNhatCay();
+    HN.moc('cn.cay');
     this.capNhatVatPham(dt);
+    HN.moc('cn.vatPham');
     this.capNhatNgocTiec();
+    HN.moc('cn.ngocTiec');
     this.capNhatHieuUng(dt, dtE);
+    HN.moc('cn.hieuUng');
   }
 
   private dungKhung(giay: number): void {
