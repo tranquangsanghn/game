@@ -5,7 +5,7 @@ import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { chuanBiSaMac, daoCua, doSau, trongVuon, trongVongDao, veDat, DAO, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, type Cell } from './cell';
-import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_CHU_KY, TIEC_DI, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
+import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
@@ -3801,28 +3801,27 @@ export class Game {
     return this.tiec.find((t) => t.dao === c.dao);
   }
 
-  /** Một Cell dự tiệc: cả đội cùng đi vòng quanh bánh `TIEC_DI` = 2s (animation chạy), rồi cùng dừng: biến hình → vận nội công (hào quang) → phóng một loại chưởng ngẫu nhiên vào bánh, rồi lại đi vòng (theo giờ tiệc chung `tc.t` nên các Cell luôn cách đều nhau) */
+  /** Một Cell dự tiệc: cả đội đi vòng quanh bánh liên tục (animation chạy); cứ `TIEC_BAN_CACH` = 3s chỉ một con (lần lượt từng con) dừng chạy: biến hình → vận nội công (hào quang) → phóng một loại chưởng ngẫu nhiên vào bánh, rồi lại chạy tiếp */
   private cellTiec(c: Cell, tc: Tiec, dt: number): void {
     const k = cellK(c.cap);
     c.lat = tc.x < c.x;
-    const u = tc.t % TIEC_CHU_KY;
-    // Thời gian đã đi vòng trong (tc.t − dt, tc.t] (đúng cả khi Cell cập nhật thưa với dt dồn lại, nên các Cell vẫn cách đều nhau)
-    const daDi = (T: number) => Math.floor(T / TIEC_CHU_KY) * TIEC_DI + Math.min(((T % TIEC_CHU_KY) + TIEC_CHU_KY) % TIEC_CHU_KY, TIEC_DI);
-    const di = Math.max(0, daDi(tc.t) - daDi(tc.t - dt));
-    if (di > 0) {
-      c.goc = (c.goc ?? 0) + ((TIEC_TOC * k) / tc.bk) * di;
-      const p = viTriVong(tc, c.goc);
-      c.x = p.x; c.y = p.y;
-    }
-    if (u < TIEC_DI) {
+    c.goc = (c.goc ?? 0) + ((TIEC_TOC * k) / tc.bk) * dt;
+    const p = viTriVong(tc, c.goc);
+    c.x = p.x; c.y = p.y;
+    // Con nào tới lượt bắn: lần lượt theo thứ tự trong đội tiệc của đảo
+    const doi = this.cell.filter((q) => q.dao === c.dao && q.tiec && !q.chet);
+    const idx = doi.indexOf(c);
+    const u = tc.t % TIEC_BAN_CACH;
+    const luot = Math.floor(tc.t / TIEC_BAN_CACH) % Math.max(1, doi.length);
+    if (idx !== luot || u >= TIEC_BIEN + TIEC_AURA + TIEC_PHONG) {
       c.nap = undefined;
       c.chay = true;
-      c.lat = Math.sin(c.goc ?? 0) > 0;
+      c.lat = Math.sin(c.goc) > 0;
       return;
     }
     c.chay = false;
     const truoc = c.nap;
-    c.nap = u - TIEC_DI;
+    c.nap = u;
     if (truoc === undefined) c.loaiChuong = Math.floor(Math.random() * CHUONG_LOAI.length);
     const luc = TIEC_BIEN + TIEC_AURA;
     // Chưởng vào bánh chỉ để đẹp: không ai nhìn thấy Cell thì không tạo chùm / vụ nổ
