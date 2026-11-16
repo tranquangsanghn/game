@@ -103,6 +103,8 @@ export const CELL_CHET_T = 1.6;
 export interface Cell {
   id: number; cap: number; x: number; y: number; hx: number; hy: number;
   hp: number; lat: boolean; phase: number;
+  /** hệ số nhân sát thương (ăn socola được cộng thêm, không giới hạn; thiếu = 1) */
+  suc?: number;
   /** đang chạy (để chọn khung hình) */
   chay: boolean;
   /** điểm lang thang hiện tại và đếm ngược chọn điểm mới */

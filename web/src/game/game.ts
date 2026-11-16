@@ -78,7 +78,7 @@ export interface TrungGa {
 interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn hồi SOCOLA_GA_TI_LE máu tối đa */
-export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; /** ngọc: số sao (thiếu = 1) */ sao?: number; /** ngọc: độ to khi vẽ (thiếu = 0,55) */ to?: number; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; }
+export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; /** ngọc: số sao (thiếu = 1) */ sao?: number; /** ngọc: độ to khi vẽ (thiếu = 0,55) */ to?: number; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; /** socola: sức mạnh (nhân sát thương) người / Cell ăn được cộng thêm (thiếu thì `CELL_AN_SUC`) */ sucAn?: number; }
 interface Chu { id: number; x: number; y: number; text: string; mau: string; t: number; }
 interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay: number; vxoay: number; t: number; mau: string; }
 /** chay = cháy nổ (lửa + tia lửa); co = hệ số kích thước */
@@ -273,6 +273,11 @@ const SOCOLA_NV_MAU = 100;
 const SOCOLA_NV_MANA = 100;
 // Socola từ chiêu Biến socola của Zinbu (chưởng nổ): ăn nhận SOCOLA_AN_TI_LE máu của con gà lúc hoá socola, vào cả máu lẫn mana (đòn ăn thường vẫn theo AN_TI_LE)
 const SOCOLA_AN_TI_LE = 0.5;
+// Ăn Cell (thanh socola do Cell chết hoá ra) hoặc Cell ăn socola: nhận CELL_AN_TI_LE máu của Cell đó (vào cả máu lẫn mana với người) và CELL_AN_TI_LE sức mạnh của nó,
+// sức mạnh Cell = CELL_SAT / CELL_SUC_THAM_CHIEU (Zinbu đấm 50 = 1); không giới hạn trần
+const CELL_AN_TI_LE = 0.3;
+const CELL_SUC_THAM_CHIEU = 50;
+const CELL_AN_SUC = 0.3;
 // Gà (con, mẹ gốc, mẹ phụ) ăn socola: hồi SOCOLA_GA_TI_LE máu tối đa, sức mạnh (nhân sát thương) +SOCOLA_SUC_GA, độ to +SOCOLA_TO_GA mỗi thanh; có trần để không to vô hạn
 const SOCOLA_SUC_GA = 0.5;
 const SOCOLA_TO_GA = 0.25;
@@ -1155,7 +1160,7 @@ export class Game {
     this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham; this.ngocNhat = d.ngocNhat ?? []; this.ngocBay = []; this.cuu = d.cuu ?? [];
     this.cauTron = d.cauTron?.length ? d.cauTron.map((q, i) => ({ ...q, cua: q.cua ?? i })) : taoCauTron();
     if (d.vuon) { this.vuonNgu = d.vuon.ngu; this.toTrung = d.vuon.to; this.toDe = d.vuon.toDe; this.daNoPhu = d.vuon.daNoPhu; this.choVua = d.vuon.choVua; }
-    if (d.cell?.length) this.cell = d.cell.map((c) => ({ ...c, hp: Math.min(c.hp, CELL_HP[c.cap]!) }));
+    if (d.cell?.length) this.cell = d.cell.map((c) => ({ ...c, hp: c.suc === undefined ? Math.min(c.hp, CELL_HP[c.cap]!) : c.hp }));
     this.tiec = Array.isArray(d.tiec) ? d.tiec : [];
     this.chuongTiec = [];
     // Tiệc không còn tan hẳn (ván lưu cũ có thể có on = false): Cell về vòng tiệc, đội hình dựng lại từ đầu
@@ -1483,7 +1488,7 @@ export class Game {
       if (n) {
         this.am.phat('anTao');
         if (v.loai === 'socola') {
-          this.anSocola(n, v.luong);
+          this.anSocola(n, v.luong, v.sucAn);
         } else if (xanh) {
           this.hoiDayMana(n);
           this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${VP_MANA} mana`, mau: '#2fa8ff', t: 0 });
@@ -1493,6 +1498,20 @@ export class Game {
         }
         this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
         continue;
+      }
+      // Cell đi qua cũng ăn socola: +CELL_AN_TI_LE máu của con đã hoá socola và +sức mạnh (không giới hạn)
+      if (v.loai === 'socola') {
+        const ce = this.cell.find((c) => !c.chet && !((c.socola ?? 0) > 0) && Math.hypot(c.x - v.x, c.y - v.y) < CELL_BK * cellK(c.cap));
+        if (ce) {
+          const hoi = Math.max(1, Math.round((v.hpGa ?? HP_GA) * CELL_AN_TI_LE));
+          const them = v.sucAn ?? CELL_AN_SUC;
+          ce.hp += hoi;
+          ce.suc = (ce.suc ?? 1) + them;
+          const t = this.tamCell(ce);
+          this.chu.push({ id: this.id++, x: t.x, y: t.y - 90, text: `🍫 CELL ĂN +${hoi} ❤ SỨC MẠNH +${Math.round(them * 100)}%`, mau: '#c98a4b', t: 0 });
+          this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
+          continue;
+        }
       }
       // Gà đi qua chỉ mổ ăn táo đỏ (táo xanh gà không ăn): hồi VP_HOI máu, không có trần. Socola thì mọi gà (con, mẹ gốc, mẹ phụ) đều ăn
       const socola = v.loai === 'socola';
@@ -1520,11 +1539,15 @@ export class Game {
   }
 
   // Socola: cộng máu và mana (không giới hạn), mở khoá bay, rồi tự bắn chưởng lên trời
-  private anSocola(n: NguoiChoi, luong?: number): void {
+  private anSocola(n: NguoiChoi, luong?: number, sucAn?: number): void {
     const mau = luong ?? SOCOLA_NV_MAU;
     const mana = luong ?? SOCOLA_NV_MANA;
     this.hoiMau(n, mau);
     this.hoiMana(n, mana);
+    if (sucAn) {
+      n.suc += sucAn;
+      this.chu.push({ id: this.id++, x: n.x, y: n.y - 310, text: `💪 SỨC MẠNH +${Math.round(sucAn * 100)}%`, mau: '#ff9f1a', t: 0 });
+    }
     n.bayKhoa = 0;
     this.chu.push({ id: this.id++, x: n.x, y: n.y - 250, text: `🍫 +${mau} ❤ +${mana} mana`, mau: '#c98a4b', t: 0 });
     this.chuongLenTroi(this.nguoi.indexOf(n));
@@ -3443,8 +3466,10 @@ export class Game {
     if (soc) {
       const v = { x: c.x, y: c.y };
       giuTrongMap(v, LE_VP);
-      const luong = Math.max(1, Math.round(Math.max(0, hp0) * SOCOLA_AN_TI_LE));
-      this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'socola', luong, hpGa: CELL_HP[c.cap]! });
+      // Ăn Cell: nhận 30% máu (tối đa) và 30% sức mạnh của con Cell này
+      const luong = Math.max(1, Math.round(CELL_HP[c.cap]! * (c.suc ?? 1) * CELL_AN_TI_LE));
+      const sucAn = (CELL_SAT[c.cap]! / CELL_SUC_THAM_CHIEU) * (c.suc ?? 1) * CELL_AN_TI_LE;
+      this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'socola', luong, hpGa: CELL_HP[c.cap]!, sucAn });
       c.tChet = CELL_CHET_T;
     }
     this.vet.push({ id: this.id++, x: c.x, y: tam.y, t: 0, loai: 'chay', co: 0.5 + c.cap * 0.15 });
@@ -3705,7 +3730,7 @@ export class Game {
     if (d < cham && c.choDanh <= this.t && !ke.nv.khoa) {
       c.choDanh = this.t + CELL_HOI[c.cap]!;
       c.danh = CELL_DANH_T;
-      this.nhanSatThuong(ke, CELL_SAT[c.cap]!);
+      this.nhanSatThuong(ke, Math.round(CELL_SAT[c.cap]! * (c.suc ?? 1)));
     }
     // Chạy tới: con tách đàn lao thẳng, cả đàn đứng vây quanh mỗi con một góc
     const vay = c.vai === 'dan' || (doi?.tach.length ?? 0) > 1;
@@ -3746,7 +3771,7 @@ export class Game {
       this.chuongTiec.push({
         id: this.id++, k, loai: c.loaiChuong ?? 0, x0: hx, y0: hy,
         x1: hx + ((tx - hx) / dd) * dai, y1: hy + ((ty - hy) / dd) * dai, t: 0,
-        sat: CELL_CHUONG_SAT[c.cap]!, cap: c.cap,
+        sat: Math.round(CELL_CHUONG_SAT[c.cap]! * (c.suc ?? 1)), cap: c.cap,
       });
       this.vetGa({ id: this.id++, x: hx, y: hy, t: 0, loai: 'chay', co: 0.25 + 0.05 * k });
     }
