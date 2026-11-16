@@ -396,11 +396,13 @@ const VP_HOI = 100;
 const VP_MANA = 80;
 const VP_BAN_KINH = 90;
 // Hạt đậu thần (loai 'dau', chỉ rơi từ cây trên đảo cát): ăn +DAU_MAU máu và +DAU_MANA mana (không giới hạn, mở khoá bay), Mabu / Zinbu và Cell đều ăn được, gà không ăn
-const DAU_MAU = 150;
+const DAU_MAU = 300;
 // Cell tự hồi máu mỗi giây: Cell thường / Cell to nhất (đảo giữ ngọc rồng, cấp 4)
 const CELL_HOI_MAU = 10;
 const CELL_HOI_MAU_NGOC = 30;
-const DAU_MANA = 120;
+const DAU_MANA = 240;
+/** Số hạt đậu thần mỗi cây đảo cát rơi khi đổ */
+const DAU_ROI = 2;
 /** Gà mẹ đang hoá socola: nhân vật chạm vào (trong bán kính này × độ to) là ăn, nhận ĂN_TUONG_TI_LE máu hiện có và sức mạnh của nó */
 const VP_GA_BAN_KINH = 60;
 const VP_TON_TAI = 45;
@@ -650,7 +652,9 @@ function taoTrangTri(): TrangTri[] {
   return kq;
 }
 
-/** Trang trí trên các đảo cát (đánh dấu `sa`): chỉ mọc trên cát cách bờ đủ xa; mỗi đảo chỉ 1–2 cây (đảo chẵn 2, lẻ 1), cây thừa đổi thành bụi */
+/** Trang trí trên các đảo cát (đánh dấu `sa`): chỉ mọc trên cát cách bờ đủ xa; mỗi đảo tối đa CAY_SA_CHAN / CAY_SA_LE cây (đảo chẵn / lẻ), cây thừa bỏ */
+const CAY_SA_CHAN = 4;
+const CAY_SA_LE = 3;
 function taoTrangTriSa(): TrangTri[] {
   let h = 777013;
   const r = () => {
@@ -675,7 +679,7 @@ function taoTrangTriSa(): TrangTri[] {
       if (Math.hypot(x - XUAT_PHAT.x, y - XUAT_PHAT.y) < 500) continue;
       if (loai === 0) {
         const d = daoCua(x, y);
-        if (soCay[d]! >= (d % 2 ? 1 : 2)) loai = 1;
+        if (soCay[d]! >= (d % 2 ? CAY_SA_LE : CAY_SA_CHAN)) loai = 1;
         else soCay[d]!++;
       }
       // Chỉ giữ cây: đá / xương rồng / cỏ / sọ bò / sỏi / cành khô của sa mạc đã bỏ (vẫn rút số như cũ để vị trí cây không đổi)
@@ -1999,9 +2003,9 @@ export class Game {
         c.huongDo = Math.abs(dx) > 20 ? Math.sign(dx) : c.lat ? -1 : 1;
         // Cây đổ có TAO_ROI cơ hội rơi 1 quả táo; rơi táo thì cây biến mất, chỉ còn quả táo ở gốc
         if (c.sa) {
-          // Cây trên đảo cát: đổ thì chắc chắn rơi 1 hạt đậu thần (thay táo)
+          // Cây trên đảo cát: đổ thì chắc chắn rơi DAU_ROI hạt đậu thần (thay táo)
           c.mat = true;
-          this.themVatPham(c.x + ngauNhien(-30, 30), c.y + ngauNhien(0, 30), 'dau');
+          for (let k = 0; k < DAU_ROI; k++) this.themVatPham(c.x + ngauNhien(-50, 50), c.y + ngauNhien(0, 40), 'dau');
         } else if (c.to) {
           // Cây to: chắc chắn rơi 2 táo đỏ (máu) + 2 táo xanh (mana)
           c.mat = true;
