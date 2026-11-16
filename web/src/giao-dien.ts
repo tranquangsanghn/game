@@ -207,7 +207,7 @@ export class GiaoDien {
   /** Ảnh nhân vật (khung đứng yên đầu tiên của animation idle, cắt sát hình) để hiện trên thẻ chọn */
   private anhNv(i: number, tiLe: number): string {
     const sp = NHAN_VAT[i]!;
-    const [x0, y0, x1, y1] = i === 0 ? [54, 22, 89, 83] : i === 1 ? [29, 24, 66, 70] : [30, 22, 68, 70];
+    const [x0, y0, x1, y1] = i === 0 ? [54, 22, 89, 83] : i === 1 ? [29, 24, 66, 70] : [40, 29, 91, 94];
     const k = sp.anim['idle'].f[0];
     const gx = (k % sp.cot) * sp.w + x0;
     const gy = Math.floor(k / sp.cot) * sp.h + y0;
