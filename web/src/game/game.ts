@@ -863,7 +863,7 @@ export class Game {
   cauView: CauTron[] = [];
   // Máy bay trong vườn gà (mayBay) và hình / số giây hồi phục để vẽ (chỉ lấy khi nằm trong khung nhìn)
   mayBay: MayBay = taoMayBay(MAP / 2, MAP / 2);
-  /** Máy bay đang bay trên đảo cát (khu vực Cell) ở khung trước; null = chưa biết (vừa vào ván / tải ván, không tính là vừa tới) */
+  /** Máy bay đang trong vườn gà ở khung trước (tên cũ mbTrenDao); null = chưa biết (vừa vào ván / tải ván, không tính là vừa tới) */
   private mbTrenDao: boolean | null = null;
   /** vận tốc máy bay khung trước (Cell bắn đón đầu) */
   private mbVx = 0;
@@ -4137,9 +4137,10 @@ export class Game {
       m.x = kep(m.x, TG.x0 + MB_LE, TG.x1 - MB_LE);
       m.y = kep(m.y, TG.y0 + MB_LE, TG.y1 - MB_LE);
       if (dt > 0) { this.mbVx = (m.x - x0) / dt; this.mbVy = (m.y - y0) / dt; }
-      // Bay tới khu vực Cell (trên đảo cát): máu / mana người trên máy bay đặt lại như lúc vào ván nhưng đầy bình (HP_NV, MANA_TOI_DA)
-      const tren = banDoHt === 'sa' && doSau(m.x, m.y) > 0;
-      if (tren && this.mbTrenDao === false) {
+      // Bay từ vườn gà ra ngoài (qua tường vườn): máu / mana người trên máy bay đặt lại như lúc vào ván nhưng đầy bình (HP_NV, MANA_TOI_DA).
+      // Bay giữa các đảo (hay về vườn rồi bay ra lại thì tính lần mới) thì giữ nguyên máu / mana.
+      const tren = banDoHt === 'sa' && trongVuon(m.x, m.y);
+      if (!tren && this.mbTrenDao === true && banDoHt === 'sa') {
         for (const p of m.ngoi) {
           const n = this.nguoi[p];
           if (n.vang || n.het) continue;
