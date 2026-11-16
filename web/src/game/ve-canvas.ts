@@ -6,7 +6,7 @@ import { CELL_HP, CELL_SO_DAO, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_N
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { MABU } from './nhan-vat-du-lieu';
-import { SP_GINYU, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_DAN_TOC } from './ginyu';
+import { SP_GINYU, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_NAP, GY_LO_LUNG } from './ginyu';
 import { DAO, doSau, duongBo, NUI, TG } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
@@ -991,8 +991,7 @@ export class VeCanvas {
       this.veMauCell(ctx, c, ce);
       ctx.globalAlpha = 1;
     }
-    // Chưởng Ginyu + thanh máu Ginyu (lượt riêng sau mọi vật để không bị che)
-    for (const q of c.gyDanView) this.veGyDan(ctx, c, q);
+    // Thanh máu bóng ma Goku (lượt riêng sau mọi vật để không bị che)
     if (c.gyView && !c.ginyu.chet) {
       ctx.globalAlpha = c.doRo(c.ginyu.x, c.ginyu.y);
       this.veMauGinyu(ctx, c);
@@ -1508,46 +1507,61 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  // Ginyu: sprite pixel art (không làm mịn), neo ở chân, sheet quay mặt trái (lat = quay phải); hoá socola nhuộm nâu, trúng đòn nháy sáng; xác mờ dần
+  // Bóng ma Goku: lơ lửng nhấp nhô trên quầng sáng xanh lơ, thân trong mờ chập chờn (atlas đã tô màu bóng ma), quay mặt trái (lat = quay phải);
+  // gồng thì hào quang xanh bùng lên + rung; lao thì kéo 3 bóng mờ phía sau; hoá socola nhuộm nâu, trúng đòn nháy sáng; xác mờ dần
   private veGinyu(ctx: CanvasRenderingContext2D, c: Game): void {
     const g = c.ginyu;
     ctx.save();
     if (g.chet) ctx.globalAlpha *= Math.max(0, 1 - g.tChet / GY_CHET_T);
     ctx.translate(g.x, g.y);
-    // Vừa sao chép sức mạnh (đang tạo dáng): quầng tím dưới chân
-    if (g.dang > 0 && !g.chet) {
-      ctx.save();
-      ctx.scale(1, 0.35);
-      const q = ctx.createRadialGradient(0, 0, 0, 0, 0, 220);
-      q.addColorStop(0, `rgba(190,120,255,${0.45 + 0.15 * Math.sin(c.t * 14)})`);
-      q.addColorStop(1, 'rgba(160,90,255,0)');
-      ctx.fillStyle = q;
-      ctx.fillRect(-220, -220, 440, 440);
-      ctx.restore();
+    // Quầng sáng dưới chân (bóng ma không có bóng đổ); gồng thì to và sáng hơn
+    const gong = g.nap !== undefined && !g.chet ? Math.min(1, g.nap / GY_NAP) : 0;
+    const dang = g.dang > 0 && !g.chet;
+    ctx.save();
+    ctx.scale(1, 0.35);
+    const R = 150 + 90 * gong + (dang ? 40 : 0);
+    const q = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+    q.addColorStop(0, `rgba(150,230,255,${0.35 + 0.3 * gong + 0.1 * Math.sin(c.t * 6)})`);
+    q.addColorStop(1, 'rgba(90,170,255,0)');
+    ctx.fillStyle = q;
+    ctx.fillRect(-R, -R, R * 2, R * 2);
+    ctx.restore();
+    const bay = GY_LO_LUNG + 10 * Math.sin(c.t * 2.6);
+    const khung = c.gyKhung(), loc = c.gyLoc();
+    const anh = g.chet ? 0.55 : 0.72 + 0.12 * Math.sin(c.t * 4.3);
+    // Đang lao: 3 bóng mờ phía sau theo hướng bay
+    if (g.lao !== undefined && !g.chet) {
+      const v = Math.hypot(g.vx ?? 0, g.vy ?? 0) || 1;
+      const ux = (g.vx ?? 0) / v, uy = (g.vy ?? 0) / v;
+      const a0 = ctx.globalAlpha;
+      for (let i = 3; i >= 1; i--) {
+        ctx.save();
+        ctx.globalAlpha = a0 * anh * (0.4 - i * 0.1);
+        ctx.translate(-ux * i * 70, -uy * i * 70 - bay);
+        ctx.scale(GY_TO, GY_TO);
+        this.sprite(ctx, SP_GINYU, khung, g.lat, true, loc);
+        ctx.restore();
+      }
     }
+    // Hào quang khi gồng (gradient, không shadowBlur)
+    if (gong > 0) {
+      const r = 110 + 50 * gong + 8 * Math.sin(c.t * 30);
+      const h = ctx.createRadialGradient(0, -bay - 100, 10, 0, -bay - 100, r);
+      h.addColorStop(0, `rgba(220,250,255,${0.5 * gong})`);
+      h.addColorStop(0.6, `rgba(120,210,255,${0.35 * gong})`);
+      h.addColorStop(1, 'rgba(80,160,255,0)');
+      ctx.fillStyle = h;
+      ctx.fillRect(-r, -bay - 100 - r, r * 2, r * 2);
+      ctx.translate(Math.sin(c.t * 70) * 3 * gong, 0);
+    }
+    ctx.globalAlpha *= anh;
+    ctx.translate(0, -bay);
     ctx.scale(GY_TO, GY_TO);
-    // Vận chưởng: thân rung nhẹ
-    if (g.nap !== undefined) ctx.translate(Math.sin(c.t * 70) * 0.4, 0);
-    this.sprite(ctx, SP_GINYU, c.gyKhung(), g.lat, false, c.gyLoc());
-    // Quả cầu năng lượng đang tụ trên tay khi vận chưởng
-    if (g.nap !== undefined && !g.chet) {
-      const r = 3 + 3 * Math.min(1, g.nap / 0.45);
-      const q = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2);
-      q.addColorStop(0, 'rgba(255,240,255,1)');
-      q.addColorStop(0.4, 'rgba(230,110,255,0.9)');
-      q.addColorStop(1, 'rgba(160,60,255,0)');
-      ctx.save();
-      ctx.translate(g.lat ? 10 : -10, -16);
-      ctx.fillStyle = q;
-      ctx.beginPath();
-      ctx.arc(0, 0, r * 2, 0, TAU);
-      ctx.fill();
-      ctx.restore();
-    }
+    this.sprite(ctx, SP_GINYU, khung, g.lat, true, loc);
     ctx.restore();
   }
 
-  // Thanh máu Ginyu trên đầu (tím), kèm số máu và tên nhân vật nó đang sao chép
+  // Thanh máu bóng ma Goku trên đầu (xanh lơ), kèm số máu và tên nhân vật nó đang sao chép
   private veMauGinyu(ctx: CanvasRenderingContext2D, c: Game): void {
     const g = c.ginyu;
     const toiDa = Math.max(g.hpMax, g.hp, 1);
@@ -1558,7 +1572,7 @@ export class VeCanvas {
     ctx.fillStyle = 'rgba(20,12,30,0.75)';
     ctx.fill();
     tronCD(ctx, -31, -3, Math.min(62, Math.max(0, (62 * g.hp) / toiDa)), 6, 3);
-    ctx.fillStyle = '#b36bff';
+    ctx.fillStyle = '#6fd6ff';
     ctx.fill();
     ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'center';
@@ -1569,31 +1583,6 @@ export class VeCanvas {
     ctx.strokeText(chu, 0, -9);
     ctx.fillStyle = '#fff';
     ctx.fillText(chu, 0, -9);
-    ctx.restore();
-  }
-
-  // Chưởng Ginyu: cầu năng lượng tím hồng, vệt sáng phía sau theo hướng bay (gradient, không shadowBlur)
-  private veGyDan(ctx: CanvasRenderingContext2D, c: Game, q: { x: number; y: number; vx: number; vy: number; t: number }): void {
-    ctx.save();
-    ctx.globalAlpha = c.doRo(q.x, q.y);
-    const ux = q.vx / GY_DAN_TOC, uy = q.vy / GY_DAN_TOC;
-    const duoi = Math.min(220, q.t * GY_DAN_TOC);
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(200,110,255,0.45)';
-    ctx.lineWidth = 46;
-    ctx.beginPath();
-    ctx.moveTo(q.x - ux * duoi, q.y - uy * duoi);
-    ctx.lineTo(q.x, q.y);
-    ctx.stroke();
-    const r = 52 + 6 * Math.sin(c.t * 30);
-    const g = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, r);
-    g.addColorStop(0, 'rgba(255,245,255,1)');
-    g.addColorStop(0.35, 'rgba(240,140,255,0.95)');
-    g.addColorStop(1, 'rgba(150,60,255,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(q.x, q.y, r, 0, TAU);
-    ctx.fill();
     ctx.restore();
   }
 
@@ -1950,12 +1939,12 @@ export class VeCanvas {
     ctx.rect(-35, 0, 70, 70);
     ctx.clip();
     if (c.trenDao) {
-      // Đang ở đảo: avatar là Cell của đảo đó, đứng nhún nhảy; núi đá: avatar Ginyu (mờ khi đã bị hạ)
+      // Đang ở đảo: avatar là Cell của đảo đó, đứng nhún nhảy; núi đá: avatar bóng ma Goku xoay người (mờ khi đã bị hạ)
       if (c.trenNui) {
-        ctx.globalAlpha = c.ginyu.chet ? 0.25 : 1;
-        ctx.translate(0, 68);
-        ctx.scale(2, 2);
-        this.sprite(ctx, SP_GINYU, GY_KHUNG.dung[Math.floor(c.t * 5) % GY_KHUNG.dung.length]!, false, false);
+        ctx.globalAlpha = c.ginyu.chet ? 0.25 : 0.9;
+        ctx.translate(0, 98);
+        ctx.scale(0.5, 0.5);
+        this.sprite(ctx, SP_GINYU, GY_KHUNG.quay[Math.floor(c.t * 4) % GY_KHUNG.quay.length]!, false, true);
       } else {
         ctx.globalAlpha = 1;
         ctx.translate(0, 66);
