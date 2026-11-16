@@ -78,7 +78,7 @@ export interface TrungGa {
 interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn hồi SOCOLA_GA_TI_LE máu tối đa */
-export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc'; /** ngọc: số sao (thiếu = 1) */ sao?: number; /** ngọc: độ to khi vẽ (thiếu = 0,55) */ to?: number; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; /** socola: sức mạnh (nhân sát thương) người / Cell ăn được cộng thêm (thiếu thì `CELL_AN_SUC`) */ sucAn?: number; }
+export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc' | 'dau'; /** ngọc: số sao (thiếu = 1) */ sao?: number; /** ngọc: độ to khi vẽ (thiếu = 0,55) */ to?: number; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; /** socola: sức mạnh (nhân sát thương) người / Cell ăn được cộng thêm (thiếu thì `CELL_AN_SUC`) */ sucAn?: number; }
 interface Chu { id: number; x: number; y: number; text: string; mau: string; t: number; }
 interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay: number; vxoay: number; t: number; mau: string; }
 /** chay = cháy nổ (lửa + tia lửa); co = hệ số kích thước */
@@ -178,8 +178,6 @@ const CAY_MOC_LAI = 10;
 const CAY_TO_HE_SO = 1.8;
 const CAY_TO_MAU = 2;
 const CAY_TO_MANA = 2;
-// Cây trên đảo cát rơi táo (máu / mana) nhiều gấp từng này lần cây trong vườn gà
-const SA_TAO_NHAN = 3;
 const CAY_DO_KINH = 90;
 /** Chiều cao thân cây tính từ gốc: đòn trúng trong khoảng này phía trên gốc là trúng cây */
 const CAY_DO_CAO = 220;
@@ -375,6 +373,9 @@ const VP_HOI = 100;
 // Táo xanh hồi VP_MANA mana
 const VP_MANA = 80;
 const VP_BAN_KINH = 90;
+// Hạt đậu thần (loai 'dau', chỉ rơi từ cây trên đảo cát): ăn +DAU_MAU máu và +DAU_MANA mana (không giới hạn, mở khoá bay), Mabu / Zinbu và Cell đều ăn được, gà không ăn
+const DAU_MAU = 150;
+const DAU_MANA = 120;
 /** Gà mẹ đang hoá socola: nhân vật chạm vào (trong bán kính này × độ to) là ăn, nhận ĂN_TUONG_TI_LE máu hiện có và sức mạnh của nó */
 const VP_GA_BAN_KINH = 60;
 const VP_TON_TAI = 45;
@@ -1486,11 +1487,16 @@ export class Game {
         continue;
       }
       const xanh = v.loai === 'xanh';
+      const dau = v.loai === 'dau';
       const n = this.nguoi.find((m) => !this.khuat(m) && Math.hypot(m.x - v.x, m.y - v.y) < VP_BAN_KINH);
       if (n) {
         this.am.phat('anTao');
         if (v.loai === 'socola') {
           this.anSocola(n, v.luong, v.sucAn);
+        } else if (dau) {
+          this.hoiMau(n, DAU_MAU);
+          this.hoiDayMana(n, DAU_MANA);
+          this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `🫘 ĐẬU THẦN +${DAU_MAU} ❤ +${DAU_MANA} mana`, mau: '#7be04a', t: 0 });
         } else if (xanh) {
           this.hoiDayMana(n);
           this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${VP_MANA} mana`, mau: '#2fa8ff', t: 0 });
@@ -1515,9 +1521,20 @@ export class Game {
           continue;
         }
       }
+      // Cell đi qua cũng ăn đậu thần: +DAU_MAU máu (không giới hạn)
+      if (dau) {
+        const ce = this.cell.find((c) => !c.chet && !((c.socola ?? 0) > 0) && Math.hypot(c.x - v.x, c.y - v.y) < CELL_BK * cellK(c.cap));
+        if (ce) {
+          ce.hp += DAU_MAU;
+          const t = this.tamCell(ce);
+          this.chu.push({ id: this.id++, x: t.x, y: t.y - 90, text: `🫘 CELL ĂN ĐẬU THẦN +${DAU_MAU} ❤`, mau: '#7be04a', t: 0 });
+          this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
+          continue;
+        }
+      }
       // Gà đi qua chỉ mổ ăn táo đỏ (táo xanh gà không ăn): hồi VP_HOI máu, không có trần. Socola thì mọi gà (con, mẹ gốc, mẹ phụ) đều ăn
       const socola = v.loai === 'socola';
-      const ga = xanh ? undefined : this.ga.find((g) => !g.chet && Math.hypot(g.x - v.x, g.y - v.y) < (g.loai === 'boss' ? VP_GA_BAN_KINH * 2.5 : VP_GA_BAN_KINH));
+      const ga = xanh || dau ? undefined : this.ga.find((g) => !g.chet && Math.hypot(g.x - v.x, g.y - v.y) < (g.loai === 'boss' ? VP_GA_BAN_KINH * 2.5 : VP_GA_BAN_KINH));
       if (ga) {
         ga.mo = MO_THOI_GIAN;
         ga.lat = v.x < ga.x;
@@ -1555,15 +1572,15 @@ export class Game {
     this.chuongLenTroi(this.nguoi.indexOf(n));
   }
 
-  private themVatPham(x: number, y: number, loai: 'do' | 'xanh' = Math.random() < 0.5 ? 'do' : 'xanh'): void {
+  private themVatPham(x: number, y: number, loai: 'do' | 'xanh' | 'dau' = Math.random() < 0.5 ? 'do' : 'xanh'): void {
     const v = { x, y };
     giuTrongMap(v, LE_VP);
     this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai });
   }
 
   // Táo xanh: cộng VP_MANA mana và mở khoá bay
-  private hoiDayMana(n: NguoiChoi): void {
-    this.hoiMana(n, VP_MANA);
+  private hoiDayMana(n: NguoiChoi, luong = VP_MANA): void {
+    this.hoiMana(n, luong);
     n.bayKhoa = 0;
   }
 
@@ -1865,16 +1882,17 @@ export class Game {
         const dx = d.x1 - d.x0;
         c.huongDo = Math.abs(dx) > 20 ? Math.sign(dx) : c.lat ? -1 : 1;
         // Cây đổ có TAO_ROI cơ hội rơi 1 quả táo; rơi táo thì cây biến mất, chỉ còn quả táo ở gốc
-        // Cây trên đảo cát (`sa`): cùng hiệu ứng, nhưng táo rơi nhiều gấp SA_TAO_NHAN = 3 lần
-        const nhan = c.sa ? SA_TAO_NHAN : 1;
-        if (c.to) {
+        if (c.sa) {
+          // Cây trên đảo cát: đổ thì chắc chắn rơi 1 hạt đậu thần (thay táo)
+          c.mat = true;
+          this.themVatPham(c.x + ngauNhien(-30, 30), c.y + ngauNhien(0, 30), 'dau');
+        } else if (c.to) {
           // Cây to: chắc chắn rơi 2 táo đỏ (máu) + 2 táo xanh (mana)
           c.mat = true;
-          for (let k = 0; k < CAY_TO_MAU * nhan; k++) this.themVatPham(c.x + ngauNhien(-70, 70), c.y + ngauNhien(0, 50), 'do');
-          for (let k = 0; k < CAY_TO_MANA * nhan; k++) this.themVatPham(c.x + ngauNhien(-70, 70), c.y + ngauNhien(0, 50), 'xanh');
+          for (let k = 0; k < CAY_TO_MAU + CAY_TO_MANA; k++) this.themVatPham(c.x + ngauNhien(-70, 70), c.y + ngauNhien(0, 50), k < CAY_TO_MAU ? 'do' : 'xanh');
         } else if (Math.random() < TAO_ROI) {
           c.mat = true;
-          for (let k = 0; k < nhan; k++) this.themVatPham(c.x + ngauNhien(-30, 30), c.y + ngauNhien(0, 30));
+          this.themVatPham(c.x + ngauNhien(-30, 30), c.y + ngauNhien(0, 30));
         }
         break;
       }

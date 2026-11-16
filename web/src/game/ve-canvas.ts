@@ -843,8 +843,41 @@ export class VeCanvas {
     ctx.restore();
   }
 
+  // Hạt đậu thần: hạt đậu xanh to bằng nửa viên ngọc rồng (ngọc vẽ ~140px, đậu dài ~70px), nảy nhẹ, có vầng sáng xanh lá
+  private veDau(ctx: CanvasRenderingContext2D, v: { x: number; y: number; t: number }): void {
+    ctx.save();
+    ctx.translate(v.x, v.y);
+    ctx.globalAlpha = v.t > 37 && (v.t * 6) % 1 < 0.5 ? 0.35 : 1;
+    duongElip(ctx, 34, 9);
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.fill();
+    duongTron(ctx, 55, 0, -34);
+    ctx.fillStyle = `rgba(123,224,74,${0.14 + 0.08 * ((v.t * 4) % 1)})`;
+    ctx.fill();
+    const tri = (v.t * 3) % 2 < 1 ? (v.t * 3) % 1 : 1 - ((v.t * 3) % 1);
+    ctx.translate(0, -34 - 6 * tri);
+    ctx.rotate(-0.5);
+    duongElip(ctx, 36, 21);
+    ctx.fillStyle = '#6fcf3a';
+    ctx.fill();
+    ctx.strokeStyle = '#2f7d1e';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    // đường lõm giữa hạt + điểm sáng
+    ctx.strokeStyle = 'rgba(40,110,30,0.7)';
+    ctx.beginPath();
+    ctx.moveTo(-24, 2);
+    ctx.quadraticCurveTo(0, 12, 24, 2);
+    ctx.stroke();
+    duongElip(ctx, 12, 5, -10, -9);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fill();
+    ctx.restore();
+  }
+
   // Quả táo: đỏ hồi máu, xanh hồi mana; nảy nhẹ trên đất, có vầng sáng cùng màu
-  private veVatPham(ctx: CanvasRenderingContext2D, v: { x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc' }): void {
+  private veVatPham(ctx: CanvasRenderingContext2D, v: { x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc' | 'dau' }): void {
+    if (v.loai === 'dau') { this.veDau(ctx, v); return; }
     const xanh = v.loai === 'xanh';
     const mau = xanh ? '#2fa8ff' : '#ff3b3b';
     ctx.save();

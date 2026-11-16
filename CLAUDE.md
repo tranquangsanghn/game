@@ -336,4 +336,4 @@
 
 - **Ăn Cell / Cell ăn socola** (ghi đè tỉ lệ socola Cell ở các mục trên): Cell chết vì Biến socola thành thanh socola; nhân vật ăn nó nhận `CELL_AN_TI_LE` = 30% máu tối đa của Cell đó (vào cả máu lẫn mana) và +30% sức mạnh của nó (`VatPham.sucAn` = `CELL_SAT` / `CELL_SUC_THAM_CHIEU` (50) × `suc` Cell × 0,3, cộng vào `NguoiChoi.suc`). Cell đi qua thanh socola (không đang hoá socola) cũng ăn: +30% máu của con đã hoá (`hpGa`) và `suc` +`sucAn` (hoặc `CELL_AN_SUC` = 0,3); `Cell.suc` nhân sát thương đấm / chưởng của Cell. Máu, mana, sức mạnh đều không giới hạn trần (ván lưu cũ chỉ kẹp máu Cell khi chưa có `suc`).
 
-- Cây trên đảo cát (`TrangTri.sa`) đổ cũng rơi táo như cây vườn gà nhưng **nhiều gấp `SA_TAO_NHAN` = 3 lần** (cây thường rơi 3 quả thay 1, cây to rơi 6 đỏ + 6 xanh).
+- Cây trên đảo cát (`TrangTri.sa`, kể cả cây to) đổ thì chắc chắn rơi **1 hạt đậu thần** (`VatPham` loại `dau`, `veDau()`, to bằng nửa viên ngọc rồng) thay táo: ăn +`DAU_MAU` = 150 máu và +`DAU_MANA` = 120 mana (không giới hạn, mở khoá bay). Mabu / Zinbu và **Cell** (đi qua, +`DAU_MAU` máu) đều ăn được; gà không ăn. Cây vườn gà vẫn rơi táo như cũ.
