@@ -5,7 +5,7 @@ import { NhanVat } from './nhan-vat-sprite';
 import { MABU, NHAN_VAT } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, trongNui, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, type Cell } from './cell';
+import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -1630,7 +1630,7 @@ export class Game {
       if (dau) {
         const daoDau = daoCua(v.x, v.y);
         const ce = this.cell.find((c) => !c.chet && !((c.socola ?? 0) > 0) && Math.hypot(c.x - v.x, c.y - v.y) < CELL_BK * cellK(c.cap)
-          && this.daoCell(c) === daoDau && trongVongDao(v.x, v.y, daoDau));
+          && (c.hoi === 'dang' || (this.daoCell(c) === daoDau && trongVongDao(v.x, v.y, daoDau))));
         if (ce) {
           // Như Mabu / Zinbu: +DAU_MAU máu; Cell không có mana nên được thêm sức mạnh (nhân sát thương đấm / chưởng, không giới hạn)
           ce.hp += DAU_MAU;
@@ -3812,6 +3812,8 @@ export class Game {
         c.nap = undefined;
         continue;
       }
+      // Cell đỏ dưới 20% máu (một lần mỗi ván): dịch chuyển đi phá cây ăn đậu thần tới khi trên 60% máu
+      if (this.cellHoiPhuc(c, dt)) continue;
       // Cell đỏ truy sát: đã mất ngọc 2 sao thì bám theo Mabu / Zinbu khắp nơi tới khi nó chết
       if (this.cellTruy(c)) {
         this.cellTruyChon(c);
@@ -3939,6 +3941,101 @@ export class Game {
     if (!n || gn > CELL_AN_TRON) { c.chay = false; return; }
     const ux = (c.x - n.x) / (gn || 1), uy = (c.y - n.y) / (gn || 1);
     this.cellDiToi(c, c.x + ux * 400, c.y + uy * 400, dt, 1);
+  }
+
+  /**
+   * Cell đỏ hồi máu một lần (`Cell.hoi`): máu dưới CELL_HOI_DUOI thì bỏ đánh, dịch chuyển tức thời tới cây khô xa nhân vật nhất (đảo của nó; đang truy sát
+   * thì mọi đảo), bắn đổ cây rồi ăn đậu thần (`capNhatVatPham()`); nhân vật lại gần (CELL_AN_GAP) thì dịch chuyển đi chỗ khác. Trên CELL_HOI_TREN thì đánh tiếp.
+   * Trả về true khi đang hồi (capNhatCell() bỏ qua phần đánh).
+   */
+  private cellHoiPhuc(c: Cell, dt: number): boolean {
+    if (c.cap !== SO_CAP - 1 || c.hoi === 'xong') return false;
+    const max = CELL_HP[c.cap]!;
+    const k = cellK(c.cap);
+    if (c.hoi === undefined) {
+      if (c.hp >= max * CELL_HOI_DUOI) return false;
+      c.hoi = 'dang';
+      c.choDich = 0;
+      this.chuGa({ id: this.id++, x: c.x, y: c.y - 70 * k, text: '🫘 CELL ĐỎ ĐI ĂN ĐẬU THẦN HỒI MÁU!', mau: '#7be04a', t: 0 });
+    }
+    if (c.hp > max * CELL_HOI_TREN) {
+      c.hoi = 'xong';
+      c.cay = undefined;
+      if (c.nap !== undefined && c.chien) { c.nap = undefined; c.chien = false; }
+      this.chuGa({ id: this.id++, x: c.x, y: c.y - 70 * k, text: '🔥 CELL ĐỎ HỒI SỨC, QUAY LẠI ĐÁNH!', mau: '#ff3b30', t: 0 });
+      return false;
+    }
+    const truy = this.cellTruy(c);
+    const dao = this.daoCell(c);
+    const duocO = (x: number, y: number) => doSau(x, y) > 60 && !trongVuon(x, y) && (truy || (daoCua(x, y) === dao && trongVongDao(x, y, dao)));
+    const ke = this.nguoi.filter((m) => !m.vang && !this.khuat(m));
+    const xaNhat = (x: number, y: number) => ke.reduce((d, m) => Math.min(d, Math.hypot(m.x - x, m.y - y)), Infinity);
+    const cayDung = (t: TrangTri) => !!t.sa && t.loai === 0 && t.doLuc === undefined && duocO(t.x, t.y);
+    // Dịch chuyển tức thời: lúc mới bắt đầu, hoặc nhân vật lại gần trong CELL_AN_GAP
+    if ((c.choDich ?? 0) <= this.t && (c.hoi === 'dang' && (c.cay === undefined || xaNhat(c.x, c.y) < CELL_AN_GAP))) {
+      let tot = -1, cho: { x: number; y: number } | undefined, iCho = -1;
+      this.trangTri.forEach((t, i) => {
+        if (!cayDung(t)) return;
+        const g = Math.random() * Math.PI * 2;
+        const x = t.x + Math.cos(g) * CELL_AN_TAM * 0.5, y = t.y + Math.sin(g) * CELL_AN_TAM * 0.3;
+        if (!duocO(x, y)) return;
+        const d = xaNhat(x, y);
+        if (d > tot) { tot = d; cho = { x, y }; iCho = i; }
+      });
+      // Hết cây: dịch chuyển tới chỗ xa nhân vật nhất trên đảo để đứng tự hồi máu
+      if (!cho && ke.length) {
+        for (let i = 0; i < 16; i++) {
+          const p = diemTrenDao(dao, 250);
+          if (!duocO(p.x, p.y)) continue;
+          const d = xaNhat(p.x, p.y);
+          if (d > tot) { tot = d; cho = p; }
+        }
+      }
+      c.choDich = this.t + CELL_HOI_DICH;
+      if (cho && (c.cay === undefined || tot > xaNhat(c.x, c.y))) {
+        c.nap = undefined; c.chien = false; c.chay = false;
+        this.vetGa({ id: this.id++, x: c.x, y: c.y - 25 * k, t: 0, loai: 'no' });
+        c.x = cho.x; c.y = cho.y;
+        giuTrongMap(c, leCell(c.cap), truy, 'dao');
+        this.vetGa({ id: this.id++, x: c.x, y: c.y - 25 * k, t: 0, loai: 'no' });
+        this.chuGa({ id: this.id++, x: c.x, y: c.y - 55 * k, text: '💨 CELL ĐỎ DỊCH CHUYỂN!', mau: '#7be04a', t: 0 });
+        if (iCho >= 0) c.cay = iCho;
+        return true;
+      }
+    }
+    if (c.nap !== undefined && c.chien) {
+      if (c.cay !== undefined) { this.cellBanChien(c, dt); return true; }
+      c.nap = undefined; c.chien = false;
+    }
+    // Có đậu thần gần (trong vùng được đi) thì chạy tới ăn
+    let gan = Infinity, dau: VatPham | undefined;
+    for (const v of this.vatPham) {
+      if (v.loai !== 'dau' || !duocO(v.x, v.y)) continue;
+      const d = Math.hypot(v.x - c.x, v.y - c.y);
+      if (d < gan) { gan = d; dau = v; }
+    }
+    if (dau && gan < CELL_AN_TRON) { this.cellDiToi(c, dau.x, dau.y, dt, 1); return true; }
+    // Bắn cây đang nhắm (đổ rồi thì chọn cây đứng gần nhất)
+    let cay = c.cay !== undefined ? this.trangTri[c.cay] : undefined;
+    if (!cay || !cayDung(cay)) {
+      gan = Infinity; c.cay = undefined; cay = undefined;
+      this.trangTri.forEach((t, i) => {
+        if (!cayDung(t)) return;
+        const d = Math.hypot(t.x - c.x, t.y - c.y);
+        if (d < gan) { gan = d; c.cay = i; cay = t; }
+      });
+    }
+    if (!cay) { c.chay = false; return true; }
+    if (Math.hypot(cay.x - c.x, cay.y - c.y) < CELL_AN_TAM) {
+      c.chay = false;
+      c.lat = cay.x < c.x;
+      if ((c.choChuong ?? 0) > this.t) return true;
+      if (this.cellTrenCam(c)) this.cellVanChuong(c);
+      else { this.doCay(cay, cay.x - c.x); c.choChuong = this.t + CELL_CHUONG_HOI[c.cap]!; }
+      return true;
+    }
+    this.cellDiToi(c, cay.x, cay.y, dt, 1);
+    return true;
   }
 
   /** Cell đỏ (cấp cao nhất) còn sống mà ngọc 2 sao của nó đã bị lấy: truy sát Mabu / Zinbu tới bất kỳ đâu, bỏ qua vòng đảo */
@@ -4072,7 +4169,7 @@ export class Game {
     // Bắn máy bay: nhắm đón đầu chỗ máy bay sẽ tới khi chùm bay tới (TIEC_CHUONG_T)
     const tMb = banMb ? this.tamMb() : null;
     // Con đi ăn đậu: bắn vào thân cây đang nhắm
-    const cay = c.vai === 'an' && c.cay !== undefined ? this.trangTri[c.cay] : undefined;
+    const cay = (c.vai === 'an' || c.hoi === 'dang') && c.cay !== undefined ? this.trangTri[c.cay] : undefined;
     const ke = cay ? { x: cay.x, y: cay.y - 40 } : tMb ? { x: tMb.x + this.mbVx * TIEC_CHUONG_T / nhanh, y: tMb.y + this.mbVy * TIEC_CHUONG_T / nhanh + 70 } : c.muc !== undefined ? this.nguoi[c.muc] : undefined;
     const luc = TIEC_BIEN + TIEC_AURA;
     if (ke && truoc < luc) c.lat = ke.x < c.x;

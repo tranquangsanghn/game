@@ -57,6 +57,14 @@ export const CELL_AN_TRON = 1500;
 /** Con đi ăn đậu gặp nhân vật (gần hơn `CELL_AN_GAP`, nhân vật nhìn thấy nó) thì dịch chuyển tức thời tới chỗ trên đảo xa mọi nhân vật nhất để trốn; hồi `CELL_AN_DICH_HOI` giây */
 export const CELL_AN_GAP = 900;
 export const CELL_AN_DICH_HOI = 3;
+/**
+ * Cell đỏ (cấp 4) hồi máu một lần mỗi ván (`Cell.hoi`): máu dưới `CELL_HOI_DUOI` (20%) máu tối đa thì bỏ đánh, dịch chuyển tức thời tới cây khô
+ * xa nhân vật nhất (trên đảo của nó; đang truy sát thì cây trên mọi đảo) để bắn đổ ăn đậu thần; gặp nhân vật lại dịch chuyển tới cây khác.
+ * Máu trên `CELL_HOI_TREN` (60%) thì tiếp tục đánh Mabu / Zinbu; không bao giờ dùng lại. Dịch chuyển hồi `CELL_HOI_DICH` giây.
+ */
+export const CELL_HOI_DUOI = 0.2;
+export const CELL_HOI_TREN = 0.6;
+export const CELL_HOI_DICH = 3;
 /** Cell đỏ tung chưởng (hào quang → phóng, chùm bay) nhanh hơn 30% */
 export const CELL_DO_NHANH = 1.3;
 /** Số giây giữa 2 đòn đấm / đá */
@@ -149,6 +157,8 @@ export interface Cell {
   ngoi?: boolean;
   /** Cell bạo nộ đang hoá socola (giây còn lại) và đã ăn combo mây trong lần hoá này chưa */
   socola?: number; comboSoc?: boolean;
+  /** Cell đỏ hồi máu một lần (`CELL_HOI_DUOI` → `CELL_HOI_TREN`): 'dang' = đang đi phá cây ăn đậu thần, 'xong' = đã dùng; thiếu = chưa dùng */
+  hoi?: 'dang' | 'xong';
 }
 
 /** Đảo có Cell giữ ngọc (1 con, Cell bạo nộ): ngồi im giữa đảo trên viên ngọc rồng 2 sao */
