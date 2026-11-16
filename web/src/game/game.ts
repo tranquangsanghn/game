@@ -181,6 +181,10 @@ const CAY_TO_MANA = 2;
 const CAY_DO_KINH = 90;
 /** Chiều cao thân cây tính từ gốc: đòn trúng trong khoảng này phía trên gốc là trúng cây */
 const CAY_DO_CAO = 220;
+/** Tảng đá núi trúng chưởng (Chiêu đặc biệt / socola) thì vỡ thành đá nhỏ (dùng chung `doLuc` với cây đổ nên lưu ván như cây), DA_VO_LAI giây sau liền lại */
+const DA_VO_LAI = 15;
+/** Hộp trúng của tảng đá (nửa rộng, cao) theo cỡ ảnh DA_NUI: loai 1–2 khối to, còn lại vừa / nhỏ */
+const hopDaNui = (loai: number) => (loai <= 2 ? { r: 190, h: 390 } : { r: 90, h: 160 });
 
 
 export const PHIEN_BAN_LUU = 4;
@@ -1445,7 +1449,7 @@ export class Game {
   // Cây đã đổ được CAY_MOC_LAI giây thì mọc lại (đứng thẳng, hết "mat")
   private capNhatCay(): void {
     for (const c of this.trangTri) {
-      if (c.doLuc !== undefined && this.t - c.doLuc >= CAY_MOC_LAI) { delete c.doLuc; delete c.huongDo; delete c.mat; }
+      if (c.doLuc !== undefined && this.t - c.doLuc >= (c.nui ? DA_VO_LAI : CAY_MOC_LAI)) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     }
   }
 
@@ -1904,6 +1908,22 @@ export class Game {
     const rg = CAY_DO_KINH * (d.to ? 1.4 : 1);
     const buoc = Math.max(1, Math.ceil(Math.sqrt(e2) / 30));
     for (const c of this.trangTri) {
+      if (c.nui) {
+        // Tảng đá núi: chỉ chưởng mới làm vỡ
+        if (!d.to || c.doLuc !== undefined) continue;
+        const h = hopDaNui(c.loai);
+        if (Math.abs(c.x - (ax + bx) / 2) > h.r + Math.abs(ex) / 2 + 40) continue;
+        for (let i = 0; i <= buoc; i++) {
+          const px = ax + (ex * i) / buoc, py = ay + (ey * i) / buoc;
+          if (Math.abs(px - c.x) > h.r || py < c.y - h.h || py > c.y + 40) continue;
+          c.doLuc = this.t;
+          this.vetGa({ id: this.id++, x: c.x, y: c.y - h.h * 0.35, t: 0, loai: 'chay', co: c.loai <= 2 ? 1.3 : 0.8 });
+          this.vetGa({ id: this.id++, x: c.x, y: c.y, t: 0, loai: 'bui' });
+          if (c.loai <= 2) this.rungMan(0.15, 7);
+          break;
+        }
+        continue;
+      }
       if (c.loai !== 0 || c.doLuc !== undefined) continue;
       const hs = c.to ? CAY_TO_HE_SO : 1;
       const r = rg * hs;

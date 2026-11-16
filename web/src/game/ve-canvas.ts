@@ -118,6 +118,8 @@ const NUI_O_DAT = 900;
 const NUI_O_VACH = 520;
 const NUI_VACH_CAO = 300;
 const NUI_VACH_SAU = 430;
+/** Tảng đá vỡ liền lại sau chừng này giây (khớp DA_VO_LAI trong game.ts): giây cuối mảnh mờ đi, tảng đá hiện lại */
+const DA_VO_LAI_VE = 15;
 const DA_NUI = [
   { sx: 0, sy: 0, w: 120, h: 109, k: 3.4 },
   { sx: 122, sy: 0, w: 123, h: 120, k: 3.4 },
@@ -364,18 +366,57 @@ export class VeCanvas {
     ctx.imageSmoothingEnabled = true;
   }
 
+  /** Mảnh đá vỡ (đã translate tới chân tảng đá): vài viên đá nhỏ (khung nhỏ của DA_NUI) văng ra theo vòng cung trong 0,5s rồi nằm yên.
+   *  Vị trí mỗi mảnh cố định theo toạ độ tảng đá (không lưu gì thêm) */
+  private veManhDa(ctx: CanvasRenderingContext2D, t: TrangTri, tv: number, img: HTMLImageElement, alpha: number): void {
+    const to = t.loai <= 2;
+    const n = to ? 7 : 4;
+    const xa = to ? 230 : 120;
+    const e = dongHe(tv / 0.5);
+    const bay = 1 - (1 - e) * (1 - e);
+    let h = (Math.floor(t.x) * 73856093) ^ (Math.floor(t.y) * 19349663);
+    const r = () => {
+      h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909);
+      return ((h ^= h >>> 16) >>> 0) / 4294967296;
+    };
+    ctx.globalAlpha = alpha;
+    for (let i = 0; i < n; i++) {
+      const goc = ((i + r() * 0.6) / n) * Math.PI * 2;
+      const kc = xa * (0.45 + r() * 0.6);
+      const m = DA_NUI[3 + Math.floor(r() * 5)]!;
+      const k = m.k * (to ? 0.7 + r() * 0.4 : 0.45 + r() * 0.3);
+      const w = m.w * k, hh = m.h * k;
+      // Văng ra: nằm trên mặt đất (elip dẹt theo phối cảnh), nảy lên theo vòng cung
+      const x = Math.cos(goc) * kc * bay, y = Math.sin(goc) * kc * 0.55 * bay - Math.sin(Math.PI * e) * (to ? 140 : 80);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((1 - e) * (r() - 0.5) * 6);
+      if (r() < 0.5) ctx.scale(-1, 1);
+      ctx.drawImage(img, m.sx, m.sy, m.w, m.h, -w / 2, -hh, w, hh);
+      ctx.restore();
+    }
+  }
+
   private veTrangTri(ctx: CanvasRenderingContext2D, t: TrangTri, now: number, sa: boolean): void {
     if (t.nui) {
-      // Tảng đá núi: ảnh điểm ảnh, không đổ
+      // Tảng đá núi: ảnh điểm ảnh. Trúng chưởng (doLuc) thì vỡ thành đá nhỏ văng ra rồi nằm đó; giây cuối đá nhỏ mờ đi, tảng đá hiện lại
       const d = DA_NUI[t.loai - 1], img = this.lay(NUI_DA);
       if (!d || !img) return;
-      const w = d.w * d.k, h = d.h * d.k;
+      const a0 = ctx.globalAlpha;
+      const tv = t.doLuc === undefined ? -1 : now - t.doLuc;
+      const lien = tv < 0 ? 1 : dongHe(tv - (DA_VO_LAI_VE - 1));
       ctx.save();
       ctx.translate(t.x, t.y);
-      if (t.lat) ctx.scale(-1, 1);
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(img, d.sx, d.sy, d.w, d.h, -w / 2, -h, w, h);
+      if (tv >= 0 && lien < 1) this.veManhDa(ctx, t, tv, img, a0 * (1 - lien));
+      if (lien > 0) {
+        const w = d.w * d.k, h = d.h * d.k;
+        ctx.globalAlpha = a0 * lien;
+        if (t.lat) ctx.scale(-1, 1);
+        ctx.drawImage(img, d.sx, d.sy, d.w, d.h, -w / 2, -h, w, h);
+      }
       ctx.restore();
+      ctx.globalAlpha = a0;
       return;
     }
     const spSa = sa ? TRANG_TRI_SA[t.loai] : undefined;
