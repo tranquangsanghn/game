@@ -53,7 +53,8 @@ export const CELL_CHUONG_SAT = [285, 190, 127, 95, 1900];
 export const CELL_CHUONG_HOI = [2, 2, 2, 2, 1];
 /** Combo chưởng (cấp 0–3): chưởng thứ 2 trở đi trúng cùng một người trong `CELL_COMBO_CUA` giây kể từ phát trúng trước thì sát thương × hệ số */
 export const CELL_COMBO_CHUONG = [3, 3, 3, 3, 3];
-export const CELL_COMBO_CUA = 0.5;
+// Cấp 4 (Cell bạo nộ, chỉ 1 con): cửa 4s nên phát kế tiếp của chính nó trúng liền cũng tính combo
+export const CELL_COMBO_CUA = [0.5, 0.5, 0.5, 0.5, 4];
 export const CELL_CHUONG_TAM = 1100;
 export const CELL_CHUONG_RONG = 14;
 /** Dịch chuyển tức thời tới sát nhân vật khi nhân vật xa hơn tầm đấm + `CELL_DICH_XA`; hồi chiêu riêng từng con theo cấp */

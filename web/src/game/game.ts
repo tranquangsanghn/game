@@ -3752,7 +3752,7 @@ export class Game {
       if (Math.hypot(px - (q.x0 + vx * u), py - (q.y0 + vy * u)) > rong) continue;
       const p = this.nguoi.indexOf(n);
       const he = CELL_COMBO_CHUONG[q.cap ?? 0] ?? 1;
-      const combo = he > 1 && this.t - (this.cellChuongLuc[p] ?? -99) <= CELL_COMBO_CUA;
+      const combo = he > 1 && this.t - (this.cellChuongLuc[p] ?? -99) <= (CELL_COMBO_CUA[q.cap ?? 0] ?? 0.5);
       if (combo) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: `💥 COMBO CHƯỞNG CELL x${he}!`, mau: '#ff9f1a', t: 0 });
       if (this.nhanSatThuong(n, q.sat! * (combo ? he : 1)) && he > 1) this.cellChuongLuc[p] = this.t;
       if (q.cap === SO_CAP - 1 && n.combo > 0) {
