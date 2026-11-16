@@ -1,154 +1,117 @@
-"""Dựng atlas Vegeta (nhân vật chọn chơi thứ 3) và atlas chưởng / vụ nổ của Vegeta từ sheet người dùng gửi.
-Dùng: python3 tools/tao-atlas-vegeta.py <vegeta-sheet.webp>
-  - vegeta-sheet: sheet "Vegeta" (Ultimate LSW, 714×2000), nền trắng, nhân vật quay mặt sang phải (như Mabu / Zinbu)
-    chỉ dùng dạng tóc đen (9 hàng đầu); chưởng = cầu lửa vàng ở hàng 6, vụ nổ = vòng nổ ở hàng Super Saiyan (nhuộm vàng)
-Ra: web/public/assets/game/vegeta_atlas.png (ảnh to gấp PNG_TL kích thước logic; Scale2x ×2 rồi thu về; 16 cột, chân ở đáy, đầu ở giữa ngang)
-    web/public/assets/game/vegeta_chuong.png (8 khung 192×160: 0–1 cầu lửa vàng (đầu quay phải) · 2 chớp nòng · 3–7 vụ nổ lớn dần)
+"""Dựng atlas Vegeta (nhân vật chọn chơi thứ 3) từ sheet người dùng gửi.
+Dùng: python3 tools/tao-atlas-vegeta.py <vegeta-sheet.png>
+  - vegeta-sheet: sheet Vegeta 920×1478 (ripped by Dazz & Fret), nền tím nhạt (128,128,255), lưới 10 cột,
+    nhân vật quay mặt sang phải (như Mabu / Zinbu)
+Ra: web/public/assets/game/vegeta_atlas.png: mỗi điểm ảnh nguồn = đúng 4 điểm ảnh PNG (Scale2x ×2, không nội suy nên nét),
+    khung đứng cao 50 × TL = 125 logic (gấp đôi Mabu, khai báo `to: 2` trong nhan-vat-du-lieu.ts)
 In ra kích thước khung và danh sách khung theo tên animation để chép vào nhan-vat-du-lieu.ts.
-Tách nền bằng loang từ mép khung (giáp / găng tay trắng của Vegeta không bị coi là nền)."""
+Ảnh chưởng / vụ nổ giữ nguyên (tools/tao-chuong-vegeta.py, từ sheet cũ)."""
 import sys
-from collections import deque
 import numpy as np
 from PIL import Image
 
 src = np.array(Image.open(sys.argv[1]).convert('RGB')).astype(int)
-X0, X1 = 36, 460  # vùng sprite (bên phải là ảnh chân dung)
+NEN = np.array([128, 128, 255])
 
 
-def nen_trang(a):
-    return (a.min(-1) > 214) & ((a.max(-1) - a.min(-1)) < 40)
+def nen(a):
+    return np.abs(a - NEN).sum(-1) < 24
 
 
-def dai(y0, y1):
-    m = ~nen_trang(src[y0:y1, X0:X1])
-    p = m.sum(1)
+M = ~nen(src)
+M[1290:, 760:] = False  # bỏ chữ ký góc dưới phải
+
+
+def doan(p, gop=0):
     out, s = [], None
     for i, v in enumerate(list(p) + [0]):
         if v > 0 and s is None:
             s = i
         if v == 0 and s is not None:
-            if i - s > 4:
-                out.append((y0 + s, y0 + i))
+            if out and s - out[-1][1] <= gop:
+                out[-1] = (out[-1][0], i)
+            else:
+                out.append((s, i))
             s = None
     return out
 
 
-def cot(y0, y1):
-    m = ~nen_trang(src[y0:y1, X0:X1])
-    p = m.sum(0)
-    out, s = [], None
-    for i, v in enumerate(list(p) + [0]):
-        if v > 0 and s is None:
-            s = i
-        if v == 0 and s is not None:
-            out.append((X0 + s, X0 + i))
-            s = None
-    return out
+DAI = [d for d in doan(M.sum(1)) if d[1] - d[0] > 4]
+HANG = [doan(M[y0:y1].sum(0), 3) for y0, y1 in DAI]
+print('số hàng', len(DAI), [len(h) for h in HANG])
 
 
-DAI = dai(70, 660)
-DAI[-1] = (515, 580)  # hàng 8: bỏ chùm chưởng tím to phía dưới
-HANG = [[c for c in cot(*b) if c[1] - c[0] >= 10] for b in DAI]  # bỏ trái tim nhỏ
-
-
-def loang_nen(a):
-    """Nền = vùng trắng nối với mép khung"""
-    t = nen_trang(a)
-    h, w = t.shape
-    nen = np.zeros_like(t)
-    q = deque()
-    for y in range(h):
-        for x in (0, w - 1):
-            if t[y, x] and not nen[y, x]:
-                nen[y, x] = True; q.append((y, x))
-    for x in range(w):
-        for y in (0, h - 1):
-            if t[y, x] and not nen[y, x]:
-                nen[y, x] = True; q.append((y, x))
-    while q:
-        y, x = q.popleft()
-        for yy, xx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
-            if 0 <= yy < h and 0 <= xx < w and t[yy, xx] and not nen[yy, xx]:
-                nen[yy, xx] = True; q.append((yy, xx))
-    return nen
-
-
-def cat_khung(r, k, xc=None):
-    """Khung nhân vật (hàng r, cột k) → RGBA sát viền + toạ độ x giữa đầu. xc: cắt bớt bên phải (chớp chưởng dính liền)"""
+def cat_khung(r, k):
+    """Khung (hàng r, cột k) → RGBA sát viền + toạ độ x giữa đầu"""
     y0, y1 = DAI[r]
     s, e = HANG[r][k]
-    if xc:
-        e = s + xc
-    a = src[y0 - 1:y1 + 1, s - 1:e + 1]
-    nen = loang_nen(a)
-    # Viền mờ của ảnh nén: điểm sáng sát nền thì bỏ
-    sat = np.zeros_like(nen)
-    sat[1:] |= nen[:-1]; sat[:-1] |= nen[1:]; sat[:, 1:] |= nen[:, :-1]; sat[:, :-1] |= nen[:, 1:]
-    m = ~nen & ~(sat & (a.min(-1) > 190))
-    lan = np.zeros(m.shape, int)
-    lan[1:] += m[:-1]; lan[:-1] += m[1:]; lan[:, 1:] += m[:, :-1]; lan[:, :-1] += m[:, 1:]
-    m &= lan > 1
+    a = src[y0:y1, s:e]
+    m = M[y0:y1, s:e]
     ys, xs = np.where(m)
-    m = m[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
     a = a[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    m = m[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
     o = np.zeros(a.shape[:2] + (4,), np.uint8)
-    o[..., :3] = np.clip(a, 0, 255)
+    o[..., :3] = a
     o[..., 3] = np.where(m, 255, 0)
-    top = np.where(m[:4].sum(0) > 0)[0]
-    return o, (top.min() + top.max() + 1) / 2
+    # Giữa đầu: tóc đen (điểm tối) ở 1/4 trên của khung
+    toi = (a.max(-1) < 70) & m
+    vung = toi[: max(4, a.shape[0] // 4)]
+    xs = np.where(vung.sum(0) > 0)[0]
+    if not len(xs):
+        xs = np.where(m[:4].sum(0) > 0)[0]
+    return o, (xs.min() + xs.max() + 1) / 2
 
 
-# Animation: (hàng, cột) theo hàng / cột tách được ở trên (sheet đã quay mặt sang phải)
+# Animation: (hàng, cột) trên sheet
 A = {
-    'idle': [(0, 2), (0, 3), (0, 4), (0, 3)],
-    'guard': [(3, 0)],
-    'taunt_flex': [(0, 5), (0, 6), (0, 7), (0, 7), (0, 6)],
-    'taunt_wave': [(0, 8), (0, 8), (0, 7), (0, 8)],
-    'taunt_stretch': [(2, 4), (2, 4), (2, 5), (2, 0)],
-    'taunt_antenna': [(0, 0), (0, 1), (0, 2)],
-    'taunt_puff': [(8, 0), (8, 1), (8, 2), (8, 3), (8, 4), (8, 4), (8, 5)],
-    'run': [(1, 1), (1, 7), (1, 1), (1, 7)],
-    'fly': [(1, 3), (1, 3)],
-    'jump_up': [(2, 1), (2, 2)],
-    'fall': [(2, 3), (2, 6)],
-    'crouch_land': [(2, 0)],
-    'hit': [(7, 0), (7, 1), (7, 0)],
-    'knockdown': [(7, 4), (7, 5)],
-    'blown_away': [(7, 1), (7, 4)],
-    'burn': [(7, 0), (7, 2), (7, 0), (7, 2)],
-    'lifted': [(7, 2), (7, 3)],
-    'launched': [(7, 3), (7, 4), (7, 5)],
-    'air_recover': [(1, 6), (1, 7)],
-    'get_up': [(7, 5), (2, 0), (0, 4)],
-    'thrown': [(7, 1), (7, 4), (7, 5), (7, 6)],
-    'lie': [(7, 6)],
-    'punch_combo': [(4, 0), (4, 1), (4, 2)],
-    'punch_long': [(4, 3), (4, 4), (4, 5)],
-    'punch_long_2': [(4, 5), (4, 6), (4, 7)],
-    'punch_dash': [(4, 1), (4, 2), (4, 4), (4, 5)],
-    'punch_charge': [(4, 8), (4, 9), (4, 11), (4, 12)],
-    'kick_long': [(5, 0), (5, 1), (5, 2)],
-    'kick_long_2': [(5, 3), (5, 4), (5, 5)],
-    'kick_sweep': [(5, 9), (5, 11), (5, 12)],
-    'kick_arc': [(5, 6), (5, 7), (5, 8)],
-    'kick_high': [(5, 9), (5, 10), (5, 12)],
-    'roll': [(1, 1), (1, 4), (1, 5), (1, 4), (1, 5), (4, 4), (4, 5)],
-    'energy_ball': [(6, 0), (6, 1), (6, 2), (6, 3), (6, 3), (6, 2)],
+    'idle': [(0, 0), (0, 1), (0, 2), (0, 3)],
+    'guard': [(1, 0)],
+    'taunt_flex': [(5, 6), (5, 7), (5, 8), (5, 9), (5, 8)],
+    'taunt_wave': [(15, 9), (16, 0), (16, 1), (16, 0)],
+    'taunt_stretch': [(5, 1), (5, 2), (5, 3), (5, 4)],
+    'taunt_antenna': [(6, 1), (6, 2), (6, 3), (6, 4)],
+    'taunt_puff': [(15, 0), (15, 1), (15, 2), (15, 3), (15, 4), (15, 5), (15, 6), (15, 7), (15, 8)],
+    'run': [(0, 4), (0, 5), (0, 6), (0, 7)],
+    'fly': [(0, 8), (0, 9)],
+    'jump_up': [(1, 3), (1, 4)],
+    'fall': [(1, 5), (1, 8)],
+    'crouch_land': [(1, 6)],
+    'hit': [(2, 0), (2, 1), (2, 0)],
+    'knockdown': [(2, 2), (2, 4)],
+    'blown_away': [(3, 0), (3, 1)],
+    'burn': [(2, 5), (2, 6), (2, 7), (2, 8)],
+    'lifted': [(3, 4), (3, 5)],
+    'launched': [(3, 8), (2, 3), (2, 2)],
+    'air_recover': [(4, 8), (4, 9)],
+    'get_up': [(4, 9), (5, 0), (0, 0)],
+    'thrown': [(3, 9), (2, 2), (2, 4), (14, 2)],
+    'lie': [(2, 4)],
+    'punch_combo': [(9, 0), (9, 2), (9, 3)],
+    'punch_long': [(8, 5), (6, 6), (6, 7)],
+    'punch_long_2': [(9, 1), (9, 3), (9, 4)],
+    'punch_dash': [(8, 0), (8, 1), (8, 2), (8, 3)],
+    'punch_charge': [(10, 2), (10, 3), (10, 4), (10, 5)],
+    'kick_long': [(7, 3), (7, 1), (7, 2)],
+    'kick_long_2': [(10, 0), (7, 5), (7, 8)],
+    'kick_sweep': [(11, 4), (11, 5), (11, 6)],
+    'kick_arc': [(7, 6), (7, 7), (7, 8)],
+    'kick_high': [(13, 0), (13, 1), (13, 2)],
+    'roll': [(4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7)],
+    'energy_ball': [(12, 0), (12, 1), (12, 1), (12, 1), (12, 1), (12, 0)],
 }
-CAT = {(6, 3): 24}  # khung bắn chưởng: chớp chưởng dính liền, chỉ lấy phần người
 
 ds, so = [], {}
 for ten, ks in A.items():
     for rk in ks:
         if rk not in so:
             so[rk] = len(ds)
-            ds.append(cat_khung(*rk, CAT.get(rk)))
+            ds.append(cat_khung(*rk))
 
 NGUONG_MAU = 70
 
 
 def scale2x(a):
-    """Phóng 2 lần kiểu Scale2x (EPX): mượt cạnh chéo của pixel art"""
+    """Phóng 2 lần kiểu Scale2x (EPX): mượt cạnh chéo của pixel art, không nội suy màu"""
     h, w = a.shape[:2]
     p = np.pad(a, ((1, 1), (1, 1), (0, 0)), mode='edge')
     E = p[1:-1, 1:-1]; B = p[:-2, 1:-1]; H = p[2:, 1:-1]; D = p[1:-1, :-2]; F = p[1:-1, 2:]
@@ -163,107 +126,33 @@ def scale2x(a):
     return o
 
 
-# Tỉ lệ logic: khung đứng (idle) cao bằng Vegeta cũ / Mabu (~61 px logic)
-CAO_DUNG = 61
-TL = CAO_DUNG / ds[so[(0, 3)]][0].shape[0]
-PNG_TL = 1.5  # ảnh PNG to gấp 1,5 kích thước logic (như atlas cũ)
-P = TL * PNG_TL  # điểm ảnh nguồn → điểm ảnh PNG
+# Tỉ lệ logic: khung đứng (cao 50 điểm ảnh nguồn) cao 125 logic ≈ gấp đôi Mabu (~61)
+h_dung = ds[so[(0, 0)]][0].shape[0]
+TL = 2.5  # điểm ảnh nguồn → logic
+P = 4  # điểm ảnh nguồn → PNG (Scale2x ×2, không thu phóng thêm)
+PNG_TL = P / TL
 
-trai = max(d for _, d in ds) * TL
-phai = max(o.shape[1] - d for o, d in ds) * TL
-cao = max(o.shape[0] for o, _ in ds) * TL
-KW, KH = int(np.ceil(trai + phai)) + 4, int(np.ceil(cao)) + 4
-NX, NY = int(np.ceil(trai)) + 2, KH - 2
-COT = 16
+trai = max(d for _, d in ds)
+phai = max(o.shape[1] - d for o, d in ds)
+cao = max(o.shape[0] for o, _ in ds)
+# Khung tính theo điểm ảnh nguồn rồi đổi ra logic; giữ số nguyên ở cả logic lẫn PNG
+chan = lambda v: int(np.ceil(v / 2)) * 2  # số chẵn để logic (× 2,5) là số nguyên
+KWn, KHn = chan(trai + phai + 2), chan(cao + 2)
+NXn = chan(trai + 1)
+COT = 10
 hang_so = (len(ds) + COT - 1) // COT
-
-
-def phong(o):
-    im = Image.fromarray(scale2x(scale2x(o)), 'RGBA')
-    w, h = max(1, round(o.shape[1] * P)), max(1, round(o.shape[0] * P))
-    # Thu từ ×4 về đúng cỡ PNG trên ảnh nhân trước alpha (không viền đen / trắng)
-    a = np.array(im).astype(float)
-    a[..., :3] *= a[..., 3:] / 255
-    im2 = Image.fromarray(a.astype(np.uint8), 'RGBA').resize((w, h), Image.LANCZOS)
-    b = np.array(im2).astype(float)
-    al = np.maximum(b[..., 3:], 1)
-    b[..., :3] = np.clip(b[..., :3] * 255 / al, 0, 255)
-    b[..., 3] = np.where(b[..., 3] < 40, 0, np.clip((b[..., 3] - 40) * 255 / 160, 0, 255))
-    return Image.fromarray(b.astype(np.uint8), 'RGBA')
-
-
-AW, AH = round(COT * KW * PNG_TL), round(hang_so * KH * PNG_TL)
+AW, AH = COT * KWn * P, hang_so * KHn * P
 atlas = Image.new('RGBA', (AW, AH), (0, 0, 0, 0))
 for i, (o, d) in enumerate(ds):
-    im = phong(o)
-    x = round(((i % COT) * KW + NX) * PNG_TL - d * P)
-    y = round(((i // COT) * KH + NY) * PNG_TL) - im.height
+    im = Image.fromarray(scale2x(scale2x(o)), 'RGBA')
+    x = round(((i % COT) * KWn + NXn - d) * P)
+    y = ((i // COT) * KHn + KHn - 2) * P - im.height
     atlas.alpha_composite(im, (x, y))
 atlas.save('web/public/assets/game/vegeta_atlas.png', optimize=True)
-print(f'PNG {AW}×{AH}; atlasW: {COT * KW}, atlasH: {hang_so * KH}, w: {KW}, h: {KH}, cot: {COT}, neoX: {NX}, neoY: {NY}')
+f = lambda v: round(v * TL, 3)
+print(f'h_dung {h_dung}, TL {TL:.4f}, PNG {AW}×{AH}')
+print(f'atlasW: {f(COT * KWn)}, atlasH: {f(hang_so * KHn)}, w: {f(KWn)}, h: {f(KHn)}, cot: {COT}, neoX: {f(NXn)}, neoY: {f(KHn - 2)}')
 for ten, ks in A.items():
     print(f'{ten}: [{", ".join(str(so[k]) for k in ks)}]')
-
-
-# ─── Chưởng + vụ nổ ───
-def tach_sang(a):
-    """Hiệu ứng sáng trên nền trắng → RGBA: alpha theo độ lệch khỏi trắng, phần lõi trắng kín bên trong giữ đặc"""
-    nen = loang_nen(a)
-    lech = (255 - a.min(-1)).astype(float)
-    al = np.clip(lech / 120, 0, 1)
-    al = np.where(nen, al, 1.0)
-    mau = np.clip(255 - (255 - a) / np.maximum(al[..., None], 1e-3), 0, 255)
-    o = np.zeros(a.shape[:2] + (4,), np.uint8)
-    o[..., :3] = mau
-    o[..., 3] = (al * 255).astype(np.uint8)
-    return o
-
-
-def nhuom_vang(o):
-    """Vòng nổ hồng / tím → vàng cam (giữ độ sáng)"""
-    o = o.copy().astype(float)
-    sang = o[..., :3].mean(-1, keepdims=True) / 255
-    vang = np.array([255, 200, 60], float)
-    o[..., :3] = np.clip(vang * (0.35 + 0.65 * sang) + 255 * np.clip(sang - 0.75, 0, 1) * 2.4, 0, 255)
-    return o.astype(np.uint8)
-
-
-def hop(x0, y0, x1, y1):
-    return tach_sang(src[y0:y1, x0:x1])
-
-
-y60, y61 = DAI[6]
-c6 = HANG[6]
-cau1 = hop(c6[-2][0] - 1, y60, c6[-2][1] + 1, y61)  # cầu lửa vàng 1 (đuôi phía trái trên)
-cau2 = hop(c6[-1][0] - 1, y60, c6[-1][1] + 1, y61)
-s3, e3 = c6[3]
-chop = hop(s3 + 22, y60, e3 + 1, y61)  # chớp nòng (phần bên phải khung bắn chưởng)
-
-# Vòng nổ hồng ở hàng Super Saiyan: cầu sáng · vòng · vòng mờ (cắt tránh hình nhân vật bên trái)
-no = [nhuom_vang(hop(*h)) for h in ((400, 1200, 468, 1272), (478, 1203, 547, 1272), (559, 1214, 616, 1266))]
-print('vòng nổ', [n.shape[:2] for n in no])
-CW, CH = 192, 160
-
-
-def dat(img, khung, co, xoay=0):
-    """xoay: độ quay ngược chiều kim đồng hồ (cầu lửa trong sheet bay chéo xuống phải → đầu quay sang phải)"""
-    im = Image.fromarray(img, 'RGBA')
-    if xoay:
-        im = im.rotate(xoay, Image.BICUBIC, expand=True)
-        im = im.crop(im.getbbox())
-    k = min(co * CW / im.width, co * CH / im.height)
-    im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
-    ch.alpha_composite(im, (khung * CW + (CW - im.width) // 2, (CH - im.height) // 2))
-
-
-ch = Image.new('RGBA', (CW * 8, CH), (0, 0, 0, 0))
-dat(cau1, 0, 0.75, 38)
-dat(cau2, 1, 0.75, 38)
-dat(chop, 2, 0.9)
-dat(no[0], 3, 0.3)
-dat(no[0], 4, 0.55)
-dat(no[0], 5, 0.8)
-dat(no[1], 6, 0.95)
-dat(no[2], 7, 1.0)
-ch.save('web/public/assets/game/vegeta_chuong.png', optimize=True)
-print('vegeta_chuong', ch.size)
+o, d = ds[so[(12, 1)]]
+print('energy_ball khung (12,1): rộng', o.shape[1], 'cao', o.shape[0], 'giữa đầu', d, '→ mép phải logic', f(o.shape[1] - d))

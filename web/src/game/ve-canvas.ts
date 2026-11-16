@@ -1261,7 +1261,7 @@ export class VeCanvas {
     if (ng?.ki === 2) {
       // Vegeta không có hàng trong atlas quả cầu: vẽ khung đứng của Vegeta
       ctx.translate(0, 70);
-      ctx.scale(2.4, 2.4);
+      ctx.scale(2.4 / (ng.nv.sp.to ?? 1), 2.4 / (ng.nv.sp.to ?? 1));
       this.sprite(ctx, ng.nv.sp, ng.nv.sp.anim['idle']!.f[0]!, false, false);
     } else {
       ctx.translate(0, 170);
@@ -1505,7 +1505,7 @@ export class VeCanvas {
     ctx.beginPath();
     ctx.rect(-45, -45, 90, 90);
     ctx.clip();
-    const k = Math.min(90 / 72, 90 / 76);
+    const k = Math.min(90 / 72, 90 / 76) / (ng.nv.sp.to ?? 1);
     ctx.scale(k, k);
     ctx.translate(0, 28);
     this.sprite(ctx, ng.nv.sp, ng.nv.khung, ng.nv.lat, false);

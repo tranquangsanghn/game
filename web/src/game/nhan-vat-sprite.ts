@@ -17,6 +17,8 @@ export interface NhanVatSprite {
   kieuChet: BuocChet[][];
   /** Khung riêng khi đi / đứng quay lên (nhìn lưng) hoặc xuống (nhìn thẳng). Thiếu thì dùng khung nhìn nghiêng */
   huong?: { len?: KhungHuong; xuong?: KhungHuong };
+  /** Kích thước logic to gấp bao nhiêu lần nhân vật thường (Vegeta 2). Trên map vẽ to theo; chân dung / avatar thu lại 1 / to */
+  to?: number;
 }
 
 /** dung: khung khi đứng yên (idle) · di: khung khi đi (run) */

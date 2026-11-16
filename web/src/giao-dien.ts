@@ -207,12 +207,13 @@ export class GiaoDien {
   /** Ảnh nhân vật (khung đứng yên đầu tiên của animation idle, cắt sát hình) để hiện trên thẻ chọn */
   private anhNv(i: number, tiLe: number): string {
     const sp = NHAN_VAT[i]!;
-    const [x0, y0, x1, y1] = i === 0 ? [54, 22, 89, 83] : i === 1 ? [29, 24, 66, 70] : [40, 29, 91, 94];
+    const [x0, y0, x1, y1] = i === 0 ? [54, 22, 89, 83] : i === 1 ? [29, 24, 66, 70] : [64, 52, 164, 182];
+    tiLe /= sp.to ?? 1; // sprite logic to gấp `to` lần thì thu lại cho thẻ bằng cỡ các nhân vật khác
     const k = sp.anim['idle'].f[0];
     const gx = (k % sp.cot) * sp.w + x0;
     const gy = Math.floor(k / sp.cot) * sp.h + y0;
     // Khung cố định (không chạy animation) để HTML màn phủ không bị dựng lại mỗi khung hình, nếu không nút bấm sẽ mất giữa lúc nhấn và nhả
-    // Vegeta: khung gốc nhỏ (~30px, ảnh nén) nên vẽ mịn thay vì vỡ hạt
+    // Vegeta: atlas điểm ảnh to, thu nhỏ trên thẻ nên vẽ mịn thay vì vỡ hạt
     return `<span class="anh-nv" style="${i === 2 ? 'image-rendering:auto;' : ''}width:${(x1 - x0) * tiLe}px;height:${(y1 - y0) * tiLe}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * tiLe}px ${sp.atlasH * tiLe}px;background-position:-${gx * tiLe}px -${gy * tiLe}px"></span>`;
   }
 
