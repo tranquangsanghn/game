@@ -4,7 +4,7 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, ZINBU } from './nhan-vat-du-lieu';
 import { chuanBiSaMac, daoCua, doSau, trongVuon, trongVongDao, veDat, DAO, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, type Cell } from './cell';
+import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_CHU_KY, TIEC_DI, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -2328,6 +2328,13 @@ export class Game {
     return dx * dx + dy * dy < r * r && this.cellTrenCam(c);
   }
 
+  /** Máy bay nằm trong tầm nhìn riêng của Cell khi nhìn máy bay (CELL_MB_NHIN, tính tới thân máy bay trên cao); không cần người trên máy bay nhìn thấy Cell */
+  private cellThayMb(c: Cell): boolean {
+    const t = this.tamMb();
+    const dx = t.x - c.x, dy = t.y - (c.y - 32 * cellK(c.cap));
+    return dx * dx + dy * dy < CELL_MB_NHIN * CELL_MB_NHIN;
+  }
+
   /** Cell "một chấm": ngoài màn hình (lề theo độ to) và xa mọi nhân vật hơn CELL_THUA_XA, không đang vận chưởng / hoá socola / chết */
   private cellThua(c: Cell): boolean {
     if (c.chet || (c.nap !== undefined && c.chien) || (c.socola ?? 0) > 0) return false;
@@ -3657,7 +3664,7 @@ export class Game {
     const t = this.tamMb();
     const d = Math.hypot(t.x - c.x, t.y - c.y);
     c.lat = t.x < c.x;
-    if ((c.choChuong ?? 0) <= this.t && d < CELL_MB_CHUONG_TAM && this.cellThayMuc(c, this.mayBay.x, this.mayBay.y) && Math.random() < dt * 3) { this.cellVanChuong(c); return; }
+    if ((c.choChuong ?? 0) <= this.t && d < CELL_MB_CHUONG_TAM && this.cellThayMb(c) && Math.random() < dt * 3) { this.cellVanChuong(c); return; }
     if (d > CELL_MB_CHUONG_TAM * 0.6) this.cellDiToi(c, this.mayBay.x, this.mayBay.y, dt, 1);
     else c.chay = false;
     c.lat = t.x < c.x;

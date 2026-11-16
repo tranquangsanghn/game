@@ -60,6 +60,8 @@ export const CELL_CHUONG_TAM = 1100;
 export const CELL_MB_TAM = 1500;
 /** Tầm chùm chưởng khi bắn máy bay (dài hơn chưởng thường) */
 export const CELL_MB_CHUONG_TAM = 2200;
+/** Tầm nhìn riêng của Cell khi nhìn máy bay (máy bay ở trên cao, to): máy bay trong tầm này thì Cell vận chưởng bắn (`cellThayMb()`) */
+export const CELL_MB_NHIN = 1500;
 /** `Cell.muc` = MUC_MB: Cell đang bắn máy bay */
 export const MUC_MB = -2;
 /** Cell ngoài màn hình (thêm lề CELL_THUA_LE × độ to) và cách mọi nhân vật quá CELL_THUA_XA chỉ cập nhật mỗi CELL_THUA_NHIP khung (như gà, `cellThua()`) */
