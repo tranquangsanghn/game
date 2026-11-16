@@ -4,6 +4,7 @@ import type { KhungSprite } from './sprite';
 import { CELL_SO_DAO, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
+import { MABU } from './nhan-vat-du-lieu';
 import { DAO, duongBo, NUI, TG } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
@@ -714,7 +715,13 @@ export class VeCanvas {
       ctx.save();
       ctx.translate(v.x, v.y);
       ctx.globalAlpha = dongHe(1 - k);
-      if (v.loai === 'chay') {
+      if (v.vg) {
+        // Vụ nổ chưởng Vegeta: 5 khung nổ lớn dần (3 → 7) trong vegeta_chuong.png
+        ctx.globalAlpha = k < 0.7 ? 1 : dongHe((1 - k) / 0.3);
+        const s = 2.2 * (v.co ?? 1);
+        ctx.scale(s, s);
+        this.sprite(ctx, c.SP_VG_CHUONG, 3 + Math.min(4, Math.floor(k * 6)), false, false);
+      } else if (v.loai === 'chay') {
         this.veChay(ctx, v, k);
       } else if (v.loai === 'no') {
         duongTron(ctx, 30 + v.t * 200);
@@ -844,6 +851,25 @@ export class VeCanvas {
     for (const d of c.danView) {
       if (!d.to) continue;
       const vt = c.danHienTai(d);
+      if (d.vg) {
+        // Chưởng Vegeta: quả cầu sáng có đuôi (khung 0, đầu quay sang phải), xoay theo hướng bay, vệt sáng vàng phía sau
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 22;
+        ctx.strokeStyle = 'rgba(255,236,120,0.45)';
+        ctx.beginPath();
+        ctx.moveTo(vt.xs, vt.ys);
+        ctx.lineTo(vt.x, vt.y);
+        ctx.stroke();
+        ctx.translate(vt.x, vt.y);
+        ctx.rotate(Math.atan2(d.y1 - d.y0, d.x1 - d.x0));
+        ctx.scale(2.4, 2.4);
+        // Đầu quả cầu nằm lệch phải trong khung: dời về để tâm đầu trùng vị trí chưởng
+        ctx.translate(-12, 0);
+        this.sprite(ctx, c.SP_VG_CHUONG, 0, false, false);
+        ctx.restore();
+        continue;
+      }
       // Chưởng socola nâu; chưởng tự bắn lên trời là quả cầu lửa có đuôi cháy dài
       const mauDan = d.soc ? '#a8693a' : d.troi ? '#ffb347' : '#ff9fd0';
       ctx.save();
@@ -1087,7 +1113,7 @@ export class VeCanvas {
     const pop = 0.4 + 0.6 * dongHe(cu.tach);
     if (cu.kieu === 'may') {
       // Mây tách ra từ Mabu: dùng đúng khung mây của Mabu, to gấp 2, bồng bềnh
-      const sp = c.nguoi[0].nv.sp;
+      const sp = MABU;
       ctx.save();
       ctx.translate(0, -34 + 6 * Math.sin(c.t * 4));
       ctx.scale(c.S_NV * 2 * pop, c.S_NV * 2 * pop);
@@ -1219,9 +1245,17 @@ export class VeCanvas {
     ctx.save();
     ctx.clip();
     // Neo sprite ở dưới vòng tròn để phần đầu + thân nằm giữa vòng
-    ctx.translate(0, 170);
-    ctx.scale(0.85, 0.85);
-    this.sprite(ctx, c.SP_CAU, q.cua * 6 + 5, false, false);
+    const ng = c.nguoi[q.cua];
+    if (ng?.ki === 2) {
+      // Vegeta không có hàng trong atlas quả cầu: vẽ khung đứng của Vegeta
+      ctx.translate(0, 70);
+      ctx.scale(2.4, 2.4);
+      this.sprite(ctx, ng.nv.sp, ng.nv.sp.anim['idle']!.f[0]!, false, false);
+    } else {
+      ctx.translate(0, 170);
+      ctx.scale(0.85, 0.85);
+      this.sprite(ctx, c.SP_CAU, c.cauHang(q) * 6 + 5, false, false);
+    }
     ctx.restore();
     duongTron(ctx, R);
     ctx.lineWidth = 7;

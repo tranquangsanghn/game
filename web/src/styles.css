@@ -240,7 +240,7 @@ kbd {
 
 
 
-/* Màn bắt đầu: 3 thẻ ảnh chọn số người chơi / nhân vật */
+/* Màn bắt đầu: 6 thẻ ảnh chọn nhân vật (hàng trên 1 người: Mabu, Zinbu, Vegeta; hàng dưới 2 người) */
 .man-chon { flex-direction: column; background: radial-gradient(ellipse at center, rgba(20, 30, 50, 0.82), rgba(8, 12, 24, 0.95)); }
 .hang-the { display: flex; gap: clamp(16px, 4vw, 48px); justify-content: center; align-items: center; flex-wrap: wrap; }
 .the-chon {
@@ -267,6 +267,10 @@ kbd {
 .the-anh { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 8px; padding-bottom: 14px; }
 .anh-nv { display: block; background-repeat: no-repeat; image-rendering: pixelated; }
 .the-chu { font-size: 24px; font-weight: 700; }
+.luoi-the { display: grid; grid-template-columns: repeat(3, auto); gap: clamp(10px, 2vw, 24px) clamp(14px, 3vw, 36px); }
+.luoi-the .the-chon { width: clamp(150px, 20vw, 230px); height: clamp(150px, 30vh, 230px); padding: 10px 8px 10px; }
+.luoi-the .the-chu { font-size: clamp(14px, 1.6vw, 19px); text-align: center; }
+.luoi-the .the-anh { padding-bottom: 8px; min-height: 0; overflow: hidden; }
 
 /* Màn hướng dẫn (sau khi chọn nhân vật) */
 .man-hd { gap: 10px; padding: 12px; box-sizing: border-box; }

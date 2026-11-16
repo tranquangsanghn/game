@@ -234,6 +234,13 @@
 - Mỗi quả cầu có chủ (`cua`: quả trái của Mabu, quả phải của Zinbu): chỉ đúng chủ mới chui vào được; quả trống có avatar chủ (khung 5 của hàng chủ, trong vòng tròn viền màu nhân vật phía trên, `veAvatarCau()`); chơi 1 người vẫn hiện đủ 2 quả (quả của người vắng chỉ đứng đó, không ai chui vào).
 - Trong cầu (`trongCau(p)`, cả pha `trong` và `vo`): nhân vật ẩn (không vẽ, không thanh máu), không điều khiển / ra đòn / bay, không nhặt đồ, không nhận sát thương (`nhanSatThuong()`), gà không thấy (`khuat(n)` = gục / mây / trong cầu, dùng ở mọi chỗ gà chọn mục tiêu) nên đi lang thang tìm; mũi tên chỉ hướng không tính người đang trốn. Hồi `CAU_HOI_MAU` = 20 máu/s tới `HP_NV` (đầy bình), mana đầy `MANA_TOI_DA` ngay, mở khoá bay. Lưu trong ván lưu (`cauTron`, thiếu thì tạo mới).
 
+# Nguyên tắc nhân vật Vegeta
+
+- Nhân vật chọn chơi thứ 3 (`VEGETA` trong `nhan-vat-du-lieu.ts`, `NHAN_VAT` = [Mabu, Zinbu, Vegeta], chỉ số `NguoiChoi.ki`, lưu trong ván lưu; ván cũ thiếu `ki` thì ô trái Mabu, ô phải Zinbu). Atlas `vegeta_atlas.png` (16 cột, khung 98×72, neo 46 / 70) dựng bằng `tools/tao-atlas-vegeta.py` từ sheet người dùng gửi (khung gốc ~30px phóng 2 lần, lật quay phải). Chưởng / vụ nổ của Vegeta lấy từ sheet Frieza (`vegeta_chuong.png` = `SP_VG_CHUONG`: khung 0 quả chưởng sao chổi, 3–7 vụ nổ lớn dần); `Dan.vg` / `Vet.vg` vẽ trong `ve-canvas.ts`.
+- Màn chọn có 6 thẻ (`THE_CHON`, `DOI_HINH`, `cheNguoi`): hàng trên 1 người (Mabu · Zinbu · Vegeta), hàng dưới 2 người (Mabu + Zinbu · Mabu + Vegeta · Vegeta + Zinbu); tay cầm ◀ ▶ từng thẻ, ▲ ▼ đổi hàng. Vegeta 1 người đứng ô trái.
+- Sức mạnh giữa Mabu và Zinbu (`SAT_THUONG` cột 3): Đấm 50 · Đá 85 · Chiêu đặc biệt 160; máu / mana / né / giảm sát thương như Mabu, Zinbu. Chỉ có 3 nhóm đòn (Đấm, Đá, Chiêu đặc biệt), không có chiêu riêng thứ 4: nút B / cần phải tự dùng chưởng (hết mana thì đá). Không có đòn ăn, đòn thường không biến gà thành socola. Cứu đồng đội: Vegeta (như Zinbu) phủ socola. Quả cầu trốn của Vegeta dùng vỏ hàng 0, lúc vỡ dừng ở khung khói, avatar là hình Vegeta.
+- Logic phân biệt nhân vật theo `ki` (không theo ô `p`): Zinbu = `ki === 1`, Mabu = `ki === 0` / cờ `may` của nhóm đòn.
+
 # Nguyên tắc cảm giác đánh
 
 - Hit-stop (`dungKhung()`, `dungHinh`): đòn Đá, đòn trúng gà mẹ, chưởng xuyên / nổ làm game chạy chậm còn `DUNG_HE_SO` = 8% trong 0,03–0,05s; gà mẹ chết khựng 0,18s. Chỉ chậm phần logic (`capNhat`), HUD và vẽ vẫn chạy.

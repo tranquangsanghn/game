@@ -1,5 +1,5 @@
-import { Game } from './game/game';
-import { MABU, ZINBU } from './game/nhan-vat-du-lieu';
+import { DOI_HINH, Game, THE_CHON, type CheNguoi } from './game/game';
+import { NHAN_VAT } from './game/nhan-vat-du-lieu';
 import { BanLuu, DiemCao, bangDiem, guiDiem, layLuu, luuGame, nhoTen, tenDaNho, xoaLuu } from './luu-tru';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -24,7 +24,7 @@ export class GiaoDien {
   private oTen = document.createElement('input');
   private veLanCuoi = '';
   /** Đang ở màn hướng dẫn (sau khi chọn nhân vật, trước khi vào game) */
-  private huongDan: 'mabu' | 'zinbu' | 'ca2' | null = null;
+  private huongDan: CheNguoi | null = null;
   /** Bước cuối sau màn hướng dẫn: màn mục tiêu (diệt vua gà), bấm Vào chơi mới bắt đầu */
   private buocMucTieu = false;
   /** Màn chọn chế độ (tay cầm): thẻ đã bấm X, chờ bấm B để xác nhận; -1 = chưa bấm */
@@ -91,7 +91,7 @@ export class GiaoDien {
     };
     this.game.onNutQuay = () => {
       if (this.huongDan) void this.lam('quay');
-      else if (this.daBamX === this.game.menuChon) void this.lam((['mabu', 'zinbu', 'ca2'] as const)[this.game.menuChon]!);
+      else if (this.daBamX === this.game.menuChon) void this.lam(THE_CHON[this.game.menuChon]!);
     };
     this.game.onNutTamDung = () => void this.lam(this.game.menuTamDung === 1 ? 'luuGame' : 'tamDung');
     this.game.onKetThuc = (kq) => void this.ketThuc(kq);
@@ -110,7 +110,10 @@ export class GiaoDien {
     switch (act) {
       case 'mabu':
       case 'zinbu':
+      case 'vegeta':
       case 'ca2':
+      case 'mabuVegeta':
+      case 'vegetaZinbu':
         this.daBamX = -1;
         // Chọn nhân vật xong thì sang màn hướng dẫn, bấm Vào chơi mới bắt đầu
         this.thongBao = { text: '', loi: false };
@@ -203,13 +206,14 @@ export class GiaoDien {
 
   /** Ảnh nhân vật (khung đứng yên đầu tiên của animation idle, cắt sát hình) để hiện trên thẻ chọn */
   private anhNv(i: number, tiLe: number): string {
-    const sp = i === 0 ? MABU : ZINBU;
-    const [x0, y0, x1, y1] = i === 0 ? [54, 22, 89, 83] : [29, 24, 66, 70];
+    const sp = NHAN_VAT[i]!;
+    const [x0, y0, x1, y1] = i === 0 ? [54, 22, 89, 83] : i === 1 ? [29, 24, 66, 70] : [30, 22, 68, 70];
     const k = sp.anim['idle'].f[0];
     const gx = (k % sp.cot) * sp.w + x0;
     const gy = Math.floor(k / sp.cot) * sp.h + y0;
     // Khung cố định (không chạy animation) để HTML màn phủ không bị dựng lại mỗi khung hình, nếu không nút bấm sẽ mất giữa lúc nhấn và nhả
-    return `<span class="anh-nv" style="width:${(x1 - x0) * tiLe}px;height:${(y1 - y0) * tiLe}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * tiLe}px ${sp.atlasH * tiLe}px;background-position:-${gx * tiLe}px -${gy * tiLe}px"></span>`;
+    // Vegeta: khung gốc nhỏ (~30px, ảnh nén) nên vẽ mịn thay vì vỡ hạt
+    return `<span class="anh-nv" style="${i === 2 ? 'image-rendering:auto;' : ''}width:${(x1 - x0) * tiLe}px;height:${(y1 - y0) * tiLe}px;background-image:url(${sp.atlas});background-size:${sp.atlasW * tiLe}px ${sp.atlasH * tiLe}px;background-position:-${gx * tiLe}px -${gy * tiLe}px"></span>`;
   }
 
   /** Hàng 7 viên ngọc rồng (1 → 7 sao, từ ngoc_rong.png) cho màn mục tiêu */
@@ -221,12 +225,17 @@ export class GiaoDien {
 
   private htmlBatDau(): string {
     const the = (act: string, mau: string, anh: string, chu: string) =>
-      `<button type="button" tabindex="-1" class="the-chon${this.game.cheDo === 'tayCam' && ['mabu', 'zinbu', 'ca2'][this.game.menuChon] === act ? ' dang-chon' : ''}" data-act="${act}" style="--mau:${mau}"><span class="the-anh">${anh}</span><span class="the-chu">${chu}</span></button>`;
-    return `<div class="man-phu man-chon"><div class="hang-the${this.game.cheDo === 'tayCam' ? ' co-chon' : ''}">
-      ${the('mabu', '#ec4899', this.anhNv(0, 3.4), '1 người chơi')}
-      ${the('zinbu', '#facc15', this.anhNv(1, 3.4), '1 người chơi')}
-      ${the('ca2', '#38bdf8', this.anhNv(0, 2.4) + this.anhNv(1, 2.4), '2 người chơi')}
-    </div>${this.game.cheDo === 'tayCam' ? `<p class="phu">Người chơi 1: ◀ ▶ chọn · ${this.daBamX === this.game.menuChon ? 'bấm B để vào' : 'bấm X rồi B để xác nhận'}</p><p class="phu" style="opacity:.6">${this.game.tayCamTen.length ? `Tay cầm: ${this.game.tayCamTen.join(' · ')}` : 'Chưa thấy tay cầm (bấm một nút bất kỳ)'}${this.game.tayCamNut ? ` · vừa bấm ${this.game.tayCamNut}` : ''}</p>` : ''}${this.luu ? '<button type="button" tabindex="-1" class="nut-phu" data-act="tiep" style="margin-top:20px">▶ Chơi tiếp ván đã lưu</button>' : ''}${this.htmlThongBao()}</div>`;
+      `<button type="button" tabindex="-1" class="the-chon${this.game.cheDo === 'tayCam' && THE_CHON[this.game.menuChon] === act ? ' dang-chon' : ''}" data-act="${act}" style="--mau:${mau}"><span class="the-anh">${anh}</span><span class="the-chu">${chu}</span></button>`;
+    const mauThe = ['#ec4899', '#facc15', '#3b82f6'];
+    const theChon = (c: CheNguoi) => {
+      const [a, b] = DOI_HINH[c];
+      const ds = [a, b].filter((k): k is number => k !== null);
+      const ten = ds.map((k) => NHAN_VAT[k]!.ten).join(' + ');
+      return the(c, ds.length > 1 ? '#38bdf8' : mauThe[ds[0]!]!, ds.map((k) => this.anhNv(k, ds.length > 1 ? 2 : 2.8)).join(''), ds.length > 1 ? `2 người · ${ten}` : `1 người · ${ten}`);
+    };
+    return `<div class="man-phu man-chon"><div class="hang-the luoi-the${this.game.cheDo === 'tayCam' ? ' co-chon' : ''}">
+      ${THE_CHON.map(theChon).join('')}
+    </div>${this.game.cheDo === 'tayCam' ? `<p class="phu">Người chơi 1: ◀ ▶ ▲ ▼ chọn · ${this.daBamX === this.game.menuChon ? 'bấm B để vào' : 'bấm X rồi B để xác nhận'}</p><p class="phu" style="opacity:.6">${this.game.tayCamTen.length ? `Tay cầm: ${this.game.tayCamTen.join(' · ')}` : 'Chưa thấy tay cầm (bấm một nút bất kỳ)'}${this.game.tayCamNut ? ` · vừa bấm ${this.game.tayCamNut}` : ''}</p>` : ''}${this.luu ? '<button type="button" tabindex="-1" class="nut-phu" data-act="tiep" style="margin-top:20px">▶ Chơi tiếp ván đã lưu</button>' : ''}${this.htmlThongBao()}</div>`;
   }
 
   /** Màn hướng dẫn sau khi chọn nhân vật: chọn chuột / tay cầm, xem ảnh hướng dẫn rồi vào chơi */
@@ -300,7 +309,7 @@ export class GiaoDien {
       ? 'Hai nhân vật bằng điểm nhau 🤝'
       : `👑 ${esc(g.nguoi[g.nguoiThang].ten)} ghi nhiều điểm nhất`;
     const kl = g.nguoiThangTran
-      ? `🏆 <b>${g.soNguoi < 2 ? esc(g.nguoi.find((n) => !n.vang)!.ten) : 'Mabu và Zinbu'} thắng!</b> Vua gà, tướng gà và toàn bộ gà con đã bị hạ.${mvp ? '<br>' + mvp : ''}`
+      ? `🏆 <b>${g.nguoi.filter((n) => !n.vang).map((n) => esc(n.ten)).join(' và ')} thắng!</b> Vua gà, tướng gà và toàn bộ gà con đã bị hạ.${mvp ? '<br>' + mvp : ''}`
       : `🐔 <b>Quái vật thắng!</b> ${g.soNguoi < 2 ? 'Nhân vật đã gục.' : 'Cả hai nhân vật đã gục.'}${mvp ? '<br>' + mvp : ''}`;
     const top = this.bang && this.bang.length
       ? `<table class="xep-hang"><caption class="phu">Bảng điểm cao nhất</caption>${this.bang.map((d, i) => `<tr><td>${i + 1}.</td><td>${esc(d.nguoiChoi)}</td><td><b>${d.diem}</b></td><td class="phu">${phut(d.thoiGian)}</td></tr>`).join('')}</table>`

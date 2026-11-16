@@ -47,6 +47,8 @@ Chọn nhân vật xong sẽ vào màn hướng dẫn (ảnh `web/public/assets/
 
 Màn bắt đầu (chế độ tay cầm) hiện tên các tay cầm đã nối và nút vừa bấm (để dò tay cầm lạ có gửi đúng chỉ số nút không).
 
+**Vegeta**: nhân vật chọn chơi thứ 3 (chơi 1 người, hoặc 2 người cùng Mabu / Zinbu; màn chọn có 6 thẻ, tay cầm ◀ ▶ ▲ ▼ để chọn). Sức mạnh giữa Mabu và Zinbu (Đấm 50 · Đá 85 · Chưởng 160), chỉ có Đấm / Đá / Chiêu đặc biệt; nút B tự dùng chưởng. Chưởng là quả cầu sáng có đuôi, nổ thành đám lửa lớn.
+
 **Biến socola (chỉ Zinbu)**: ném chưởng socola nổ diện rộng (tốn 40 mana). Gà con dính thì chết luôn và thành thanh socola, Mabu / Zinbu chạm vào là ăn được: +100 máu và +100 mana. Gà mẹ dính thì chịu sát thương rồi hoá socola 5 giây (đứng yên, không né); lúc đó nếu Mabu đang ở dạng mây quét trúng thì gà mẹ mất 30% máu (một lần mỗi lần hoá socola), từ 30% trở xuống thì chết luôn. Tướng gà đang hoá socola thì Mabu / Zinbu chạm vào là ăn luôn (vua gà thì không ăn được). Hồi chiêu 3 giây; trong lúc hồi Zinbu vẫn đấm / đá / chưởng bình thường.
 
 **Biến mây (chỉ Mabu)**: chọn nút đám mây trên bảng chiêu rồi ra đòn (tốn 40 mana). Mabu biến thành đám mây to gấp 2 trong 7 giây, không nhận sát thương, mọi con gà mây quét qua đều trúng đòn. Sau đó phải chờ 25 giây mới dùng lại.

@@ -124,3 +124,64 @@ export const ZINBU: NhanVatSprite = {
   ],
 };
 
+
+// Vegeta: dựng bằng tools/tao-atlas-vegeta.py từ sheet người dùng gửi (khung gốc ~30px, phóng 2 lần, lật quay phải).
+// Chỉ có 3 nhóm đòn (không có chiêu riêng thứ 4); chưởng vẽ bằng quả chưởng / vụ nổ trong vegeta_chuong.png.
+export const VEGETA: NhanVatSprite = {
+  ten: 'Vegeta', atlas: 'assets/game/vegeta_atlas.png', atlasW: 1568, atlasH: 648, w: 98, h: 72, cot: 16,
+  neoX: 46, neoY: 70,
+  anim: {
+    idle: { f: [0, 1, 2, 3], ms: 150, lap: true },
+    taunt_flex: { f: [5, 6, 7, 8, 9, 10], ms: 117, lap: false },
+    taunt_wave: { f: [11, 12, 13, 14, 15, 16, 17], ms: 117, lap: false },
+    taunt_stretch: { f: [18, 19, 20, 21, 22, 23, 24, 25, 26], ms: 117, lap: false },
+    taunt_antenna: { f: [27, 28, 29, 30, 31, 32, 33, 34], ms: 117, lap: false },
+    taunt_puff: { f: [35, 36, 37, 38, 39, 40], ms: 133, lap: false },
+    run: { f: [41, 42, 43, 44, 45, 46], ms: 100, lap: true },
+    fly: { f: [47, 48], ms: 83, lap: true },
+    jump_up: { f: [49, 50], ms: 83, lap: false },
+    fall: { f: [51, 52], ms: 100, lap: false },
+    crouch_land: { f: [53], ms: 167, lap: false },
+    guard: { f: [4], ms: 17, lap: false },
+    hit: { f: [54, 55, 56], ms: 83, lap: false },
+    knockdown: { f: [57, 58], ms: 117, lap: false },
+    blown_away: { f: [59, 60], ms: 67, lap: true },
+    burn: { f: [61, 62, 63, 64], ms: 83, lap: false },
+    lifted: { f: [65, 66, 65, 66], ms: 117, lap: false },
+    launched: { f: [67, 68, 69], ms: 100, lap: false },
+    air_recover: { f: [69, 70], ms: 67, lap: false },
+    get_up: { f: [71, 72, 73], ms: 150, lap: false },
+    thrown: { f: [74, 75, 76, 77], ms: 117, lap: false },
+    lie: { f: [58], ms: 17, lap: false },
+    lie_thrown: { f: [58], ms: 17, lap: false },
+    punch_combo: { f: [78, 79, 80, 81, 82], ms: 67, lap: false },
+    punch_long: { f: [83, 84, 85, 86], ms: 83, lap: false },
+    punch_long_2: { f: [87, 88, 89, 90], ms: 83, lap: false },
+    punch_dash: { f: [91, 92, 93, 94, 95], ms: 67, lap: false, tien: { tu: 0, den: 3, v: 3.2 } },
+    punch_charge: { f: [96, 97, 98, 99], ms: 100, lap: false, tien: { tu: 1, den: 3, v: 3.0 } },
+    kick_long: { f: [100, 101, 102, 103, 104, 105], ms: 83, lap: false },
+    kick_long_2: { f: [106, 107, 108, 109], ms: 83, lap: false },
+    kick_sweep: { f: [110, 111, 112, 113], ms: 83, lap: false },
+    kick_arc: { f: [114, 115, 116, 117, 118, 119, 120], ms: 67, lap: false },
+    kick_high: { f: [121, 122, 123, 124], ms: 83, lap: false },
+    roll: { f: [125, 126, 127, 128, 129, 130, 131], ms: 67, lap: false, tien: { tu: 0, den: 6, v: 3.0 } },
+    energy_ball: { f: [132, 133, 134, 135, 135, 135], ms: 83, lap: false, ban: { o: 3, dx: 40, dy: -40 } },
+  },
+  khieuKhich: ['taunt_flex', 'taunt_wave', 'taunt_stretch', 'taunt_antenna', 'taunt_puff'],
+  nhomDon: [
+    { ten: 'Đấm', vong: false, don: ['punch_combo', 'punch_long', 'punch_long_2', 'punch_dash', 'punch_charge'] },
+    { ten: 'Đá', vong: false, don: ['kick_long', 'kick_long_2', 'kick_sweep', 'kick_arc', 'kick_high'] },
+    { ten: 'Chiêu đặc biệt', vong: true, don: ['roll', 'energy_ball'] },
+  ],
+  kieuChet: [
+    [{ anim: 'hit' }, { anim: 'knockdown' }, { anim: 'lie', giu: true }],
+    [{ anim: 'blown_away', ticks: 26, vx: -3.6, bay: true }, { anim: 'knockdown', vx: -1 }, { anim: 'lie', giu: true }],
+    [{ anim: 'launched', ticks: 34, vx: -1.6, vy: -4.2, bay: true }, { anim: 'knockdown' }, { anim: 'lie', giu: true }],
+    [{ anim: 'lifted' }, { anim: 'knockdown', vx: -0.6 }, { anim: 'lie', giu: true }],
+    [{ anim: 'burn', ticks: 36, vx: -1.8 }, { anim: 'knockdown' }, { anim: 'lie', giu: true }],
+    [{ anim: 'thrown', vx: -2.2 }, { anim: 'lie_thrown', giu: true }],
+  ],
+};
+
+/** Danh sách nhân vật chọn chơi, chỉ số = NguoiChoi.ki (0 Mabu · 1 Zinbu · 2 Vegeta) */
+export const NHAN_VAT = [MABU, ZINBU, VEGETA];

@@ -2,7 +2,7 @@ import type { KhungSprite } from './sprite';
 import { VeCanvas } from './ve-canvas';
 import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
-import { MABU, ZINBU } from './nhan-vat-du-lieu';
+import { MABU, NHAN_VAT } from './nhan-vat-du-lieu';
 import { chuanBiSaMac, daoCua, doSau, trongNui, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
@@ -75,14 +75,15 @@ export interface TrungGa {
   ap?: number;
 }
 /** soc = chưởng biến socola của Zinbu · troi = chưởng tự bắn lên trời (chỉ để đẹp, không gây sát thương) */
-interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; }
+interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; /** chưởng của Vegeta (vẽ bằng quả chưởng sao chổi) */ vg?: boolean; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn hồi SOCOLA_GA_TI_LE máu tối đa */
 export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc' | 'dau'; /** ngọc: số sao (thiếu = 1) */ sao?: number; /** ngọc: độ to khi vẽ (thiếu = 0,55) */ to?: number; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; /** socola: sức mạnh (nhân sát thương) người / Cell ăn được cộng thêm (thiếu thì `CELL_AN_SUC`) */ sucAn?: number; }
 interface Chu { id: number; x: number; y: number; text: string; mau: string; t: number; }
 interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay: number; vxoay: number; t: number; mau: string; }
 /** chay = cháy nổ (lửa + tia lửa); co = hệ số kích thước */
-interface Vet { id: number; x: number; y: number; t: number; loai: 'bui' | 'no' | 'chay'; co?: number; }
+/** vg = vụ nổ chưởng của Vegeta (vẽ bằng khung nổ trong vegeta_chuong.png) */
+interface Vet { id: number; x: number; y: number; t: number; loai: 'bui' | 'no' | 'chay'; co?: number; vg?: boolean; }
 interface ChuyenBay { x0: number; y0: number; x1: number; y1: number; t: number; T: number; }
 export interface NguoiChoi {
   ten: string; mau: string; diem: number; combo: number; tamX: number; tamY: number;
@@ -102,6 +103,8 @@ export interface NguoiChoi {
   may: { dang: boolean; con: number; hoi: number };
   /** Sức mạnh: hệ số nhân sát thương mọi đòn đánh gà (mặc định 1; ăn gà mẹ socola được cộng thêm) */
   suc: number;
+  /** Nhân vật ở ô này: 0 Mabu · 1 Zinbu · 2 Vegeta (NHAN_VAT); ván lưu cũ thiếu thì theo ô (0 Mabu, 1 Zinbu) */
+  ki: number;
 }
 type VatXep =
   | { loai: 'ga'; y: number; ga: Ga }
@@ -261,8 +264,20 @@ const GD2_DE = 0.6;
 // Xác suất né đòn ngẫu nhiên: nhân vật 25%, gà con 0%; gà mẹ không né ngẫu nhiên mà né 100% trong thế phòng thủ (neGa)
 const NE_NV = 0.25;
 const NE_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0 };
-// Sát thương nhân vật gây ra: [Mabu, Zinbu] theo nhóm đòn 0 Đấm · 1 Đá · 2 Chiêu đặc biệt; mây (riêng Mabu)
-const SAT_THUONG = [[50, 50], [70, 100], [130, 190]];
+// Sát thương nhân vật gây ra: [Mabu, Zinbu, Vegeta] (theo NguoiChoi.ki) theo nhóm đòn 0 Đấm · 1 Đá · 2 Chiêu đặc biệt; mây (riêng Mabu)
+// Vegeta lấy sức mạnh giữa Mabu và Zinbu
+const SAT_THUONG = [[50, 50, 50], [70, 100, 85], [130, 190, 160]];
+/** Màu riêng mỗi nhân vật (theo ki) */
+const MAU_NV = ['#e84393', '#8e44ad', '#2f6fe0'];
+/** Độ cao thanh máu trên đầu theo nhân vật (ki) */
+const DAU_NV = [195, 150, 170];
+/** Lựa chọn ở màn bắt đầu → nhân vật (ki) ở ô trái / phải; null = ô đó vắng */
+export type CheNguoi = 'mabu' | 'zinbu' | 'vegeta' | 'ca2' | 'mabuVegeta' | 'vegetaZinbu';
+export const DOI_HINH: Record<CheNguoi, [number | null, number | null]> = {
+  mabu: [0, null], zinbu: [null, 1], vegeta: [2, null], ca2: [0, 1], mabuVegeta: [0, 2], vegetaZinbu: [2, 1],
+};
+/** Thứ tự thẻ ở màn chọn (hàng trên 1 người, hàng dưới 2 người) */
+export const THE_CHON: CheNguoi[] = ['mabu', 'zinbu', 'vegeta', 'ca2', 'mabuVegeta', 'vegetaZinbu'];
 const SAT_MAY = 250;
 // Chiêu Biến socola (riêng Zinbu, nhóm đòn 3): chưởng bay tới điểm chuột (tối đa TAM_SOCOLA), nổ bán kính BAN_KINH_SOCOLA. Gà con dính thì chết luôn và thành socola; gà mẹ dính sát thương SAT_SOCOLA rồi hoá socola SOCOLA_THOI_GIAN giây (đứng yên, không né).
 // Hồi SOCOLA_HOI giây (đồng hồ riêng hoiSoc, không khoá các đòn khác); tốn MANA_DAC_BIET.
@@ -302,6 +317,8 @@ const TUONG_HOI_SINH = 0;
 // Vua gà (gà mẹ gốc) có HP_VUA máu, không hồi sinh; vương miện đính ngọc rồng 1 sao, rơi xuống đất khi nó chết
 const HP_VUA = 600;
 const NGOC_BAN_KINH = 110;
+// Chưởng / vụ nổ của Vegeta (tools/tao-atlas-vegeta.py, lấy từ sheet Frieza): 0 chưởng sao chổi (đầu bên phải) · 1 quả trắng · 3–7 vụ nổ lớn dần
+const SP_VG_CHUONG: KhungSprite = { atlas: 'assets/game/vegeta_chuong.png', atlasW: 1536, atlasH: 160, w: 192, h: 160, cot: 8, neoX: 96, neoY: 80 };
 const SP_NGOC: KhungSprite = { atlas: 'assets/game/ngoc_rong.png', atlasW: 1792, atlasH: 256, w: 256, h: 256, cot: 7, neoX: 128, neoY: 128 };
 // Gà mẹ không còn né ngẫu nhiên: cứ THE_CHU_KY giây vào "thế phòng thủ" THE_KEO_DAI giây trong thế né 100% mọi đòn (hiện chữ "NÉ!", có quầng xanh bao quanh), ngoài thế thì không né đòn nào
 const THE_CHU_KY = 6;
@@ -780,8 +797,8 @@ export class Game {
   /** Tay cầm bấm X ở màn chọn chế độ: đánh dấu thẻ, chờ bấm B để xác nhận */
   onNutX: () => void = () => {};
   /** Tay cầm 1 bấm trái / phải ở màn bắt đầu (sang = -1 / 1); giao diện trả true nếu đã dùng (chọn bản đồ ở màn mục tiêu) */
-  /** Thẻ đang chọn ở màn chọn chế độ (0 Mabu · 1 Zinbu · 2 hai người), chữ thập / cần trái trái-phải để chọn */
-  menuChon = 2;
+  /** Thẻ đang chọn ở màn chọn chế độ (chỉ số trong THE_CHON), chữ thập / cần trái chọn (trái-phải từng thẻ, lên-xuống đổi hàng) */
+  menuChon = 3;
   /** Nút đang chọn ở màn tạm dừng (0 Tiếp tục · 1 Lưu game), chữ thập / cần trái lên-xuống để chọn, A để bấm */
   menuTamDung = 0;
   /** Tay cầm bấm A ở màn tạm dừng: giao diện bấm nút đang chọn (menuTamDung) */
@@ -888,6 +905,7 @@ export class Game {
   cauTron: CauTron[] = taoCauTron();
   readonly SP_CAU = SP_CAU;
   readonly SP_NGOC = SP_NGOC;
+  readonly SP_VG_CHUONG = SP_VG_CHUONG;
   readonly SP_CELL = SP_CELL;
   readonly SP_CELL_TIEC = SP_CELL_TIEC;
   cauView: CauTron[] = [];
@@ -944,7 +962,7 @@ export class Game {
   // Chế độ chuột: người chơi mà chuột đang điều khiển (Tab để đổi) và chuột đang nằm trên bảng chiêu thức (không phải trên map)
   chuot = 0;
   /** Lựa chọn ở màn bắt đầu (nhớ để Chơi lại giữ nguyên) */
-  cheNguoi: 'mabu' | 'zinbu' | 'ca2' = 'ca2';
+  cheNguoi: CheNguoi = 'ca2';
   trenBang = false;
   // Chỉ có 1 tay cầm thì nó điều khiển nhân vật này (nút View để đổi); có 2 tay cầm thì mỗi tay một nhân vật
   tayCam = 0;
@@ -1042,7 +1060,7 @@ export class Game {
       this.canvasNen.setAttribute('aria-hidden', 'true');
       this.canvasEl.before(this.canvasNen);
       this.ctxNen = this.canvasNen.getContext('2d');
-      this.ve.napTruoc(MABU.atlas, ZINBU.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas, SP_CELL.atlas, SP_CELL_TIEC.atlas, ...CHUONG_LOAI.map((l) => l.atlas));
+      this.ve.napTruoc(...NHAN_VAT.map((v) => v.atlas), SP_VG_CHUONG.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas, SP_CELL.atlas, SP_CELL_TIEC.atlas, ...CHUONG_LOAI.map((l) => l.atlas));
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG, LOC_SOCOLA, LOC_SOCOLA_HONG]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO, LOC_SOCOLA, ...LOC_PHU]);
       this.ve.nhuomTruoc(SP_CELL.atlas, [LOC_SOCOLA]);
@@ -1093,8 +1111,8 @@ export class Game {
     this.tayCam = this.chuot;
   }
 
-  /** Bắt đầu ván: 'mabu' / 'zinbu' = chơi 1 nhân vật, 'ca2' = chơi cả hai */
-  batDau(che: 'mabu' | 'zinbu' | 'ca2' = this.cheNguoi): void {
+  /** Bắt đầu ván: lựa chọn ở màn bắt đầu (DOI_HINH: 1 người Mabu / Zinbu / Vegeta, hoặc 2 người) */
+  batDau(che: CheNguoi = this.cheNguoi): void {
     this.choiLaiChoB = false;
     this.cheNguoi = che;
     banDoHt = this.banDo;
@@ -1110,7 +1128,8 @@ export class Game {
     const [gx, gy] = goc.reduce((a, b) => (Math.hypot(b[0] - this.viTriVua!.x, b[1] - this.viTriVua!.y) > Math.hypot(a[0] - this.viTriVua!.x, a[1] - this.viTriVua!.y) ? b : a));
     const vao = gx < MAP / 2 ? 1 : -1;
     const xuong = gy < MAP / 2 ? 1 : -1;
-    this.nguoi.forEach((n, p) => { n.x = gx + (this.cheNguoi === 'ca2' ? (p === 0 ? 0 : 170 * vao) : 0); n.y = gy + (this.cheNguoi === 'ca2' ? (p === 0 ? 0 : 60 * xuong) : 0); });
+    const hai = this.soNguoi > 1;
+    this.nguoi.forEach((n, p) => { n.x = gx + (hai ? (p === 0 ? 0 : 170 * vao) : 0); n.y = gy + (hai ? (p === 0 ? 0 : 60 * xuong) : 0); });
     this.chonNguoiDau();
     // Máy bay đậu trong vườn gà, gần chỗ xuất phát (phía trong vườn)
     this.mayBay = taoMayBay(kep(gx + vao * 700, TUONG + MB_LE, MAP - TUONG - MB_LE), kep(gy + xuong * 380, TUONG + MB_LE, MAP - TUONG - MB_LE));
@@ -1214,6 +1233,9 @@ export class Game {
     this.mbTrenDao = null;
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
+    // Đội hình theo nhân vật đã lưu (ván lưu cũ thiếu ki: ô trái Mabu, ô phải Zinbu)
+    const kiLuu = d.nguoi.map((o, p) => (o.vang ? null : o.ki ?? p));
+    this.cheNguoi = THE_CHON.find((c) => DOI_HINH[c][0] === kiLuu[0] && DOI_HINH[c][1] === kiLuu[1]) ?? 'ca2';
     this.nguoi = d.nguoi.map((o, p) => {
       const { nhom, lat, huong, ...r } = o;
       const n: NguoiChoi = { ...this.taoNguoiChoi()[p], ...r };
@@ -1224,7 +1246,6 @@ export class Game {
       else if (n.may.dang) n.nv.vaoMay();
       return n;
     });
-    this.cheNguoi = this.nguoi[0].vang ? 'zinbu' : this.nguoi[1].vang ? 'mabu' : 'ca2';
     this.chonNguoiDau();
     this.capNhatView(0, true);
     this.man = 'pause';
@@ -1998,7 +2019,7 @@ export class Game {
     const n = this.nguoi[d.p];
     if (!n || n.het || n.vang) return false;
     const tam = this.tamGa(g);
-    const an = Math.max(1, Math.round(Math.max(0, g.hp) * (AN_TI_LE[d.p] ?? 0.02)));
+    const an = Math.max(1, Math.round(Math.max(0, g.hp) * (AN_TI_LE[n.ki] ?? 0.02)));
     // Bản sao đang bị kéo (đứng yên, nhuộm socola); con gốc biến mất ngay (đã chết, không còn hình)
     this.keoGa.push({ ...g, id: this.id++, socola: 1, hong: d.an === 'hong', keo: { p: d.p, an }, vx: 0, vy: 0, mo: 0, nhay: 0, choang: 0, day: undefined });
     g.hp = 0;
@@ -2051,8 +2072,11 @@ export class Game {
     trung.forEach((g) => { if (!this.danAn(d, g)) this.trungGa(g, d.p, d.sat, 2); });
     const ceTrung = this.cell.filter((c) => !c.chet && !d.da?.includes(c.id) && Math.hypot(this.tamCell(c).x - d.x1, this.tamCell(c).y - d.y1) < BAN_KINH_NO + CELL_BK * cellK(c.cap) * 2);
     ceTrung.forEach((c) => this.trungCell(c, d.p, d.sat));
-    this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'no' });
-    this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 0.9 });
+    if (d.vg) this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 1, vg: true });
+    else {
+      this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'no' });
+      this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 0.9 });
+    }
     this.rungMan(0.15, 9);
     this.dungKhung(0.05);
     if (!trung.length && !ceTrung.length && !d.da?.length) {
@@ -3321,7 +3345,7 @@ export class Game {
       const x1 = x + tanX + dx;
       const y1 = y + tanY + Math.abs(dx) * 0.3;
       const T = Math.hypot(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
-      this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0, sat: soc ? SAT_SOCOLA : SAT_THUONG[nhom][p], soc: soc && i === 0, nhom, an });
+      this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0, sat: soc ? SAT_SOCOLA : SAT_THUONG[nhom]![n.ki]!, soc: soc && i === 0, nhom, an, vg: n.ki === 2 && !soc });
     });
     if (tren && chieu) this.trungMb();
   }
@@ -3349,6 +3373,8 @@ export class Game {
   hetMana(p: number, k: number): boolean {
     const n = this.nguoi[p];
     if (k === 2) return n.mana < MANA_CHUONG;
+    // Nhân vật không có nhóm này (Vegeta không có chiêu riêng thứ 4)
+    if (k >= n.nv.sp.nhomDon.length) return true;
     if (k === NHOM_MAY) return n.mana < MANA_DAC_BIET || (n.nv.sp.nhomDon[k]?.may ? n.may.dang || n.may.hoi > 0 : n.hoiSoc > 0);
     return false;
   }
@@ -3432,7 +3458,7 @@ export class Game {
     g.h0 = g.h;
     // Zinbu yếu hơn: mọi đòn thường (Đấm, Đá, chưởng) hạ gà con thì gà thành thanh socola, ăn nhận AN_TI_LE[1] (5%) máu tối đa của gà
     // Chiêu Biến socola mà đủ giết: gà biến hẳn thành thanh socola (không giữ hình gà), ăn nhận SOCOLA_AN_TI_LE máu lúc đó
-    if (soc || (p === 1 && kieu !== undefined)) {
+    if (soc || (this.nguoi[p]?.ki === 1 && kieu !== undefined)) {
       const v = { x: g.x, y: g.y };
       giuTrongMap(v, LE_VP);
       const luong = soc ? Math.max(1, Math.round(Math.max(0, hp0) * SOCOLA_AN_TI_LE)) : Math.max(1, Math.round(HP_GA * (g.suc ?? 1) * AN_TI_LE[1]!));
@@ -4077,7 +4103,8 @@ export class Game {
     const p = this.nguoi.indexOf(n);
     const b = this.nguoi[1 - p];
     if (b.vang || b.het || this.cuu.some((c) => c.p === p)) return;
-    this.cuu.push({ p, kieu: p === 1 ? 'may' : 'socola', x: n.x, y: n.y, cho: CUU_CHO, t: 0, tach: 0 });
+    // Người cứu là Mabu thì phủ mây, Zinbu / Vegeta thì phủ socola
+    this.cuu.push({ p, kieu: b.ki === 0 ? 'may' : 'socola', x: n.x, y: n.y, cho: CUU_CHO, t: 0, tach: 0 });
   }
 
   // Đếm giờ cứu: sau CUU_CHO giây thì mây / socola xuất hiện (tách ra từ người cứu), mây / socola bám theo người cứu (nối bằng dây), đếm ngược CUU_THOI_GIAN giây khi người cứu còn sống, hết giờ thì hồi sinh
@@ -4442,8 +4469,17 @@ export class Game {
   }
 
   /** Hình quả cầu để vẽ: khung atlas (hàng 0 Mabu · hàng 1 Zinbu), độ mờ, độ lắc (độ) và số giây còn trốn (null = không hiện) */
+  /** Hàng atlas quả cầu theo nhân vật chủ quả cầu: 0 Mabu · 1 Zinbu (Vegeta dùng vỏ hàng 0) */
+  cauHang(q: CauTron): number {
+    const ki = this.nguoi[q.cua]?.ki ?? q.cua;
+    return ki === 1 ? 1 : 0;
+  }
+
   cauHinh(q: CauTron): { khung: number; a: number; lac: number; rungX: number; con: number | null } {
-    const hang = q.cua * 6;
+    const hang = this.cauHang(q) * 6;
+    // Vegeta không có hàng riêng trong atlas quả cầu: dùng vỏ quả cầu hàng 0, lúc vỡ dừng ở khung khói (khung 2) thay vì hiện Mabu bước ra
+    const vg = this.nguoi[q.cua]?.ki === 2;
+    if (q.pha === 'vo' && vg) return { khung: hang + 2, a: 1, lac: 0, rungX: 0, con: null };
     if (q.pha === 'moc') return { khung: hang, a: dongHe01(q.t - (CAU_MOC - 1)), lac: 0, rungX: 0, con: null };
     if (q.pha === 'vo') return { khung: hang + 2 + Math.min(3, Math.floor((q.t / CAU_VO) * 4)), a: 1, lac: 0, rungX: 0, con: null };
     if (q.pha === 'trong') {
@@ -4635,7 +4671,10 @@ export class Game {
             const canMoi = Math.abs(cx) > 0.6 ? Math.sign(cx) : 0;
             const sang = (moi(g, 15) ? 1 : 0) - (moi(g, 14) ? 1 : 0) || (canMoi && canMoi !== this.menuCanCu ? canMoi : 0);
             this.menuCanCu = canMoi;
-            if (sang) this.menuChon = Math.max(0, Math.min(2, this.menuChon + sang));
+            if (sang) this.menuChon = Math.max(0, Math.min(THE_CHON.length - 1, this.menuChon + sang));
+            // Lên / xuống: đổi hàng (1 người ↔ 2 người)
+            const doc = (moi(g, 13) ? 1 : 0) - (moi(g, 12) ? 1 : 0);
+            if (doc) this.menuChon = Math.max(0, Math.min(THE_CHON.length - 1, this.menuChon + doc * 3));
           }
           // X: đánh dấu thẻ ở màn chọn chế độ · A / Menu: Tiếp / Vào chơi ở màn hướng dẫn · B: xác nhận / quay lại
           if (moi(g, 2)) this.onNutX();
@@ -4893,7 +4932,7 @@ export class Game {
   // Thanh máu trên đầu nhân vật (toạ độ thế giới của điểm giữa thanh)
   thanhTrenDau(p: number): { x: number; y: number } {
     const n = this.nguoi[p];
-    return { x: n.x, y: n.y - (n.nv.cao - n.nv.nhun) * S_NV - (p === 0 ? 195 : 150) };
+    return { x: n.x, y: n.y - (n.nv.cao - n.nv.nhun) * S_NV - (DAU_NV[n.ki] ?? 170) };
   }
 
   // Thanh máu trên đầu gà tướng (to hơn của nhân vật vì gà tướng cao gấp nhiều lần)
@@ -5043,20 +5082,24 @@ export class Game {
   // ─── Khởi tạo ───
 
   private taoNguoiChoi(): NguoiChoi[] {
-    const mot = this.cheNguoi !== 'ca2';
-    const co = this.cheNguoi === 'zinbu' ? 1 : 0;
-    return [0, 1].map((p) => ({
-      vang: mot && p !== co,
-      ten: p === 0 ? MABU.ten : ZINBU.ten, mau: p === 0 ? '#e84393' : '#8e44ad',
-      hp: mot && p !== co ? 0 : HP_KHOI_DAU, het: mot && p !== co, diem: 0, combo: 0, tamX: W_MAC_DINH / 2, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
-      x: MAP / 2 + (mot ? 0 : p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
-      nv: this.taoNhanVat(p), bay: null, mana: MANA_BAN_DAU, bayKhoa: 0, thuongLuc: -999, hoiSoc: 0,
-      nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, ngam: null, cuaCan: false, may: { dang: false, con: 0, hoi: 0 }, suc: 1,
-    }));
+    const dh = DOI_HINH[this.cheNguoi] ?? DOI_HINH.ca2;
+    const mot = dh[0] === null || dh[1] === null;
+    return [0, 1].map((p) => {
+      const vang = dh[p] === null;
+      const ki = dh[p] ?? p;
+      return {
+        vang, ki,
+        ten: NHAN_VAT[ki]!.ten, mau: MAU_NV[ki]!,
+        hp: vang ? 0 : HP_KHOI_DAU, het: vang, diem: 0, combo: 0, tamX: W_MAC_DINH / 2, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
+        x: MAP / 2 + (mot ? 0 : p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
+        nv: this.taoNhanVat(p, ki), bay: null, mana: MANA_BAN_DAU, bayKhoa: 0, thuongLuc: -999, hoiSoc: 0,
+        nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, ngam: null, cuaCan: false, may: { dang: false, con: 0, hoi: 0 }, suc: 1,
+      };
+    });
   }
 
-  private taoNhanVat(p: number): NhanVat {
-    const nv = new NhanVat(p === 0 ? MABU : ZINBU);
+  private taoNhanVat(p: number, ki: number): NhanVat {
+    const nv = new NhanVat(NHAN_VAT[ki]!);
     nv.lat = p === 0;
     return nv;
   }
