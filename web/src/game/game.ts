@@ -5,7 +5,7 @@ import { NhanVat } from './nhan-vat-sprite';
 import { MABU, NHAN_VAT } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, trongNui, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
+import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -104,6 +104,8 @@ export interface NguoiChoi {
   may: { dang: boolean; con: number; hoi: number };
   /** Sức mạnh: hệ số nhân sát thương mọi đòn đánh gà (mặc định 1; ăn gà mẹ socola được cộng thêm) */
   suc: number;
+  /** Sát thương cộng thẳng vào mỗi đòn (sau khi nhân `suc`), +DAU_SAT mỗi hạt đậu thần (mặc định 0) */
+  satDau: number;
   /** Nhân vật ở ô này: 0 Mabu · 1 Zinbu · 2 Vegeta (NHAN_VAT); ván lưu cũ thiếu thì theo ô (0 Mabu, 1 Zinbu) */
   ki: number;
 }
@@ -397,6 +399,8 @@ const VP_MANA = 80;
 const VP_BAN_KINH = 90;
 // Hạt đậu thần (loai 'dau', chỉ rơi từ cây trên đảo cát): ăn +DAU_MAU máu và +DAU_MANA mana (không giới hạn, mở khoá bay), Mabu / Zinbu và Cell đều ăn được, gà không ăn
 const DAU_MAU = 300;
+// Mabu / Zinbu ăn một hạt đậu thần: +DAU_SAT sát thương cộng thẳng vào mỗi đòn (`NguoiChoi.satDau`, không giới hạn)
+const DAU_SAT = 10;
 // Cell tự hồi máu mỗi giây: Cell thường / Cell to nhất (đảo giữ ngọc rồng, cấp 4)
 const CELL_HOI_MAU = 10;
 const CELL_HOI_MAU_NGOC = 30;
@@ -1601,7 +1605,8 @@ export class Game {
         } else if (dau) {
           this.hoiMau(n, DAU_MAU);
           this.hoiDayMana(n, DAU_MANA);
-          this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `🫘 ĐẬU THẦN +${DAU_MAU} ❤ +${DAU_MANA} mana`, mau: '#7be04a', t: 0 });
+          n.satDau = (n.satDau ?? 0) + DAU_SAT;
+          this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `🫘 ĐẬU THẦN +${DAU_MAU} ❤ +${DAU_MANA} mana +${DAU_SAT} ⚔`, mau: '#7be04a', t: 0 });
         } else if (xanh) {
           this.hoiDayMana(n);
           this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: `+${VP_MANA} mana`, mau: '#2fa8ff', t: 0 });
@@ -1632,11 +1637,11 @@ export class Game {
         const ce = this.cell.find((c) => !c.chet && !((c.socola ?? 0) > 0) && Math.hypot(c.x - v.x, c.y - v.y) < CELL_BK * cellK(c.cap)
           && (c.hoi === 'dang' || (this.daoCell(c) === daoDau && trongVongDao(v.x, v.y, daoDau))));
         if (ce) {
-          // Như Mabu / Zinbu: +DAU_MAU máu; Cell không có mana nên được thêm sức mạnh (nhân sát thương đấm / chưởng, không giới hạn)
+          // Như Mabu / Zinbu: +DAU_MAU máu; Cell không có mana nên sát thương cộng thêm nhiều hơn (CELL_DAU_SAT mỗi đòn, không giới hạn)
           ce.hp += DAU_MAU;
-          ce.suc = (ce.suc ?? 1) + CELL_DAU_SUC;
+          ce.satDau = (ce.satDau ?? 0) + CELL_DAU_SAT;
           const t = this.tamCell(ce);
-          this.chu.push({ id: this.id++, x: t.x, y: t.y - 90, text: `🫘 CELL ĂN ĐẬU THẦN +${DAU_MAU} ❤ SỨC MẠNH x${ce.suc.toFixed(1)}`, mau: '#7be04a', t: 0 });
+          this.chu.push({ id: this.id++, x: t.x, y: t.y - 90, text: `🫘 CELL ĂN ĐẬU THẦN +${DAU_MAU} ❤ +${CELL_DAU_SAT} ⚔`, mau: '#7be04a', t: 0 });
           this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
           continue;
         }
@@ -3449,7 +3454,7 @@ export class Game {
   // kieu = nhóm đòn (0 Đấm · 1 Đá · 2 Chiêu đặc biệt; bỏ trống cho mây / socola). Trả về true nếu đòn thật sự trúng (không né / miss / phản)
   private trungGa(g: Ga, p: number, sat: number, kieu?: number, soc = false): boolean {
     // Sức mạnh nhân vật (ăn gà mẹ socola) nhân sát thương mọi đòn
-    sat *= this.nguoi[p]?.suc ?? 1;
+    sat = sat * (this.nguoi[p]?.suc ?? 1) + (this.nguoi[p]?.satDau ?? 0);
     // Vua gà đang chạy trốn nhanh thì bất tử: mọi đòn đều vô hiệu
     if (g.loai === 'boss' && g.goc && (g.tron ?? 0) > 0) {
       const t = this.tamGa(g);
@@ -3621,7 +3626,9 @@ export class Game {
       this.chu.push({ id: this.id++, x: tam.x + ngauNhien(-40, 40), y: tam.y - 40, text: 'NÉ!', mau: '#9be7ff', t: 0 });
       return false;
     }
-    let he = n?.suc ?? 1;
+    // Sức mạnh nhân vật nhân sát thương, đậu thần cộng thẳng mỗi đòn (giáp Cell bạo nộ vẫn giảm cả phần cộng thêm)
+    sat = sat * (n?.suc ?? 1) + (n?.satDau ?? 0);
+    let he = 1;
     if (c.cap === SO_CAP - 1 && !xuyenGiap && !((c.socola ?? 0) > 0)) {
       if ((n?.combo ?? 0) >= CELL_PHA_GIAP) {
         if (Math.random() < 0.3) this.chu.push({ id: this.id++, x: tam.x + ngauNhien(-60, 60), y: tam.y - 110, text: 'PHÁ GIÁP!', mau: '#ff9f1a', t: 0 });
@@ -4139,7 +4146,7 @@ export class Game {
     if (d < cham && c.choDanh <= this.t && !ke.nv.khoa) {
       c.choDanh = this.t + CELL_HOI[c.cap]!;
       c.danh = CELL_DANH_T;
-      this.nhanSatThuong(ke, Math.round(CELL_SAT[c.cap]! * (c.suc ?? 1)));
+      this.nhanSatThuong(ke, Math.round(CELL_SAT[c.cap]! * (c.suc ?? 1) + (c.satDau ?? 0)));
     }
     // Chạy tới: con tách đàn lao thẳng, cả đàn đứng vây quanh mỗi con một góc
     const vay = c.vai === 'dan' || (doi?.tach.length ?? 0) > 1;
@@ -4183,7 +4190,7 @@ export class Game {
       this.chuongTiec.push({
         id: this.id++, k, loai: c.loaiChuong ?? 0, x0: hx, y0: hy,
         x1: hx + ((tx - hx) / dd) * dai, y1: hy + ((ty - hy) / dd) * dai, t: 0,
-        ...(cay ? { cay: c.cay, cap: c.cap } : { sat: Math.round(CELL_CHUONG_SAT[c.cap]! * (c.suc ?? 1)), cap: c.cap }),
+        ...(cay ? { cay: c.cay, cap: c.cap } : { sat: Math.round(CELL_CHUONG_SAT[c.cap]! * (c.suc ?? 1) + (c.satDau ?? 0)), cap: c.cap }),
       });
       this.vetGa({ id: this.id++, x: hx, y: hy, t: 0, loai: 'chay', co: 0.25 + 0.05 * k });
     }
@@ -5388,7 +5395,7 @@ export class Game {
         hp: vang ? 0 : HP_KHOI_DAU, het: vang, diem: 0, combo: 0, tamX: W_MAC_DINH / 2, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
         x: MAP / 2 + (mot ? 0 : p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
         nv: this.taoNhanVat(p, ki), bay: null, mana: MANA_BAN_DAU, bayKhoa: 0, thuongLuc: -999, hoiSoc: 0,
-        nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, ngam: null, cuaCan: false, may: { dang: false, con: 0, hoi: 0 }, suc: 1,
+        nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, ngam: null, cuaCan: false, may: { dang: false, con: 0, hoi: 0 }, suc: 1, satDau: 0,
       };
     });
   }

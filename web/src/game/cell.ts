@@ -48,10 +48,11 @@ export const CELL_TACH_SO = [1, 1, 2, 2, 1];
 export const CELL_TOC = [105, 127.5, 150, 180, 300];
 /**
  * Con đi ăn đậu (Cell cấp 0–3, `vai: 'an'`): đội xuất trận thì ngoài con tách đàn, cả đàn cử 1 con trốn đi bắn cây trên đảo cho rơi đậu thần rồi ăn
- * (mỗi hạt +DAU_MAU máu như Mabu / Zinbu và sức mạnh +`CELL_DAU_SUC`); chỉ khi trên đảo không còn Cell nào khác nó mới đi đánh.
+ * (mỗi hạt +DAU_MAU máu như Mabu / Zinbu và sát thương +`CELL_DAU_SAT` mỗi đòn); chỉ khi trên đảo không còn Cell nào khác nó mới đi đánh.
  * `CELL_AN_TAM`: đứng cách cây trong tầm này thì bắn; `CELL_AN_TRON`: nhân vật gần hơn tầm này thì nó chạy ra xa.
  */
-export const CELL_DAU_SUC = 0.2;
+/** Mọi Cell ăn một hạt đậu thần: +CELL_DAU_SAT sát thương cộng thẳng vào mỗi đòn đấm / đá / chưởng (Cell không có mana nên hơn Mabu / Zinbu 2) */
+export const CELL_DAU_SAT = 12;
 export const CELL_AN_TAM = 700;
 export const CELL_AN_TRON = 1500;
 /** Con đi ăn đậu gặp nhân vật (gần hơn `CELL_AN_GAP`, nhân vật nhìn thấy nó) thì dịch chuyển tức thời tới chỗ trên đảo xa mọi nhân vật nhất để trốn; hồi `CELL_AN_DICH_HOI` giây */
@@ -127,6 +128,8 @@ export interface Cell {
   hp: number; lat: boolean; phase: number;
   /** hệ số nhân sát thương (ăn socola được cộng thêm, không giới hạn; thiếu = 1) */
   suc?: number;
+  /** sát thương cộng thêm mỗi đòn đấm / đá / chưởng do ăn đậu thần (CELL_DAU_SAT mỗi hạt, không giới hạn; thiếu = 0) */
+  satDau?: number;
   /** đang chạy (để chọn khung hình) */
   chay: boolean;
   /** điểm lang thang hiện tại và đếm ngược chọn điểm mới */
