@@ -152,6 +152,10 @@ export class VeCanvas {
   private oNen = new Map<number, { cv: HTMLCanvasElement | null; dung: number }>();
   private oNenBac: number | null = null;
   private oNenKhung = 0;
+  /** Bộ ô của bậc tỉ lệ trước, dán tạm khi bộ ô mới chưa đủ */
+  private oNenCu: { o: Map<number, { cv: HTMLCanvasElement | null; dung: number }>; T: number } | null = null;
+  /** Canvas ô nền rảnh để dùng lại */
+  private oNenKho: HTMLCanvasElement[] = [];
   private mauTuong: { mat: CanvasPattern; gach: CanvasPattern; vienNgang: CanvasPattern; vienDoc: CanvasPattern } | null = null;
   private anh = new Map<string, HTMLImageElement>();
   // Atlas đã nhuộm sẵn theo bộ lọc màu (nháy sáng, đen, vàng, đỏ…): nhuộm cả atlas MỘT lần rồi dùng lại.
@@ -286,7 +290,7 @@ export class VeCanvas {
 
   /** Cỡ các bộ nhớ đệm ảnh (cho bộ đo hiệu năng) */
   thongKe(): Record<string, number> {
-    return { dmAnh: this.anh.size, dmNhuom: this.nhuom.size, dmMip: this.mip.size, dmElip: this.elip.size, dmONen: this.oNen.size };
+    return { dmAnh: this.anh.size, dmNhuom: this.nhuom.size, dmMip: this.mip.size, dmElip: this.elip.size, dmONen: this.oNen.size, dmONenCu: this.oNenCu?.o.size ?? 0, dmONenKho: this.oNenKho.length };
   }
 
   // ─── Thế giới (trong nhóm camera) ───
@@ -581,11 +585,16 @@ export class VeCanvas {
     const mt = ctx.getTransform();
     const A = mt.a;
     if (!(A > 0) || mt.b !== 0 || mt.c !== 0) return false;
-    // Bậc tỉ lệ có trễ: chỉ đổi khi lệch hẳn sang bậc khác, tránh dựng lại liên tục khi zoom dao động quanh ranh giới
+    // Bậc tỉ lệ có trễ: chỉ đổi khi lệch hẳn sang bậc khác, tránh dựng lại liên tục khi zoom dao động quanh ranh giới.
+    // Đổi bậc: bộ ô cũ giữ lại làm nền tạm (phóng lên dán) cho tới khi bộ ô mới dựng đủ, không vẽ vector cả thế giới
     const bac = Math.log2(A) * 2;
     if (this.oNenBac === null || Math.abs(bac - this.oNenBac) > 0.75) {
+      if (this.oNenBac !== null && this.oNen.size) {
+        if (this.oNenCu) this.traO(this.oNenCu.o);
+        this.oNenCu = { o: this.oNen, T: O_NEN_PX / 2 ** (this.oNenBac / 2) };
+        this.oNen = new Map();
+      }
       this.oNenBac = Math.round(bac);
-      this.oNen.clear();
     }
     const q = 2 ** (this.oNenBac / 2);
     const T = O_NEN_PX / q;
@@ -605,30 +614,62 @@ export class VeCanvas {
         o.dung = khung;
       }
     }
-    // Bỏ bớt ô lâu không dùng
+    // Bỏ bớt ô lâu không dùng (canvas trả về kho để dùng lại, không vứt cho GC)
     if (this.oNen.size > O_NEN_MAX) {
       const cu = [...this.oNen.entries()].filter(([, o]) => o.dung !== khung).sort((a, b) => a[1].dung - b[1].dung);
-      for (let k = 0; k < cu.length && this.oNen.size > O_NEN_MAX; k++) this.oNen.delete(cu[k]![0]);
+      for (let k = 0; k < cu.length && this.oNen.size > O_NEN_MAX; k++) {
+        const cv = cu[k]![1].cv;
+        if (cv) this.oNenKho.push(cv);
+        this.oNen.delete(cu[k]![0]);
+      }
     }
-    if (!du) return false;
+    if (du && this.oNenCu) {
+      this.traO(this.oNenCu.o);
+      this.oNenCu = null;
+    }
+    if (!du && !this.oNenCu) return false;
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.imageSmoothingEnabled = true;
-    const ex = mt.e, ey = mt.f;
+    if (!du && this.oNenCu) this.danO(ctx, this.oNenCu.o, this.oNenCu.T, A, mt.e, mt.f, x0, y0, x1, y1);
+    this.danO(ctx, this.oNen, T, A, mt.e, mt.f, x0, y0, x1, y1);
+    ctx.restore();
+    return true;
+  }
+
+  /** Dán các ô của một bộ ô (cạnh T đơn vị thế giới) phủ khung nhìn, toạ độ điểm ảnh làm tròn để các ô khít nhau */
+  private danO(
+    ctx: CanvasRenderingContext2D,
+    bo: Map<number, { cv: HTMLCanvasElement | null; dung: number }>,
+    T: number,
+    A: number,
+    ex: number,
+    ey: number,
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+  ): void {
+    const i0 = Math.floor(x0 / T), i1 = Math.floor(x1 / T), j0 = Math.floor(y0 / T), j1 = Math.floor(y1 / T);
     for (let j = j0; j <= j1; j++) {
       const py0 = Math.round(A * j * T + ey), py1 = Math.round(A * (j + 1) * T + ey);
       for (let i = i0; i <= i1; i++) {
-        const cv = this.oNen.get(i * 100003 + j)?.cv;
+        const cv = bo.get(i * 100003 + j)?.cv;
         if (!cv) continue;
         const px0 = Math.round(A * i * T + ex), px1 = Math.round(A * (i + 1) * T + ex);
         ctx.drawImage(cv, px0, py0, px1 - px0, py1 - py0);
       }
     }
-    ctx.restore();
-    return true;
   }
 
-  /** Dựng một ô nền đảo (ô (i, j), cạnh T đơn vị thế giới, q điểm ảnh / đơn vị); ô không có đất / vách nào thì null (không giữ ảnh) */
+  /** Trả mọi canvas của một bộ ô về kho (giữ tối đa O_NEN_MAX canvas rảnh) */
+  private traO(bo: Map<number, { cv: HTMLCanvasElement | null; dung: number }>): void {
+    for (const o of bo.values()) if (o.cv && this.oNenKho.length < O_NEN_MAX) this.oNenKho.push(o.cv);
+    bo.clear();
+  }
+
+  /** Dựng một ô nền đảo (ô (i, j), cạnh T đơn vị thế giới, q điểm ảnh / đơn vị); ô không có đất / vách nào thì null (không giữ ảnh).
+   *  Canvas lấy từ kho dùng lại (tạo canvas mới rồi vứt liên tục làm bộ nhớ GPU dồn lại, FPS tụt dần theo thời gian) */
   private taoONen(i: number, j: number, T: number, q: number): HTMLCanvasElement | null {
     const x0 = i * T, y0 = j * T, x1 = x0 + T, y1 = y0 + T;
     const LE = SA_VIEN;
@@ -639,11 +680,16 @@ export class VeCanvas {
     if (!co && NUI.x + NUI.rx > x0 && NUI.x - NUI.rx < x1 && NUI.y + NUI.ry + NUI_VACH_SAU > y0 && NUI.y - NUI.ry < y1) co = true;
     // Không chạm đoạn bờ nào: cả ô cùng là đất hoặc cùng là vực
     if (!co && doSau(x0 + T / 2, y0 + T / 2) <= 0) return null;
-    const cv = document.createElement('canvas');
-    cv.width = O_NEN_PX;
-    cv.height = O_NEN_PX;
+    let cv = this.oNenKho.pop();
+    if (!cv) {
+      cv = document.createElement('canvas');
+      cv.width = O_NEN_PX;
+      cv.height = O_NEN_PX;
+    }
     const x = cv.getContext('2d');
     if (!x) return null;
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.clearRect(0, 0, O_NEN_PX, O_NEN_PX);
     x.setTransform(q, 0, 0, q, -x0 * q, -y0 * q);
     this.veLopDao(x, x0, y0, x1, y1);
     return cv;
