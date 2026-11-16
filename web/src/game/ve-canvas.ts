@@ -1527,10 +1527,10 @@ export class VeCanvas {
     if (c.trenDao) {
       // Số Cell còn lại trên đảo hiện tại, ngay trên đầu avatar
       ctx.save();
-      ctx.font = `700 18px ${FONT}`;
+      ctx.font = `700 36px ${FONT}`;
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffd27a';
-      ctx.fillText(`${c.soCellDao}`, c.GIUA, -20);
+      ctx.fillText(`${c.soCellDao}`, c.GIUA, -16);
       ctx.restore();
       return;
     }
