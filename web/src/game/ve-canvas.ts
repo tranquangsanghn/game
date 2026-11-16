@@ -981,6 +981,11 @@ export class VeCanvas {
 
     for (let p = 0; p < c.nguoi.length; p++) this.veThanhTrenDau(ctx, c, p);
     for (const g of c.tuongView) this.veMauTuong(ctx, c, g);
+    for (const ce of c.cellView) {
+      ctx.globalAlpha = c.doRo(ce.x, ce.y);
+      this.veMauCell(ctx, c, ce);
+      ctx.globalAlpha = 1;
+    }
 
     HN.moc('ve.gaBayTiecThanh');
     // Đạn / chưởng
@@ -1489,6 +1494,11 @@ export class VeCanvas {
       ctx.fillText(ce.id % 2 ? '♪' : '♫', Math.sin(ph) * 6, -64 - 4 * Math.abs(Math.sin(ph)));
     }
     ctx.restore();
+  }
+
+  // Thanh máu trên đầu Cell: vẽ ở lượt riêng sau mọi vật (như thanh máu gà tướng) để không bị Cell / cây / chưởng phía trước che mất
+  private veMauCell(ctx: CanvasRenderingContext2D, c: Game, ce: Cell): void {
+    const k = cellK(ce.cap);
     // Thanh máu trên đầu (kiểu như gà tướng) chỉ có ở Cell đỏ (cấp cao nhất) và con đi ăn đậu thần (`vai: 'an'`, thanh xanh lá), kèm số máu
     // (và sức mạnh khi đã ăn thêm); ăn quá máu tối đa thì thanh tính theo máu hiện có
     const an = ce.vai === 'an';
