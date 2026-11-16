@@ -375,6 +375,9 @@ const VP_MANA = 80;
 const VP_BAN_KINH = 90;
 // Hạt đậu thần (loai 'dau', chỉ rơi từ cây trên đảo cát): ăn +DAU_MAU máu và +DAU_MANA mana (không giới hạn, mở khoá bay), Mabu / Zinbu và Cell đều ăn được, gà không ăn
 const DAU_MAU = 150;
+// Cell tự hồi máu mỗi giây: Cell thường / Cell to nhất (đảo giữ ngọc rồng, cấp 4)
+const CELL_HOI_MAU = 10;
+const CELL_HOI_MAU_NGOC = 30;
 const DAU_MANA = 120;
 /** Gà mẹ đang hoá socola: nhân vật chạm vào (trong bán kính này × độ to) là ăn, nhận ĂN_TUONG_TI_LE máu hiện có và sức mạnh của nó */
 const VP_GA_BAN_KINH = 60;
@@ -3616,6 +3619,9 @@ export class Game {
     const dtKhung = dt;
     for (const c of this.cell) {
       if (c.chet) { c.tChet += dtKhung; continue; }
+      // Tự hồi máu (tới máu tối đa của cấp; máu ăn thêm vượt mức thì giữ nguyên)
+      const hpMax = CELL_HP[c.cap]!;
+      if (c.hp < hpMax) c.hp = Math.min(hpMax, c.hp + (c.cap === 4 ? CELL_HOI_MAU_NGOC : CELL_HOI_MAU) * dtKhung);
       // Cell ngoài màn hình và xa mọi nhân vật chỉ là "một chấm": cập nhật thưa (mỗi CELL_THUA_NHIP khung, so le theo id) với dt dồn lại
       if (this.cellThua(c)) {
         c.dtThua = (c.dtThua ?? 0) + dtKhung;

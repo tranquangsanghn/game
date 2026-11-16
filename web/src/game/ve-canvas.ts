@@ -1,10 +1,10 @@
 import type { ChuongTiec, Tiec } from './tiec';
 import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
 import type { KhungSprite } from './sprite';
-import { capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
+import { CELL_SO_DAO, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
-import { duongBo, TG } from './ban-do';
+import { DAO, duongBo, TG } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
 // Toạ độ vẽ giữ nguyên như bản SVG cũ: viewBox (-SIDE, -BAR, W + 2·SIDE, H + BAR), căn giữa, giữ tỉ lệ.
@@ -516,6 +516,21 @@ export class VeCanvas {
     ctx.globalAlpha = 1;
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(this.anhBdn, x0, y0, W, H);
+    // Số Cell ban đầu của từng đảo (cố định, không đổi khi Cell chết)
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 3;
+    ctx.lineJoin = 'round';
+    DAO.forEach((d, i) => {
+      const tx = x0 + ((d.x - TG.x0) / RX) * W, ty = y0 + ((d.y - TG.y0) / RY) * H;
+      const so = String(CELL_SO_DAO[i] ?? 0);
+      ctx.strokeStyle = '#000';
+      ctx.strokeText(so, tx, ty);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(so, tx, ty);
+    });
+    ctx.lineJoin = 'miter';
     // Máy bay: vòng nhấp nháy + mũi máy bay theo hướng bay
     const px = x0 + ((b.x - TG.x0) / RX) * W, py = y0 + ((b.y - TG.y0) / RY) * H;
     const t = performance.now() / 1000;
