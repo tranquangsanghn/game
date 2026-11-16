@@ -4,8 +4,8 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, NHAN_VAT } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
-import { chuanBiSaMac, daoCua, doSau, trongNui, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, type Cell } from './cell';
+import { chuanBiSaMac, daoCua, diemTrenDao, doSau, trongNui, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
+import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -1626,9 +1626,11 @@ export class Game {
           continue;
         }
       }
-      // Cell đi qua cũng ăn đậu thần: +DAU_MAU máu (không giới hạn)
+      // Cell đi qua cũng ăn đậu thần: +DAU_MAU máu (không giới hạn); chỉ ăn đậu nằm trong vòng đảo của chính nó
       if (dau) {
-        const ce = this.cell.find((c) => !c.chet && !((c.socola ?? 0) > 0) && Math.hypot(c.x - v.x, c.y - v.y) < CELL_BK * cellK(c.cap));
+        const daoDau = daoCua(v.x, v.y);
+        const ce = this.cell.find((c) => !c.chet && !((c.socola ?? 0) > 0) && Math.hypot(c.x - v.x, c.y - v.y) < CELL_BK * cellK(c.cap)
+          && this.daoCell(c) === daoDau && trongVongDao(v.x, v.y, daoDau));
         if (ce) {
           // Như Mabu / Zinbu: +DAU_MAU máu; Cell không có mana nên được thêm sức mạnh (nhân sát thương đấm / chưởng, không giới hạn)
           ce.hp += DAU_MAU;
@@ -3867,8 +3869,33 @@ export class Game {
    * và bắn chưởng cho cây đổ rơi đậu (không ai nhìn thấy nó thì cây đổ luôn, không tạo chùm / hiệu ứng); hết cây thì trốn ra xa nhân vật.
    */
   private cellAnDau(c: Cell, dt: number): void {
-    if (c.nap !== undefined && c.chien) { this.cellBanChien(c, dt); return; }
     const dao = this.daoCell(c);
+    // Gặp Mabu / Zinbu (lại gần trong CELL_AN_GAP, nhân vật nhìn thấy nó): dịch chuyển tức thời tới chỗ trên đảo xa mọi nhân vật nhất để trốn
+    if ((c.choDich ?? 0) <= this.t && this.cellTrenCam(c)) {
+      const ke = this.nguoi.filter((m) => !m.vang && !this.khuat(m));
+      const xaNhat = (x: number, y: number) => ke.reduce((d, m) => Math.min(d, Math.hypot(m.x - x, m.y - y)), Infinity);
+      if (ke.length && xaNhat(c.x, c.y) < CELL_AN_GAP) {
+        let tot = -1, cho: { x: number; y: number } | undefined;
+        for (let i = 0; i < 16; i++) {
+          const p = diemTrenDao(dao, 250);
+          if (!trongVongDao(p.x, p.y, dao) || trongVuon(p.x, p.y)) continue;
+          const d = xaNhat(p.x, p.y);
+          if (d > tot) { tot = d; cho = p; }
+        }
+        c.choDich = this.t + CELL_AN_DICH_HOI;
+        if (cho && tot > CELL_AN_GAP) {
+          const k = cellK(c.cap);
+          c.nap = undefined; c.chien = false; c.chay = false;
+          this.vetGa({ id: this.id++, x: c.x, y: c.y - 25 * k, t: 0, loai: 'no' });
+          this.chuGa({ id: this.id++, x: c.x, y: c.y - 55 * k, text: '💨 CELL TRỐN!', mau: '#7be04a', t: 0 });
+          c.x = cho.x; c.y = cho.y;
+          giuTrongMap(c, leCell(c.cap), false, 'dao');
+          this.vetGa({ id: this.id++, x: c.x, y: c.y - 25 * k, t: 0, loai: 'no' });
+          return;
+        }
+      }
+    }
+    if (c.nap !== undefined && c.chien) { this.cellBanChien(c, dt); return; }
     const trenDao = (x: number, y: number) => daoCua(x, y) === dao && trongVongDao(x, y, dao);
     let gan = Infinity, dau: VatPham | undefined;
     for (const v of this.vatPham) {

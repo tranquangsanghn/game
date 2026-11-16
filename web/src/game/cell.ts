@@ -54,6 +54,9 @@ export const CELL_TOC = [105, 127.5, 150, 180, 300];
 export const CELL_DAU_SUC = 0.2;
 export const CELL_AN_TAM = 700;
 export const CELL_AN_TRON = 1500;
+/** Con đi ăn đậu gặp nhân vật (gần hơn `CELL_AN_GAP`, nhân vật nhìn thấy nó) thì dịch chuyển tức thời tới chỗ trên đảo xa mọi nhân vật nhất để trốn; hồi `CELL_AN_DICH_HOI` giây */
+export const CELL_AN_GAP = 900;
+export const CELL_AN_DICH_HOI = 3;
 /** Cell đỏ tung chưởng (hào quang → phóng, chùm bay) nhanh hơn 30% */
 export const CELL_DO_NHANH = 1.3;
 /** Số giây giữa 2 đòn đấm / đá */
