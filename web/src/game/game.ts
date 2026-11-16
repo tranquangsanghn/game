@@ -892,6 +892,8 @@ export class Game {
   tuongSong: Ga | null = null;
   /** Ngọc rồng đã nhặt (số sao, theo thứ tự nhặt) xếp ở thanh đen trên, bên trái; ngocBay = viên đang bay từ chỗ nhặt lên thanh đen */
   ngocNhat: number[] = [];
+  /** Đã báo chữ Cell đỏ truy sát (không lưu ván) */
+  private cellTruyBao = false;
   ngocBay: { x: number; y: number; t: number; slot: number; sao: number }[] = [];
   readonly NGOC_BAY_T = 1.1;
   // Gà mẹ đang đánh (phụ gần nhân vật nhất; chưa có thì gà mẹ gốc): chiêu hiện trên thanh đen phía trên
@@ -3731,6 +3733,11 @@ export class Game {
         c.nap = undefined;
         continue;
       }
+      // Cell đỏ truy sát: đã mất ngọc 2 sao thì bám theo Mabu / Zinbu khắp nơi tới khi nó chết
+      if (this.cellTruy(c)) {
+        this.cellTruyChon(c);
+        if (c.muc === undefined) { c.chay = false; c.nap = undefined; c.chien = false; continue; }
+      }
       // Cell giữ ngọc không có ai để đánh: đi về chỗ ngồi giữa đảo rồi ngồi im trên viên ngọc
       if (c.ngoi && c.muc === undefined) {
         c.nap = undefined;
@@ -3777,6 +3784,28 @@ export class Game {
     this.cell = this.cell.filter((c) => !c.chet || c.tChet < CELL_CHET_T);
   }
 
+  /** Cell đỏ (cấp cao nhất) còn sống mà ngọc 2 sao của nó đã bị lấy: truy sát Mabu / Zinbu tới bất kỳ đâu, bỏ qua vòng đảo */
+  private cellTruy(c: Cell): boolean {
+    return c.cap === SO_CAP - 1 && !c.chet && this.ngocNhat.includes(NGOC_TIEC_SAO);
+  }
+
+  /** Chọn mục tiêu cho Cell đang truy sát: người đi bộ gần nhất (không ẩn / gục / mây / trong cầu), không thì máy bay có người ngồi, không thì đứng chờ */
+  private cellTruyChon(c: Cell): void {
+    if (!this.cellTruyBao) {
+      this.cellTruyBao = true;
+      this.chuGa({ id: this.id++, x: c.x, y: c.y - 300, text: '🔥 CELL ĐỎ TRUY SÁT!', mau: '#ff3b30', t: 0 });
+    }
+    let gan = Infinity, chon = -1;
+    this.nguoi.forEach((n, p) => {
+      if (n.vang || this.khuat(n)) return;
+      const d = Math.hypot(n.x - c.x, n.y - c.y);
+      if (d < gan) { gan = d; chon = p; }
+    });
+    const m = this.mayBay;
+    const mb = m.pha !== 'no' && m.ngoi.some((p) => !this.nguoi[p]?.het);
+    this.cellRaTran(c, chon >= 0 || mb ? 'tach' : undefined, chon >= 0 ? chon : mb ? MUC_MB : undefined);
+  }
+
   /** Cell đi về (x, y) với tốc độ CELL_TOC × he, quay mặt theo hướng đi; trả về khoảng cách còn lại */
   private cellDiToi(c: Cell, x: number, y: number, dt: number, he: number): number {
     const dx = x - c.x, dy = y - c.y, dd = Math.hypot(dx, dy);
@@ -3787,6 +3816,11 @@ export class Game {
     c.x += (dx / dd) * b;
     c.y += (dy / dd) * b;
     c.lat = dx < 0;
+    if (this.cellTruy(c)) {
+      // Truy sát: đi khắp thế giới (qua biển, vào vườn gà), không bị giữ trong vòng đảo
+      giuTrongMap(c, leCell(c.cap), true, 'dao');
+      return dd - b;
+    }
     giuTrongMap(c, leCell(c.cap), false, 'dao');
     this.cellTrongVong(c, cx, cy);
     return dd - b;
@@ -3915,13 +3949,13 @@ export class Game {
     for (let i = 0; i < 10 && !duoc; i++) {
       const g = g0 + (i / 10) * Math.PI * 2;
       x = ke.x + Math.cos(g) * r; y = ke.y + Math.sin(g) * r * 0.6;
-      duoc = doSau(x, y) > 60 && !trongVuon(x, y) && daoCua(x, y) === dao && trongVongDao(x, y, dao);
+      duoc = this.cellTruy(c) || (doSau(x, y) > 60 && !trongVuon(x, y) && daoCua(x, y) === dao && trongVongDao(x, y, dao));
     }
     c.choDich = this.t + CELL_DICH_HOI[c.cap]!;
     if (!duoc) return;
     this.vetGa({ id: this.id++, x: c.x, y: c.y - 25 * k, t: 0, loai: 'no' });
     c.x = x; c.y = y;
-    giuTrongMap(c, leCell(c.cap), false, 'dao');
+    giuTrongMap(c, leCell(c.cap), this.cellTruy(c), 'dao');
     c.lat = ke.x < c.x;
     c.chay = false;
     this.vetGa({ id: this.id++, x: c.x, y: c.y - 25 * k, t: 0, loai: 'no' });
