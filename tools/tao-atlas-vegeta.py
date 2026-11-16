@@ -2,7 +2,7 @@
 Dùng: python3 tools/tao-atlas-vegeta.py <vegeta-sheet.webp> <frieza-sheet.png>
   - vegeta-sheet: sheet Vegeta nền xanh lá (453×2000), mỗi khung một ô; nhân vật quay mặt sang trái (atlas lật lại quay phải như Mabu / Zinbu)
   - frieza-sheet: Frieza (Dragon Ball Z Super Butouden, SNES), chỉ lấy quả chưởng và vụ nổ
-Ra: web/public/assets/game/vegeta_atlas.png (16 cột, khung W×H in ra cuối, chân ở đáy, đầu ở giữa ngang)
+Ra: web/public/assets/game/vegeta_atlas.png (ảnh to gấp 2 kích thước logic; đã lọc nhiễu, bỏ viền xanh, phóng Scale2x ×2 (so màu gần giống); 16 cột, khung W×H in ra cuối, chân ở đáy, đầu ở giữa ngang)
     web/public/assets/game/vegeta_chuong.png (8 khung 192×160: 0 chưởng sao chổi · 1 quả trắng · 2 quả vàng có vòng · 3–6 vụ nổ lớn dần · 7 vụ nổ to nhất)
 In ra danh sách khung theo tên animation để chép vào nhan-vat-du-lieu.ts."""
 import sys
@@ -90,19 +90,28 @@ A = {
     'energy_ball': [(39, 0), (39, 1), (45, 0), (45, 1), (45, 1), (45, 1)],
 }
 
-# Cắt từng khung (không trùng), tách nền, lật quay phải, phóng TL
+# Cắt từng khung (không trùng), tách nền, bỏ viền xanh, lật quay phải
 ds, so = [], {}
 def khung_rgba(rk):
     s, e, y0, y1 = hang[rk[0]][rk[1]]
     o = np.zeros((y1 - y0, e - s, 4), np.uint8)
     p = src[y0:y1, s:e].copy()
-    m = fg[y0:y1, s:e]
-    # Khử ánh xanh viền: kênh xanh lá không vượt kênh lớn hơn trong đỏ / xanh dương
+    m = fg[y0:y1, s:e].copy()
+    # Viền: điểm ảnh sát nền mà còn ngả xanh lá (ánh nền nén webp) thì bỏ
+    nen = ~m
+    sat = np.zeros_like(m)
+    sat[1:] |= nen[:-1]; sat[:-1] |= nen[1:]; sat[:, 1:] |= nen[:, :-1]; sat[:, :-1] |= nen[:, 1:]
+    ngaXanh = p[..., 1] > np.maximum(p[..., 0], p[..., 2]) + 10
+    m &= ~(sat & ngaXanh)
+    # Điểm lẻ loi (không có hàng xóm 4 hướng) là nhiễu
+    lan = np.zeros(m.shape, int)
+    lan[1:] += m[:-1]; lan[:-1] += m[1:]; lan[:, 1:] += m[:, :-1]; lan[:, :-1] += m[:, 1:]
+    m &= lan > 0
+    # Khử ánh xanh: kênh xanh lá không vượt kênh lớn hơn trong đỏ / xanh dương
     p[..., 1] = np.minimum(p[..., 1], np.maximum(p[..., 0], p[..., 2]) + 12)
     o[..., :3] = np.clip(p, 0, 255)
     o[..., 3] = np.where(m, 255, 0)
     o = o[:, ::-1]
-    # Đầu = giữa các điểm ảnh của 5 hàng trên cùng
     top = np.where(o[:5, :, 3].sum(0) > 0)[0]
     dau = (top.min() + top.max() + 1) / 2
     return o, dau
@@ -111,20 +120,43 @@ for ten, ks in A.items():
         if rk not in so:
             so[rk] = len(ds)
             ds.append(khung_rgba(rk))
+
+NGUONG_MAU = 70
+
+def scale2x(a):
+    """Phóng 2 lần kiểu Scale2x (EPX): làm mượt cạnh chéo của pixel art thay vì nhân khối vuông"""
+    h, w = a.shape[:2]
+    p = np.pad(a, ((1, 1), (1, 1), (0, 0)), mode='edge')
+    E = p[1:-1, 1:-1]; B = p[:-2, 1:-1]; H = p[2:, 1:-1]; D = p[1:-1, :-2]; F = p[1:-1, 2:]
+    # Hai điểm ảnh coi là cùng màu khi gần giống nhau (ảnh nén webp không có màu phẳng tuyệt đối) và cùng trong suốt / cùng đặc
+    bang_ = lambda x, y: (np.abs(x[..., :3].astype(int) - y[..., :3].astype(int)).sum(-1) < NGUONG_MAU) & (x[..., 3] == y[..., 3])
+    BD, BF, DH, HF = bang_(B, D), bang_(B, F), bang_(D, H), bang_(H, F)
+    BH, DF = bang_(B, H), bang_(D, F)
+    E0 = np.where((BD & ~BF & ~DH)[..., None], D, E)
+    E1 = np.where((BF & ~BD & ~HF)[..., None], F, E)
+    E2 = np.where((DH & ~BD & ~HF)[..., None], D, E)
+    E3 = np.where((HF & ~DH & ~BF)[..., None], F, E)
+    o = np.zeros((h * 2, w * 2, a.shape[2]), a.dtype)
+    o[0::2, 0::2] = E0; o[0::2, 1::2] = E1; o[1::2, 0::2] = E2; o[1::2, 1::2] = E3
+    return o
+
 trai = max(d for _, d in ds) * TL
 phai = max(o.shape[1] - d for o, d in ds) * TL
 cao = max(o.shape[0] for o, _ in ds) * TL
 KW, KH = int(np.ceil(trai + phai)) + 4, int(cao) + 4
 NX, NY = int(np.ceil(trai)) + 2, KH - 2
 COT = 16
+# Ảnh PNG to gấp PNG_TL lần kích thước logic (game tự đổi tỉ lệ): phóng Scale2x hai lần = 4 lần khung gốc
+PNG_TL = 2
 hang_so = (len(ds) + COT - 1) // COT
-atlas = Image.new('RGBA', (COT * KW, hang_so * KH), (0, 0, 0, 0))
+atlas = Image.new('RGBA', (COT * KW * PNG_TL, hang_so * KH * PNG_TL), (0, 0, 0, 0))
 for i, (o, d) in enumerate(ds):
-    im = Image.fromarray(o, 'RGBA').resize((o.shape[1] * TL, o.shape[0] * TL), Image.NEAREST)
-    x = (i % COT) * KW + NX - int(round(d * TL))
-    y = (i // COT) * KH + NY - im.height
+    im = Image.fromarray(scale2x(scale2x(o)), 'RGBA')
+    x = ((i % COT) * KW + NX) * PNG_TL - int(round(d * TL * PNG_TL))
+    y = ((i // COT) * KH + NY) * PNG_TL - im.height
     atlas.alpha_composite(im, (x, y))
 atlas.save('web/public/assets/game/vegeta_atlas.png', optimize=True)
+atlas = atlas.resize((atlas.width // PNG_TL, atlas.height // PNG_TL))
 print(f'atlasW: {atlas.width}, atlasH: {atlas.height}, w: {KW}, h: {KH}, cot: {COT}, neoX: {NX}, neoY: {NY}')
 for ten, ks in A.items():
     print(f'{ten}: [{", ".join(str(so[k]) for k in ks)}]')

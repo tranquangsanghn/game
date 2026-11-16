@@ -125,11 +125,11 @@ export const ZINBU: NhanVatSprite = {
 };
 
 
-// Vegeta: dựng bằng tools/tao-atlas-vegeta.py từ sheet người dùng gửi (khung gốc ~30px, phóng 2 lần, lật quay phải).
+// Vegeta: dựng bằng tools/tao-atlas-vegeta.py từ sheet người dùng gửi (khung gốc ~30px: lọc nhiễu, bỏ viền xanh, phóng Scale2x 2 lần, lật quay phải; PNG to gấp 2 kích thước logic).
 // Chỉ có 3 nhóm đòn (không có chiêu riêng thứ 4); chưởng vẽ bằng quả chưởng / vụ nổ trong vegeta_chuong.png.
 export const VEGETA: NhanVatSprite = {
-  ten: 'Vegeta', atlas: 'assets/game/vegeta_atlas.png', atlasW: 1568, atlasH: 648, w: 98, h: 72, cot: 16,
-  neoX: 46, neoY: 70,
+  ten: 'Vegeta', atlas: 'assets/game/vegeta_atlas.png', atlasW: 1536, atlasH: 648, w: 96, h: 72, cot: 16,
+  neoX: 45, neoY: 70,
   anim: {
     idle: { f: [0, 1, 2, 3], ms: 150, lap: true },
     taunt_flex: { f: [5, 6, 7, 8, 9, 10], ms: 117, lap: false },
