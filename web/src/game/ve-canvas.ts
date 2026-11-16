@@ -716,9 +716,9 @@ export class VeCanvas {
       ctx.translate(v.x, v.y);
       ctx.globalAlpha = dongHe(1 - k);
       if (v.vg) {
-        // Vụ nổ chưởng Vegeta: 5 khung nổ lớn dần (3 → 7) trong vegeta_chuong.png
+        // Vụ nổ chưởng Vegeta: 5 khung nổ lớn dần (3 → 7) trong vegeta_chuong.png (cầu sáng → vòng → vòng mờ)
         ctx.globalAlpha = k < 0.7 ? 1 : dongHe((1 - k) / 0.3);
-        const s = 2.2 * (v.co ?? 1);
+        const s = 1.9 * (v.co ?? 1);
         ctx.scale(s, s);
         this.sprite(ctx, c.SP_VG_CHUONG, 3 + Math.min(4, Math.floor(k * 6)), false, false);
       } else if (v.loai === 'chay') {
@@ -852,21 +852,33 @@ export class VeCanvas {
       if (!d.to) continue;
       const vt = c.danHienTai(d);
       if (d.vg) {
-        // Chưởng Vegeta: quả cầu sáng có đuôi (khung 0, đầu quay sang phải), xoay theo hướng bay, vệt sáng vàng phía sau
+        // Chưởng Vegeta: cầu lửa vàng (khung 0 / 1 luân phiên, đầu quay sang phải) xoay theo hướng bay, vệt sáng phía sau;
+        // vừa bắn thì có chớp nòng (khung 2) ở tay
         ctx.save();
         ctx.lineCap = 'round';
-        ctx.lineWidth = 22;
-        ctx.strokeStyle = 'rgba(255,236,120,0.45)';
+        ctx.lineWidth = 20;
+        ctx.strokeStyle = 'rgba(255,220,90,0.4)';
         ctx.beginPath();
         ctx.moveTo(vt.xs, vt.ys);
         ctx.lineTo(vt.x, vt.y);
         ctx.stroke();
+        const gocBay = Math.atan2(d.y1 - d.y0, d.x1 - d.x0);
+        if (d.t < 0.12) {
+          ctx.save();
+          ctx.translate(d.x0, d.y0);
+          ctx.rotate(gocBay);
+          ctx.globalAlpha = 1 - d.t / 0.12;
+          ctx.scale(0.9, 0.9);
+          ctx.translate(70, 0);
+          this.sprite(ctx, c.SP_VG_CHUONG, 2, false, false);
+          ctx.restore();
+        }
         ctx.translate(vt.x, vt.y);
-        ctx.rotate(Math.atan2(d.y1 - d.y0, d.x1 - d.x0));
-        ctx.scale(2.4, 2.4);
-        // Đầu quả cầu nằm lệch phải trong khung: dời về để tâm đầu trùng vị trí chưởng
-        ctx.translate(-12, 0);
-        this.sprite(ctx, c.SP_VG_CHUONG, 0, false, false);
+        ctx.rotate(gocBay);
+        ctx.scale(1.4, 1.4);
+        // Đầu cầu lửa nằm lệch phải trong khung: dời về để đầu trùng vị trí chưởng
+        ctx.translate(-42, 0);
+        this.sprite(ctx, c.SP_VG_CHUONG, Math.floor(d.t * 14) % 2, false, false);
         ctx.restore();
         continue;
       }
