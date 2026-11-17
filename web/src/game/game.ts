@@ -327,7 +327,9 @@ const SAT_THUONG = [[50, 50, 50], [70, 100, 85], [130, 190, 160]];
 // mỗi đòn = HOP_THE_SAT_GAP × (đòn cùng nhóm của Mabu + của Zinbu). Tồn tại HOP_THE_T giây (đếm ngược trên đầu) rồi tách ra, chờ HOP_THE_HOI giây mới hợp thể lại.
 // Người ít máu hơn lúc hợp thể chỉ điều khiển đi lại / bay, người nhiều máu hơn (bằng nhau thì Mabu) chỉ điều khiển ra đòn.
 const HOP_THE_GAN = 300;
-const HOP_THE_CUA = 0.4;
+const HOP_THE_CUA = 1;
+/** Máy bay chở dưới 2 người không bay vào trong lề này quanh thần điện */
+const MB_THAN_LE = 300;
 const HOP_THE_GAP = 5;
 /** Sát thương mỗi đòn của Super Bư = HOP_THE_SAT_GAP × (đòn Mabu + đòn Zinbu) (máu vẫn HOP_THE_GAP × tổng máu) */
 const HOP_THE_SAT_GAP = 6;
@@ -2859,6 +2861,8 @@ export class Game {
 
   /** Lần cuối báo "núi đá chỉ cho 2 người" (giây `t`) */
   private nuiBaoLuc = -99;
+  /** Lần cuối báo "thần điện chỉ cho 2 người" khi máy bay chở 1 người bay tới (giây `t`) */
+  private thanBaoLuc = -99;
 
   // Dây buộc: 2 nhân vật không xa nhau quá mức camera chứa nổi. Người vừa di chuyển nhiều hơn là người bị chặn lại.
   // Bóng ma Goku đang là bản sao cũng bị buộc chung dây với cả hai nhân vật (tam giác 3 người): ai đi xa thì kéo / bị kéo như nhau.
@@ -5611,6 +5615,16 @@ export class Game {
       // Máy bay bay được khắp thế giới (qua biển, qua tường vườn), chỉ không ra khỏi bản đồ
       m.x = kep(m.x, TG.x0 + MB_LE, TG.x1 - MB_LE);
       m.y = kep(m.y, TG.y0 + MB_LE, TG.y1 - MB_LE);
+      // Thần điện (khu vực của Frieza) chỉ bay vào được khi đủ 2 người (chưa gục) cùng ngồi trên máy bay
+      if (m.ngoi.filter((p) => !this.nguoi[p]?.het).length < 2 && trongThan(m.x, m.y, MB_THAN_LE) && !trongThan(x0, y0, MB_THAN_LE)) {
+        m.x = x0;
+        m.y = y0;
+        if (pl) pl.dich = null;
+        if (this.t - this.thanBaoLuc > 3) {
+          this.thanBaoLuc = this.t;
+          this.chu.push({ id: this.id++, x: m.x, y: m.y - 420, text: '✈ THẦN ĐIỆN CHỈ VÀO ĐƯỢC KHI ĐỦ 2 NGƯỜI!', mau: '#c9a2ff', t: 0 });
+        }
+      }
       if (dt > 0) { this.mbVx = (m.x - x0) / dt; this.mbVy = (m.y - y0) / dt; }
       // Cất cánh từ trong vườn gà rồi bay ra ngoài (qua tường vườn): máu / mana người trên máy bay đặt lại đầy bình (HP_NV, MANA_TOI_DA), một lần mỗi lần cất cánh.
       // Bay ngang qua vườn gà (không hạ cánh rồi cất cánh lại trong vườn) hay bay giữa các đảo thì giữ nguyên máu / mana.
@@ -5912,6 +5926,17 @@ export class Game {
     for (const c of cap) {
       const vao = dung.find(({ n, p }) => !n.het && !n.bay && !this.trongCau(p) && !this.congCho!.includes(p) && cach(n, c.a) < CONG_BK);
       if (!vao) continue;
+      // Vào thần điện (khu vực của Frieza): phải đủ 2 người chơi và cả hai cùng đứng trong cổng
+      if (c.a === this.cong) {
+        const hai = this.nguoi.filter((n) => !n.vang).length >= 2;
+        if (!hai || dung.some(({ n }) => cach(n, c.a) >= CONG_BK)) {
+          if (this.congBao <= 0) {
+            this.congBao = 2;
+            this.chu.push({ id: this.id++, x: c.a.x, y: c.a.y - 700, text: hai ? '🌀 CẢ 2 NGƯỜI CÙNG VÀO CỔNG MỚI SANG THẦN ĐIỆN!' : '🌀 THẦN ĐIỆN CHỈ VÀO ĐƯỢC KHI CHƠI 2 NGƯỜI!', mau: '#c9a2ff', t: 0 });
+          }
+          return;
+        }
+      }
       if (dung.some(({ n, p }) => n.het || n.bay || this.trongCau(p))) {
         if (this.congBao <= 0) {
           this.congBao = 2;

@@ -57,14 +57,14 @@ export const FZ_CHUONG_SAT = 400;
 export const FZ_TOC_DANH = 260;
 /** Giây giữa 2 đòn đấm / đá, hồi chưởng */
 export const FZ_HOI = 0.9;
-export const FZ_CHUONG_HOI = 4;
+export const FZ_CHUONG_HOI = 2;
 export const FZ_HOI_MAU = 30;
 /** Giáp: Super Bư đánh chỉ lọt (1 − FZ_GIAP) */
 export const FZ_GIAP = 0.75;
 /** Tầm đấm (chạm thân), chưởng: xa hơn FZ_CHUONG_XA mới bắn, tầm FZ_CHUONG_TAM, vận FZ_CHUONG_NAP giây (đứng yên, báo hiệu) */
 export const FZ_CHAM = 150;
 export const FZ_CHUONG_XA = 350;
-export const FZ_CHUONG_TAM = 1100;
+export const FZ_CHUONG_TAM = 500;
 export const FZ_CHUONG_NAP = 0.8;
 /** Bán kính thân (trúng đòn), tâm thân cao (dạng thường / vàng) */
 export const FZ_BK = 110;
