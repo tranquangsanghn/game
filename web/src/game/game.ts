@@ -8,7 +8,7 @@ import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, tro
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
 import { taoFrieza, capNhatFrieza, SP_FRIEZA, type Frieza } from './frieza';
-import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_DANH, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
+import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
@@ -3945,7 +3945,7 @@ export class Game {
     g.ki = n.ki;
     g.hpMax = Math.max(1, Math.round(Math.max(1, n.hp) * GY_SAO_TI_LE * (g.suc ?? 1) * (1 + GY_HOI_MAU * (g.hoiSinh ?? 0))));
     g.hp = g.hpMax;
-    g.sat = [0, 1, 2].map((i) => Math.round((SAT_THUONG[i]![n.ki]! * suc + (n.satDau ?? 0)) * GY_SAO_TI_LE)) as [number, number, number];
+    g.sat = [0, 1, 2].map((i) => Math.round((SAT_THUONG[i]![n.ki]! * suc + (n.satDau ?? 0)) * GY_SAO_SAT)) as [number, number, number];
     g.lao = undefined;
     g.quang = undefined;
     g.khieu = undefined;
@@ -3954,7 +3954,7 @@ export class Game {
     g.x = n.x + ngauNhien(-30, 30);
     g.y = n.y + ngauNhien(-10, 10);
     giuTrongMap(g, LE_NV, false, 'dao');
-    g.sao = { p, con: GY_SAO_T, danh: GY_SAO_DANH[Math.floor(Math.random() * GY_SAO_DANH.length)]!, nhom: 0, doi: 0, di: false };
+    g.sao = { p, con: GY_SAO_T, danh: ngauNhien(GY_SAO_DANH[0], GY_SAO_DANH[1]), nhom: 0, doi: 0, di: false };
     const nv = new NhanVat(NHAN_VAT[n.ki]!);
     nv.lat = n.nv.lat;
     this.gyNv = nv;
@@ -4081,7 +4081,7 @@ export class Game {
     this.gyBienSao(p);
   }
 
-  /** Bản sao: lảng vảng cạnh đồng đội như người thật, cứ 1–4s (ngẫu nhiên) đánh Mabu hoặc Zinbu bằng đòn của người bị sao chép; hết GY_SAO_T giây thì trở lại bóng ma */
+  /** Bản sao: lảng vảng cạnh đồng đội như người thật, cứ 1–2s (ngẫu nhiên) đánh Mabu hoặc Zinbu bằng đòn của người bị sao chép; hết GY_SAO_T giây thì trở lại bóng ma */
   private gyCapNhatSao(dt: number): void {
     const g = this.ginyu, s = g.sao!, nv = this.gyNv!;
     if ((s.con -= dt) <= 0) { this.gyHetSao(); return; }
@@ -4095,13 +4095,14 @@ export class Game {
       if (s.danh <= 0 && s.muc === undefined && hopLe.length) {
         s.muc = hopLe[Math.floor(Math.random() * hopLe.length)]!;
         const r = Math.random();
-        s.nhom = r < 0.4 ? 0 : r < 0.75 ? 1 : 2;
+        s.nhom = r < GY_TI_LE_DAM ? 0 : r < GY_TI_LE_DAM + GY_TI_LE_DA ? 1 : 2;
       }
       if (s.muc !== undefined && !this.gyHopLe(s.muc)) s.muc = undefined;
       let tx: number | undefined, ty: number | undefined;
       if (s.muc !== undefined) {
         const ke = this.nguoi[s.muc]!;
-        const tam = s.nhom === 2 ? TAM_CHIEU * 0.7 : s.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN;
+        // Chưởng bắn từ xa (gần hết tầm chưởng), Đấm / Đá phải lại gần
+        const tam = s.nhom === 2 ? TAM_CHIEU : s.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN;
         const d = Math.hypot(ke.x - g.x, ke.y - g.y);
         if (d <= tam * 0.85 || s.danh < -3) this.gyRaDon(ke);
         else { tx = ke.x; ty = ke.y; }
@@ -4163,7 +4164,7 @@ export class Game {
     const T = Math.hypot(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
     this.dan.push({ id: this.id++, p: s.p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: false, to: chieu, sat: Math.round(g.sat[nhom]! * (g.suc ?? 1)), nhom, vg: g.ki === 2 && chieu, gy: true });
     s.muc = undefined;
-    s.danh = GY_SAO_DANH[Math.floor(Math.random() * GY_SAO_DANH.length)]!;
+    s.danh = ngauNhien(GY_SAO_DANH[0], GY_SAO_DANH[1]);
   }
 
   /** Đạn của bản sao: chưởng xuyên qua mọi nhân vật trên đường bay, chạm đích thì nổ / đánh trúng nhân vật (né / giảm như đòn quái) */
