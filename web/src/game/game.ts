@@ -330,9 +330,9 @@ const HOP_THE_GAN = 300;
 const HOP_THE_CUA = 1;
 /** Máy bay chở dưới 2 người không bay vào trong lề này quanh thần điện */
 const MB_THAN_LE = 300;
-const HOP_THE_GAP = 5;
+const HOP_THE_GAP = 3;
 /** Sát thương mỗi đòn của Super Bư = HOP_THE_SAT_GAP × (đòn Mabu + đòn Zinbu) (máu vẫn HOP_THE_GAP × tổng máu) */
-const HOP_THE_SAT_GAP = 6;
+const HOP_THE_SAT_GAP = 3;
 const HOP_THE_T = 40;
 const HOP_THE_HOI = 15;
 /** Super Bư bị hạ: tách ra sớm, mỗi người còn HOP_THE_CON_MAU máu lúc hợp thể (tối thiểu 1) */
@@ -997,6 +997,24 @@ export class Game {
   congThanView = false;
   /** Người vừa bước ra khỏi cổng dịch chuyển: phải đi xa khỏi cổng rồi mới vào lại được (không lưu ván) */
   private congCho: number[] | null = null;
+  /** Nhân vật p đang đứng trên thần điện (khung trước); null = chưa đo (vào / tải ván: không đặt lại) */
+  private trenThanTruoc: boolean[] | null = null;
+
+  /** Bước lên thần điện (qua cổng, rơi máy bay xuống…) thì máu / mana đặt lại về HP_NV / MANA_TOI_DA: không mang máu / mana cày được vào đánh Frieza */
+  private datLaiVaoThan(): void {
+    if (banDoHt !== 'sa') return;
+    const nay = this.nguoi.map((n, p) => !n.vang && !this.trongMb(p) && trongThan(n.x, n.y));
+    const truoc = this.trenThanTruoc;
+    this.trenThanTruoc = nay;
+    if (!truoc) return;
+    this.nguoi.forEach((n, p) => {
+      if (!nay[p] || truoc[p] || n.het || this.hopThe) return;
+      n.hp = HP_NV;
+      n.mana = MANA_TOI_DA;
+      n.bayKhoa = 0;
+      this.chu.push({ id: this.id++, x: n.x, y: n.y - 320 - 50 * p, text: `🏯 ${n.ten}: MÁU ${HP_NV} · MANA ${MANA_TOI_DA}`, mau: n.mau, t: 0 });
+    });
+  }
   /** Hợp thể Super Bư (không lưu ván): chu = người điều khiển ra đòn, mang thân Super Bư (`nv` đổi sang SUPER_BU) · nhap = người bị nhập
    *  (ẩn, đi theo, chỉ điều khiển đi lại / bay của Super Bư) · con = giây còn lại · truoc = máu / mana hai người lúc hợp thể · hpMax / manaMax = của Super Bư */
   hopThe: { chu: number; nhap: number; con: number; nvCu: NhanVat; truoc: { hp: number; mana: number }[]; hpMax: number; manaMax: number } | null = null;
@@ -1665,6 +1683,7 @@ export class Game {
     this.capNhatPt(dt);
     HN.moc('cn.mayBay');
     this.capNhatCong(dt);
+    this.datLaiVaoThan();
     this.nguoi.forEach((n, p) => this.mayQuet(n, p));
     HN.moc('cn.may');
     this.chonVay(dtE);

@@ -46,8 +46,8 @@ export const FZ_FPS_DUNG = 1.5;
 /**
  * Chỉ số chiến đấu của Frieza (dạng thường; dạng vàng nhân FZ_VANG_GAP qua `fzGap()`).
  * Mabu / Zinbu chưa hợp thể đánh Frieza không mất máu (Game `trungFz()`), chỉ Super Bư (hợp thể, chỉ làm được trên thần điện) mới gây sát thương,
- * còn giáp FZ_GIAP. Cân bằng theo Super Bư lúc vào ván (5 × (150 + 150) = 1500 máu, Đấm 600 mỗi 0,4s ≈ 1500 sát thương / giây):
- * dạng thường mất ~375 / s (trừ hồi 30 / s) ⇒ ~8s đánh liên tục; dạng vàng chỉ ~190 / s trên 6000 máu, hồi 60 / s ⇒ gần như không hạ được, nên né chờ hết vàng.
+ * còn giáp FZ_GIAP. Bước lên thần điện thì máu / mana mỗi người đặt lại 300 / 200 (Game `datLaiVaoThan()`), nên Super Bư luôn là 3 × (300 + 300) = 1800 máu,
+ * Đấm 300 mỗi 0,4s ≈ 750 sát thương / giây, chưởng 960: dạng thường mất ~190–240 / s (trừ hồi 30 / s) ⇒ ~15s đánh liên tục; dạng vàng chỉ ~95–120 / s trên 6000 máu, hồi 60 / s ⇒ gần như không hạ được, nên né chờ hết vàng.
  * Frieza đánh Mabu / Zinbu thường: Đấm 150 (nhận 75) ⇒ 2 đòn gục người mới vào ván, chưởng 400 (nhận 200) một phát gục ⇒ bắt buộc hợp thể.
  */
 export const FZ_HP = 3000;
