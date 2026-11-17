@@ -494,6 +494,9 @@ const BAY_TOI_DA = 1200;
 // Đấm / Đá trúng thì hồi MANA_DAM. Tự hồi MANA_HOI mỗi giây khi không bay (chỉ tới MANA_HOI_TOI_DA; táo xanh / socola / đòn trúng cộng không giới hạn); còn dưới MANA_TOI_THIEU thì không bay. Mỗi lần bay xong khoá BAY_KHOA giây mới bay tiếp.
 const MANA_BAN_DAU = 200;
 const MANA_TOI_DA = 200;
+/** Từ ngoài vườn gà nhảy xuống máy bay / phi thuyền vào trong vườn: máu, mana mỗi người đặt lại đúng bấy nhiêu (bay ngang qua vườn không tính) */
+const VAO_VUON_MAU = HP_NV;
+const VAO_VUON_MANA = 300;
 const MANA_HOI_TOI_DA = 100;
 const MANA_DAM = 5;
 const MANA_CHUONG = 30;
@@ -1086,6 +1089,9 @@ export class Game {
   mayBay: MayBay = taoMayBay(MAP / 2, MAP / 2);
   /** Máy bay cất cánh từ trong vườn gà và chưa bay ra khỏi vườn: lần đầu bay ra thì đặt lại máu / mana rồi tắt cờ (bay ngang qua vườn không tính) */
   private mbCatVuon = false;
+  /** Máy bay / phi thuyền đang chở người đã ra ngoài vườn gà: nhảy xuống trong vườn thì đặt lại máu / mana (datLaiVaoVuon()) rồi tắt cờ */
+  private mbRaVuon = false;
+  private ptRaVuon = false;
   /** vận tốc máy bay khung trước (Cell bắn đón đầu) */
   private mbVx = 0;
   /** giờ game được báo lại chữ "Cell đang ngồi trên ngọc" */
@@ -1319,6 +1325,7 @@ export class Game {
     // Máy bay đậu trong vườn gà, gần chỗ xuất phát (phía trong vườn)
     this.mayBay = taoMayBay(kep(gx + vao * 700, TUONG + MB_LE, MAP - TUONG - MB_LE), kep(gy + xuong * 380, TUONG + MB_LE, MAP - TUONG - MB_LE));
     this.mbCatVuon = false;
+    this.mbRaVuon = this.ptRaVuon = false;
     this.phiThuyen = taoPhiThuyen(this.mayBay);
     this.ga = [];
     this.keoGa = [];
@@ -1434,6 +1441,7 @@ export class Game {
     // Bản sao dở / xác bản sao không khôi phục: về dạng bóng ma
     if (this.ginyu.chet) this.ginyu.tChet = GY_CHET_T;
     this.mbCatVuon = false;
+    this.mbRaVuon = this.ptRaVuon = false;
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const i of d.thanVo ?? []) if (i >= 0 && i < thanVo.length) thanVo[i] = true;
     this.frieza = taoFrieza();
@@ -2969,7 +2977,9 @@ export class Game {
 
   // Máy bay ra khỏi vườn gà → vườn ngủ (gà, trứng biến mất, không hoạt động). Máy bay về → tổ trứng ẩn đẻ / ấp đủ ME_PHU_HIEN_VUA gà mẹ phụ thì vua gà mới xuất hiện lại (nếu vua gà chưa bị hạ)
   private capNhatVuon(dtE: number): void {
-    const ngoai = !trongVuon(this.mayBay.x, this.mayBay.y);
+    // Máy bay hoặc phi thuyền bay ra khỏi vườn (qua tường) thì vườn ngủ; xe nào còn đậu trong vườn mà không ai ở trong vườn cũng vậy
+    // (đi phi thuyền sang núi đá, máy bay vẫn đậu trong vườn). Người ngồi xe đi theo xe nên chỉ cần xét vị trí nhân vật.
+    const ngoai = !this.nguoi.some((n) => !n.vang && trongVuon(n.x, n.y));
     if (ngoai && !this.vuonNgu) {
       this.vuonNgu = true;
       // Vua gà còn sống (hoặc chưa xuất hiện) thì sẽ xuất hiện lại như mới; đã bị hạ thì không bao giờ có lại
@@ -5686,6 +5696,19 @@ export class Game {
       n.nv.lat = m.lat;
       if (p !== m.ngoi[0] || m.pha !== 'bay') n.dich = null;
     }
+    if (m.ngoi.length && !trongVuon(m.x, m.y)) this.mbRaVuon = true;
+  }
+
+  /** Nhảy xuống máy bay / phi thuyền vào trong vườn gà sau khi xe đã ra ngoài vườn: mỗi người (chưa gục) đặt lại VAO_VUON_MAU máu, VAO_VUON_MANA mana */
+  private datLaiVaoVuon(ds: number[]): void {
+    for (const p of ds) {
+      const n = this.nguoi[p];
+      if (!n || n.vang || n.het || !trongVuon(n.x, n.y)) continue;
+      n.hp = VAO_VUON_MAU;
+      n.mana = VAO_VUON_MANA;
+      n.bayKhoa = 0;
+      this.chu.push({ id: this.id++, x: n.x, y: n.y - 260 - 50 * p, text: `🏡 ${n.ten} VỀ VƯỜN GÀ: MÁU ${VAO_VUON_MAU} · MANA ${VAO_VUON_MANA}`, mau: n.mau, t: 0 });
+    }
   }
 
   // Chưởng (Chiêu đặc biệt / socola, không tính chưởng tự bắn lên trời) bay qua thân máy bay thì máy bay trúng (người ngồi trên máy bay bắn chưởng thì máy bay nổ ngay, xem ban())
@@ -5781,6 +5804,8 @@ export class Game {
         this.chetNv(n);
       }
     });
+    if (this.mbRaVuon && trongVuon(m.x, m.y)) this.datLaiVaoVuon(roi);
+    this.mbRaVuon = false;
     if (dat) {
       const g = { x: m.x, y: m.y };
       if (trongVuon(g.x, g.y)) {
@@ -5931,6 +5956,7 @@ export class Game {
       n.dich = null;
       n.nv.lat = m.lat;
     }
+    if (m.ngoi.length && !trongVuon(m.x, m.y)) this.ptRaVuon = true;
   }
 
   /** Cổng dịch chuyển: giữa đảo 4 (`cong`) ↔ thần điện (`THAN_CONG`). Nhân vật (chưa gục, không bay, không trong máy bay / cầu)
@@ -6009,6 +6035,8 @@ export class Game {
       n.dangDi = true;
       n.combo = 0;
     });
+    if (this.ptRaVuon && trongVuon(m.x, m.y)) this.datLaiVaoVuon(ra);
+    this.ptRaVuon = false;
   }
 
   /** Hình phi thuyền để vẽ (cùng kiểu với máy bay; khung theo atlas SP_PT) */
