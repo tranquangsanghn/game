@@ -21,7 +21,7 @@ export const FZ_FPS_DUNG = 1.5;
 
 /** Chuỗi điểm quanh điện thờ (điểm ảnh của than_dien.png) */
 const DUONG_ANH: [number, number][] = [
-  [165, 70], [165, 160], [168, 250], [262, 256], [360, 262], [458, 256], [552, 250], [555, 160], [555, 70],
+  [135, 90], [135, 170], [150, 250], [262, 256], [360, 262], [458, 256], [570, 250], [585, 170], [585, 90],
 ];
 export const FZ_DUONG = DUONG_ANH.map(([x, y]) => ({ x: THAN.x0 + x * THAN_TL, y: THAN.y0 + y * THAN_TL }));
 
