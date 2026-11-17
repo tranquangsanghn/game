@@ -44,12 +44,12 @@ def tach_nen(a, nen, r, ho=None):
     return np.dstack([a.astype(np.uint8), alpha])
 
 
-def cat(mask, n, size):
-    """Đường cắt giữa các ô: chỗ ít điểm ảnh nhất gần đường chia đều."""
+def cat(mask, n, size, lan=50):
+    """Đường cắt giữa các ô: chỗ ít điểm ảnh nhất gần đường chia đều (±lan; ±25 thì hàng 2 bị cắt ngang giày khung 4, 7)."""
     res = [0]
     for k in range(1, n):
         c = size * k // n
-        res.append(c - 25 + int(np.argmin(mask[c - 25:c + 25])))
+        res.append(c - lan + int(np.argmin(mask[c - lan:c + lan])))
     return res + [size]
 
 
@@ -62,7 +62,7 @@ H, W = m.shape
 ys = cat(m.sum(1), HANG, H)
 khung = []
 for r in range(HANG):
-    xs = cat(m[ys[r]:ys[r + 1]].sum(0), COT_SHEET, W)
+    xs = cat(m[ys[r]:ys[r + 1]].sum(0), COT_SHEET, W, 25)
     for c in range(COT_SHEET):
         o = co_ho[ys[r]:ys[r + 1], xs[c]:xs[c + 1]].copy()
         # Khe kín trắng (giữa râu và lưng, tay và thân) là nền; hàng bắn chưởng thì chỉ nửa trái (lõi quả cầu ở bên phải)

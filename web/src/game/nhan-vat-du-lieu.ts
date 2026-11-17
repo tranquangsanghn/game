@@ -191,9 +191,9 @@ export const NHAN_VAT = [MABU, ZINBU, VEGETA];
 // Dựng bằng tools/tao-atlas-super-buu.py từ sheet người dùng gửi (ảnh vẽ tay, quay mặt phải); PNG gấp 2 logic, vẽ có làm mịn.
 // Khung: 0,3,4,7 đứng · 1–2 đấm · 5,24 đá · 8–11 lướt · 12–15 bắn chưởng · 16–19 gọi bóng ma · 20–23 ăn kẹo.
 export const SUPER_BU: NhanVatSprite = {
-  ten: 'Super Bư', atlas: 'assets/game/super_buu_atlas.png', atlasW: 645, atlasH: 440, w: 129, h: 88, cot: 5,
-  // neoY = đáy chân (87) + NANG 10: nâng hình lên cho chân không lẫn xuống nền; trên map to TO_BAN_DO = 1,95 (= 1,3 × 1,5)
-  neoX: 46.5, neoY: 97, muot: true, to: 1.3, toBanDo: 1.95,
+  ten: 'Super Bư', atlas: 'assets/game/super_buu_atlas.png', atlasW: 650, atlasH: 450, w: 130, h: 90, cot: 5,
+  // neoY = đáy chân (89) + NANG 10: nâng hình lên cho chân không lẫn xuống nền; trên map to TO_BAN_DO = 1,95 (= 1,3 × 1,5)
+  neoX: 47.5, neoY: 99, muot: true, to: 1.3, toBanDo: 1.95,
   anim: {
     idle: { f: [0, 3, 4, 7], ms: 170, lap: true },
     taunt_flex: { f: [20, 21, 22, 23, 22, 23], ms: 150, lap: false },
