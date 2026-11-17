@@ -238,6 +238,7 @@
 - Chỉ chạy khi **đủ 2 nhân vật** (chơi 1 người thì không lên được, nhãn "🛸 CẦN 2 NGƯỜI"; 2 người thì nhãn "🛸 n/2"). Nhân vật lại gần `PT_MO_BK` thì cửa mở, đi vào `PT_BK` là lên. Người ở ngoài bị gục thì người trong phi thuyền ra để cứu.
 - Pha (`capNhatPt()`): `dau` → `cat` (đóng cửa, cất cánh `PT_CAT` = 2s) → `bay` (tự bay thẳng tới bến kia, tốc độ `PT_TOC` = 5 × `MB_TOC`) → `ha` (hạ cánh `PT_HA` = 1,6s, rung màn, bụi) → `ra` (mở cửa `PT_RA`) → mọi người bước ra (`ptXuong()`) rồi tự đi một đoạn (ở núi đá: vào phía bóng ma Goku, bóng ma thấy là khiêu khích như thường) → `dau` ở bến mới.
 - Hai bến: vườn gà (`vuon`) ↔ núi đá (`nui`: `ptBenNui()`, từ tâm núi về phía vườn gà `PT_NUI_K` = 0,35 bán kính). Ở núi đá cả hai vào lại thì bay về vườn gà. Người vừa bước ra (`cho`) phải đi khỏi bán kính lên mới lên lại được. Không đặt lại máu / mana.
+- **Cây không che xe**: cây / vật trang trí đứng chắn trước máy bay hoặc phi thuyền đang ở dưới đất (đậu, cất / hạ cánh, chỗ máy bay chờ hồi phục) thì không vẽ và không đánh đổ được (`xeDuoiDat()`, `cayCheXe()`, vùng `XE_CHE_X` / `XE_CHE_SAU` / `XE_CHE_TRUOC`, cây to nhân `CAY_TO_HE_SO`); xe bay đi thì cây hiện lại.
 - Camera / bản đồ nhỏ khi ở trong phi thuyền như máy bay (zoom theo `z`, mũi tên trên mini map chỉ hướng bay). Lưu ván: trường tuỳ chọn `phiThuyen`; đang đi dở thì tải lại coi như đã tới nơi (cất cánh dở thì ở bến cũ), mọi người bước ra.
 
 # Nguyên tắc quả cầu trốn

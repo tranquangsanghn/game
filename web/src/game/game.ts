@@ -196,6 +196,10 @@ const PT_RA = 0.7;
 const PT_CACH_MB = 560;
 /** Chỗ đậu ở núi đá: trên đường từ tâm núi về phía vườn gà, cách tâm bấy nhiêu phần bán kính */
 const PT_NUI_K = 0.35;
+/** Cây trong vùng này quanh máy bay / phi thuyền dưới đất bị ẩn (nửa rộng, phía sau, phía trước tính từ chân xe) để không che xe */
+const XE_CHE_X = 340;
+const XE_CHE_SAU = 120;
+const XE_CHE_TRUOC = 480;
 const ptBenNui = () => {
   const a = Math.atan2(MAP / 2 - NUI.y, MAP / 2 - NUI.x);
   return { x: NUI.x + Math.cos(a) * NUI.rx * PT_NUI_K, y: NUI.y + Math.sin(a) * NUI.ry * PT_NUI_K };
@@ -2074,7 +2078,9 @@ export class Game {
     // Thân cây cao (vẽ phía trên gốc) nên đánh vào thân / tán cũng đổ: hộp quanh thân, rộng CAY_DO_KINH, từ CAY_DO_CAO phía trên gốc xuống dưới gốc một chút. Lấy mẫu dọc đường bay để không bỏ sót.
     const rg = CAY_DO_KINH * (d.to ? 1.4 : 1);
     const buoc = Math.max(1, Math.ceil(Math.sqrt(e2) / 30));
+    const xe = this.xeDuoiDat();
     for (const c of this.trangTri) {
+      if (this.cayCheXe(c, xe)) continue;
       if (c.nui) {
         // Tảng đá núi: chỉ chưởng mới làm vỡ
         if (!d.to || c.doLuc !== undefined) continue;
@@ -2516,7 +2522,8 @@ export class Game {
     const dem = this.mbDem();
     this.mbDemView = dem && trong(dem.x, dem.y, 300) ? dem : null;
     this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && !this.trongMb(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
-    for (const t of this.trangTri) if (!t.mat && trong(t.x, t.y, t.to ? 700 : 400) && this.doRo(t.x, t.y) > 0) xep.push({ loai: 'td', y: t.y, td: t });
+    const xe = this.xeDuoiDat();
+    for (const t of this.trangTri) if (!t.mat && !this.cayCheXe(t, xe) && trong(t.x, t.y, t.to ? 700 : 400) && this.doRo(t.x, t.y) > 0) xep.push({ loai: 'td', y: t.y, td: t });
     xep.sort((a, b) => a.y - b.y);
     this.xep = xep;
     this.gaBayView = this.ga.filter((g) => g.loai === 'flyer' && trong(g.x, g.y, 400) && this.thay(g.x, g.y));
@@ -5356,6 +5363,22 @@ export class Game {
   private mbDem(): { x: number; y: number; con: number } | null {
     const m = this.mayBay;
     return m.pha === 'no' ? { x: m.goc.x, y: m.goc.y, con: Math.max(1, Math.ceil(MB_HOI - m.t)) } : null;
+  }
+
+  /** Chỗ máy bay / phi thuyền đang ở dưới đất (đậu, cất / hạ cánh, máy bay chờ hồi phục) */
+  private xeDuoiDat(): { x: number; y: number }[] {
+    const mb = this.mayBay, pt = this.phiThuyen;
+    const kq: { x: number; y: number }[] = [];
+    if (mb.pha === 'no') kq.push(mb.goc);
+    else if (mb.z < 0.5) kq.push(mb);
+    if (pt.z < 0.5) kq.push(pt);
+    return kq;
+  }
+
+  /** Cây / vật trang trí đứng chắn trước máy bay / phi thuyền dưới đất: không vẽ, không đánh đổ (chỗ xe đậu coi như trống) */
+  private cayCheXe(t: TrangTri, xe: { x: number; y: number }[]): boolean {
+    const r = XE_CHE_X * (t.to ? CAY_TO_HE_SO : 1);
+    return xe.some((v) => Math.abs(t.x - v.x) < r && t.y > v.y - XE_CHE_SAU && t.y < v.y + XE_CHE_TRUOC * (t.to ? CAY_TO_HE_SO : 1));
   }
 
   // ─── Phi thuyền ───
