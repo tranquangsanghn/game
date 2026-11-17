@@ -7,7 +7,7 @@ import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, trongNui, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
-import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_DANH, GY_SAO_TAM, type Ginyu } from './ginyu';
+import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_DANH, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
@@ -880,6 +880,8 @@ export class Game {
   gyView = false;
   /** Animation của bản sao (nhân vật bị sao chép); không lưu ván */
   gyNv: NhanVat | null = null;
+  /** Nhân vật đã gục ở khung trước (để biết lúc vừa gục mà tăng sức bóng ma), không lưu ván */
+  private gyHetTruoc: boolean[] = [];
   banhView: Tiec[] = [];
   trungDe: TrungGa[] = [];
   trungView: TrungGa[] = [];
@@ -1165,6 +1167,7 @@ export class Game {
     this.tiec = taoTiec(this.cell);
     this.ginyu = taoGinyu();
     this.gyNv = null;
+    this.gyHetTruoc = [];
     this.cellDoi = [];
     this.cellChuongLuc = [];
     this.chuongTiec = [];
@@ -1260,6 +1263,7 @@ export class Game {
     // Bóng ma Goku: thôi chạm trán / gồng / lao dở (lần gặp sau sao chép lại, giữ tỉ lệ máu)
     if (d.ginyu) this.ginyu = { ...taoGinyu(), ...d.ginyu, gap: false, quen: 0, muc: undefined, nap: undefined, lao: undefined, lui: undefined, dang: 0, khieu: undefined, nghi: undefined, quang: undefined, sao: undefined, socola: undefined };
     this.gyNv = null;
+    this.gyHetTruoc = [];
     // Bản sao dở / xác bản sao không khôi phục: về dạng bóng ma
     if (this.ginyu.chet) this.ginyu.tChet = GY_CHET_T;
     this.mbCatVuon = false;
@@ -3767,7 +3771,29 @@ export class Game {
   private gyDongDoi(): NguoiChoi | undefined {
     const s = this.ginyu.sao;
     const b = s ? this.nguoi[1 - s.p] : undefined;
-    return b && !b.vang ? b : undefined;
+    return b && !b.vang && !b.het ? b : undefined;
+  }
+
+  /** Mabu / Zinbu vừa gục trên núi đá: bóng ma mạnh thêm GY_TANG_SUC lần sức gốc (sát thương, máu bản sao) rồi đánh tiếp người còn lại */
+  private gyTangSuc(): void {
+    const g = this.ginyu;
+    this.nguoi.forEach((n, p) => {
+      const truoc = this.gyHetTruoc[p] ?? n.het;
+      this.gyHetTruoc[p] = n.het;
+      if (g.chet || n.vang || !n.het || truoc || !trongNui(n.x, n.y, GY_NUI_LE)) return;
+      const cu = g.suc ?? 1;
+      g.suc = cu + GY_TANG_SUC;
+      if (g.sao) {
+        const k = g.suc / cu;
+        g.hpMax = Math.round(g.hpMax * k);
+        g.hp = Math.round(g.hp * k);
+        if (g.sao.muc === p) g.sao.muc = undefined;
+      }
+      if (g.muc === p) g.muc = undefined;
+      const tam = this.tamGy();
+      this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 260, text: `👻 BÓNG MA GOKU MẠNH LÊN! x${g.suc.toFixed(1).replace('.', ',')}`, mau: '#c39bff', t: 0 });
+      this.vetGa({ id: this.id++, x: g.x, y: tam.y, t: 0, loai: 'no' });
+    });
   }
 
   /** Trúng người p: thành bản sao y hệt người đó (animation, thanh máu), chỉ số = GY_SAO_TI_LE của người đó */
@@ -3775,7 +3801,7 @@ export class Game {
     const g = this.ginyu, n = this.nguoi[p];
     const suc = n.suc ?? 1;
     g.ki = n.ki;
-    g.hpMax = Math.max(1, Math.round(Math.max(1, n.hp) * GY_SAO_TI_LE));
+    g.hpMax = Math.max(1, Math.round(Math.max(1, n.hp) * GY_SAO_TI_LE * (g.suc ?? 1)));
     g.hp = g.hpMax;
     g.sat = [0, 1, 2].map((i) => Math.round((SAT_THUONG[i]![n.ki]! * suc + (n.satDau ?? 0)) * GY_SAO_TI_LE)) as [number, number, number];
     g.lao = undefined;
@@ -3811,6 +3837,7 @@ export class Game {
 
   private capNhatGinyu(dt: number): void {
     const g = this.ginyu;
+    this.gyTangSuc();
     if (g.chet) {
       g.tChet += dt;
       if (this.gyNv) this.gyNv.capNhat(dt, false);
@@ -3966,7 +3993,7 @@ export class Game {
     const x1 = ke.x, y1 = ke.y - 80;
     const chieu = nhom === 2;
     const T = Math.hypot(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
-    this.dan.push({ id: this.id++, p: s.p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: false, to: chieu, sat: g.sat[nhom]!, nhom, vg: g.ki === 2 && chieu, gy: true });
+    this.dan.push({ id: this.id++, p: s.p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: false, to: chieu, sat: Math.round(g.sat[nhom]! * (g.suc ?? 1)), nhom, vg: g.ki === 2 && chieu, gy: true });
     s.muc = undefined;
     s.danh = GY_SAO_DANH[Math.floor(Math.random() * GY_SAO_DANH.length)]!;
   }
@@ -4052,12 +4079,14 @@ export class Game {
     g.lao = undefined;
     g.socola = undefined;
     this.gyNv?.nga();
-    if (soc) {
+    // Bóng ma chết thì biến thành viên ngọc rồng GY_NGOC_SAO sao (kể cả chết vì Biến socola)
+    if (!this.ngocNhat.includes(GY_NGOC_SAO) && !this.vatPham.some((v) => v.loai === 'ngoc' && v.sao === GY_NGOC_SAO)) {
       const v = { x: g.x, y: g.y };
-      giuTrongMap(v, LE_VP);
-      this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'socola', luong: Math.max(1, Math.round(g.hpMax * SOCOLA_AN_TI_LE)), hpGa: g.hpMax });
-      g.tChet = GY_CHET_T;
+      giuTrongMap(v, LE_VP, false, 'dao');
+      this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'ngoc', sao: GY_NGOC_SAO });
+      this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 300, text: `⭐ BÓNG MA HOÁ NGỌC RỒNG ${GY_NGOC_SAO} SAO!`, mau: '#ffb347', t: 0 });
     }
+    if (soc) g.tChet = GY_CHET_T;
     for (let i = 0; i < 3; i++) this.vet.push({ id: this.id++, x: g.x + ngauNhien(-80, 80), y: tam.y + ngauNhien(-80, 60), t: 0, loai: 'chay', co: 0.8 + i * 0.2 });
     this.rungMan(0.3, 12);
     this.dungKhung(0.15);

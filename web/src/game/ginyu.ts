@@ -61,6 +61,10 @@ export const GY_DANH_T = 0.3;
 export const GY_CHET_T = 2.5;
 /** Hoá socola (trúng Biến socola mà chưa chết): đứng yên giây */
 export const GY_SOCOLA_T = 4;
+/** Mabu / Zinbu gục trên núi đá thì bóng ma mạnh thêm GY_TANG_SUC lần sức gốc của nó (nhân sát thương, máu bản sao), cộng dồn */
+export const GY_TANG_SUC = 0.5;
+/** Bóng ma chết thì biến thành viên ngọc rồng mấy sao */
+export const GY_NGOC_SAO = 3;
 /** Điểm khi hạ */
 export const GY_DIEM = 500;
 /** Máu mặc định trước khi sao chép (chưa gặp ai) */
@@ -73,6 +77,8 @@ export interface Ginyu {
   /** Chỗ lơ lửng giữa núi */
   hx: number; hy: number;
   hp: number; hpMax: number;
+  /** Hệ số sức mạnh (thiếu = 1): +GY_TANG_SUC mỗi lần Mabu / Zinbu gục trên núi; nhân sát thương và máu bản sao */
+  suc?: number;
   /** Sát thương gốc sao chép được: Đấm, Đá, Chiêu đặc biệt (đã nhân `suc` và cộng `satDau` của nhân vật); lao thẳng dùng Chiêu đặc biệt */
   sat: [number, number, number];
   /** Nhân vật bị sao chép (ki: 0 Mabu · 1 Zinbu · 2 Vegeta); undefined = chưa gặp ai */
