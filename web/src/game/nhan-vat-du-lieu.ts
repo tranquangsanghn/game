@@ -192,7 +192,8 @@ export const NHAN_VAT = [MABU, ZINBU, VEGETA];
 // Khung: 0,3,4,7 đứng · 1–2 đấm · 5,24 đá · 8–11 lướt · 12–15 bắn chưởng · 16–19 gọi bóng ma · 20–23 ăn kẹo.
 export const SUPER_BU: NhanVatSprite = {
   ten: 'Super Bư', atlas: 'assets/game/super_buu_atlas.png', atlasW: 645, atlasH: 440, w: 129, h: 88, cot: 5,
-  neoX: 46.5, neoY: 87, muot: true, to: 1.3,
+  // neoY = đáy chân (87) + NANG 10: nâng hình lên cho chân không lẫn xuống nền; trên map to TO_BAN_DO = 1,95 (= 1,3 × 1,5)
+  neoX: 46.5, neoY: 97, muot: true, to: 1.3, toBanDo: 1.95,
   anim: {
     idle: { f: [0, 3, 4, 7], ms: 170, lap: true },
     taunt_flex: { f: [20, 21, 22, 23, 22, 23], ms: 150, lap: false },
@@ -223,8 +224,8 @@ export const SUPER_BU: NhanVatSprite = {
     punch_dash: { f: [9, 1, 2, 2], ms: 80, lap: false, tien: { tu: 0, den: 2, v: 3.2 } },
     kick_arc: { f: [5, 24, 5], ms: 100, lap: false },
     kick_long: { f: [24, 5, 24], ms: 100, lap: false },
-    energy_ball: { f: [12, 13, 14, 15], ms: 110, lap: false, ban: { o: 1, dx: 40, dy: -57 } },
-    ghost: { f: [16, 17, 18, 19], ms: 110, lap: false, ban: { o: 1, dx: 40, dy: -46 } },
+    energy_ball: { f: [12, 13, 14, 15], ms: 110, lap: false, ban: { o: 1, dx: 40, dy: -67 } },
+    ghost: { f: [16, 17, 18, 19], ms: 110, lap: false, ban: { o: 1, dx: 40, dy: -56 } },
   },
   khieuKhich: ['taunt_flex', 'taunt_wave', 'taunt_stretch', 'taunt_antenna', 'taunt_puff'],
   nhomDon: [

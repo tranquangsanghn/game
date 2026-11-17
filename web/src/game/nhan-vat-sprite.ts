@@ -19,6 +19,8 @@ export interface NhanVatSprite {
   huong?: { len?: KhungHuong; xuong?: KhungHuong };
   /** Kích thước logic to gấp bao nhiêu lần nhân vật thường (Vegeta 2). Trên map vẽ to theo; chân dung / avatar thu lại 1 / to */
   to?: number;
+  /** Chỉ trên map: vẽ to gấp bao nhiêu lần (Super Bư); không ảnh hưởng chân dung / avatar */
+  toBanDo?: number;
   /** Vẽ có làm mịn (ảnh vẽ tay thu nhỏ, như Super Bư); thiếu = pixel art, không làm mịn */
   muot?: boolean;
 }

@@ -335,7 +335,7 @@ const HOP_THE_CON_MAU = 0.1;
 const BAN_KINH_MA = 300;
 const MA_HOI = 3;
 /** Độ cao thanh máu trên đầu Super Bư (cao hơn Mabu / Zinbu) */
-const DAU_SB = 330;
+const DAU_SB = 540;
 /** Màu riêng mỗi nhân vật (theo ki) */
 const MAU_NV = ['#e84393', '#8e44ad', '#2f6fe0'];
 /** Độ cao thanh máu trên đầu theo nhân vật (ki) */
@@ -1648,7 +1648,7 @@ export class Game {
     this.capNhatHopThe(dt);
     HN.moc('cn.hopThe');
     // Nhân vật đi bộ / bay không đổi vùng: đang trong vườn gà thì ở lại trong vườn, đang ở đảo thì ở lại đảo (chỉ máy bay mới ra / vào vườn)
-    this.nguoi.forEach((n, p) => { if (!this.trongMb(p)) giuTrongMap(n, leNhanVat(n.nv.heSoTo), !!n.bay, vungCua(truoc[p])); });
+    this.nguoi.forEach((n, p) => { if (!this.trongMb(p)) giuTrongMap(n, leNhanVat(n.nv.heSoTo * (n.nv.sp.toBanDo ?? 1)), !!n.bay, vungCua(truoc[p])); });
     this.chanNuiMotNguoi(truoc);
     HN.moc('cn.nhanVat');
     this.capNhatMb(dt);
@@ -6088,8 +6088,8 @@ export class Game {
     N.y = C.y;
     this.vet.push({ id: this.id++, x: C.x, y: C.y - 120, t: 0, loai: 'chay', co: 2.4 });
     this.vet.push({ id: this.id++, x: C.x, y: C.y - 60, t: 0, loai: 'bui', co: 2 });
-    this.chu.push({ id: this.id++, x: C.x, y: C.y - 560, text: '✨ HỢP THỂ: SUPER BƯ!', mau: '#ff7ac8', t: 0 });
-    this.chu.push({ id: this.id++, x: C.x, y: C.y - 500, text: `🕹 ${N.ten}: đi lại / bay · 🎯 ${C.ten}: ra đòn`, mau: '#ffffff', t: 0 });
+    this.chu.push({ id: this.id++, x: C.x, y: C.y - 780, text: '✨ HỢP THỂ: SUPER BƯ!', mau: '#ff7ac8', t: 0 });
+    this.chu.push({ id: this.id++, x: C.x, y: C.y - 720, text: `🕹 ${N.ten}: đi lại / bay · 🎯 ${C.ten}: ra đòn`, mau: '#ffffff', t: 0 });
     this.am.phat('chuong');
     this.rungMan(0.4, 12);
     this.rungTayCam(0, 400, 0.8);
@@ -6483,7 +6483,7 @@ export class Game {
   // Vị trí điểm neo (chân) của sprite nhân vật trên map và hệ số phóng
   nvViTri(p: number): { x: number; y: number; k: number } {
     const n = this.nguoi[p];
-    return { x: n.x, y: n.y - (n.nv.cao - n.nv.nhun) * S_NV, k: S_NV * n.nv.heSoTo * (n.nv.sp.to ?? 1) };
+    return { x: n.x, y: n.y - (n.nv.cao - n.nv.nhun) * S_NV, k: S_NV * n.nv.heSoTo * (n.nv.sp.toBanDo ?? 1) };
   }
 
   // Bảng chiêu của gà mẹ (thanh đen phía trên): 0 Mổ + đá · 1 Lao · 2 Bay · 3 Đen · 4 Vàng · 5 Đỏ · 6 Gọi gà con.
@@ -6550,7 +6550,7 @@ export class Game {
   private viTriTay(p: number) {
     const n = this.nguoi[p];
     const { dx, dy } = n.nv.diemBan;
-    const to = n.nv.sp.to ?? 1;
+    const to = n.nv.sp.toBanDo ?? 1;
     return { x: n.x + (n.nv.lat ? -dx : dx) * S_NV * to, y: n.y + (dy * to - n.nv.cao) * S_NV };
   }
 
