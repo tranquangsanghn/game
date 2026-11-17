@@ -6,6 +6,7 @@ import { CELL_HP, CELL_SO_DAO, CELL_TEN, capCuaDao, cellK, CELL_CHET_T, CELL_KHU
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T, SP_CONG, CONG_TO, CONG_FPS } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { MABU } from './nhan-vat-du-lieu';
+import { SP_FRIEZA, FZ_TEN, FZ_TO, FZ_KHUNG, fzKhung } from './frieza';
 import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_LO_LUNG } from './ginyu';
 import { DAO, doSau, duongBo, NUI, TG, THAN, THAN_CONG, THAN_DA_GIAC } from './ban-do';
 
@@ -969,6 +970,10 @@ export class VeCanvas {
         ctx.globalAlpha = c.gyNv ? 1 : c.doRo(c.ginyu.x, c.ginyu.y);
         this.veGinyu(ctx, c);
         ctx.globalAlpha = 1;
+      } else if (o.loai === 'fz') {
+        ctx.globalAlpha = c.doRo(c.frieza.x, c.frieza.y);
+        this.veFrieza(ctx, c);
+        ctx.globalAlpha = 1;
       } else if (o.loai === 'banh') {
         ctx.globalAlpha = c.doRo(o.tc.x, o.tc.y);
         // Tiệc có ngọc rồng (chưa nhặt): giữa vòng là viên ngọc thay cho bánh
@@ -1521,6 +1526,16 @@ export class VeCanvas {
 
   // Bóng ma Goku: lơ lửng nhấp nhô trên quầng sáng xanh lơ, thân trong mờ chập chờn (atlas đã tô màu bóng ma), quay mặt trái (lat = quay phải);
   // gồng thì hào quang xanh bùng lên + rung; lao thì kéo 3 bóng mờ phía sau; hoá socola nhuộm nâu, trúng đòn nháy sáng; xác mờ dần
+  /** Frieza (pixel art, không làm mịn) đi loanh quanh điện thờ */
+  private veFrieza(ctx: CanvasRenderingContext2D, c: Game): void {
+    const f = c.frieza;
+    ctx.save();
+    ctx.translate(f.x, f.y);
+    ctx.scale(FZ_TO, FZ_TO);
+    this.sprite(ctx, SP_FRIEZA, fzKhung(f), f.lat, false);
+    ctx.restore();
+  }
+
   private veGinyu(ctx: CanvasRenderingContext2D, c: Game): void {
     const g = c.ginyu;
     // Bản sao: vẽ y hệt nhân vật bị sao chép (cùng sprite, animation, cỡ); bản sao bị hạ thì ngã rồi mờ dần
@@ -2008,7 +2023,7 @@ export class VeCanvas {
     let ten: string;
     let mo: boolean;
     let so: number | null = null;
-    if (c.trenThan) { ten = 'Frieza'; mo = true; }
+    if (c.trenThan) { ten = FZ_TEN; mo = false; }
     else if (c.trenNui) { ten = GY_TEN; mo = c.ginyu.chet && !c.ginyu.choHoi; }
     else if (c.trenDao) { ten = CELL_TEN[capCuaDao(c.daoHienTai)] ?? 'Cell'; so = c.soCellDao; mo = so <= 0; }
     else { ten = 'Vua gà'; mo = !tg; }
@@ -2044,7 +2059,11 @@ export class VeCanvas {
     if (c.trenDao) {
       // Đang ở đảo: avatar là Cell của đảo đó, đứng nhún nhảy; núi đá: avatar bóng ma Goku xoay người (mờ khi đã bị hạ)
       if (c.trenThan) {
-        // Thần điện: chưa có sprite Frieza, avatar để trống
+        // Thần điện: avatar Frieza đứng thở
+        ctx.globalAlpha = 1;
+        ctx.translate(0, 72);
+        ctx.scale(1.1, 1.1);
+        this.sprite(ctx, SP_FRIEZA, FZ_KHUNG.dung[Math.floor(c.t * 1.5) % FZ_KHUNG.dung.length]!, false, false);
       } else if (c.trenNui) {
         ctx.globalAlpha = c.ginyu.chet && !c.ginyu.choHoi ? 0.25 : 0.9;
         ctx.translate(0, 98);

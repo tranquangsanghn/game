@@ -7,6 +7,7 @@ import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN_CONG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
+import { taoFrieza, capNhatFrieza, SP_FRIEZA, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_DANH, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -120,6 +121,7 @@ type VatXep =
   | { loai: 'pt'; y: number }
   | { loai: 'cell'; y: number; ce: Cell }
   | { loai: 'gy'; y: number }
+  | { loai: 'fz'; y: number }
   | { loai: 'banh'; y: number; tc: Tiec }
   | { loai: 'cong'; y: number; than?: boolean };
 
@@ -927,6 +929,9 @@ export class Game {
   gyNv: NhanVat | null = null;
   /** Nhân vật đã gục ở khung trước (để biết lúc vừa gục mà tăng sức bóng ma), không lưu ván */
   private gyHetTruoc: boolean[] = [];
+  /** Frieza đi loanh quanh điện thờ trên thần điện (không lưu ván); fzView = có vẽ không (trong khung nhìn + tầm nhìn) */
+  frieza: Frieza = taoFrieza();
+  fzView = false;
   banhView: Tiec[] = [];
   /** Cổng dịch chuyển giữa đảo Cell 10 con (trang trí, tính từ vị trí tiệc, không lưu ván); congView = có vẽ không */
   cong = { x: 0, y: 0 };
@@ -1148,7 +1153,7 @@ export class Game {
       this.canvasNen.setAttribute('aria-hidden', 'true');
       this.canvasEl.before(this.canvasNen);
       this.ctxNen = this.canvasNen.getContext('2d');
-      this.ve.napTruoc(...NHAN_VAT.map((v) => v.atlas), SP_VG_CHUONG.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas, SP_PT.atlas, SP_CELL.atlas, SP_CELL_TIEC.atlas, SP_CONG.atlas, SP_GINYU.atlas, ...CHUONG_LOAI.map((l) => l.atlas));
+      this.ve.napTruoc(...NHAN_VAT.map((v) => v.atlas), SP_VG_CHUONG.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas, SP_PT.atlas, SP_CELL.atlas, SP_CELL_TIEC.atlas, SP_CONG.atlas, SP_GINYU.atlas, SP_FRIEZA.atlas, ...CHUONG_LOAI.map((l) => l.atlas));
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG, LOC_SOCOLA, LOC_SOCOLA_HONG]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO, LOC_SOCOLA, ...LOC_PHU]);
       this.ve.nhuomTruoc(SP_CELL.atlas, [LOC_SOCOLA]);
@@ -1230,6 +1235,7 @@ export class Game {
     this.tiec = taoTiec(this.cell);
     this.cong = viTriCong(this.tiec);
     this.ginyu = taoGinyu();
+    this.frieza = taoFrieza();
     this.gyNv = null;
     this.gyHetTruoc = [];
     this.cellDoi = [];
@@ -1589,6 +1595,7 @@ export class Game {
     this.capNhatCell(dtE);
     HN.moc('cn.cell');
     this.capNhatGinyu(dtE);
+    capNhatFrieza(this.frieza, dtE);
     HN.moc('cn.ginyu');
     this.capNhatTiec(dtE);
     HN.moc('cn.tiec');
@@ -2534,6 +2541,10 @@ export class Game {
     const gy = this.ginyu;
     this.gyView = (!gy.chet || gy.tChet < GY_CHET_T) && trong(gy.x, gy.y - GY_TAM_CAO, gy.lao !== undefined ? 520 : 260) && this.doRo(gy.x, gy.y) > 0;
     if (this.gyView) xep.push({ loai: 'gy', y: gy.y });
+    // Frieza: khung nhìn trước, sương mù sau
+    const fz = this.frieza;
+    this.fzView = trong(fz.x, fz.y - 120, 220) && this.doRo(fz.x, fz.y) > 0;
+    if (this.fzView) xep.push({ loai: 'fz', y: fz.y });
     this.banhView = this.tiec.filter((tc) => !tc.vo && trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to) && this.doRo(tc.x, tc.y) > 0);
     for (const tc of this.banhView) xep.push({ loai: 'banh', y: tc.y, tc });
     this.congView = trong(this.cong.x, this.cong.y - 150 * CONG_TO, 260 * CONG_TO) && this.doRo(this.cong.x, this.cong.y) > 0;
