@@ -3,7 +3,8 @@
 // Chỉ có dữ liệu / logic (không đụng canvas): `doSau()` = khoảng cách có dấu tới bờ đảo (dương = cát, âm = biển, đơn vị thế giới),
 // lưới đi được để đẩy vật đang đứng dưới nước lên bờ gần nhất (`veDat()`). Phần vẽ nằm trong ve-canvas.ts.
 
-import { THAN_ANH_H, THAN_ANH_W, THAN_CHAN, THAN_VIEN } from './than-dien-vien';
+import { THAN_ANH_H, THAN_ANH_W, THAN_VIEN } from './than-dien-vien';
+import { THAN_VAT } from './than-dien-vat';
 
 export type LoaiBanDo = 'co' | 'sa';
 
@@ -157,7 +158,8 @@ export const TG_SA = (() => {
 
 /** Thần điện: khối đất nổi trên vực phía bắc vòng đảo (ảnh than_dien.png cắt từ ảnh người dùng gửi, tools/tao-than-dien.py),
  *  mỗi điểm ảnh = THAN_TL đơn vị thế giới (9: khung 6480 × 4320 ≈ 0,68 diện tích vườn gà). Không nối với đâu: vào bằng cổng dịch chuyển giữa đảo 4 (hoặc máy bay).
- *  Bờ là đa giác bậc thang THAN_VIEN (đất = trong đa giác), vật cản THAN_CHAN (điện thờ, vườn cây, hàng cọ, chân cột vòm). */
+ *  Bờ là đa giác bậc thang THAN_VIEN (đất = trong đa giác). Cây cối / vật dụng là vật riêng THAN_VAT (tools/tao-vat-than-dien.py):
+ *  mỗi vật có vật cản riêng, trúng chưởng thì biến mất (thanVo), chỉ còn nền gạch. */
 export const THAN_TL = 9;
 const THAN_CACH = 2600;
 export const THAN = (() => {
@@ -166,10 +168,14 @@ export const THAN = (() => {
   return { x0, y0, x1: x0 + w, y1: y0 + h, w, h };
 })();
 const THAN_DA: [number, number][] = THAN_VIEN.map(([x, y]) => [THAN.x0 + x * THAN_TL, THAN.y0 + y * THAN_TL]);
-/** Vật cản thần điện theo toạ độ thế giới */
-export const THAN_CHAN_TG = THAN_CHAN.map(([x0, y0, x1, y1]) => ({
-  x0: THAN.x0 + x0 * THAN_TL, y0: THAN.y0 + y0 * THAN_TL, x1: THAN.x0 + x1 * THAN_TL, y1: THAN.y0 + y1 * THAN_TL,
+/** Cây cối / vật dụng thần điện theo toạ độ thế giới: khung vẽ (cũng là hộp trúng chưởng) và vật cản */
+export const THAN_VAT_TG = THAN_VAT.map((v) => ({
+  ...v,
+  x0: THAN.x0 + v.x * THAN_TL, y0: THAN.y0 + v.y * THAN_TL, x1: THAN.x0 + (v.x + v.w) * THAN_TL, y1: THAN.y0 + (v.y + v.h) * THAN_TL,
+  chanTg: v.chan.map(([x0, y0, x1, y1]) => ({ x0: THAN.x0 + x0 * THAN_TL, y0: THAN.y0 + y0 * THAN_TL, x1: THAN.x0 + x1 * THAN_TL, y1: THAN.y0 + y1 * THAN_TL })),
 }));
+/** Vật thần điện đã bị chưởng phá (theo chỉ số THAN_VAT): Game đặt lại khi tạo ván mới / nạp ván lưu */
+export const thanVo: boolean[] = THAN_VAT.map(() => false);
 /** Cổng dịch chuyển trên thần điện: sân dưới, giữa hai hàng cọ gần mép nam (điểm ảnh 360, 420), xa bậc thềm điện thờ */
 export const THAN_CONG = { x: THAN.x0 + 360 * THAN_TL, y: THAN.y0 + 420 * THAN_TL };
 /** Đường viền thần điện (toạ độ thế giới) để bộ vẽ dựng vách đá */
@@ -194,7 +200,7 @@ function doSauThan(x: number, y: number): number {
 export function raKhoiChanThan(o: { x: number; y: number }, le = 30): { cx: boolean; cy: boolean } {
   const r = { cx: false, cy: false };
   if (!trongThan(o.x, o.y)) return r;
-  for (const c of THAN_CHAN_TG) {
+  for (let k = 0; k < THAN_VAT_TG.length; k++) for (const c of thanVo[k] ? [] : THAN_VAT_TG[k]!.chanTg) {
     if (o.x <= c.x0 - le || o.x >= c.x1 + le || o.y <= c.y0 - le || o.y >= c.y1 + le) continue;
     const t = o.x - (c.x0 - le), p = c.x1 + le - o.x, tr = o.y - (c.y0 - le), d = c.y1 + le - o.y;
     const m = Math.min(t, p, tr, d);

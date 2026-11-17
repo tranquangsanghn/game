@@ -8,7 +8,7 @@ import type { NhanVatSprite } from './nhan-vat-sprite';
 import { MABU } from './nhan-vat-du-lieu';
 import { SP_FRIEZA, FZ_TEN, FZ_TO, FZ_KHUNG, fzKhung } from './frieza';
 import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_LO_LUNG } from './ginyu';
-import { DAO, doSau, duongBo, NUI, TG, THAN, THAN_CONG, THAN_DA_GIAC } from './ban-do';
+import { DAO, doSau, duongBo, NUI, TG, THAN, THAN_CONG, THAN_DA_GIAC, THAN_VAT_TG, thanVo } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
 // Toạ độ vẽ giữ nguyên như bản SVG cũ: viewBox (-SIDE, -BAR, W + 2·SIDE, H + BAR), căn giữa, giữ tỉ lệ.
@@ -70,7 +70,9 @@ const rad = (deg: number) => (deg * Math.PI) / 180;
 /** Sprite trang trí cắt từ gói "EPIC RPG World Pack – Grass Land" (map_co.png). Neo ở giữa đáy; k = tỉ lệ phóng */
 const MAP_CO = 'assets/game/map_co.png';
 /** Nền thần điện (pixel art cắt từ ảnh người dùng gửi, tools/tao-than-dien.py), phủ đúng khung THAN */
-const THAN_ANH = 'assets/game/than_dien.png';
+const THAN_ANH = 'assets/game/than_dien_nen.png';
+/** Atlas cây cối / vật dụng thần điện (tools/tao-vat-than-dien.py): vẽ đè lên nền gạch, vật đã bị chưởng phá thì không vẽ */
+const THAN_VAT_ANH = 'assets/game/than_dien_vat.png';
 const TRANG_TRI_SPRITE = [
   { sx: 268, sy: 343, w: 98, h: 175, k: 1.7 }, // cây
   { sx: 200, sy: 497, w: 44, h: 29, k: 1.8 }, // bụi có hoa
@@ -1677,8 +1679,15 @@ export class VeCanvas {
     ctx.fillStyle = this.mauNui?.vach ?? '#4a2a30';
     ctx.fill(this.thanVien);
     ctx.translate(0, -SA_VACH_CAO);
-    if (img) ctx.drawImage(img, THAN.x0, THAN.y0, THAN.w, THAN.h);
-    else {
+    if (img) {
+      ctx.drawImage(img, THAN.x0, THAN.y0, THAN.w, THAN.h);
+      const vat = this.lay(THAN_VAT_ANH);
+      if (vat) for (let k = 0; k < THAN_VAT_TG.length; k++) {
+        const v = THAN_VAT_TG[k]!;
+        if (thanVo[k] || v.x1 < x0 || v.x0 > x1 || v.y1 < y0 || v.y0 > y1) continue;
+        ctx.drawImage(vat, v.ax, v.ay, v.w, v.h, v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+      }
+    } else {
       ctx.fillStyle = '#d8d8d8';
       ctx.fill(this.thanVien);
     }

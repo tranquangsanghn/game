@@ -1,5 +1,5 @@
 // Frieza: quái của thần điện (map `THAN` trong ban-do.ts). Hiện chỉ đi loanh quanh điện thờ (chưa đánh nhau, không bị đánh).
-// Đường đi: chuỗi điểm hình chữ U ôm điện thờ (hông trái → sân trước → hông phải), đều nằm ngoài vật cản THAN_CHAN nên đi thẳng giữa hai điểm liền nhau.
+// Đường đi: chuỗi điểm hình chữ U ôm điện thờ (hông trái → sân trước → hông phải), đều nằm ngoài vật cản thần điện (THAN_VAT) nên đi thẳng giữa hai điểm liền nhau.
 // Mỗi lượt: đứng thở FZ_NGHI giây rồi chọn ngẫu nhiên một điểm khác trên chuỗi, đi lần lượt qua các điểm ở giữa tới đó.
 // File này chỉ có dữ liệu + hàm thuần; Game gọi `capNhatFrieza()` mỗi khung, vẽ ở ve-canvas.ts (`veFrieza()`). Không lưu ván (tải lại thì đứng ở sân trước).
 // Sprite: web/public/assets/game/frieza_atlas.png (dựng bằng tools/tao-atlas-frieza.py từ sheet người dùng gửi), 6 khung 80×84, neo đáy giữa, quay mặt PHẢI.

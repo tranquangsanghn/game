@@ -4,7 +4,7 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, NHAN_VAT } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
-import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN_CONG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
+import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
 import { taoFrieza, capNhatFrieza, SP_FRIEZA, type Frieza } from './frieza';
@@ -263,6 +263,8 @@ export interface TrangThaiLuu {
   banDo?: LoaiBanDo;
   /** Cây đã đổ: [chỉ số trong trangTri, thời điểm đổ, hướng đổ] */
   cayDo?: [number, number, number, number?][];
+  /** Chỉ số cây cối / vật dụng thần điện đã bị chưởng phá (THAN_VAT) */
+  thanVo?: number[];
   nguoi: (Omit<NguoiChoi, 'nv' | 'nham' | 'ngam' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
 }
 
@@ -1214,6 +1216,8 @@ export class Game {
     if (this.banDo === 'sa') chuanBiSaMac();
     // Đá núi nối cuối danh sách: chỉ số cây (cayDo của ván lưu) không đổi
     this.trangTri = this.banDo === 'sa' ? [...taoTrangTri(), ...taoTrangTriSa(), ...taoTrangTriNui()] : taoTrangTri();
+    // Thần điện: ván mới thì mọi cây cối / vật dụng nguyên vẹn (chỉ ván mới mới đặt lại)
+    thanVo.fill(false);
     this.nguoi = this.taoNguoiChoi();
     // Nhân vật xuất phát ở góc vườn gà xa vua gà nhất: chốt chỗ vua gà xuất hiện trước, rồi chọn góc xa nó nhất
     this.viTriVua = { x: ngauNhien(600, MAP - 600), y: ngauNhien(600, MAP - 600) };
@@ -1297,6 +1301,7 @@ export class Game {
       ga: this.ga, trungDe: this.trungDe, vatPham: this.vatPham, ngocNhat: this.ngocNhat, cuu: this.cuu, cauTron: this.cauTron, cell: this.cell, tiec: this.tiec, mayBay: this.mayBay, phiThuyen: this.phiThuyen, ginyu: this.ginyu,
       vuon: { ngu: this.vuonNgu, to: this.toTrung, toDe: this.toDe, daNoPhu: this.daNoPhu, choVua: this.choVua },
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
+      thanVo: thanVo.flatMap((v, i) => (v ? [i] : [])),
       nguoi: this.nguoi.map((n) => {
         const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
         void nham; void ngam; void cuaCan; void dich;
@@ -1340,6 +1345,7 @@ export class Game {
     if (this.ginyu.chet) this.ginyu.tChet = GY_CHET_T;
     this.mbCatVuon = false;
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
+    for (const i of d.thanVo ?? []) if (i >= 0 && i < thanVo.length) thanVo[i] = true;
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
     // Đội hình theo nhân vật đã lưu (ván lưu cũ thiếu ki: ô trái Mabu, ô phải Zinbu)
     const kiLuu = d.nguoi.map((o, p) => (o.vang ? null : o.ki ?? p));
@@ -2111,6 +2117,7 @@ export class Game {
     // Thân cây cao (vẽ phía trên gốc) nên đánh vào thân / tán cũng đổ: hộp quanh thân, rộng CAY_DO_KINH, từ CAY_DO_CAO phía trên gốc xuống dưới gốc một chút. Lấy mẫu dọc đường bay để không bỏ sót.
     const rg = CAY_DO_KINH * (d.to ? 1.4 : 1);
     const buoc = Math.max(1, Math.ceil(Math.sqrt(e2) / 30));
+    if (d.to) this.danPhaThan(ax, ay, ex, ey, buoc);
     const xe = this.xeDuoiDat();
     for (const c of this.trangTri) {
       if (this.cayCheXe(c, xe)) continue;
@@ -2137,6 +2144,32 @@ export class Game {
         const px = ax + (ex * i) / buoc, py = ay + (ey * i) / buoc;
         if (Math.abs(px - c.x) > r || py < c.y - CAY_DO_CAO * hs || py > c.y + 40) continue;
         this.doCay(c, d.x1 - d.x0);
+        break;
+      }
+    }
+  }
+
+  /** Thần điện: chưởng (Chiêu đặc biệt / socola) quét qua khung một cây / chòi / điện thờ thì vật đó biến mất, chỉ còn nền gạch
+   *  (không mọc lại, chỉ ván mới mới đặt lại). Lấy mẫu dọc đoạn bay như cây đổ */
+  private danPhaThan(ax: number, ay: number, ex: number, ey: number, buoc: number): void {
+    if (!trongThan(ax, ay, 2000) && !trongThan(ax + ex, ay + ey, 2000)) return;
+    for (let k = 0; k < THAN_VAT_TG.length; k++) {
+      if (thanVo[k]) continue;
+      const v = THAN_VAT_TG[k]!;
+      for (let i = 0; i <= buoc; i++) {
+        const px = ax + (ex * i) / buoc, py = ay + (ey * i) / buoc;
+        if (px < v.x0 || px > v.x1 || py < v.y0 || py > v.y1) continue;
+        thanVo[k] = true;
+        const cx = (v.x0 + v.x1) / 2, cy = (v.y0 + v.y1) / 2;
+        if (v.loai === 'dien') {
+          // Điện thờ to: nhiều vụ nổ rải khắp thân, rung mạnh
+          for (let n = 0; n < 6; n++) this.vetGa({ id: this.id++, x: ngauNhien(v.x0 + 200, v.x1 - 200), y: ngauNhien(v.y0 + 200, v.y1 - 200), t: 0, loai: 'chay', co: 2.2 });
+          this.rungMan(0.4, 14);
+        } else {
+          this.vetGa({ id: this.id++, x: cx, y: cy, t: 0, loai: 'chay', co: v.loai === 'choi' ? 1.6 : 1.2 });
+          this.rungMan(0.15, v.loai === 'choi' ? 9 : 6);
+        }
+        this.vetGa({ id: this.id++, x: cx, y: v.y1 - 60, t: 0, loai: 'bui' });
         break;
       }
     }
