@@ -186,3 +186,55 @@ export const VEGETA: NhanVatSprite = {
 
 /** Danh sách nhân vật chọn chơi, chỉ số = NguoiChoi.ki (0 Mabu · 1 Zinbu · 2 Vegeta) */
 export const NHAN_VAT = [MABU, ZINBU, VEGETA];
+
+// Super Bư: dạng hợp thể của Mabu + Zinbu (không chọn chơi được, chỉ hiện lúc hợp thể, xem hopThe trong game.ts).
+// Dựng bằng tools/tao-atlas-super-buu.py từ sheet người dùng gửi (ảnh vẽ tay, quay mặt phải); PNG gấp 2 logic, vẽ có làm mịn.
+// Khung: 0,3,4,7 đứng · 1–2 đấm · 5,24 đá · 8–11 lướt · 12–15 bắn chưởng · 16–19 gọi bóng ma · 20–23 ăn kẹo.
+export const SUPER_BU: NhanVatSprite = {
+  ten: 'Super Bư', atlas: 'assets/game/super_buu_atlas.png', atlasW: 645, atlasH: 440, w: 129, h: 88, cot: 5,
+  neoX: 46.5, neoY: 87, muot: true, to: 1.3,
+  anim: {
+    idle: { f: [0, 3, 4, 7], ms: 170, lap: true },
+    taunt_flex: { f: [20, 21, 22, 23, 22, 23], ms: 150, lap: false },
+    taunt_wave: { f: [16, 17, 19, 17, 16], ms: 150, lap: false },
+    taunt_stretch: { f: [0, 3, 4, 7, 0], ms: 150, lap: false },
+    taunt_antenna: { f: [20, 21, 20, 21], ms: 150, lap: false },
+    taunt_puff: { f: [22, 23, 22, 23, 22], ms: 140, lap: false },
+    run: { f: [3, 4, 7, 0], ms: 110, lap: true },
+    fly: { f: [8, 9, 10, 11], ms: 70, lap: true },
+    jump_up: { f: [8, 9], ms: 83, lap: false },
+    fall: { f: [10, 11], ms: 100, lap: false },
+    crouch_land: { f: [0], ms: 167, lap: false },
+    guard: { f: [0], ms: 17, lap: false },
+    hit: { f: [22, 23], ms: 100, lap: false },
+    knockdown: { f: [21, 22], ms: 117, lap: false },
+    blown_away: { f: [8, 9], ms: 67, lap: true },
+    burn: { f: [22, 23, 22, 23], ms: 83, lap: false },
+    lifted: { f: [21, 22], ms: 117, lap: false },
+    launched: { f: [8, 9, 10], ms: 100, lap: false },
+    air_recover: { f: [10, 11], ms: 67, lap: false },
+    get_up: { f: [7, 0], ms: 150, lap: false },
+    thrown: { f: [21, 22], ms: 117, lap: false },
+    lie: { f: [22], ms: 17, lap: false },
+    lie_thrown: { f: [22], ms: 17, lap: false },
+    punch_combo: { f: [1, 2, 1, 2], ms: 70, lap: false },
+    punch_long: { f: [1, 2, 2], ms: 90, lap: false },
+    punch_long_2: { f: [2, 1, 2], ms: 90, lap: false },
+    punch_dash: { f: [9, 1, 2, 2], ms: 80, lap: false, tien: { tu: 0, den: 2, v: 3.2 } },
+    kick_arc: { f: [5, 24, 5], ms: 100, lap: false },
+    kick_long: { f: [24, 5, 24], ms: 100, lap: false },
+    energy_ball: { f: [12, 13, 14, 15], ms: 110, lap: false, ban: { o: 1, dx: 40, dy: -57 } },
+    ghost: { f: [16, 17, 18, 19], ms: 110, lap: false, ban: { o: 1, dx: 40, dy: -46 } },
+  },
+  khieuKhich: ['taunt_flex', 'taunt_wave', 'taunt_stretch', 'taunt_antenna', 'taunt_puff'],
+  nhomDon: [
+    { ten: 'Đấm', vong: false, don: ['punch_combo', 'punch_long', 'punch_long_2', 'punch_dash'] },
+    { ten: 'Đá', vong: false, don: ['kick_arc', 'kick_long'] },
+    { ten: 'Chiêu đặc biệt', vong: true, don: ['energy_ball'] },
+    // Riêng Super Bư: bắn bóng ma Bư bay tới rồi nổ diện rộng (xem ban() trong game.ts)
+    { ten: 'Bóng ma', vong: false, don: ['ghost'], ma: true },
+  ],
+  kieuChet: [
+    [{ anim: 'hit' }, { anim: 'knockdown' }, { anim: 'lie', giu: true }],
+  ],
+};

@@ -6,7 +6,7 @@ export interface HoatAnh {
   ban?: { o: number; dx: number; dy: number };
 }
 export interface BuocChet { anim: string; ticks?: number; vx?: number; vy?: number; bay?: boolean; giu?: boolean }
-export interface NhomDon { ten: string; vong: boolean; don: string[]; may?: boolean }
+export interface NhomDon { ten: string; vong: boolean; don: string[]; may?: boolean; /** Super Bư: chiêu Bóng ma (bắn con ma nổ như chưởng, hồi bằng hoiSoc) */ ma?: boolean }
 
 export interface NhanVatSprite {
   ten: string; atlas: string; atlasW: number; atlasH: number; w: number; h: number; cot: number;
@@ -19,6 +19,8 @@ export interface NhanVatSprite {
   huong?: { len?: KhungHuong; xuong?: KhungHuong };
   /** Kích thước logic to gấp bao nhiêu lần nhân vật thường (Vegeta 2). Trên map vẽ to theo; chân dung / avatar thu lại 1 / to */
   to?: number;
+  /** Vẽ có làm mịn (ảnh vẽ tay thu nhỏ, như Super Bư); thiếu = pixel art, không làm mịn */
+  muot?: boolean;
 }
 
 /** dung: khung khi đứng yên (idle) · di: khung khi đi (run) */

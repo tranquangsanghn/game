@@ -2,7 +2,7 @@ import type { KhungSprite } from './sprite';
 import { VeCanvas } from './ve-canvas';
 import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
-import { MABU, NHAN_VAT } from './nhan-vat-du-lieu';
+import { MABU, NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
@@ -78,7 +78,7 @@ export interface TrungGa {
   ap?: number;
 }
 /** soc = chưởng biến socola của Zinbu · troi = chưởng tự bắn lên trời (chỉ để đẹp, không gây sát thương) */
-interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; /** chưởng của Vegeta (vẽ bằng quả chưởng sao chổi) */ vg?: boolean; /** đòn của bản sao bóng ma Goku (p = người bị sao chép, chỉ trúng nhân vật) */ gy?: boolean; }
+interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; /** chưởng của Vegeta (vẽ bằng quả chưởng sao chổi) */ vg?: boolean; /** đòn của bản sao bóng ma Goku (p = người bị sao chép, chỉ trúng nhân vật) */ gy?: boolean; /** chưởng của Super Bư (quả cầu vàng to) */ sb?: boolean; /** chiêu Bóng ma của Super Bư (con ma bay tới rồi nổ to) */ ma?: boolean; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn hồi SOCOLA_GA_TI_LE máu tối đa */
 export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc' | 'dau'; /** ngọc: số sao (thiếu = 1) */ sao?: number; /** ngọc: độ to khi vẽ (thiếu = 0,55) */ to?: number; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; /** socola: sức mạnh (nhân sát thương) người / Cell ăn được cộng thêm (thiếu thì `CELL_AN_SUC`) */ sucAn?: number; }
@@ -320,6 +320,22 @@ const NE_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0 };
 // Sát thương nhân vật gây ra: [Mabu, Zinbu, Vegeta] (theo NguoiChoi.ki) theo nhóm đòn 0 Đấm · 1 Đá · 2 Chiêu đặc biệt; mây (riêng Mabu)
 // Vegeta lấy sức mạnh giữa Mabu và Zinbu
 const SAT_THUONG = [[50, 50, 50], [70, 100, 85], [130, 190, 160]];
+// Hợp thể Super Bư (chỉ đội Mabu + Zinbu, chế độ tay cầm): hai người đứng gần nhau trong HOP_THE_GAN và cùng bấm một nút đánh (A / B / X / Y)
+// trong HOP_THE_CUA giây thì hợp thể. Super Bư mạnh gấp HOP_THE_GAP lần Mabu + Zinbu cộng lại: máu = HOP_THE_GAP × tổng máu hai người lúc hợp thể,
+// mỗi đòn = HOP_THE_GAP × (đòn cùng nhóm của Mabu + của Zinbu). Tồn tại HOP_THE_T giây (đếm ngược trên đầu) rồi tách ra, chờ HOP_THE_HOI giây mới hợp thể lại.
+// Người ít máu hơn lúc hợp thể chỉ điều khiển đi lại / bay, người nhiều máu hơn (bằng nhau thì Mabu) chỉ điều khiển ra đòn.
+const HOP_THE_GAN = 300;
+const HOP_THE_CUA = 0.4;
+const HOP_THE_GAP = 5;
+const HOP_THE_T = 40;
+const HOP_THE_HOI = 15;
+/** Super Bư bị hạ: tách ra sớm, mỗi người còn HOP_THE_CON_MAU máu lúc hợp thể (tối thiểu 1) */
+const HOP_THE_CON_MAU = 0.1;
+/** Chiêu Bóng ma (nhóm 3 của Super Bư): sát thương = HOP_THE_GAP × (Biến mây Mabu + Biến socola Zinbu), nổ bán kính BAN_KINH_MA, hồi MA_HOI giây */
+const BAN_KINH_MA = 300;
+const MA_HOI = 3;
+/** Độ cao thanh máu trên đầu Super Bư (cao hơn Mabu / Zinbu) */
+const DAU_SB = 330;
 /** Màu riêng mỗi nhân vật (theo ki) */
 const MAU_NV = ['#e84393', '#8e44ad', '#2f6fe0'];
 /** Độ cao thanh máu trên đầu theo nhân vật (ki) */
@@ -974,6 +990,13 @@ export class Game {
   congThanView = false;
   /** Người vừa bước ra khỏi cổng dịch chuyển: phải đi xa khỏi cổng rồi mới vào lại được (không lưu ván) */
   private congCho: number[] | null = null;
+  /** Hợp thể Super Bư (không lưu ván): chu = người điều khiển ra đòn, mang thân Super Bư (`nv` đổi sang SUPER_BU) · nhap = người bị nhập
+   *  (ẩn, đi theo, chỉ điều khiển đi lại / bay của Super Bư) · con = giây còn lại · truoc = máu / mana hai người lúc hợp thể · hpMax / manaMax = của Super Bư */
+  hopThe: { chu: number; nhap: number; con: number; nvCu: NhanVat; truoc: { hp: number; mana: number }[]; hpMax: number; manaMax: number } | null = null;
+  /** Giây còn chờ mới hợp thể lại được (sau khi tách) */
+  hopTheHoi = 0;
+  /** Nút đánh vừa bấm của từng người (nút, lúc bấm) để nhận ra hai người cùng bấm một nút */
+  private hopNut: ({ nut: number; t: number } | null)[] = [null, null];
   /** Hẹn giờ chữ báo cổng không mở (đồng đội gục / đang trốn / đang bay) */
   private congBao = 0;
   /** Dịch chuyển xong: khung sau camera nhảy thẳng tới chỗ mới */
@@ -1254,6 +1277,9 @@ export class Game {
     // Thần điện: ván mới thì mọi cây cối / vật dụng nguyên vẹn (chỉ ván mới mới đặt lại)
     thanVo.fill(false);
     this.nguoi = this.taoNguoiChoi();
+    this.hopThe = null;
+    this.hopTheHoi = 0;
+    this.hopNut = [null, null];
     // Nhân vật xuất phát ở góc vườn gà xa vua gà nhất: chốt chỗ vua gà xuất hiện trước, rồi chọn góc xa nó nhất
     this.viTriVua = { x: ngauNhien(600, MAP - 600), y: ngauNhien(600, MAP - 600) };
     const le = TUONG + 320;
@@ -1337,11 +1363,13 @@ export class Game {
       vuon: { ngu: this.vuonNgu, to: this.toTrung, toDe: this.toDe, daNoPhu: this.daNoPhu, choVua: this.choVua },
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       thanVo: thanVo.flatMap((v, i) => (v ? [i] : [])),
-      nguoi: this.nguoi.map((n) => {
+      nguoi: this.nguoi.map((n, p) => {
         const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
         void nham; void ngam; void cuaCan; void dich;
+        // Đang hợp thể: lưu như đã tách ra (máu / mana chia lại theo tỉ lệ còn lại của Super Bư)
+        const tach = this.hopThe ? this.chiaHopThe(false)[p]! : null;
         // Đang bay thì coi như đã bay tới nơi
-        return { ...r, x: bay ? bay.x1 : n.x, y: bay ? bay.y1 : n.y, nhom: nv.nhom, lat: nv.lat, huong: nv.huong };
+        return { ...r, ...(tach ?? {}), x: bay ? bay.x1 : n.x, y: bay ? bay.y1 : n.y, nhom: Math.min(nv.nhom, NHOM_MAY), lat: nv.lat, huong: nv.huong };
       }),
     }));
   }
@@ -1617,6 +1645,8 @@ export class Game {
     this.dieuKhien(dt);
     HN.moc('cn.dieuKhien');
     this.rangBuoc(truoc);
+    this.capNhatHopThe(dt);
+    HN.moc('cn.hopThe');
     // Nhân vật đi bộ / bay không đổi vùng: đang trong vườn gà thì ở lại trong vườn, đang ở đảo thì ở lại đảo (chỉ máy bay mới ra / vào vườn)
     this.nguoi.forEach((n, p) => { if (!this.trongMb(p)) giuTrongMap(n, leNhanVat(n.nv.heSoTo), !!n.bay, vungCua(truoc[p])); });
     this.chanNuiMotNguoi(truoc);
@@ -2334,19 +2364,25 @@ export class Game {
 
   // Chiêu đặc biệt: nổ trúng mọi con gà trong bán kính
   private no(d: Dan): void {
+    // Bóng ma của Super Bư nổ rộng hơn chưởng thường
+    const bk = d.ma ? BAN_KINH_MA : BAN_KINH_NO;
     const trung = this.ga.filter((g) => {
       if (g.chet || d.da?.includes(g.id)) return false;
       const tam = this.tamGa(g);
-      return Math.hypot(tam.x - d.x1, tam.y - d.y1) < BAN_KINH_NO;
+      return Math.hypot(tam.x - d.x1, tam.y - d.y1) < bk;
     });
     trung.forEach((g) => { if (!this.danAn(d, g)) this.trungGa(g, d.p, d.sat, 2); });
-    const ceTrung = this.cell.filter((c) => !c.chet && !d.da?.includes(c.id) && Math.hypot(this.tamCell(c).x - d.x1, this.tamCell(c).y - d.y1) < BAN_KINH_NO + CELL_BK * cellK(c.cap) * 2);
+    const ceTrung = this.cell.filter((c) => !c.chet && !d.da?.includes(c.id) && Math.hypot(this.tamCell(c).x - d.x1, this.tamCell(c).y - d.y1) < bk + CELL_BK * cellK(c.cap) * 2);
     ceTrung.forEach((c) => this.trungCell(c, d.p, d.sat));
-    const gyTrung = !this.ginyu.chet && !d.da?.includes(-1) && this.gyGan(d.x1, d.y1, BAN_KINH_NO + GY_BK);
+    const gyTrung = !this.ginyu.chet && !d.da?.includes(-1) && this.gyGan(d.x1, d.y1, bk + GY_BK);
     if (gyTrung) this.trungGy(d.p, d.sat);
-    const dongDoi = this.danTrungDongDoi(d, d.x1, d.y1, BAN_KINH_NO + 60);
+    const dongDoi = this.danTrungDongDoi(d, d.x1, d.y1, bk + 60);
     if (d.vg) this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 1, vg: true });
-    else {
+    else if (d.ma || d.sb) {
+      // Super Bư: vụ nổ to hơn (bóng ma nổ to nhất)
+      this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'no', co: d.ma ? 2 : 1.4 });
+      this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: d.ma ? 2.2 : 1.4 });
+    } else {
       this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'no' });
       this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 0.9 });
     }
@@ -2501,7 +2537,7 @@ export class Game {
   // Các mũi tên ">" chỉ từ nhân vật gần gà mẹ gốc hơn về phía nó (hiện từng đợt); chỉ lấy mũi tên nằm trong khung nhìn.
   private huongToiTuong(trong: (x: number, y: number, le: number) => boolean) {
     const kq: { x: number; y: number; goc: number; a: number; mau: string }[] = [];
-    const song = this.nguoi.filter((n, p) => !n.het && !this.trongCau(p));
+    const song = this.nguoi.filter((n, p) => !n.het && !this.trongCau(p) && !this.biNhap(p));
     if (this.man !== 'play' || !song.length) return kq;
     // Mọi nhân vật đã rời vườn gà (đang ở đảo): không còn mũi tên của vườn gà
     if (this.trenDao) return kq;
@@ -2638,7 +2674,7 @@ export class Game {
     if (this.ptView) xep.push({ loai: 'pt', y: this.phiThuyen.y + this.phiThuyen.z * 20000 });
     const dem = this.mbDem();
     this.mbDemView = dem && trong(dem.x, dem.y, 300) ? dem : null;
-    this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && !this.trongMb(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
+    this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && !this.trongMb(i) && !this.biNhap(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
     const xe = this.xeDuoiDat();
     for (const t of this.trangTri) if (!t.mat && !this.cayCheXe(t, xe) && trong(t.x, t.y, t.to ? 700 : 400) && this.doRo(t.x, t.y) > 0) xep.push({ loai: 'td', y: t.y, td: t });
     xep.sort((a, b) => a.y - b.y);
@@ -3648,15 +3684,17 @@ export class Game {
   // Nhóm Đấm: 1 viên · Đá: 2 viên tản (cả hai miễn phí, trúng thì hồi mana) · Chiêu đặc biệt: 1 chưởng xuyên rồi nổ (MANA_CHUONG) · nhóm 3: Biến mây / socola (MANA_DAC_BIET).
   private ban(p: number, x: number, y: number): void {
     const n = this.nguoi[p];
-    if (n.hoiChieu > 0 || n.nv.khoa || n.het || this.trongCau(p) || this.trongPt(p)) return;
+    if (n.hoiChieu > 0 || n.nv.khoa || n.het || this.trongCau(p) || this.trongPt(p) || this.biNhap(p)) return;
     // Trên máy bay: đấm / đá bình thường; bắn chưởng (Chiêu đặc biệt / socola) thì máy bay nổ; không biến mây
     const tren = this.trongMb(p);
     const nhom = n.nv.nhom;
     // Nhóm 3: Mabu biến mây, Zinbu biến socola
     const nhomMay = !!n.nv.sp.nhomDon[nhom]?.may;
-    const soc = nhom === NHOM_MAY && !nhomMay;
+    // Super Bư: nhóm 3 là chiêu Bóng ma (bắn con ma nổ to, hồi bằng hoiSoc như socola)
+    const ma = nhom === NHOM_MAY && !!n.nv.sp.nhomDon[nhom]?.ma;
+    const soc = nhom === NHOM_MAY && !nhomMay && !ma;
     if (tren && nhomMay) return;
-    const chieu = nhom === 2 || soc;
+    const chieu = nhom === 2 || soc || ma;
     // Chiêu đặc biệt (chưởng) tốn MANA_CHUONG, Biến mây / socola tốn MANA_DAC_BIET; Đấm / Đá miễn phí (còn hồi mana khi trúng)
     const phi = nhom === 2 ? MANA_CHUONG : nhom === NHOM_MAY ? MANA_DAC_BIET : 0;
     if (nhomMay) {
@@ -3666,14 +3704,15 @@ export class Game {
     }
     if (n.may.dang) return;
     // Biến socola đang hồi: không ra chiêu (các đòn khác vẫn dùng bình thường)
-    if (soc && n.hoiSoc > 0) return;
+    if ((soc || ma) && n.hoiSoc > 0) return;
     if (n.mana < phi) return this.thieuMana(n);
     n.mana -= phi;
     if (soc) n.hoiSoc = SOCOLA_HOI;
+    if (ma) n.hoiSoc = MA_HOI;
     // Thời gian hồi giữa 2 đòn theo nhóm (không phụ thuộc độ dài animation); combo cao thì chưởng hồi nhanh hơn.
     // Socola chỉ chặn đòn kế tiếp 0,5s (đủ cho animation); hồi chiêu socola nằm ở hoiSoc
     const giamHoi = nhom === 2 && n.combo >= COMBO_GIAM_HOI ? COMBO_HOI_CHUONG : 1;
-    n.hoiChieu = soc ? 0.5 : (chieu ? 0.5 * giamHoi : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
+    n.hoiChieu = soc || ma ? 0.5 : (chieu ? 0.5 * giamHoi : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
     if (!n.dangDi) {
       n.nv.lat = x < n.x;
       n.nv.huong = 'ngang';
@@ -3682,7 +3721,7 @@ export class Game {
     this.am.phat(chieu ? 'chuong' : nhom === 1 ? 'da' : 'dam');
 
     // Giới hạn tầm theo đòn vừa ra: chuột trỏ xa hơn tầm thì đòn dừng ở mép tầm đánh
-    const tam = soc ? TAM_SOCOLA : chieu ? TAM_CHIEU : TAM_DON[n.nv.donVuaRa ?? ''] ?? (n.nv.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN);
+    const tam = soc || ma ? TAM_SOCOLA : chieu ? TAM_CHIEU : TAM_DON[n.nv.donVuaRa ?? ''] ?? (n.nv.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN);
     const ddx = x - n.x;
     const ddy = y - n.y;
     const dd = Math.hypot(ddx, ddy);
@@ -3696,12 +3735,13 @@ export class Game {
     const an: Dan['an'] = !soc && n.nv.donVuaRa === DON_AN[n.nv.sp.ten] ? (n.nv.sp.ten === 'Mabu' ? 'hong' : 'soc') : undefined;
     const tanX = n.dangDi ? ngauNhien(-18, 18) : 0;
     const tanY = n.dangDi ? ngauNhien(-14, 14) : 0;
-    const lech = [...(n.nv.nhom === 1 ? [-28, 28] : [0]), ...(this.dangChum(p) ? [-70, 70] : [])];
+    const sb = this.hopThe?.chu === p;
+    const lech = [...(n.nv.nhom === 1 ? [-28, 28] : [0]), ...(this.dangChum(p) && !ma ? [-70, 70] : [])];
     lech.forEach((dx, i) => {
       const x1 = x + tanX + dx;
       const y1 = y + tanY + Math.abs(dx) * 0.3;
       const T = Math.hypot(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
-      this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0, sat: soc ? SAT_SOCOLA : SAT_THUONG[nhom]![n.ki]!, soc: soc && i === 0, nhom, an, vg: n.ki === 2 && !soc });
+      this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0, sat: soc ? SAT_SOCOLA : this.satNv(p, nhom), soc: soc && i === 0, nhom, an, vg: n.ki === 2 && !soc && !sb, sb: sb && !ma, ma: ma && i === 0 });
     });
     if (tren && chieu) this.trungMb();
   }
@@ -5202,7 +5242,7 @@ export class Game {
   // khongNe: đòn phản / đốt cháy không né được; mauChu: màu chữ bay
   // Trả về true nếu thật sự trúng (không né, không trong cầu / máy bay)
   private nhanSatThuong(n: NguoiChoi, sat: number, khongNe = false, mauChu = '#ff4d4d'): boolean {
-    if (this.trongCau(this.nguoi.indexOf(n)) || this.trongMb(this.nguoi.indexOf(n))) return false;
+    if (this.trongCau(this.nguoi.indexOf(n)) || this.trongMb(this.nguoi.indexOf(n)) || this.biNhap(this.nguoi.indexOf(n))) return false;
     if (!khongNe && Math.random() < NE_NV) {
       this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: 'NÉ!', mau: '#9be7ff', t: 0 });
       return false;
@@ -5214,6 +5254,11 @@ export class Game {
     this.rung = Math.max(this.rung, 0.15);
     this.rungTayCam(this.nguoi.indexOf(n), n.hp <= 0 ? 600 : 180, n.hp <= 0 ? 1 : 0.6);
     if (n.hp > 0) return true;
+    // Super Bư bị hạ: không gục, tách ra sớm (mỗi người còn ít máu)
+    if (this.hopThe?.chu === this.nguoi.indexOf(n)) {
+      this.tachHopThe(true);
+      return true;
+    }
     n.het = true;
     this.am.phat('nvChet');
     n.dich = null;
@@ -5314,7 +5359,7 @@ export class Game {
     const co = this.nguoi.filter((n) => !n.vang).length;
     if (m.pha === 'dau') {
       this.nguoi.forEach((n, p) => {
-        if (n.vang || m.ngoi.includes(p) || this.trongPt(p) || n.het || n.nv.laMay || n.bay || n.nv.khoa || this.trongCau(p) || this.dangCuu(p)) return;
+        if (n.vang || this.hopThe || m.ngoi.includes(p) || this.trongPt(p) || n.het || n.nv.laMay || n.bay || n.nv.khoa || this.trongCau(p) || this.dangCuu(p)) return;
         if (Math.hypot(n.x - m.x, (n.y - m.y) / EP_GA) >= MB_BK) return;
         m.ngoi.push(p);
         n.dich = null;
@@ -5565,7 +5610,7 @@ export class Game {
     m.t += dt;
     const dung = this.nguoi.filter((n) => !n.vang);
     const hai = dung.length >= 2;
-    const lenDuoc = (n: NguoiChoi, p: number) => !n.vang && !n.het && !n.nv.laMay && !n.bay && !n.nv.khoa && !this.trongMb(p) && !this.trongCau(p) && !this.dangCuu(p);
+    const lenDuoc = (n: NguoiChoi, p: number) => !n.vang && !this.hopThe && !n.het && !n.nv.laMay && !n.bay && !n.nv.khoa && !this.trongMb(p) && !this.trongCau(p) && !this.dangCuu(p);
     const cach = (n: NguoiChoi) => Math.hypot(n.x - m.x, (n.y - m.y) / EP_GA);
     m.cho = m.cho.filter((p) => !this.nguoi[p] || cach(this.nguoi[p]) < PT_BK * 1.5);
     if (m.pha === 'dau') {
@@ -5740,7 +5785,7 @@ export class Game {
   /** Gà không thấy / không đánh được nhân vật này: đã gục, đang là mây hoặc đang trốn trong quả cầu */
   private khuat(n: NguoiChoi): boolean {
     const p = this.nguoi.indexOf(n);
-    return n.het || n.nv.laMay || this.trongCau(p) || this.trongMb(p);
+    return n.het || n.nv.laMay || this.trongCau(p) || this.trongMb(p) || this.biNhap(p);
   }
 
   // Chạm quả cầu thì chui vào; trong cầu hồi máu tới đầy bình, đầy mana; hết CAU_TRON giây thì vỡ ra (hoạt ảnh) và thả nhân vật ra đúng chỗ đó
@@ -5748,7 +5793,7 @@ export class Game {
     for (const q of this.cauTron) {
       q.t += dt;
       if (q.pha === 'san') {
-        const p = this.nguoi.findIndex((n, i) => i === q.cua && !n.vang && !n.het && !n.nv.laMay && !n.bay && !n.nv.khoa && !this.trongCau(i) && !this.trongMb(i)
+        const p = this.nguoi.findIndex((n, i) => i === q.cua && !this.hopThe && !n.vang && !n.het && !n.nv.laMay && !n.bay && !n.nv.khoa && !this.trongCau(i) && !this.trongMb(i)
           && Math.hypot(n.x - q.x, (n.y - q.y) / EP_GA) < CAU_BAN_KINH);
         if (p < 0) continue;
         const n = this.nguoi[p];
@@ -5903,11 +5948,13 @@ export class Game {
       return;
     }
     const p = this.chuot;
+    const h = this.hopThe;
     if (e.button === 2 && e.buttons & 2) {
-      this.datDich(p, pt.x, pt.y);
+      // Hợp thể: người bị nhập lái thân Super Bư, người mang thân không tự đi được
+      if (!h || p === h.nhap) this.datDich(h ? h.chu : p, pt.x, pt.y);
       return;
     }
-    if (e.button !== 0 || !(e.buttons & 1)) return;
+    if (e.button !== 0 || !(e.buttons & 1) || h?.nhap === p) return;
     const w = this.manHinhRaThe(pt.x, pt.y);
     this.ban(p, w.x, w.y);
   }
@@ -5963,6 +6010,149 @@ export class Game {
   // ─── Điều khiển bằng tay cầm (Gamepad API, bố cục kiểu Xbox; mapping "standard") ───
   // Dành cho trẻ em, chỉ các nút đơn giản: Chữ thập: chạy · Cần trái: bay · A đấm · X đá · Y chưởng · B / Cần phải: chiêu riêng
   // Menu: bắt đầu / tạm dừng · View: khi chỉ có 1 tay cầm thì đổi sang điều khiển nhân vật kia
+
+  // ─── Hợp thể Super Bư ───
+
+  /** p đang bị nhập vào Super Bư (ẩn, không bị đánh, không tự ra đòn) */
+  biNhap(p: number): boolean {
+    return !!this.hopThe && this.hopThe.nhap === p;
+  }
+
+  /** Sát thương gốc mỗi đòn của p theo nhóm đòn; Super Bư = HOP_THE_GAP × (Mabu + Zinbu) */
+  private satNv(p: number, nhom: number): number {
+    if (this.hopThe?.chu === p) {
+      const goc = nhom === NHOM_MAY ? SAT_MAY + SAT_SOCOLA : SAT_THUONG[nhom]![0]! + SAT_THUONG[nhom]![1]!;
+      return HOP_THE_GAP * goc;
+    }
+    return SAT_THUONG[nhom]![this.nguoi[p].ki]!;
+  }
+
+  /** Đội Mabu + Zinbu, cả hai đang đứng bình thường (không gục / mây / bay / máy bay / cầu / đang bị khoá) và cách nhau trong HOP_THE_GAN */
+  private hopTheDuoc(): boolean {
+    const [a, b] = this.nguoi;
+    if (!a || !b || this.hopThe || a.ki + b.ki !== 1 || a.ki === b.ki) return false;
+    const tot = (n: NguoiChoi, p: number) => !n.vang && !n.het && !n.bay && !n.nv.laMay && !n.may.dang && !n.nv.khoa && !this.trongMb(p) && !this.trongCau(p);
+    return tot(a, 0) && tot(b, 1) && Math.hypot(a.x - b.x, a.y - b.y) <= HOP_THE_GAN;
+  }
+
+  /** Chữ gợi ý (chỉ trên đầu người còn đứng đầu tiên): đang chờ hồi hợp thể, hoặc đã sẵn sàng (đứng gần nhau) */
+  hopTheGoiY(p: number): string | null {
+    if (this.hopThe || this.cheDo !== 'tayCam') return null;
+    const [a, b] = this.nguoi;
+    if (!a || !b || a.ki + b.ki !== 1 || a.ki === b.ki || a.vang || b.vang) return null;
+    if (p !== this.nguoi.findIndex((n) => !n.het)) return null;
+    if (this.hopTheHoi > 0) return `🔄 Hợp thể sau ${Math.ceil(this.hopTheHoi)}s`;
+    return this.hopTheDuoc() ? '✨ Cùng bấm 1 nút: HỢP THỂ!' : null;
+  }
+
+  /** Hai người vừa cùng bấm một nút đánh (cách nhau ≤ HOP_THE_CUA giây) khi đứng gần nhau: hợp thể */
+  private thuHopThe(): void {
+    const [a, b] = this.hopNut;
+    if (!a || !b || a.nut !== b.nut || Math.abs(a.t - b.t) > HOP_THE_CUA) return;
+    this.hopNut = [null, null];
+    if (this.hopThe) return;
+    if (this.hopTheHoi > 0) {
+      const [m, n] = this.nguoi;
+      if (m && n && Math.hypot(m.x - n.x, m.y - n.y) <= HOP_THE_GAN) this.chu.push({ id: this.id++, x: (m.x + n.x) / 2, y: (m.y + n.y) / 2 - 300, text: `⏳ CHƯA HỢP THỂ ĐƯỢC: CHỜ ${Math.ceil(this.hopTheHoi)}s`, mau: '#ffd23f', t: 0 });
+      return;
+    }
+    if (this.hopTheDuoc()) this.batDauHopThe();
+  }
+
+  /** Hợp thể: người nhiều máu hơn (bằng nhau thì Mabu) mang thân Super Bư và ra đòn, người kia bị nhập và lái đi lại / bay */
+  private batDauHopThe(): void {
+    const [a, b] = this.nguoi as [NguoiChoi, NguoiChoi];
+    const chu = a.hp > b.hp ? 0 : b.hp > a.hp ? 1 : a.ki === 0 ? 0 : 1;
+    const C = this.nguoi[chu]!;
+    const N = this.nguoi[1 - chu]!;
+    const hpMax = Math.round(HOP_THE_GAP * (a.hp + b.hp));
+    const manaMax = Math.round(a.mana + b.mana);
+    this.hopThe = { chu, nhap: 1 - chu, con: HOP_THE_T, nvCu: C.nv, truoc: this.nguoi.map((n) => ({ hp: n.hp, mana: n.mana })), hpMax, manaMax };
+    const nv = new NhanVat(SUPER_BU);
+    nv.lat = C.nv.lat;
+    C.nv = nv;
+    C.x = (a.x + b.x) / 2;
+    C.y = (a.y + b.y) / 2;
+    giuTrongMap(C, leNhanVat(1), false, vungCua(C));
+    C.hp = hpMax;
+    C.mana = manaMax;
+    C.hoiChieu = 0.4;
+    C.hoiSoc = 0;
+    for (const n of [C, N]) {
+      n.dich = null;
+      n.bay = null;
+      n.dangDi = false;
+      n.cuaCan = false;
+    }
+    N.x = C.x;
+    N.y = C.y;
+    this.vet.push({ id: this.id++, x: C.x, y: C.y - 120, t: 0, loai: 'chay', co: 2.4 });
+    this.vet.push({ id: this.id++, x: C.x, y: C.y - 60, t: 0, loai: 'bui', co: 2 });
+    this.chu.push({ id: this.id++, x: C.x, y: C.y - 560, text: '✨ HỢP THỂ: SUPER BƯ!', mau: '#ff7ac8', t: 0 });
+    this.chu.push({ id: this.id++, x: C.x, y: C.y - 500, text: `🕹 ${N.ten}: đi lại / bay · 🎯 ${C.ten}: ra đòn`, mau: '#ffffff', t: 0 });
+    this.am.phat('chuong');
+    this.rungMan(0.4, 12);
+    this.rungTayCam(0, 400, 0.8);
+    this.rungTayCam(1, 400, 0.8);
+  }
+
+  /** Máu / mana của từng người khi tách ra: theo tỉ lệ còn lại của Super Bư (bị hạ thì mỗi người còn HOP_THE_CON_MAU máu lúc hợp thể) */
+  private chiaHopThe(chet: boolean): { hp: number; mana: number }[] {
+    const h = this.hopThe!;
+    const C = this.nguoi[h.chu]!;
+    const rHp = chet ? HOP_THE_CON_MAU : Math.max(0, C.hp) / Math.max(1, h.hpMax);
+    const rMana = Math.max(0, C.mana) / Math.max(1, h.manaMax);
+    return h.truoc.map((t) => ({ hp: Math.max(1, Math.round(t.hp * rHp)), mana: Math.round(t.mana * rMana) }));
+  }
+
+  /** Hết giờ (hoặc Super Bư bị hạ): tách lại thành Mabu và Zinbu đứng hai bên, chờ HOP_THE_HOI giây mới hợp thể lại */
+  private tachHopThe(chet: boolean): void {
+    const h = this.hopThe;
+    if (!h) return;
+    const chia = this.chiaHopThe(chet);
+    const C = this.nguoi[h.chu]!;
+    const N = this.nguoi[h.nhap]!;
+    h.nvCu.lat = C.nv.lat;
+    h.nvCu.datNhom(Math.min(C.nv.nhom, h.nvCu.sp.nhomDon.length - 1), this.t);
+    C.nv = h.nvCu;
+    this.hopThe = null;
+    this.hopTheHoi = HOP_THE_HOI;
+    this.nguoi.forEach((n, p) => {
+      n.hp = chia[p]!.hp;
+      n.mana = chia[p]!.mana;
+      n.het = false;
+      n.dich = null;
+      n.bay = null;
+      n.dangDi = false;
+      n.thuongLuc = this.tGame;
+    });
+    C.hoiChieu = 0.4;
+    N.x = C.x + 90;
+    C.x -= 90;
+    N.y = C.y;
+    N.nv.lat = true;
+    C.nv.lat = false;
+    for (const n of [C, N]) giuTrongMap(n, leNhanVat(1), false, vungCua(n));
+    this.vet.push({ id: this.id++, x: (C.x + N.x) / 2, y: C.y - 100, t: 0, loai: 'chay', co: 1.8 });
+    this.chu.push({ id: this.id++, x: (C.x + N.x) / 2, y: C.y - 380, text: chet ? '💥 SUPER BƯ BỊ HẠ: TÁCH RA!' : `💨 TÁCH RA! HỢP THỂ LẠI SAU ${HOP_THE_HOI}s`, mau: chet ? '#ff4d4d' : '#9be7ff', t: 0 });
+    this.rungMan(0.25, 8);
+  }
+
+  /** Mỗi khung: đếm ngược thời gian hợp thể / thời gian hồi; người bị nhập luôn đứng đúng chỗ Super Bư */
+  private capNhatHopThe(dt: number): void {
+    this.hopTheHoi = Math.max(0, this.hopTheHoi - dt);
+    const h = this.hopThe;
+    if (!h) return;
+    h.con -= dt;
+    const C = this.nguoi[h.chu]!;
+    const N = this.nguoi[h.nhap]!;
+    N.x = C.x;
+    N.y = C.y;
+    N.dich = null;
+    N.bay = null;
+    N.dangDi = false;
+    if (h.con <= 0 || C.het) this.tachHopThe(C.het);
+  }
 
   private docTayCam(): void {
     const ds = this.dsTayCam;
@@ -6053,39 +6243,54 @@ export class Game {
         n.ngam = null;
         continue;
       }
-      // Chữ thập: chạy. Cần trái: bay (gạt hướng nào bay hướng đó). Cần phải: chiêu riêng (Mabu biến mây, Zinbu biến socola)
-      const dx = (duoc(g, 15) ? 1 : 0) - (duoc(g, 14) ? 1 : 0);
-      const dy = (duoc(g, 13) ? 1 : 0) - (duoc(g, 12) ? 1 : 0);
-      const bay = this.canGat(g, 0, 1, VUNG_BAY_CAN);
+      // Nút đánh vừa bấm (A / B / X / Y): hai người cùng bấm một nút khi đứng gần nhau thì hợp thể Super Bư (thuHopThe)
+      const nutMoi = [0, 1, 2, 3].find((i) => moi(g, i));
+      if (nutMoi !== undefined) this.hopNut[p] = { nut: nutMoi, t: this.t };
+      // Đang hợp thể: người bị nhập chỉ đi lại / bay (điều khiển thân Super Bư), người mang thân chỉ ra đòn
+      const h = this.hopThe;
+      const diDuoc = !h || p === h.nhap;
+      const danhDuoc = !h || p === h.chu;
+      if (diDuoc) this.dieuKhienDi(h ? h.chu : p, g);
+      if (!danhDuoc) continue;
       const phai = this.canGat(g, 2, g.mapping === 'standard' || g.axes.length < 6 ? 3 : 5);
-      // Cần trái gạt nhẹ (chưa tới ngưỡng bay) thì chạy theo hướng gạt; chữ thập vẫn ưu tiên
-      const canNhe = this.canGat(g, 0, 1);
-      const chay = dx || dy ? { x: dx, y: dy, m: Math.hypot(dx, dy) } : canNhe;
-      // Hướng nhìn theo hướng đang bay / chạy; không có điều khiển nào thì giữ nguyên
-      const huong = bay.m > 0 ? bay : chay;
-      if (huong.m > 0) n.nhin = { x: huong.x / huong.m, y: huong.y / huong.m };
-      n.ngam = null;
-
-      if (bay.m > 0) {
-        // Gạt cần trái: bay một đoạn theo hướng gạt; đang khoá bay hoặc hết mana thì chỉ chạy
-        this.datDichThe(p, n.x + (bay.x / bay.m) * BAY_CAN, n.y + (bay.y / bay.m) * BAY_CAN);
-        n.cuaCan = true;
-      } else if (chay.m > 0) {
-        this.datDichThe(p, n.x + (chay.x / chay.m) * 200, n.y + (chay.y / chay.m) * 200);
-        n.cuaCan = true;
-      } else if (n.cuaCan) {
-        n.dich = null;
-        n.cuaCan = false;
-      }
-
       // Ra đòn: giữ nút thì đánh liên tục theo thời gian hồi chiêu. A đấm · X đá · Y chưởng · B hoặc cần phải: chiêu riêng
       const nhom = duoc(g, 1) || phai.m > 0 || duoc(g, 11) ? NHOM_MAY : duoc(g, 3) ? 2 : duoc(g, 2) ? 1 : duoc(g, 0) ? 0 : -1;
       if (nhom >= 0) this.dungChieu(p, nhom);
     }
+    if (this.man === 'play' && dungTayCam) this.thuHopThe();
     // Lưu trạng thái nút ở khung này để lần sau biết nút nào mới bấm
     const luu = new Map<number, boolean[]>();
     for (const g of ds) luu.set(g.index, g.buttons.map((b, i) => b.pressed || (i === 6 || i === 7) && b.value > 0.5));
     this.nutCu = luu;
+  }
+
+  /** Tay cầm g điều khiển đi lại / bay của nhân vật p (khi hợp thể: người bị nhập lái thân Super Bư) */
+  private dieuKhienDi(p: number, g: Gamepad): void {
+    const n = this.nguoi[p];
+    const duoc = (i: number) => !!g.buttons[i]?.pressed;
+    // Chữ thập: chạy. Cần trái: bay (gạt hướng nào bay hướng đó)
+    const dx = (duoc(15) ? 1 : 0) - (duoc(14) ? 1 : 0);
+    const dy = (duoc(13) ? 1 : 0) - (duoc(12) ? 1 : 0);
+    const bay = this.canGat(g, 0, 1, VUNG_BAY_CAN);
+    // Cần trái gạt nhẹ (chưa tới ngưỡng bay) thì chạy theo hướng gạt; chữ thập vẫn ưu tiên
+    const canNhe = this.canGat(g, 0, 1);
+    const chay = dx || dy ? { x: dx, y: dy, m: Math.hypot(dx, dy) } : canNhe;
+    // Hướng nhìn theo hướng đang bay / chạy; không có điều khiển nào thì giữ nguyên
+    const huong = bay.m > 0 ? bay : chay;
+    if (huong.m > 0) n.nhin = { x: huong.x / huong.m, y: huong.y / huong.m };
+    n.ngam = null;
+
+    if (bay.m > 0) {
+      // Gạt cần trái: bay một đoạn theo hướng gạt; đang khoá bay hoặc hết mana thì chỉ chạy
+      this.datDichThe(p, n.x + (bay.x / bay.m) * BAY_CAN, n.y + (bay.y / bay.m) * BAY_CAN);
+      n.cuaCan = true;
+    } else if (chay.m > 0) {
+      this.datDichThe(p, n.x + (chay.x / chay.m) * 200, n.y + (chay.y / chay.m) * 200);
+      n.cuaCan = true;
+    } else if (n.cuaCan) {
+      n.dich = null;
+      n.cuaCan = false;
+    }
   }
 
   // Cần analog có vùng chết; trả hướng (đã co giãn) và độ lớn m (0 = đang nằm yên)
@@ -6168,7 +6373,8 @@ export class Game {
 
   /** 0..1: độ đầy của bình mana (so với max(MANA_TOI_DA, mana hiện có)) */
   nlBay(p: number): number {
-    return Math.min(1, this.nguoi[p].mana / Math.max(MANA_TOI_DA, this.nguoi[p].mana));
+    const day = this.hopThe?.chu === p ? this.hopThe.manaMax : MANA_TOI_DA;
+    return Math.min(1, this.nguoi[p].mana / Math.max(day, this.nguoi[p].mana));
   }
 
   private datDichThe(p: number, x: number, y: number): void {
@@ -6255,7 +6461,7 @@ export class Game {
   // Thanh máu trên đầu nhân vật (toạ độ thế giới của điểm giữa thanh)
   thanhTrenDau(p: number): { x: number; y: number } {
     const n = this.nguoi[p];
-    return { x: n.x, y: n.y - (n.nv.cao - n.nv.nhun) * S_NV - (DAU_NV[n.ki] ?? 170) };
+    return { x: n.x, y: n.y - (n.nv.cao - n.nv.nhun) * S_NV - (this.hopThe?.chu === p ? DAU_SB : DAU_NV[n.ki] ?? 170) };
   }
 
   // Thanh máu trên đầu gà tướng (to hơn của nhân vật vì gà tướng cao gấp nhiều lần)
@@ -6269,14 +6475,15 @@ export class Game {
   }
 
   mauNv(p: number): number {
-    return Math.min(1, Math.max(0, this.nguoi[p].hp) / Math.max(HP_NV, this.nguoi[p].hp));
+    const day = this.hopThe?.chu === p ? this.hopThe.hpMax : HP_NV;
+    return Math.min(1, Math.max(0, this.nguoi[p].hp) / Math.max(day, this.nguoi[p].hp));
   }
 
 
   // Vị trí điểm neo (chân) của sprite nhân vật trên map và hệ số phóng
   nvViTri(p: number): { x: number; y: number; k: number } {
     const n = this.nguoi[p];
-    return { x: n.x, y: n.y - (n.nv.cao - n.nv.nhun) * S_NV, k: S_NV * n.nv.heSoTo };
+    return { x: n.x, y: n.y - (n.nv.cao - n.nv.nhun) * S_NV, k: S_NV * n.nv.heSoTo * (n.nv.sp.to ?? 1) };
   }
 
   // Bảng chiêu của gà mẹ (thanh đen phía trên): 0 Mổ + đá · 1 Lao · 2 Bay · 3 Đen · 4 Vàng · 5 Đỏ · 6 Gọi gà con.
@@ -6343,7 +6550,8 @@ export class Game {
   private viTriTay(p: number) {
     const n = this.nguoi[p];
     const { dx, dy } = n.nv.diemBan;
-    return { x: n.x + (n.nv.lat ? -dx : dx) * S_NV, y: n.y + (dy - n.nv.cao) * S_NV };
+    const to = n.nv.sp.to ?? 1;
+    return { x: n.x + (n.nv.lat ? -dx : dx) * S_NV * to, y: n.y + (dy * to - n.nv.cao) * S_NV };
   }
 
   tamGa(g: Ga) {

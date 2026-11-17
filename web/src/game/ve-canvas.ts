@@ -10,6 +10,9 @@ import { SP_FRIEZA, FZ_TEN, FZ_TO, FZ_KHUNG, fzKhung } from './frieza';
 import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_LO_LUNG } from './ginyu';
 import { DAO, doSau, duongBo, NUI, TG, THAN, THAN_CONG, THAN_DA_GIAC, THAN_VAT_TG, thanVo } from './ban-do';
 
+/** Con ma của chiêu Bóng ma (Super Bư), tách nền bằng tools/tao-atlas-super-buu.py */
+const SP_SB_MA: KhungSprite = { atlas: 'assets/game/super_buu_ma.png', atlasW: 161, atlasH: 256, w: 161, h: 256, cot: 1, neoX: 80, neoY: 128 };
+
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
 // Toạ độ vẽ giữ nguyên như bản SVG cũ: viewBox (-SIDE, -BAR, W + 2·SIDE, H + BAR), căn giữa, giữ tỉ lệ.
 // Thêm loại vật / màn / nhân vật mới: thêm hàm vẽ ở đây và gọi trong ve(); sprite cứ truyền KhungSprite vào sprite(), ảnh tự nạp và nhớ lại.
@@ -1050,6 +1053,45 @@ export class VeCanvas {
         ctx.restore();
         continue;
       }
+      if (d.ma) {
+        // Bóng ma của Super Bư: con ma bay tới, lắc lư, kéo vệt trắng mờ phía sau, quay mặt theo hướng bay
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 40;
+        ctx.strokeStyle = 'rgba(220,235,255,0.35)';
+        ctx.beginPath();
+        ctx.moveTo(vt.xs, vt.ys);
+        ctx.lineTo(vt.x, vt.y);
+        ctx.stroke();
+        ctx.translate(vt.x, vt.y + 8 * Math.sin(d.t * 18));
+        ctx.rotate(0.15 * Math.sin(d.t * 12));
+        const k = 0.9 * Math.min(1, 0.4 + d.t * 4);
+        ctx.scale(k, k);
+        this.sprite(ctx, SP_SB_MA, 0, d.x1 < d.x0, true);
+        ctx.restore();
+        continue;
+      }
+      if (d.sb) {
+        // Chưởng Super Bư: quả cầu năng lượng vàng to, lõi trắng
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 46;
+        ctx.strokeStyle = 'rgba(255,214,90,0.45)';
+        ctx.beginPath();
+        ctx.moveTo(vt.xs, vt.ys);
+        ctx.lineTo(vt.x, vt.y);
+        ctx.stroke();
+        const gr = ctx.createRadialGradient(vt.x, vt.y, 0, vt.x, vt.y, 52);
+        gr.addColorStop(0, '#ffffff');
+        gr.addColorStop(0.35, '#fff3a8');
+        gr.addColorStop(0.75, 'rgba(255,190,40,0.9)');
+        gr.addColorStop(1, 'rgba(255,150,0,0)');
+        ctx.fillStyle = gr;
+        duongTron(ctx, 52, vt.x, vt.y);
+        ctx.fill();
+        ctx.restore();
+        continue;
+      }
       // Chưởng socola nâu; chưởng tự bắn lên trời là quả cầu lửa có đuôi cháy dài
       const mauDan = d.soc ? '#a8693a' : d.troi ? '#ffb347' : '#ff9fd0';
       ctx.save();
@@ -1265,7 +1307,7 @@ export class VeCanvas {
     ctx.save();
     ctx.translate(t.x, t.y);
     ctx.scale(t.k, t.k);
-    this.sprite(ctx, n.nv.sp, n.nv.khung, n.nv.lat, false);
+    this.sprite(ctx, n.nv.sp, n.nv.khung, n.nv.lat, !!n.nv.sp.muot);
     ctx.restore();
   }
 
@@ -1836,13 +1878,19 @@ export class VeCanvas {
   // Thanh máu trên đầu nhân vật; dạng mây thì không có
   private veThanhTrenDau(ctx: CanvasRenderingContext2D, c: Game, p: number): void {
     const n = c.nguoi[p];
-    if (n.vang || n.nv.laMay || c.dangCuu(p) || c.trongCau(p) || c.trongMb(p)) return;
+    if (n.vang || n.nv.laMay || c.dangCuu(p) || c.trongCau(p) || c.trongMb(p) || c.biNhap(p)) return;
     const t = c.thanhTrenDau(p);
     this.veThanhNv(ctx, t.x, t.y, c.mauNv(p));
+    // Super Bư: số giây hợp thể còn lại (to, đếm ngược) trên thanh máu
+    const h = c.hopThe;
+    if (h?.chu === p) this.veDemHopThe(ctx, t.x, t.y - 40, h.con);
     // Combo đang chạy (từ 3 đòn); combo đủ cao thì chưởng hồi nhanh (⚡)
     if (n.het) return;
     const dong: string[] = [];
     if (n.combo >= 3) dong.push(`COMBO ${n.combo}${n.combo >= c.COMBO_GIAM_HOI ? ' ⚡' : ''}`);
+    // Hợp thể: đang chờ hồi / đã sẵn sàng (đứng gần nhau)
+    const goiY = c.hopTheGoiY(p);
+    if (goiY) dong.push(goiY);
     if (!dong.length) return;
     ctx.save();
     ctx.font = `800 26px ${FONT}`;
@@ -1856,6 +1904,31 @@ export class VeCanvas {
       ctx.fillStyle = '#ffb347';
       ctx.fillText(d, t.x, y);
     });
+    ctx.restore();
+  }
+
+  /** Đồng hồ hợp thể trên đầu Super Bư: chữ "SUPER BƯ" + số giây còn lại (10 giây cuối nhấp nháy đỏ) */
+  private veDemHopThe(ctx: CanvasRenderingContext2D, x: number, y: number, con: number): void {
+    const so = Math.max(0, Math.ceil(con));
+    const gap = con < 10;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.font = `800 26px ${FONT}`;
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+    ctx.strokeText('SUPER BƯ', x, y - 70);
+    ctx.fillStyle = '#ff7ac8';
+    ctx.fillText('SUPER BƯ', x, y - 70);
+    const nay = gap ? 1 + 0.12 * Math.max(0, Math.sin(con * Math.PI * 2)) : 1;
+    ctx.translate(x, y - 22);
+    ctx.scale(nay, nay);
+    ctx.font = `800 58px ${FONT}`;
+    ctx.lineWidth = 9;
+    ctx.strokeText(`⏱ ${so}`, 0, 0);
+    ctx.fillStyle = gap ? '#ff4d4d' : '#ffd23f';
+    ctx.fillText(`⏱ ${so}`, 0, 0);
     ctx.restore();
   }
 
@@ -1877,7 +1950,11 @@ export class VeCanvas {
   // ─── Thanh đen hai bên: máu, chiêu thức, nửa vòng tròn nhân vật ───
 
   private veThanhBen(ctx: CanvasRenderingContext2D, c: Game, p: number): void {
-    const ng = c.nguoi[p];
+    const ng0 = c.nguoi[p];
+    // Đang hợp thể: người bị nhập dùng chung thân Super Bư (chân dung, máu, mana của Super Bư), nút đánh mờ hẳn
+    const nhap = c.biNhap(p);
+    const q = nhap ? c.hopThe!.chu : p;
+    const ng = c.nguoi[q];
     const tn = c.tamNv(p);
     const xt = c.xThanh(p);
     duongTron(ctx, c.R_NV, tn.x, tn.y);
@@ -1894,13 +1971,13 @@ export class VeCanvas {
     const k = Math.min(90 / 72, 90 / 76) / (ng.nv.sp.to ?? 1);
     ctx.scale(k, k);
     ctx.translate(0, 28);
-    this.sprite(ctx, ng.nv.sp, ng.nv.khung, ng.nv.lat, false);
+    this.sprite(ctx, ng.nv.sp, ng.nv.khung, ng.nv.lat, !!ng.nv.sp.muot);
     ctx.restore();
 
     // Hai bình cầu xếp dọc ngay trên nút trên cùng: trên = máu (xanh lá, số máu nằm giữa bình), dưới = mana (xanh lơ, số mana nằm giữa bình, xám khi đang khoá bay sau lần bay)
     const ym = c.yMauNv(p);
-    this.veBinh(ctx, xt, ym - 28, dongHe(c.mauNv(p)), '#ff3b3b', ng.het);
-    this.veBinh(ctx, xt, ym + 14, dongHe(c.nlBay(p)), ng.bayKhoa > 0 ? '#8a9a94' : '#2fa8ff', ng.het);
+    this.veBinh(ctx, xt, ym - 28, dongHe(c.mauNv(q)), '#ff3b3b', ng.het);
+    this.veBinh(ctx, xt, ym + 14, dongHe(c.nlBay(q)), ng.bayKhoa > 0 ? '#8a9a94' : '#2fa8ff', ng.het);
     ctx.save();
     ctx.globalAlpha = ng.het ? 0.4 : 1;
     ctx.font = `700 15px ${FONT}`;
@@ -1910,31 +1987,39 @@ export class VeCanvas {
     ctx.lineWidth = 4;
     ctx.strokeStyle = 'rgba(0,0,0,0.75)';
     ctx.fillStyle = '#fff';
-    for (const [v, y] of [[c.hpNv(p), ym - 28], [c.manaNv(p), ym + 14]] as [number, number][]) {
+    for (const [v, y] of [[c.hpNv(q), ym - 28], [c.manaNv(q), ym + 14]] as [number, number][]) {
       ctx.strokeText(`${v}`, xt, y);
       ctx.fillText(`${v}`, xt, y);
+    }
+    // Hợp thể: vai của người này (người bị nhập lái đi lại / bay, người mang thân ra đòn)
+    if (c.hopThe) {
+      ctx.font = `800 14px ${FONT}`;
+      const vai = nhap ? '🕹 ĐI LẠI' : '🎯 RA ĐÒN';
+      ctx.strokeText(vai, xt, ym - 66);
+      ctx.fillStyle = '#ff7ac8';
+      ctx.fillText(vai, xt, ym - 66);
     }
     ctx.restore();
 
     // Các chiêu xếp dọc từ dưới lên: đang dùng sáng + phát sáng, hết mana thì mờ hẳn
     for (const b of c.nutBang(p)) {
-      const dung = ng.nv.nhom === b.k;
-      const het = c.hetMana(p, b.k);
+      const dung = ng0.nv.nhom === b.k && !nhap;
+      const het = c.hetMana(p, b.k) || nhap;
       ctx.save();
       ctx.translate(b.x, b.y);
       ctx.scale(0.8, 0.8);
       ctx.globalAlpha = het ? 0.12 : dung ? 1 : 0.4;
-      if (dung && !het) this.sang(ctx, ng.mau);
+      if (dung && !het) this.sang(ctx, ng0.mau);
       duongTron(ctx, c.R_NUT);
       ctx.fillStyle = '#0d1b12';
       ctx.fill();
-      ctx.strokeStyle = dung ? ng.mau : '#555';
+      ctx.strokeStyle = dung ? ng0.mau : '#555';
       ctx.lineWidth = 4;
       ctx.stroke();
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
       ctx.scale(1.35, 1.35);
-      this.bieuTuongNv(ctx, b.k, ng.nv.sp);
+      this.bieuTuongNv(ctx, b.k, ng0.nv.sp);
       ctx.restore();
     }
   }
@@ -1988,6 +2073,22 @@ export class VeCanvas {
       ctx.fill(P.nutDa);
       ctx.stroke(P.nutDa);
       ctx.stroke(P.nutDaVach);
+    } else if (k === 3 && sp.nhomDon[3]?.ma) {
+      // Bóng ma (Super Bư): con ma trắng xanh có đuôi, hai mắt xanh
+      ctx.beginPath();
+      ctx.moveTo(-8, 8);
+      ctx.quadraticCurveTo(-10, -10, 0, -10);
+      ctx.quadraticCurveTo(10, -10, 8, 4);
+      ctx.quadraticCurveTo(10, 10, 4, 9);
+      ctx.quadraticCurveTo(0, 6, -8, 8);
+      ctx.fillStyle = '#eef6ff';
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#1a3fbf';
+      duongElip(ctx, 1.8, 2.4, -3, -3);
+      ctx.fill();
+      duongElip(ctx, 1.8, 2.4, 3, -3);
+      ctx.fill();
     } else if (k === 3 && !sp.nhomDon[3]?.may) {
       // Biến socola (Zinbu): thanh socola nâu có ô vuông
       ctx.save();
