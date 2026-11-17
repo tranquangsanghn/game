@@ -1,7 +1,7 @@
 // Âm thanh game: hiệu ứng ngắn phát chồng được (nhân bản thẻ Audio), nhạc nền lặp vô hạn.
 // Trình duyệt chỉ cho phát tiếng sau lần bấm / nhấn phím đầu tiên, nên mọi lệnh phát lỗi đều bị nuốt và nhạc nền tự thử lại.
 
-export type TenAm = 'dam' | 'da' | 'chuong' | 'anTao' | 'deTrung' | 'meChet' | 'nvChet';
+export type TenAm = 'dam' | 'da' | 'chuong' | 'anTao' | 'deTrung' | 'meChet' | 'nvChet' | 'gokuMa';
 
 const FILE: Record<TenAm, string> = {
   dam: 'dam.wav',
@@ -11,9 +11,10 @@ const FILE: Record<TenAm, string> = {
   deTrung: 'ga-de-trung.mp3',
   meChet: 'ga-me-chet.mp3',
   nvChet: 'nv-chet.mp3',
+  gokuMa: 'goku-ma-het.mp3',
 };
 const DUONG_DAN = 'assets/am-thanh/';
-const AM_LUONG: Record<TenAm, number> = { dam: 0.7, da: 0.7, chuong: 0.7, anTao: 0.8, deTrung: 0.6, meChet: 0.9, nvChet: 0.9 };
+const AM_LUONG: Record<TenAm, number> = { dam: 0.7, da: 0.7, chuong: 0.7, anTao: 0.8, deTrung: 0.6, meChet: 0.9, nvChet: 0.9, gokuMa: 0.9 };
 const AM_LUONG_NHAC = 0.12;
 const AM_LUONG_NHAC_DAO = 0.3;
 const GIAN_CACH = 0.06; // giây: cùng một tiếng không phát lại dày hơn mức này

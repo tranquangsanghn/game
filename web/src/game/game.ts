@@ -4066,6 +4066,7 @@ export class Game {
       g.gap = true;
       g.chay = false;
       this.chuGa({ id: this.id++, x: g.x, y: g.y - GY_TAM_CAO - 160, text: '👻 lêu lêu lêu nhé', mau: '#c39bff', t: 0 });
+      this.am.phat('gokuMa'); // tiếng hét kéo dài suốt khiêu khích → lao → biến hình
       return;
     }
     // Không thấy ai: lượn về giữa núi
