@@ -7,7 +7,7 @@ import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
-import { taoFrieza, capNhatFrieza, SP_FRIEZA, type Frieza } from './frieza';
+import { taoFrieza, capNhatFrieza, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -1210,7 +1210,7 @@ export class Game {
       this.canvasNen.setAttribute('aria-hidden', 'true');
       this.canvasEl.before(this.canvasNen);
       this.ctxNen = this.canvasNen.getContext('2d');
-      this.ve.napTruoc(...NHAN_VAT.map((v) => v.atlas), SP_VG_CHUONG.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas, SP_PT.atlas, SP_CELL.atlas, SP_CELL_TIEC.atlas, SP_CONG.atlas, SP_GINYU.atlas, SP_FRIEZA.atlas, ...CHUONG_LOAI.map((l) => l.atlas));
+      this.ve.napTruoc(...NHAN_VAT.map((v) => v.atlas), SP_VG_CHUONG.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas, SP_PT.atlas, SP_CELL.atlas, SP_CELL_TIEC.atlas, SP_CONG.atlas, SP_GINYU.atlas, SP_FRIEZA.atlas, SP_FRIEZA_VANG.atlas, ...CHUONG_LOAI.map((l) => l.atlas));
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG, LOC_SOCOLA, LOC_SOCOLA_HONG]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO, LOC_SOCOLA, ...LOC_PHU]);
       this.ve.nhuomTruoc(SP_CELL.atlas, [LOC_SOCOLA]);
@@ -1666,7 +1666,7 @@ export class Game {
     this.capNhatCell(dtE);
     HN.moc('cn.cell');
     this.capNhatGinyu(dtE);
-    capNhatFrieza(this.frieza, dtE);
+    this.capNhatFz(dtE);
     HN.moc('cn.ginyu');
     this.capNhatTiec(dtE);
     HN.moc('cn.tiec');
@@ -2646,7 +2646,7 @@ export class Game {
     if (this.gyView) xep.push({ loai: 'gy', y: gy.y });
     // Frieza: khung nhìn trước, sương mù sau
     const fz = this.frieza;
-    this.fzView = trong(fz.x, fz.y - 120, 220) && this.doRo(fz.x, fz.y) > 0;
+    this.fzView = (fz.bien >= 0 || fz.vang > 0 ? trong(fz.x, fz.y - 230, 330) : trong(fz.x, fz.y - 120, 220)) && this.doRo(fz.x, fz.y) > 0;
     if (this.fzView) xep.push({ loai: 'fz', y: fz.y });
     this.banhView = this.tiec.filter((tc) => !tc.vo && trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to) && this.doRo(tc.x, tc.y) > 0);
     for (const tc of this.banhView) xep.push({ loai: 'banh', y: tc.y, tc });
@@ -3974,6 +3974,39 @@ export class Game {
   }
 
   /** Đang được nhân vật nhìn thấy: chỉ khi đó mới bắt đầu khiêu khích / lao / ra đòn */
+  /** Frieza đi loanh quanh điện thờ + chiêu đặc biệt biến thành Golden Frieza (chỉ bắt đầu khi nhân vật nhìn thấy; chữ / nổ qua chuGa() / vetGa()) */
+  private capNhatFz(dt: number): void {
+    const f = this.frieza;
+    const cao = f.bien >= 0 || f.vang > 0 ? 768 * FZ_VANG_TO * 0.4 : 120;
+    const thay = this.nvThay(f.x, f.y - cao, 300, 60);
+    let gan: NguoiChoi | null = null;
+    let dMin = Infinity;
+    for (const n of this.nguoi) {
+      if (n.vang || n.het) continue;
+      const d = Math.hypot(n.x - f.x, n.y - f.y);
+      if (d < dMin) { dMin = d; gan = n; }
+    }
+    const su = capNhatFrieza(f, dt, thay, gan?.x);
+    if (!su) return;
+    const tamY = f.y - 768 * FZ_VANG_TO * 0.4;
+    if (su === 'batDau') {
+      this.chuGa({ id: this.id++, x: f.x, y: f.y - 420, text: '✨ FRIEZA BIẾN HÌNH: GOLDEN FRIEZA!', mau: '#ffd23f', t: 0 });
+    } else if (su === 'aura') {
+      this.vetGa({ id: this.id++, x: f.x, y: tamY, t: 0, loai: 'chay', co: 1.8 });
+      if (this.nvThay(f.x, tamY, 300, 60)) this.rungMan(0.3, 9);
+    } else if (su === 'phong') {
+      const huong = f.lat ? -1 : 1;
+      this.vetGa({ id: this.id++, x: f.x + huong * 160, y: tamY - 40, t: 0, loai: 'chay', co: 2.6 });
+      this.vetGa({ id: this.id++, x: f.x, y: f.y, t: 0, loai: 'bui' });
+      if (this.nvThay(f.x, tamY, 300, 60)) this.rungMan(0.45, 14);
+    } else if (su === 'xong') {
+      this.chuGa({ id: this.id++, x: f.x, y: f.y - 420, text: '👑 GOLDEN FRIEZA!', mau: '#ffd23f', t: 0 });
+    } else if (su === 'het') {
+      this.vetGa({ id: this.id++, x: f.x, y: tamY, t: 0, loai: 'chay', co: 1.2 });
+      this.chuGa({ id: this.id++, x: f.x, y: f.y - 360, text: 'Frieza trở lại dạng thường', mau: '#d9b3ff', t: 0 });
+    }
+  }
+
   private gyTrenCam(): boolean {
     return this.nvThay(this.ginyu.x, this.ginyu.y - GY_TAM_CAO, 300, 60);
   }

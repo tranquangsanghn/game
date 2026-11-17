@@ -1,4 +1,4 @@
-// Frieza: quái của thần điện (map `THAN` trong ban-do.ts). Hiện chỉ đi loanh quanh điện thờ (chưa đánh nhau, không bị đánh).
+// Frieza: quái của thần điện (map `THAN` trong ban-do.ts). Hiện đi loanh quanh điện thờ, thấy nhân vật thì dùng chiêu đặc biệt biến thành Golden Frieza (chưa đánh nhau, không bị đánh).
 // Đường đi: chuỗi điểm hình chữ U ôm điện thờ (hông trái → sân trước → hông phải), đều nằm ngoài vật cản thần điện (THAN_VAT) nên đi thẳng giữa hai điểm liền nhau.
 // Mỗi lượt: đứng thở FZ_NGHI giây rồi chọn ngẫu nhiên một điểm khác trên chuỗi, đi lần lượt qua các điểm ở giữa tới đó.
 // File này chỉ có dữ liệu + hàm thuần; Game gọi `capNhatFrieza()` mỗi khung, vẽ ở ve-canvas.ts (`veFrieza()`). Không lưu ván (tải lại thì đứng ở sân trước).
@@ -10,6 +10,31 @@ import { CELL_HP, CELL_SAT, CELL_CHUONG_SAT, CELL_TOC, CELL_HOI, CELL_CHUONG_HOI
 export const SP_FRIEZA: KhungSprite = { atlas: 'assets/game/frieza_atlas.png', atlasW: 480, atlasH: 84, w: 80, h: 84, cot: 6, neoX: 40, neoY: 82 };
 export const FZ_KHUNG = { dung: [0, 1], di: [2, 3, 4, 5] } as const;
 export const FZ_TEN = 'Frieza';
+export const FZ_TEN_VANG = 'Golden Frieza';
+
+/**
+ * Chiêu đặc biệt: biến thành Golden Frieza. Sprite web/public/assets/game/golden_frieza.png (tools/tao-atlas-golden-frieza.py từ sheet người dùng gửi),
+ * 7 khung 512×768 ngang, chân ở y = 750, ảnh vẽ tay (vẽ có làm mịn), quay mặt TRÁI (ngược pixel Frieza).
+ * Khung: 0 đứng thủ thế · 1 khoanh tay tập trung · 2 bùng hào quang · 3 tụ lực trong tay · 4 nâng cầu năng lượng · 5 cầu cực đại · 6 phóng chưởng.
+ * Nhân vật nhìn thấy Frieza (`thay`) mà chiêu đã hồi thì đứng yên biến hình (chạy lần lượt khung 0 → 6 theo FZ_VANG_NHIP),
+ * xong thì ở dạng vàng FZ_VANG_T giây (đứng / đi dùng khung 0, đi nhanh hơn ×FZ_VANG_TOC), rồi trở lại dạng thường và hồi FZ_VANG_HOI giây.
+ */
+export const SP_FRIEZA_VANG: KhungSprite = { atlas: 'assets/game/golden_frieza.png', atlasW: 3584, atlasH: 768, w: 512, h: 768, cot: 7, neoX: 256, neoY: 750 };
+/** Độ to dạng vàng (thân cao ~520 điểm ảnh nguồn → ~310, to hơn dạng thường ~245) */
+export const FZ_VANG_TO = 0.6;
+/** Thời gian từng khung biến hình (giây, theo animation.json của sheet) */
+export const FZ_VANG_NHIP = [0.4, 0.35, 0.3, 0.3, 0.3, 0.45, 0.6];
+export const FZ_VANG_BIEN_T = FZ_VANG_NHIP.reduce((a, b) => a + b, 0);
+/** Khung bùng hào quang / phóng chưởng (Game nổ, rung màn ở các khung này) */
+export const FZ_VANG_AURA = 2;
+export const FZ_VANG_PHONG = 6;
+/** Ở dạng vàng bao lâu (giây), hồi chiêu sau khi trở lại dạng thường */
+export const FZ_VANG_T = 20;
+export const FZ_VANG_HOI = 25;
+/** Dạng vàng: đi nhanh hơn; sát thương ×FZ_VANG_SAT, nhận sát thương ×FZ_VANG_NHAN (dùng khi code chiến đấu của Frieza) */
+export const FZ_VANG_TOC = 1.6;
+export const FZ_VANG_SAT = 2;
+export const FZ_VANG_NHAN = 0.5;
 /** Độ to (nhân khung 80 điểm ảnh; thân cao ~70 → ~245, nhỉnh hơn Mabu / Zinbu) */
 export const FZ_TO = 3.5;
 /** Tốc độ đi bộ thật (px/s; nhân vật đi bộ 460) */
@@ -57,17 +82,61 @@ export interface Frieza {
   t: number;
   /** Máu (khởi đầu FZ_HP) */
   hp: number;
+  /** Đang biến hình: giây đã chạy (< 0 là không biến hình) */
+  bien: number;
+  /** Giây còn ở dạng Golden Frieza (> 0 là đang vàng) */
+  vang: number;
+  /** Giây còn hồi chiêu biến hình */
+  hoiVang: number;
 }
+
+/** Sự kiện của chiêu biến hình trong khung vừa cập nhật (Game hiện chữ, nổ, rung màn) */
+export type SuKienFz = 'batDau' | 'aura' | 'phong' | 'xong' | 'het' | null;
 
 export function taoFrieza(): Frieza {
   const i = 4;
   const p = FZ_DUONG[i]!;
-  return { x: p.x, y: p.y, lat: false, i, dich: i, nghi: 2, t: 0, hp: FZ_HP };
+  return { x: p.x, y: p.y, lat: false, i, dich: i, nghi: 2, t: 0, hp: FZ_HP, bien: -1, vang: 0, hoiVang: 0 };
 }
 
-/** Đi loanh quanh điện thờ */
-export function capNhatFrieza(f: Frieza, dt: number): void {
+/** Khung biến hình ứng với số giây đã chạy */
+function khungBien(t: number): number {
+  let c = 0;
+  for (let k = 0; k < FZ_VANG_NHIP.length; k++) {
+    c += FZ_VANG_NHIP[k]!;
+    if (t < c) return k;
+  }
+  return FZ_VANG_NHIP.length - 1;
+}
+
+/**
+ * Đi loanh quanh điện thờ; `thay` = nhân vật đang nhìn thấy Frieza, `huongX` = x của nhân vật gần nhất (quay mặt về đó lúc biến hình).
+ * Trả sự kiện của chiêu biến hình (nếu có) để Game làm hiệu ứng.
+ */
+export function capNhatFrieza(f: Frieza, dt: number, thay = false, huongX?: number): SuKienFz {
   f.t += dt;
+  let su: SuKienFz = null;
+  if (f.hoiVang > 0) f.hoiVang -= dt;
+  // Đang biến hình: đứng yên chạy hết các khung
+  if (f.bien >= 0) {
+    const k0 = khungBien(f.bien);
+    f.bien += dt;
+    const k1 = khungBien(f.bien);
+    if (k0 < FZ_VANG_AURA && k1 >= FZ_VANG_AURA) su = 'aura';
+    if (k0 < FZ_VANG_PHONG && k1 >= FZ_VANG_PHONG) su = 'phong';
+    if (f.bien >= FZ_VANG_BIEN_T) { f.bien = -1; f.vang = FZ_VANG_T; f.nghi = 1; su = 'xong'; }
+    return su;
+  }
+  if (f.vang > 0) {
+    f.vang -= dt;
+    if (f.vang <= 0) { f.vang = 0; f.hoiVang = FZ_VANG_HOI; su = 'het'; }
+  } else if (thay && f.hoiVang <= 0) {
+    // Chiêu đặc biệt: thấy nhân vật thì biến thành Golden Frieza
+    f.bien = 0;
+    if (huongX !== undefined && Math.abs(huongX - f.x) > 1) f.lat = huongX < f.x;
+    return 'batDau';
+  }
+  const toc = f.vang > 0 ? FZ_TOC * FZ_VANG_TOC : FZ_TOC;
   if (f.nghi > 0) {
     f.nghi -= dt;
     if (f.nghi <= 0) {
@@ -76,13 +145,13 @@ export function capNhatFrieza(f: Frieza, dt: number): void {
       while (Math.abs(d - f.i) < 2) d = Math.floor(Math.random() * FZ_DUONG.length);
       f.dich = d;
     }
-    return;
+    return su;
   }
-  let con = FZ_TOC * dt;
+  let con = toc * dt;
   while (con > 0) {
     if (f.i === f.dich) {
       f.nghi = FZ_NGHI[0] + Math.random() * (FZ_NGHI[1] - FZ_NGHI[0]);
-      return;
+      return su;
     }
     const tiep = f.i + Math.sign(f.dich - f.i);
     const p = FZ_DUONG[tiep]!;
@@ -91,6 +160,17 @@ export function capNhatFrieza(f: Frieza, dt: number): void {
     if (d <= con) { f.x = p.x; f.y = p.y; f.i = tiep; con -= d; }
     else { f.x += (dx / d) * con; f.y += (dy / d) * con; con = 0; }
   }
+  return su;
+}
+
+/** Đang vẽ bằng sprite Golden Frieza (đang biến hình hoặc đang ở dạng vàng) */
+export function fzVang(f: Frieza): boolean {
+  return f.bien >= 0 || f.vang > 0;
+}
+
+/** Khung Golden Frieza hiện tại: đang biến hình thì theo thời gian, dạng vàng thì đứng thủ thế (khung 0) */
+export function fzKhungVang(f: Frieza): number {
+  return f.bien >= 0 ? khungBien(f.bien) : 0;
 }
 
 /** Khung sprite hiện tại */
