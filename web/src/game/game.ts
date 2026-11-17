@@ -2614,9 +2614,10 @@ export class Game {
     if (this.fzView) xep.push({ loai: 'fz', y: fz.y });
     this.banhView = this.tiec.filter((tc) => !tc.vo && trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to) && this.doRo(tc.x, tc.y) > 0);
     for (const tc of this.banhView) xep.push({ loai: 'banh', y: tc.y, tc });
-    this.congView = trong(this.cong.x, this.cong.y - 150 * CONG_TO, 260 * CONG_TO) && this.doRo(this.cong.x, this.cong.y) > 0;
+    // Cổng luôn hiện (không bị sương mù), chỉ lọc theo khung nhìn / khối đất
+    this.congView = trong(this.cong.x, this.cong.y - 150 * CONG_TO, 260 * CONG_TO);
     if (this.congView) xep.push({ loai: 'cong', y: this.cong.y });
-    this.congThanView = trong(THAN_CONG.x, THAN_CONG.y - 150 * CONG_TO, 260 * CONG_TO) && this.doRo(THAN_CONG.x, THAN_CONG.y) > 0;
+    this.congThanView = trong(THAN_CONG.x, THAN_CONG.y - 150 * CONG_TO, 260 * CONG_TO);
     if (this.congThanView) xep.push({ loai: 'cong', y: THAN_CONG.y, than: true });
     this.chuongTiecView = this.chuongTiec.filter((q) => {
       const dai = Math.hypot(q.x1 - q.x0, q.y1 - q.y0);

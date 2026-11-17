@@ -318,7 +318,7 @@
 
 # Nguyên tắc cổng dịch chuyển
 
-- Một cổng dịch chuyển (dẫn tới thần điện, xem mục "Nguyên tắc thần điện") đứng **giữa đảo 4** (`CONG_DAO`, đảo Cell 10 con), vị trí `Game.cong` = `viTriCong(tiec)` (tâm đảo; vòng tiệc của đảo được đặt tránh cổng, ván lưu cũ có vòng tiệc đè tâm đảo thì cổng dời ra phía đối diện bánh; không lưu ván). Sprite `web/public/assets/game/cong_dich_chuyen.png` (`SP_CONG`, 4 khung xoáy 480×320 ngang, neo giữa đáy, to `CONG_TO` = 2, `CONG_FPS` = 6), tách nền trắng từ ảnh người dùng gửi bằng `tools/tao-atlas-cong.py`. Vẽ `veCong()` (quầng tím dưới chân bằng gradient), lọc `trong()` trước rồi sương mù `doRo()` (`congView`), xếp theo y trong `xep` loại `'cong'`.
+- Một cổng dịch chuyển (dẫn tới thần điện, xem mục "Nguyên tắc thần điện") đứng **giữa đảo 4** (`CONG_DAO`, đảo Cell 10 con), vị trí `Game.cong` = `viTriCong(tiec)` (tâm đảo; vòng tiệc của đảo được đặt tránh cổng, ván lưu cũ có vòng tiệc đè tâm đảo thì cổng dời ra phía đối diện bánh; không lưu ván). Sprite `web/public/assets/game/cong_dich_chuyen.png` (`SP_CONG`, 4 khung xoáy 480×320 ngang, neo giữa đáy, to `CONG_TO` = 1,6, `CONG_FPS` = 6), tách nền trắng từ ảnh người dùng gửi bằng `tools/tao-atlas-cong.py`. Vẽ `veCong()` (quầng tím dưới chân bằng gradient; sprite dời xuống `CONG_CHIM` = 40 điểm ảnh sprite rồi cắt phần dưới mặt đất cho cổng như cắm chân xuống đất), **luôn hiện, không bị sương mù** (cả cổng thần điện): chỉ lọc `trong()` (khung nhìn + khối đất) (`congView` / `congThanView`), xếp theo y trong `xep` loại `'cong'`.
 
 # Nguyên tắc thần điện (map của Frieza)
 

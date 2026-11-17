@@ -3,7 +3,7 @@ import { HN } from './do-hieu-nang';
 import type { Game, Ga, TrangTri, Cuu, CauTron, MbHinh } from './game';
 import type { KhungSprite } from './sprite';
 import { CELL_HP, CELL_SO_DAO, CELL_TEN, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
-import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T, SP_CONG, CONG_TO, CONG_FPS } from './tiec';
+import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T, SP_CONG, CONG_TO, CONG_FPS, CONG_CHIM } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { MABU } from './nhan-vat-du-lieu';
 import { SP_FRIEZA, FZ_TEN, FZ_TO, FZ_KHUNG, fzKhung } from './frieza';
@@ -983,10 +983,7 @@ export class VeCanvas {
         else this.veBanh(ctx, c, o.tc);
         ctx.globalAlpha = 1;
       } else if (o.loai === 'cong') {
-        const cg = o.than ? THAN_CONG : c.cong;
-        ctx.globalAlpha = c.doRo(cg.x, cg.y);
-        this.veCong(ctx, c, cg);
-        ctx.globalAlpha = 1;
+        this.veCong(ctx, c, o.than ? THAN_CONG : c.cong);
       }
       else if (o.loai === 'mb') this.veMayBay(ctx, c, c.mbView, c.SP_MB, true);
       else if (o.loai === 'pt') this.veMayBay(ctx, c, c.ptView, c.SP_PT, false);
@@ -1711,7 +1708,12 @@ export class VeCanvas {
     ctx.arc(0, 0, R, 0, TAU);
     ctx.fill();
     ctx.restore();
+    // Chìm chân xuống đất: dời sprite xuống CONG_CHIM rồi cắt phần dưới mặt đất (clip trong save / restore)
+    ctx.beginPath();
+    ctx.rect(-300 * CONG_TO, -400 * CONG_TO, 600 * CONG_TO, 400 * CONG_TO);
+    ctx.clip();
     ctx.scale(CONG_TO, CONG_TO);
+    ctx.translate(0, CONG_CHIM);
     this.sprite(ctx, SP_CONG, Math.floor(c.t * CONG_FPS) % 4, false, true);
     ctx.restore();
   }
