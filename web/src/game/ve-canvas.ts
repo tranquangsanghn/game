@@ -6,7 +6,7 @@ import { CELL_HP, CELL_SO_DAO, CELL_TEN, capCuaDao, cellK, CELL_CHET_T, CELL_KHU
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T, SP_CONG, CONG_TO, CONG_FPS, CONG_CHIM } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { MABU } from './nhan-vat-du-lieu';
-import { SP_FRIEZA, SP_FRIEZA_VANG, FZ_TEN, FZ_TEN_VANG, FZ_TO, FZ_VANG_TO, FZ_VANG_AURA, FZ_VANG_T, FZ_KHUNG, fzKhung, fzVang, fzKhungVang } from './frieza';
+import { SP_FRIEZA, SP_FRIEZA_VANG, FZ_TEN, FZ_TEN_VANG, FZ_TO, FZ_VANG_TO, FZ_VANG_AURA, FZ_VANG_T, FZ_KHUNG, FZ_CHET_T, FZ_DANH_T, FZ_CHUONG_NAP, fzKhung, fzVang, fzKhungVang, fzHpMax, fzGap } from './frieza';
 import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_LO_LUNG } from './ginyu';
 import { DAO, doSau, duongBo, NUI, TG, THAN, THAN_CONG, THAN_DA_GIAC, THAN_VAT_TG, thanVo } from './ban-do';
 
@@ -1016,6 +1016,11 @@ export class VeCanvas {
       this.veMauGinyu(ctx, c);
       ctx.globalAlpha = 1;
     }
+    if (c.fzView && !c.frieza.chet) {
+      ctx.globalAlpha = c.doRo(c.frieza.x, c.frieza.y);
+      this.veMauFz(ctx, c);
+      ctx.globalAlpha = 1;
+    }
 
     HN.moc('ve.gaBayTiecThanh');
     // Đạn / chưởng
@@ -1571,7 +1576,28 @@ export class VeCanvas {
   private veFrieza(ctx: CanvasRenderingContext2D, c: Game): void {
     const f = c.frieza;
     ctx.save();
+    // Bị hạ: nằm ngang rồi mờ dần
+    if (f.chet) ctx.globalAlpha *= Math.max(0, 1 - f.tChet / FZ_CHET_T);
     ctx.translate(f.x, f.y);
+    if (f.chet) ctx.rotate((f.lat ? -1 : 1) * Math.min(1, f.tChet * 4) * Math.PI / 2);
+    // Ra đòn: lao người về phía trước rồi lùi lại
+    if (f.danh > 0) ctx.translate((f.lat ? -1 : 1) * Math.sin((1 - f.danh / FZ_DANH_T) * Math.PI) * 50, 0);
+    // Vận chưởng: quả cầu năng lượng lớn dần ở tay (tím; dạng vàng vàng), gradient không shadowBlur
+    if (f.nap) {
+      const vang = f.vang > 0;
+      const r = 20 + 40 * Math.min(1, f.nap.t / FZ_CHUONG_NAP);
+      const hx = (f.lat ? -1 : 1) * (vang ? 90 : 60), hy = -(vang ? 200 : 110);
+      const gr = ctx.createRadialGradient(hx, hy, 2, hx, hy, r);
+      gr.addColorStop(0, '#ffffff');
+      gr.addColorStop(0.4, vang ? 'rgba(255,220,80,0.9)' : 'rgba(200,120,255,0.9)');
+      gr.addColorStop(1, 'rgba(160,60,255,0)');
+      ctx.fillStyle = gr;
+      ctx.beginPath();
+      ctx.arc(hx, hy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Trúng đòn: nháy (nhấp nháy độ mờ, không dùng filter)
+    if (f.nhay > 0 && Math.floor(f.nhay * 40) % 2 === 0) ctx.globalAlpha *= 0.45;
     if (fzVang(f)) {
       const k = fzKhungVang(f);
       // Quầng vàng dưới chân (gradient, không shadowBlur vì sprite to); bùng mạnh từ khung hào quang, nhấp nháy khi ở dạng vàng
@@ -1691,6 +1717,31 @@ export class VeCanvas {
   }
 
   // Thanh máu trên đầu Cell: vẽ ở lượt riêng sau mọi vật (như thanh máu gà tướng) để không bị Cell / cây / chưởng phía trước che mất
+  /** Thanh máu Frieza trên đầu (tím, dạng vàng vàng), kèm số máu; dạng vàng máu tối đa gấp đôi */
+  private veMauFz(ctx: CanvasRenderingContext2D, c: Game): void {
+    const f = c.frieza;
+    const toiDa = Math.max(fzHpMax(f), f.hp);
+    ctx.save();
+    ctx.translate(f.x, f.y - (fzVang(f) ? 380 : 270));
+    ctx.scale(3, 3);
+    tronCD(ctx, -34, -6, 68, 12, 6);
+    ctx.fillStyle = 'rgba(13,27,18,0.75)';
+    ctx.fill();
+    tronCD(ctx, -31, -3, Math.min(62, Math.max(0, (62 * f.hp) / toiDa)), 6, 3);
+    ctx.fillStyle = f.vang > 0 ? '#ffd23f' : '#b46bff';
+    ctx.fill();
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+    const chu = `${Math.ceil(f.hp)}${fzGap(f) > 1 ? '  ⚔x2' : ''}`;
+    ctx.strokeText(chu, 0, -9);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(chu, 0, -9);
+    ctx.restore();
+  }
+
   private veMauCell(ctx: CanvasRenderingContext2D, c: Game, ce: Cell): void {
     const k = cellK(ce.cap);
     // Thanh máu trên đầu (kiểu như gà tướng) chỉ có ở Cell đỏ (cấp cao nhất), con đi ăn đậu thần (`vai: 'an'` hoặc đã từng là nó,
@@ -2181,8 +2232,8 @@ export class VeCanvas {
     let mo: boolean;
     let so: number | string | null = null;
     if (c.trenThan) {
-      ten = fzVang(c.frieza) ? FZ_TEN_VANG : FZ_TEN; mo = false;
-      if (c.frieza.vang > 0) so = `✨ ${Math.ceil(c.frieza.vang)}s / ${FZ_VANG_T}s`;
+      ten = fzVang(c.frieza) ? FZ_TEN_VANG : FZ_TEN; mo = c.frieza.chet;
+      if (!c.frieza.chet) so = c.frieza.vang > 0 ? `✨ ${Math.ceil(c.frieza.vang)}s / ${FZ_VANG_T}s` : c.hopThe ? '⚔ Super Bư đánh được!' : '🛡 Hợp thể Super Bư mới đánh được';
     }
     else if (c.trenNui) {
       ten = GY_TEN; mo = c.ginyu.chet && !c.ginyu.choHoi;

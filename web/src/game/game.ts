@@ -7,7 +7,7 @@ import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
-import { taoFrieza, capNhatFrieza, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, type Frieza } from './frieza';
+import { taoFrieza, capNhatFrieza, fzDiToi, fzVeDuong, fzGap, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -265,6 +265,8 @@ export interface TrangThaiLuu {
   cayDo?: [number, number, number, number?][];
   /** Chỉ số cây cối / vật dụng thần điện đã bị chưởng phá (THAN_VAT) */
   thanVo?: number[];
+  /** Frieza: máu (dạng thường) và đã bị hạ chưa (thiếu = Frieza mới) */
+  frieza?: { hp: number; chet: boolean };
   nguoi: (Omit<NguoiChoi, 'nv' | 'nham' | 'ngam' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
 }
 
@@ -827,6 +829,7 @@ const LE_BAY: Le = { x: 70, tren: 150, duoi: 60 };
 const LE_VP: Le = { x: 60, tren: 60, duoi: 20 };
 // Bóng ma Goku (biến `ginyu`, cao ~230 kể cả lơ lửng, rộng ~170)
 const LE_GY: Le = { x: 100, tren: 230, duoi: 20 };
+const LE_FZ: Le = { x: 100, tren: 260, duoi: 20 };
 // Trứng thường (cao ~45) và trứng đỏ (to gấp TRUNG_DB_TO, có vầng sáng)
 const LE_TRUNG: Le = { x: 30, tren: 50, duoi: 10 };
 const LE_TRUNG_DB: Le = { x: 200, tren: 300, duoi: 40 };
@@ -1363,6 +1366,7 @@ export class Game {
       vuon: { ngu: this.vuonNgu, to: this.toTrung, toDe: this.toDe, daNoPhu: this.daNoPhu, choVua: this.choVua },
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       thanVo: thanVo.flatMap((v, i) => (v ? [i] : [])),
+      frieza: { hp: Math.min(FZ_HP, Math.max(1, this.frieza.hp / fzGap(this.frieza))), chet: this.frieza.chet },
       nguoi: this.nguoi.map((n, p) => {
         const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
         void nham; void ngam; void cuaCan; void dich;
@@ -1409,6 +1413,8 @@ export class Game {
     this.mbCatVuon = false;
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const i of d.thanVo ?? []) if (i >= 0 && i < thanVo.length) thanVo[i] = true;
+    this.frieza = taoFrieza();
+    if (d.frieza) { this.frieza.hp = d.frieza.hp; this.frieza.chet = d.frieza.chet; if (d.frieza.chet) this.frieza.tChet = FZ_CHET_T; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
     // Đội hình theo nhân vật đã lưu (ván lưu cũ thiếu ki: ô trái Mabu, ô phải Zinbu)
     const kiLuu = d.nguoi.map((o, p) => (o.vang ? null : o.ki ?? p));
@@ -2168,6 +2174,11 @@ export class Game {
       (d.da ??= []).push(-1);
       if (this.trungGy(d.p, d.sat)) this.dungKhung(0.03);
     }
+    // Frieza (đánh dấu bằng id -2)
+    if (!this.frieza.chet && !d.da?.includes(-2) && this.fzGan(vt.x, vt.y, CHUONG_XUYEN + FZ_BK)) {
+      (d.da ??= []).push(-2);
+      if (this.trungFz(d.p, d.sat)) this.dungKhung(0.03);
+    }
     // Trên núi đá Mabu / Zinbu đánh được nhau (đánh dấu trong `da` bằng -10 - ô)
     if (this.danTrungDongDoi(d, vt.x, vt.y, CHUONG_XUYEN + 70)) this.dungKhung(0.03);
   }
@@ -2291,6 +2302,13 @@ export class Game {
         }
         return;
       }
+      if (!this.frieza.chet && this.fzGan(x, y, FZ_BK * 1.3)) {
+        if (this.trungFz(p, d.sat) && (d.nhom === 0 || d.nhom === 1)) {
+          this.hoiMana(this.nguoi[p], MANA_DAM);
+          if (d.nhom === 1) this.dungKhung(0.04);
+        }
+        return;
+      }
       // Trên núi đá: đòn trúng đồng đội (Mabu đánh được Zinbu và ngược lại)
       if (this.danTrungDongDoi(d, x, y, 110)) {
         if (d.nhom === 1) this.dungKhung(0.04);
@@ -2376,6 +2394,8 @@ export class Game {
     ceTrung.forEach((c) => this.trungCell(c, d.p, d.sat));
     const gyTrung = !this.ginyu.chet && !d.da?.includes(-1) && this.gyGan(d.x1, d.y1, bk + GY_BK);
     if (gyTrung) this.trungGy(d.p, d.sat);
+    const fzTrung = !this.frieza.chet && !d.da?.includes(-2) && this.fzGan(d.x1, d.y1, bk + FZ_BK);
+    if (fzTrung) this.trungFz(d.p, d.sat);
     const dongDoi = this.danTrungDongDoi(d, d.x1, d.y1, bk + 60);
     if (d.vg) this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 1, vg: true });
     else if (d.ma || d.sb) {
@@ -2388,7 +2408,7 @@ export class Game {
     }
     this.rungMan(0.15, 9);
     this.dungKhung(0.05);
-    if (!trung.length && !ceTrung.length && !gyTrung && !dongDoi && !d.da?.length) {
+    if (!trung.length && !ceTrung.length && !gyTrung && !fzTrung && !dongDoi && !d.da?.length) {
       this.nguoi[d.p].combo = 0;
       this.nguoi[d.p].banTruot++;
     }
@@ -2412,8 +2432,10 @@ export class Game {
     // Ginyu: đủ giết thì thành thanh socola, không thì hoá socola GY_SOCOLA_T giây (đứng yên)
     const gyTrung = !this.ginyu.chet && this.gyGan(d.x1, d.y1, BAN_KINH_SOCOLA + GY_BK * 0.5);
     if (gyTrung) this.trungGy(d.p, SAT_SOCOLA, false, true);
+    const fzTrung = !this.frieza.chet && this.fzGan(d.x1, d.y1, BAN_KINH_SOCOLA + FZ_BK * 0.5);
+    if (fzTrung) this.trungFz(d.p, SAT_SOCOLA);
     const dongDoi = this.danTrungDongDoi(d, d.x1, d.y1, BAN_KINH_SOCOLA, SAT_SOCOLA);
-    if (!trung.length && !ceTrung.length && !gyTrung && !dongDoi) {
+    if (!trung.length && !ceTrung.length && !gyTrung && !fzTrung && !dongDoi) {
       this.nguoi[d.p].combo = 0;
       this.nguoi[d.p].banTruot++;
     }
@@ -2646,7 +2668,7 @@ export class Game {
     if (this.gyView) xep.push({ loai: 'gy', y: gy.y });
     // Frieza: khung nhìn trước, sương mù sau
     const fz = this.frieza;
-    this.fzView = (fz.bien >= 0 || fz.vang > 0 ? trong(fz.x, fz.y - 230, 330) : trong(fz.x, fz.y - 120, 220)) && this.doRo(fz.x, fz.y) > 0;
+    this.fzView = (!fz.chet || fz.tChet < FZ_CHET_T) && (fz.bien >= 0 || fz.vang > 0 ? trong(fz.x, fz.y - 230, 330) : trong(fz.x, fz.y - 120, 220)) && this.doRo(fz.x, fz.y) > 0;
     if (this.fzView) xep.push({ loai: 'fz', y: fz.y });
     this.banhView = this.tiec.filter((tc) => !tc.vo && trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to) && this.doRo(tc.x, tc.y) > 0);
     for (const tc of this.banhView) xep.push({ loai: 'banh', y: tc.y, tc });
@@ -3670,6 +3692,14 @@ export class Game {
         this.trungGy(p, SAT_MAY);
       }
     }
+    const fz = this.frieza;
+    if (!fz.chet && (fz.chamMay ?? 0) <= this.t) {
+      const tam = this.tamFz();
+      if (((tam.x - n.x) / (MAY_RX + 60)) ** 2 + ((tam.y - (n.y - MAY_NANG)) / (MAY_RY + 60)) ** 2 < 1) {
+        fz.chamMay = this.t + MAY_NHIP;
+        this.trungFz(p, SAT_MAY);
+      }
+    }
   }
 
   private comboSocolaMay(g: Ga, p: number): void {
@@ -3974,19 +4004,164 @@ export class Game {
   }
 
   /** Đang được nhân vật nhìn thấy: chỉ khi đó mới bắt đầu khiêu khích / lao / ra đòn */
-  /** Frieza đi loanh quanh điện thờ + chiêu đặc biệt biến thành Golden Frieza (chỉ bắt đầu khi nhân vật nhìn thấy; chữ / nổ qua chuGa() / vetGa()) */
+  // ─── Frieza (thần điện) ───
+  // Không ai thì đi tuần quanh điện thờ; nhân vật trên thần điện nhìn thấy Frieza thì Frieza đuổi đánh người gần nhất (đấm khi chạm, xa thì vận chưởng),
+  // cứ ~10s biến thành Golden Frieza 15s (mọi chỉ số ×2). Mabu / Zinbu chưa hợp thể đánh không mất máu: phải hợp thể Super Bư (chỉ làm được trên thần điện).
+
+  /** Tâm thân (trúng đòn, chữ bay) */
+  tamFz() {
+    const f = this.frieza;
+    return { x: f.x, y: f.y - (f.bien >= 0 || f.vang > 0 ? FZ_TAM_CAO_VANG : FZ_TAM_CAO) };
+  }
+
+  private fzGan(x: number, y: number, r: number): boolean {
+    const t = this.tamFz();
+    const dx = x - t.x, dy = y - t.y;
+    return Math.abs(dx) < r && Math.abs(dy) < r && dx * dx + dy * dy < r * r;
+  }
+
+  /** Mục tiêu của Frieza: nhân vật gần nhất đang đứng trên thần điện (không ẩn / gục / mây / trong máy bay / bị nhập) */
+  private fzMuc(): NguoiChoi | null {
+    const f = this.frieza;
+    let kq: NguoiChoi | null = null, dMin = Infinity;
+    for (const n of this.nguoi) {
+      if (n.vang || this.khuat(n) || !trongThan(n.x, n.y)) continue;
+      const d = Math.hypot(n.x - f.x, n.y - f.y);
+      if (d < dMin) { dMin = d; kq = n; }
+    }
+    return kq;
+  }
+
+  /**
+   * Đòn của p trúng Frieza. Chưa hợp thể (không phải người mang thân Super Bư) thì không xước (chữ nhắc hợp thể); Super Bư thì mất máu,
+   * qua giáp FZ_GIAP, dạng vàng phòng thủ gấp đôi (nhận ÷2). Trả true nếu mất máu.
+   */
+  private trungFz(p: number, sat: number): boolean {
+    const f = this.frieza;
+    if (f.chet) return false;
+    const n = this.nguoi[p];
+    const t = this.tamFz();
+    if (this.hopThe?.chu !== p) {
+      if (this.t - f.chuMien > 0.7) {
+        f.chuMien = this.t;
+        this.chuGa({ id: this.id++, x: t.x, y: t.y - 140, text: '🛡 KHÔNG XƯỚC! HỢP THỂ SUPER BƯ MỚI ĐÁNH ĐƯỢC', mau: '#d9b3ff', t: 0 });
+      }
+      return false;
+    }
+    const mat = Math.max(1, Math.round(((sat * (n?.suc ?? 1) + (n?.satDau ?? 0)) * (1 - FZ_GIAP)) / fzGap(f)));
+    f.hp -= mat;
+    f.nhay = 0.15;
+    this.chu.push({ id: this.id++, x: t.x + ngauNhien(-30, 30), y: t.y - 100, text: `-${mat}`, mau: '#ffd23f', t: 0 });
+    if (n) { n.combo++; n.banTrung++; }
+    if (f.hp <= 0) this.fzChet(p);
+    return true;
+  }
+
+  /** Frieza bị hạ: ngã mờ dần, 3 vụ nổ, rung màn, điểm, cả đội bắn chưởng lên trời. Không hồi sinh */
+  private fzChet(p: number): void {
+    const f = this.frieza;
+    f.chet = true;
+    f.hp = 0;
+    f.tChet = 0;
+    f.bien = -1;
+    f.vang = 0;
+    f.nap = undefined;
+    f.danh = 0;
+    const t = this.tamFz();
+    for (let k = 0; k < 3; k++) this.vet.push({ id: this.id++, x: t.x + ngauNhien(-90, 90), y: t.y + ngauNhien(-80, 80), t: -k * 0.15, loai: 'chay', co: 1.6 });
+    this.rungMan(0.5, 14);
+    this.dungKhung(0.18);
+    this.am.phat('meChet');
+    this.chu.push({ id: this.id++, x: t.x, y: t.y - 220, text: '💥 FRIEZA ĐÃ BỊ HẠ!', mau: '#ffd23f', t: 0 });
+    this.congDiem(p, FZ_DIEM, t.x, t.y - 160, `+${FZ_DIEM}`);
+    this.nguoi.forEach((_, q) => this.chuongLenTroi(q));
+  }
+
+  /** Frieza đánh nhau với mục tiêu `muc` (null = hết mục tiêu, chỉ làm nốt chưởng đang vận) */
+  private fzChien(muc: NguoiChoi | null, dt: number): void {
+    const f = this.frieza;
+    const g = fzGap(f);
+    f.nghi = 0.1;
+    if (f.nap) {
+      f.nap.t += dt;
+      f.lat = f.nap.x < f.x;
+      if (f.nap.t < FZ_CHUONG_NAP) return;
+      // Phóng chưởng: chùm thẳng về chỗ mục tiêu lúc bắt đầu vận (chạy ngang để né), dạng vàng chùm vàng, thường chùm tím
+      const vang = f.vang > 0;
+      const x0 = f.x + (f.lat ? -1 : 1) * (vang ? 90 : 60), y0 = f.y - (vang ? 200 : 110);
+      const dx = f.nap.x - x0, dy = f.nap.y - y0, d = Math.hypot(dx, dy) || 1;
+      const L = Math.min(FZ_CHUONG_TAM, d + 250);
+      this.chuongTiec.push({ id: this.id++, k: vang ? 5 : 4, loai: vang ? 1 : 2, x0, y0, x1: x0 + (dx / d) * L, y1: y0 + (dy / d) * L, t: 0, sat: FZ_CHUONG_SAT * g, fz: true });
+      this.vetGa({ id: this.id++, x: x0, y: y0, t: 0, loai: 'chay', co: 0.6 });
+      f.nap = undefined;
+      f.choChuong = FZ_CHUONG_HOI / g;
+      return;
+    }
+    if (!muc) return;
+    const dx = muc.x - f.x, dy = muc.y - f.y, d = Math.hypot(dx, dy);
+    if (Math.abs(dx) > 5) f.lat = dx < 0;
+    if (f.danh > 0) return;
+    if (d > FZ_CHUONG_XA && d < FZ_CHUONG_TAM && f.choChuong <= 0) {
+      f.nap = { t: 0, x: muc.x, y: muc.y - 70 };
+      this.chuGa({ id: this.id++, x: f.x, y: f.y - 300, text: f.vang > 0 ? '✨ GOLDEN FRIEZA VẬN CHƯỞNG!' : '💜 FRIEZA VẬN CHƯỞNG!', mau: f.vang > 0 ? '#ffd23f' : '#d9b3ff', t: 0 });
+      return;
+    }
+    if (d <= FZ_CHAM) {
+      if (f.choDanh <= 0) {
+        f.choDanh = FZ_HOI / g;
+        f.danh = FZ_DANH_T;
+        this.vetGa({ id: this.id++, x: muc.x, y: muc.y - 80, t: 0, loai: 'no' });
+        this.nhanSatThuong(muc, FZ_SAT * g);
+      }
+      return;
+    }
+    f.nghi = 0;
+    fzDiToi(f, muc.x, muc.y, FZ_TOC_DANH * g, dt);
+  }
+
+  /** Chưởng của Frieza tới nơi: ai (không ẩn / gục / mây) nằm trên chùm thì trúng (vẫn né / giảm 50%); không bắn máy bay */
+  private chuongFzTrung(q: ChuongTiec): void {
+    const rong = CELL_CHUONG_RONG * q.k;
+    const vx = q.x1 - q.x0, vy = q.y1 - q.y0, L2 = vx * vx + vy * vy || 1;
+    for (const n of this.nguoi) {
+      if (n.vang || this.khuat(n)) continue;
+      const px = n.x, py = n.y - 70;
+      const u = Math.max(0, Math.min(1, ((px - q.x0) * vx + (py - q.y0) * vy) / L2));
+      if (Math.hypot(px - (q.x0 + vx * u), py - (q.y0 + vy * u)) > rong) continue;
+      this.nhanSatThuong(n, q.sat!);
+    }
+  }
+
+  /** Frieza: tự hồi máu, đi tuần / đánh nhau, chiêu đặc biệt biến thành Golden Frieza (chỉ bắt đầu khi nhân vật nhìn thấy; chữ / nổ qua chuGa() / vetGa()) */
   private capNhatFz(dt: number): void {
     const f = this.frieza;
+    if (f.chet) { f.tChet += dt; return; }
+    f.nhay = Math.max(0, f.nhay - dt);
+    f.danh = Math.max(0, f.danh - dt);
+    f.choDanh -= dt;
+    f.choChuong -= dt;
+    const max = fzHpMax(f);
+    if (f.hp < max && f.bien < 0) f.hp = Math.min(max, f.hp + FZ_HOI_MAU * fzGap(f) * dt);
     const cao = f.bien >= 0 || f.vang > 0 ? 768 * FZ_VANG_TO * 0.4 : 120;
     const thay = this.nvThay(f.x, f.y - cao, 300, 60);
-    let gan: NguoiChoi | null = null;
-    let dMin = Infinity;
-    for (const n of this.nguoi) {
-      if (n.vang || n.het) continue;
-      const d = Math.hypot(n.x - f.x, n.y - f.y);
-      if (d < dMin) { dMin = d; gan = n; }
+    // Chiêu / đánh nhau chỉ khi nhân vật nhìn thấy Frieza (đang dở chưởng thì làm nốt)
+    const muc = thay ? this.fzMuc() : null;
+    if (muc && !f.chien) {
+      f.chien = true;
+      this.chuGa({ id: this.id++, x: f.x, y: f.y - 360, text: '⚔ FRIEZA XUẤT TRẬN!', mau: '#d9b3ff', t: 0 });
+    } else if (!muc && f.chien && f.bien < 0 && !f.nap) fzVeDuong(f);
+    let gan: NguoiChoi | null = muc;
+    if (!gan) {
+      let dMin = Infinity;
+      for (const n of this.nguoi) {
+        if (n.vang || n.het) continue;
+        const d = Math.hypot(n.x - f.x, n.y - f.y);
+        if (d < dMin) { dMin = d; gan = n; }
+      }
     }
-    const su = capNhatFrieza(f, dt, thay, gan?.x);
+    const su = capNhatFrieza(f, dt, thay && !f.nap && f.danh <= 0, gan?.x);
+    if (f.chien && f.bien < 0) this.fzChien(muc, dt);
+    giuTrongMap(f, LE_FZ, false, 'dao');
     if (!su) return;
     const tamY = f.y - 768 * FZ_VANG_TO * 0.4;
     if (su === 'batDau') {
@@ -4000,7 +4175,7 @@ export class Game {
       this.vetGa({ id: this.id++, x: f.x, y: f.y, t: 0, loai: 'bui' });
       if (this.nvThay(f.x, tamY, 300, 60)) this.rungMan(0.45, 14);
     } else if (su === 'xong') {
-      this.chuGa({ id: this.id++, x: f.x, y: f.y - 420, text: '👑 GOLDEN FRIEZA!', mau: '#ffd23f', t: 0 });
+      this.chuGa({ id: this.id++, x: f.x, y: f.y - 420, text: '👑 GOLDEN FRIEZA! MỌI CHỈ SỐ x2', mau: '#ffd23f', t: 0 });
     } else if (su === 'het') {
       this.vetGa({ id: this.id++, x: f.x, y: tamY, t: 0, loai: 'chay', co: 1.2 });
       this.chuGa({ id: this.id++, x: f.x, y: f.y - 360, text: 'Frieza trở lại dạng thường', mau: '#d9b3ff', t: 0 });
@@ -5194,7 +5369,7 @@ export class Game {
       q.t += dt * (q.cap === 4 ? CELL_DO_NHANH : 1);
       if (q.t < TIEC_CHUONG_T) continue;
       this.vetGa({ id: this.id++, x: q.x1, y: q.y1, t: 0, loai: 'chay', co: q.sat ? 0.6 : 0.35 });
-      if (q.sat) this.chuongCellTrung(q);
+      if (q.sat) { if (q.fz) this.chuongFzTrung(q); else this.chuongCellTrung(q); }
       // Chưởng của con đi ăn đậu tới cây: cây đổ, rơi đậu thần
       const cay = q.cay !== undefined ? this.trangTri[q.cay] : undefined;
       if (cay && cay.doLuc === undefined) this.doCay(cay, q.x1 - q.x0);
@@ -6065,7 +6240,8 @@ export class Game {
     const [a, b] = this.nguoi;
     if (!a || !b || this.hopThe || a.ki + b.ki !== 1 || a.ki === b.ki) return false;
     const tot = (n: NguoiChoi, p: number) => !n.vang && !n.het && !n.bay && !n.nv.laMay && !n.may.dang && !n.nv.khoa && !this.trongMb(p) && !this.trongCau(p);
-    return tot(a, 0) && tot(b, 1) && Math.hypot(a.x - b.x, a.y - b.y) <= HOP_THE_GAN;
+    // Chỉ hợp thể được trên thần điện (tháp của Frieza): cả hai phải đứng trên thần điện
+    return tot(a, 0) && tot(b, 1) && trongThan(a.x, a.y) && trongThan(b.x, b.y) && Math.hypot(a.x - b.x, a.y - b.y) <= HOP_THE_GAN;
   }
 
   /** Chữ gợi ý (chỉ trên đầu người còn đứng đầu tiên): đang chờ hồi hợp thể, hoặc đã sẵn sàng (đứng gần nhau) */
@@ -6074,6 +6250,7 @@ export class Game {
     const [a, b] = this.nguoi;
     if (!a || !b || a.ki + b.ki !== 1 || a.ki === b.ki || a.vang || b.vang) return null;
     if (p !== this.nguoi.findIndex((n) => !n.het)) return null;
+    if (!trongThan(a.x, a.y) || !trongThan(b.x, b.y)) return null;
     if (this.hopTheHoi > 0) return `🔄 Hợp thể sau ${Math.ceil(this.hopTheHoi)}s`;
     return this.hopTheDuoc() ? '✨ Cùng bấm 1 nút: HỢP THỂ!' : null;
   }
@@ -6086,7 +6263,7 @@ export class Game {
     if (this.hopThe) return;
     if (this.hopTheHoi > 0) {
       const [m, n] = this.nguoi;
-      if (m && n && Math.hypot(m.x - n.x, m.y - n.y) <= HOP_THE_GAN) this.chu.push({ id: this.id++, x: (m.x + n.x) / 2, y: (m.y + n.y) / 2 - 300, text: `⏳ CHƯA HỢP THỂ ĐƯỢC: CHỜ ${Math.ceil(this.hopTheHoi)}s`, mau: '#ffd23f', t: 0 });
+      if (m && n && trongThan(m.x, m.y) && trongThan(n.x, n.y) && Math.hypot(m.x - n.x, m.y - n.y) <= HOP_THE_GAN) this.chu.push({ id: this.id++, x: (m.x + n.x) / 2, y: (m.y + n.y) / 2 - 300, text: `⏳ CHƯA HỢP THỂ ĐƯỢC: CHỜ ${Math.ceil(this.hopTheHoi)}s`, mau: '#ffd23f', t: 0 });
       return;
     }
     if (this.hopTheDuoc()) this.batDauHopThe();
