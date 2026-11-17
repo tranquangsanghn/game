@@ -38,6 +38,31 @@ export const CHUONG_LOAI = [
   { atlas: 'assets/game/cell_chuong_tim.png', w: 114, h: 44, bw: 12, nk0: 22, nk1: 100, hx: 104, tayX: 20, tayY: 25, ti: 1 },
 ] as const;
 
+/** Cổng dịch chuyển (chỉ để trang trí, chưa có tác dụng): đặt giữa đảo `CONG_DAO` (đảo Cell 10 con); atlas 4 khung xoáy (khung 480×320, neo giữa đáy),
+ *  tách nền trắng từ ảnh người dùng gửi bằng tools/tao-atlas-cong.py. Vẽ `veCong()` trong ve-canvas.ts, xếp theo y loại 'cong'. */
+export const SP_CONG: KhungSprite = { atlas: 'assets/game/cong_dich_chuyen.png', atlasW: 1920, atlasH: 320, w: 480, h: 320, cot: 4, neoX: 240, neoY: 310 };
+export const CONG_DAO = 4;
+export const CONG_TO = 2;
+export const CONG_FPS = 6;
+/** Khoảng trống tối thiểu giữa vòng tiệc và tâm cổng (nửa bề rộng cổng + lề) */
+const CONG_CACH = 240 * CONG_TO + 250;
+/** Vị trí cổng: tâm đảo CONG_DAO; ván lưu cũ có vòng tiệc đè lên tâm đảo thì dời cổng ra phía đối diện bánh */
+export function viTriCong(tiec: Tiec[]): { x: number; y: number } {
+  const d = DAO[CONG_DAO]!;
+  const tc = tiec.find((t) => t.dao === CONG_DAO);
+  if (!tc) return { x: d.x, y: d.y };
+  const kc = Math.hypot(d.x - tc.x, d.y - tc.y), can = tc.bk + CONG_CACH;
+  if (kc >= can) return { x: d.x, y: d.y };
+  const ux = kc > 1 ? (d.x - tc.x) / kc : 0, uy = kc > 1 ? (d.y - tc.y) / kc : 1;
+  // thử dời theo hướng ra xa bánh, xoay dần nếu rơi xuống biển
+  for (let i = 0; i < 12; i++) {
+    const g = Math.atan2(uy, ux) + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * 0.4;
+    const x = tc.x + Math.cos(g) * can, y = tc.y + Math.sin(g) * can;
+    if (doSau(x, y) > 500 && daoCua(x, y) === CONG_DAO) return { x, y };
+  }
+  return { x: d.x, y: d.y };
+}
+
 export interface Tiec {
   dao: number; x: number; y: number; on: boolean; t: number;
   /** độ to bánh (nhân khung) và bán kính vòng quanh bánh */
@@ -77,6 +102,8 @@ export function taoTiec(cell: Cell[]): Tiec[] {
         const x = cx + Math.cos(g) * bk, y = cy + Math.sin(g) * bk;
         if (doSau(x, y) < 220 || daoCua(x, y) !== dao) return false;
       }
+      // Đảo có cổng dịch chuyển: vòng tiệc không đè lên cổng (giữa đảo)
+      if (dao === CONG_DAO && Math.hypot(cx - d.x, cy - d.y) < bk + CONG_CACH) return false;
       return doSau(cx, cy) > 220;
     };
     let tam = { x: d.x, y: d.y }, bk = bk0, xong = false;

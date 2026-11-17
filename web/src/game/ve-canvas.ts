@@ -3,7 +3,7 @@ import { HN } from './do-hieu-nang';
 import type { Game, Ga, TrangTri, Cuu, CauTron, MbHinh } from './game';
 import type { KhungSprite } from './sprite';
 import { CELL_HP, CELL_SO_DAO, CELL_TEN, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
-import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
+import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T, SP_CONG, CONG_TO, CONG_FPS } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { MABU } from './nhan-vat-du-lieu';
 import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_LO_LUNG } from './ginyu';
@@ -970,6 +970,10 @@ export class VeCanvas {
         if (o.tc.ngoc) this.veNgoc(ctx, c.SP_NGOC, o.tc.x, o.tc.y, c.t, c.ngocTiecTo(o.tc), o.tc.ngoc);
         else this.veBanh(ctx, c, o.tc);
         ctx.globalAlpha = 1;
+      } else if (o.loai === 'cong') {
+        ctx.globalAlpha = c.doRo(c.cong.x, c.cong.y);
+        this.veCong(ctx, c);
+        ctx.globalAlpha = 1;
       }
       else if (o.loai === 'mb') this.veMayBay(ctx, c, c.mbView, c.SP_MB, true);
       else if (o.loai === 'pt') this.veMayBay(ctx, c, c.ptView, c.SP_PT, false);
@@ -1627,6 +1631,27 @@ export class VeCanvas {
       ctx.fillText(chu, 0, -9);
       ctx.restore();
     }
+  }
+
+  // Cổng dịch chuyển giữa đảo Cell 10 con: 4 khung xoáy lặp, quầng tím nhấp nháy dưới chân (gradient, không shadowBlur)
+  private veCong(ctx: CanvasRenderingContext2D, c: Game): void {
+    const { x, y } = c.cong;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.save();
+    ctx.scale(1, 0.3);
+    const R = 260 * CONG_TO;
+    const q = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+    q.addColorStop(0, `rgba(120,60,200,${0.35 + 0.12 * Math.sin(c.t * 3)})`);
+    q.addColorStop(1, 'rgba(80,30,160,0)');
+    ctx.fillStyle = q;
+    ctx.beginPath();
+    ctx.arc(0, 0, R, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+    ctx.scale(CONG_TO, CONG_TO);
+    this.sprite(ctx, SP_CONG, Math.floor(c.t * CONG_FPS) % 4, false, true);
+    ctx.restore();
   }
 
   // Bánh sinh nhật giữa vòng Cell: sprite 8 khung lửa lặp, quầng sáng cam
