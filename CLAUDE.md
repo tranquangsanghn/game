@@ -231,6 +231,15 @@
 - Nổ (`noMb()`): người trên máy bay rơi xuống đúng chỗ nổ. Đất liền (trong vườn gà hoặc `doSau() > 0`): đứng dậy tại đó. Rơi xuống biển: chết (`chetNv()`), cả hai chết thì `ketThuc(false)` (thua, chơi lại từ đầu). Máy bay hồi phục sau `MB_HOI` = 15s (có hình mờ + số đếm ngược ở chỗ sẽ hồi, `mbDem()`): nổ trên đất liền (kể cả lúc đang đậu) thì hạ cánh luôn ở đó, 15s sau xuất hiện lại đúng chỗ đó (`goc`); chưa từng nổ thì ở chỗ đậu ban đầu.
 - Lưu ván: `mayBay` trong ván lưu (trường tuỳ chọn, thiếu thì tạo mới, không cần tăng `PHIEN_BAN_LUU`).
 
+# Nguyên tắc phi thuyền
+
+- Một phi thuyền (`phiThuyen`, `PhiThuyen` trong `game.ts`; sprite `web/public/assets/game/phi_thuyen.png` = `SP_PT`, atlas 6 cột × 2 hàng khung 300×240 neo (150, 230): 0 đậu · 1–3 mở cửa · 4 cất cánh bụi · 5 phụt lửa · 6 nhấc lên · 7 bay ngang (quay phải) · 8 hạ xuống · 9–11 chạm đất / bụi / khói; dựng bằng `tools/tao-atlas-phi-thuyen.py` từ ảnh người dùng gửi; vẽ chung `veMayBay()` với `ptView`, không làm mịn vì là pixel art) đậu **cạnh máy bay** trong vườn gà (`taoPhiThuyen()`: cách máy bay `PT_CACH_MB` về phía giữa vườn).
+- **Không phá huỷ được**: chưởng không trúng, Cell không bắn, không nổ. **Không điều khiển được**: người bên trong (`trongPt(p)`, cũng tính là `trongMb(p)`: ẩn, không bị đánh, gà / quái không thấy) không lái, không ra đòn (`ban()` / `dungChieu()` bỏ qua).
+- Chỉ chạy khi **đủ 2 nhân vật** (chơi 1 người thì không lên được, nhãn "🛸 CẦN 2 NGƯỜI"; 2 người thì nhãn "🛸 n/2"). Nhân vật lại gần `PT_MO_BK` thì cửa mở, đi vào `PT_BK` là lên. Người ở ngoài bị gục thì người trong phi thuyền ra để cứu.
+- Pha (`capNhatPt()`): `dau` → `cat` (đóng cửa, cất cánh `PT_CAT` = 2s) → `bay` (tự bay thẳng tới bến kia, tốc độ `PT_TOC` = 5 × `MB_TOC`) → `ha` (hạ cánh `PT_HA` = 1,6s, rung màn, bụi) → `ra` (mở cửa `PT_RA`) → mọi người bước ra (`ptXuong()`) rồi tự đi một đoạn (ở núi đá: vào phía bóng ma Goku, bóng ma thấy là khiêu khích như thường) → `dau` ở bến mới.
+- Hai bến: vườn gà (`vuon`) ↔ núi đá (`nui`: `ptBenNui()`, từ tâm núi về phía vườn gà `PT_NUI_K` = 0,35 bán kính). Ở núi đá cả hai vào lại thì bay về vườn gà. Người vừa bước ra (`cho`) phải đi khỏi bán kính lên mới lên lại được. Không đặt lại máu / mana.
+- Camera / bản đồ nhỏ khi ở trong phi thuyền như máy bay (zoom theo `z`, mũi tên trên mini map chỉ hướng bay). Lưu ván: trường tuỳ chọn `phiThuyen`; đang đi dở thì tải lại coi như đã tới nơi (cất cánh dở thì ở bến cũ), mọi người bước ra.
+
 # Nguyên tắc quả cầu trốn
 
 - 2 quả cầu (`cauTron`, `CauTron`, `taoCauTron()`) đặt cố định gần giữa map (`CAU_VI_TRI`, tránh chỗ nhân vật xuất hiện; cây / bụi không mọc trong bán kính 500 quanh cầu; vẽ to ×1,4). Sprite `web/public/assets/game/cau_buu.png` (`SP_CAU`, 6 cột × 2 hàng: hàng 0 Mabu, hàng 1 Zinbu; khung 0 nguyên quả · 1 nứt rung · 2 nổ khói hồng · 3 bóng đen trong khói · 4 nhân vật hiện ra · 5 nhân vật giơ tay trên vỏ vỡ), nguồn ảnh tách nền ô caro bằng script, neo ở đáy quả cầu.

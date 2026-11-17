@@ -1,6 +1,6 @@
 import type { ChuongTiec, Tiec } from './tiec';
 import { HN } from './do-hieu-nang';
-import type { Game, Ga, TrangTri, Cuu, CauTron } from './game';
+import type { Game, Ga, TrangTri, Cuu, CauTron, MbHinh } from './game';
 import type { KhungSprite } from './sprite';
 import { CELL_HP, CELL_SO_DAO, CELL_TEN, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T } from './tiec';
@@ -971,7 +971,8 @@ export class VeCanvas {
         else this.veBanh(ctx, c, o.tc);
         ctx.globalAlpha = 1;
       }
-      else if (o.loai === 'mb') this.veMayBay(ctx, c);
+      else if (o.loai === 'mb') this.veMayBay(ctx, c, c.mbView, c.SP_MB, true);
+      else if (o.loai === 'pt') this.veMayBay(ctx, c, c.ptView, c.SP_PT, false);
       else this.veNhanVat(ctx, c, o.p);
     }
     HN.moc('ve.xep');
@@ -1347,9 +1348,8 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  // Máy bay: bóng dưới đất (khi đang bay), thân (đậu / cất cánh / bay / lung lay / nổ theo khung atlas), nhãn số người đã lên trên đầu
-  private veMayBay(ctx: CanvasRenderingContext2D, c: Game): void {
-    const h = c.mbView;
+  // Máy bay / phi thuyền: bóng dưới đất (khi đang bay), thân (theo khung atlas), nhãn số người đã lên trên đầu
+  private veMayBay(ctx: CanvasRenderingContext2D, c: Game, h: MbHinh | null, sp: KhungSprite, muot: boolean): void {
     if (!h || h.a <= 0) return;
     ctx.save();
     ctx.globalAlpha = h.a;
@@ -1361,7 +1361,7 @@ export class VeCanvas {
     }
     ctx.translate(h.x + h.rung, h.y - h.nang);
     ctx.scale(h.to, h.to);
-    this.sprite(ctx, c.SP_MB, h.khung, h.lat, true);
+    this.sprite(ctx, sp, h.khung, h.lat, muot);
     ctx.restore();
     if (!h.nhan) return;
     ctx.save();
@@ -1370,9 +1370,10 @@ export class VeCanvas {
     ctx.lineJoin = 'round';
     ctx.lineWidth = 8;
     ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-    ctx.strokeText(h.nhan, h.x, h.y - h.nang - 190);
+    const ny = h.y - h.nang - (h.nhanCao ?? 190);
+    ctx.strokeText(h.nhan, h.x, ny);
     ctx.fillStyle = '#ffd23f';
-    ctx.fillText(h.nhan, h.x, h.y - h.nang - 190);
+    ctx.fillText(h.nhan, h.x, ny);
     ctx.restore();
   }
 
