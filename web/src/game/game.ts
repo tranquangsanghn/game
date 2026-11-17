@@ -334,13 +334,13 @@ const MB_THAN_LE = 300;
 const HOP_THE_GAP = 3;
 /** Sát thương mỗi đòn của Super Bư = HOP_THE_SAT_GAP × (đòn Mabu + đòn Zinbu) (máu vẫn HOP_THE_GAP × tổng máu) */
 const HOP_THE_SAT_GAP = 3;
-const HOP_THE_T = 40;
+const HOP_THE_T = 50;
 const HOP_THE_HOI = 15;
 /** Super Bư bị hạ: tách ra sớm, mỗi người còn HOP_THE_CON_MAU máu lúc hợp thể (tối thiểu 1) */
 const HOP_THE_CON_MAU = 0.1;
 /** Chiêu Bóng ma (nhóm 3 của Super Bư): sát thương = HOP_THE_SAT_GAP × (Biến mây Mabu + Biến socola Zinbu), nổ bán kính BAN_KINH_MA, hồi MA_HOI giây */
 const BAN_KINH_MA = 300;
-const MA_HOI = 3;
+const MA_HOI = 0.5;
 /** Độ cao thanh máu trên đầu Super Bư (cao hơn Mabu / Zinbu) */
 const DAU_SB = 540;
 /** Màu riêng mỗi nhân vật (theo ki) */
