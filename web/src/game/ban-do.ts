@@ -156,9 +156,9 @@ export const TG_SA = (() => {
 })();
 
 /** Thần điện: khối đất nổi trên vực phía bắc vòng đảo (ảnh than_dien.png cắt từ ảnh người dùng gửi, tools/tao-than-dien.py),
- *  mỗi điểm ảnh = THAN_TL đơn vị thế giới (7,7: khung 5544 × 3696 ≈ 1/2 diện tích vườn gà). Không nối với đâu: vào bằng cổng dịch chuyển giữa đảo 4 (hoặc máy bay).
+ *  mỗi điểm ảnh = THAN_TL đơn vị thế giới (9: khung 6480 × 4320 ≈ 0,68 diện tích vườn gà). Không nối với đâu: vào bằng cổng dịch chuyển giữa đảo 4 (hoặc máy bay).
  *  Bờ là đa giác bậc thang THAN_VIEN (đất = trong đa giác), vật cản THAN_CHAN (điện thờ, vườn cây, hàng cọ, chân cột vòm). */
-export const THAN_TL = 7.7;
+export const THAN_TL = 9;
 const THAN_CACH = 2600;
 export const THAN = (() => {
   const w = THAN_ANH_W * THAN_TL, h = THAN_ANH_H * THAN_TL;
@@ -170,8 +170,8 @@ const THAN_DA: [number, number][] = THAN_VIEN.map(([x, y]) => [THAN.x0 + x * THA
 export const THAN_CHAN_TG = THAN_CHAN.map(([x0, y0, x1, y1]) => ({
   x0: THAN.x0 + x0 * THAN_TL, y0: THAN.y0 + y0 * THAN_TL, x1: THAN.x0 + x1 * THAN_TL, y1: THAN.y0 + y1 * THAN_TL,
 }));
-/** Cổng dịch chuyển trên thần điện (giữa hai hàng cọ, trước điện thờ; điểm ảnh 360, 300) */
-export const THAN_CONG = { x: THAN.x0 + 360 * THAN_TL, y: THAN.y0 + 300 * THAN_TL };
+/** Cổng dịch chuyển trên thần điện: sân dưới, giữa hai hàng cọ gần mép nam (điểm ảnh 360, 420), xa bậc thềm điện thờ */
+export const THAN_CONG = { x: THAN.x0 + 360 * THAN_TL, y: THAN.y0 + 420 * THAN_TL };
 /** Đường viền thần điện (toạ độ thế giới) để bộ vẽ dựng vách đá */
 export const THAN_DA_GIAC = THAN_DA;
 /** Điểm nằm trong khung thần điện (nới thêm `le`) */
