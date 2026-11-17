@@ -5,7 +5,7 @@ import { NhanVat } from './nhan-vat-sprite';
 import { MABU, NHAN_VAT } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
+import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
 import { taoFrieza, capNhatFrieza, SP_FRIEZA, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
@@ -744,6 +744,38 @@ function taoTrangTriSa(): TrangTri[] {
   return kq;
 }
 
+/** Cây thêm trên mỗi đảo cát (ngoài CAY_SA_CHAN / CAY_SA_LE): CAY_SA_THEM cây khô đổ được, rơi đậu thần như cây đảo.
+ *  Sinh riêng bằng RNG cố định và nối CUỐI `trangTri` (sau tảng đá núi) để chỉ số cây / đá của ván lưu cũ (`cayDo`) không đổi.
+ *  Cách bờ ≥ 260, trong vòng đảo, cách tâm đảo ≥ 600 (cổng / chỗ Cell giữ ngọc), cách mọi cây khác ≥ 450, xa chỗ xuất phát. */
+const CAY_SA_THEM = 4;
+function taoCayThemSa(cu: TrangTri[]): TrangTri[] {
+  let h = 515151;
+  const r = () => {
+    h = (h + 0x6d2b79f5) | 0;
+    let t = Math.imul(h ^ (h >>> 15), 1 | h);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const kq: TrangTri[] = [];
+  const cay = cu.filter((t) => t.sa && t.loai === 0);
+  for (let d = 0; d < SO_DAO; d++) {
+    const dao = DAO[d]!;
+    let them = 0;
+    for (let k = 0; k < 2000 && them < CAY_SA_THEM; k++) {
+      const g = r() * Math.PI * 2;
+      const rr = Math.sqrt(r()) * dao.r * 0.85;
+      const x = dao.x + Math.cos(g) * rr, y = dao.y + Math.sin(g) * rr;
+      const lat = r() < 0.5;
+      if (rr < 600 || daoCua(x, y) !== d || doSau(x, y) < 260 || !trongVongDao(x, y, d) || trongVuon(x, y) || trongNui(x, y, 300)) continue;
+      if (Math.hypot(x - XUAT_PHAT.x, y - XUAT_PHAT.y) < 500) continue;
+      if ([...cay, ...kq].some((t) => Math.hypot(t.x - x, t.y - y) < 450)) continue;
+      kq.push({ x, y, loai: 0, lat, sa: true, to: false });
+      them++;
+    }
+  }
+  return kq;
+}
+
 /** Số loại tảng đá trên núi đá (atlas DA_NUI trong ve-canvas.ts) */
 export const SO_DA_NUI = 8;
 /** Tảng đá trên núi đá (đánh dấu `nui`, `loai` = 1..SO_DA_NUI, không phải cây nên không đổ): thưa, cách bờ đủ xa.
@@ -1215,7 +1247,10 @@ export class Game {
     this.banDoVan = this.banDo;
     if (this.banDo === 'sa') chuanBiSaMac();
     // Đá núi nối cuối danh sách: chỉ số cây (cayDo của ván lưu) không đổi
-    this.trangTri = this.banDo === 'sa' ? [...taoTrangTri(), ...taoTrangTriSa(), ...taoTrangTriNui()] : taoTrangTri();
+    if (this.banDo === 'sa') {
+      const tt = [...taoTrangTri(), ...taoTrangTriSa(), ...taoTrangTriNui()];
+      this.trangTri = [...tt, ...taoCayThemSa(tt)];
+    } else this.trangTri = taoTrangTri();
     // Thần điện: ván mới thì mọi cây cối / vật dụng nguyên vẹn (chỉ ván mới mới đặt lại)
     thanVo.fill(false);
     this.nguoi = this.taoNguoiChoi();
@@ -4680,7 +4715,7 @@ export class Game {
       const d = Math.hypot(v.x - c.x, v.y - c.y);
       if (d < gan) { gan = d; dau = v; }
     }
-    if (dau) { this.cellDiToi(c, dau.x, dau.y, dt, 1); return; }
+    if (dau) { this.cellDiToi(c, dau.x, dau.y, dt, CELL_AN_TOC); return; }
     gan = Infinity;
     let iCay = -1;
     this.trangTri.forEach((t, i) => {
@@ -4702,7 +4737,7 @@ export class Game {
         }
         return;
       }
-      this.cellDiToi(c, cay.x, cay.y, dt, 1);
+      this.cellDiToi(c, cay.x, cay.y, dt, CELL_AN_TOC);
       return;
     }
     c.cay = undefined;
@@ -4715,7 +4750,7 @@ export class Game {
     }
     if (!n || gn > CELL_AN_TRON) { c.chay = false; return; }
     const ux = (c.x - n.x) / (gn || 1), uy = (c.y - n.y) / (gn || 1);
-    this.cellDiToi(c, c.x + ux * 400, c.y + uy * 400, dt, 1);
+    this.cellDiToi(c, c.x + ux * 400, c.y + uy * 400, dt, CELL_AN_TOC);
   }
 
   /**

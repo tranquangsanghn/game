@@ -56,6 +56,8 @@ export const CELL_DAU_SAT = 12;
 /** Mỗi hạt đậu thần còn cộng sức mạnh `suc` +CELL_DAU_SUC theo cấp (nhân sát thương gốc đấm / đá / chưởng, cộng dồn, không giới hạn): Cell đỏ (cấp 4) 0,15, còn lại 0,1 */
 export const CELL_DAU_SUC = [0.1, 0.1, 0.1, 0.1, 0.15];
 export const CELL_AN_TAM = 700;
+/** Con đi ăn đậu (`vai: 'an'`) chạy nhanh gấp CELL_AN_TOC lần Cell thường cùng cấp (tới cây, tới đậu, trốn) */
+export const CELL_AN_TOC = 1.5;
 export const CELL_AN_TRON = 1500;
 /** Con đi ăn đậu gặp nhân vật (gần hơn `CELL_AN_GAP`, nhân vật nhìn thấy nó) thì dịch chuyển tức thời tới chỗ trên đảo xa mọi nhân vật nhất để trốn; hồi `CELL_AN_DICH_HOI` giây */
 export const CELL_AN_GAP = 900;
