@@ -1783,9 +1783,8 @@ export class Game {
       }
       // Cell đi qua cũng ăn đậu thần: +DAU_MAU máu (không giới hạn); chỉ ăn đậu nằm trong vòng đảo của chính nó
       if (dau) {
-        const daoDau = daoCua(v.x, v.y);
         const ce = this.cell.find((c) => !c.chet && !((c.socola ?? 0) > 0) && Math.hypot(c.x - v.x, c.y - v.y) < CELL_BK * cellK(c.cap)
-          && (c.hoi === 'dang' || (this.daoCell(c) === daoDau && trongVongDao(v.x, v.y, daoDau))));
+          && this.cellDuocAnDau(c, v));
         if (ce) {
           // Như Mabu / Zinbu: +DAU_MAU máu; Cell không có mana nên sát thương cộng thêm nhiều hơn (CELL_DAU_SAT mỗi đòn, không giới hạn)
           ce.hp += DAU_MAU;
@@ -4638,6 +4637,8 @@ export class Game {
       }
       const tcc = this.tiecCua(c);
       if (c.tiec && tcc?.on) { this.cellTiec(c, tcc, dt); continue; }
+      // Mọi Cell đang đánh nhau / đi ăn đậu mà thấy đậu thần rơi (trong tầm nhìn, chỗ nó được ăn) thì bỏ đánh, chạy tới ăn trước
+      if ((c.muc !== undefined || c.vai === 'an') && this.cellChayAnDau(c, dt)) continue;
       if (c.vai === 'an') { this.cellAnDau(c, dt); continue; }
       if (c.muc === MUC_MB) { this.cellBanMb(c, dt); continue; }
       const ke = c.muc !== undefined ? this.nguoi[c.muc] : undefined;
@@ -4674,6 +4675,27 @@ export class Game {
     }
     // Xác nằm đủ lâu thì biến mất
     this.cell = this.cell.filter((c) => !c.chet || c.tChet < CELL_CHET_T);
+  }
+
+  /** Đậu thần Cell được ăn: trong vòng đảo của nó (Cell đỏ đang hồi máu / truy sát thì ở đâu cũng được), khớp với điều kiện ăn trong `capNhatVatPham()` */
+  private cellDuocAnDau(c: Cell, v: VatPham): boolean {
+    if (c.hoi === 'dang' || this.cellTruy(c)) return true;
+    const dao = this.daoCell(c);
+    return daoCua(v.x, v.y) === dao && trongVongDao(v.x, v.y, dao);
+  }
+
+  /** Thấy đậu thần (trong TAM_NHIN của Cell, chỗ nó được ăn) thì bỏ chưởng đang vận, chạy tới ăn; trả về true khi đang đi ăn */
+  private cellChayAnDau(c: Cell, dt: number): boolean {
+    let gan = TAM_NHIN + CELL_BK * cellK(c.cap), dau: VatPham | undefined;
+    for (const v of this.vatPham) {
+      if (v.loai !== 'dau') continue;
+      const d = Math.hypot(v.x - c.x, v.y - c.y);
+      if (d < gan && this.cellDuocAnDau(c, v)) { gan = d; dau = v; }
+    }
+    if (!dau) return false;
+    if (c.nap !== undefined && c.chien) { c.nap = undefined; c.chien = false; }
+    this.cellDiToi(c, dau.x, dau.y, dt, c.vai === 'an' ? CELL_AN_TOC : 1);
+    return true;
   }
 
   /**
