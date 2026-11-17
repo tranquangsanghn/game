@@ -8,7 +8,7 @@ import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
-import { taoFrieza, capNhatFrieza, fzDiToi, fzVeDuong, fzGap, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
+import { taoFrieza, capNhatFrieza, fzDiToi, fzVeDuong, fzGap, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_VANG_CHUONG_HOI, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -537,6 +537,9 @@ const TAM_DAM_XA = 400;
 const TAM_DA_GAN = 250;
 const TAM_DA_XA = 500;
 const TAM_CHIEU = 1200;
+/** Super Bư: chưởng (Chiêu đặc biệt) tầm gấp SB_TAM_GAP, hồi SB_CHUONG_HOI giây */
+const SB_TAM_GAP = 2;
+const SB_CHUONG_HOI = 0.5;
 // Tầm nhìn (sương mù kiểu Dota) = 1,5 × tầm xa nhất của đấm xa / đá xa. Gà ngoài tầm nhìn thì ẩn; nhân vật và chưởng đang bay đều mang theo tầm nhìn.
 const TAM_DANH_XA = Math.max(TAM_DAM_XA, TAM_DA_XA);
 const TAM_NHIN = TAM_DANH_XA * 1.5;
@@ -3790,6 +3793,8 @@ export class Game {
     // Socola chỉ chặn đòn kế tiếp 0,5s (đủ cho animation); hồi chiêu socola nằm ở hoiSoc
     const giamHoi = nhom === 2 && n.combo >= COMBO_GIAM_HOI ? COMBO_HOI_CHUONG : 1;
     n.hoiChieu = soc || ma ? 0.5 : (chieu ? 0.5 * giamHoi : n.nv.nhom === 1 ? 0.32 : n.dangDi ? 0.3 : 0.2) * 2;
+    const sbChuong = nhom === 2 && this.hopThe?.chu === p;
+    if (sbChuong) n.hoiChieu = SB_CHUONG_HOI;
     if (!n.dangDi) {
       n.nv.lat = x < n.x;
       n.nv.huong = 'ngang';
@@ -3798,7 +3803,7 @@ export class Game {
     this.am.phat(chieu ? 'chuong' : nhom === 1 ? 'da' : 'dam');
 
     // Giới hạn tầm theo đòn vừa ra: chuột trỏ xa hơn tầm thì đòn dừng ở mép tầm đánh
-    const tam = soc || ma ? TAM_SOCOLA : chieu ? TAM_CHIEU : TAM_DON[n.nv.donVuaRa ?? ''] ?? (n.nv.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN);
+    const tam = soc || ma ? TAM_SOCOLA : chieu ? TAM_CHIEU * (sbChuong ? SB_TAM_GAP : 1) : TAM_DON[n.nv.donVuaRa ?? ''] ?? (n.nv.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN);
     const ddx = x - n.x;
     const ddy = y - n.y;
     const dd = hyp(ddx, ddy);
@@ -4133,18 +4138,20 @@ export class Game {
       const vang = f.vang > 0;
       const x0 = f.x + (f.lat ? -1 : 1) * (vang ? 90 : 60), y0 = f.y - (vang ? 200 : 110);
       const dx = f.nap.x - x0, dy = f.nap.y - y0, d = hyp(dx, dy) || 1;
-      const L = Math.min(FZ_CHUONG_TAM, d + 250);
+      const L = Math.min(FZ_CHUONG_TAM * (vang ? FZ_VANG_TAM_GAP : 1), d + 250);
       this.chuongTiec.push({ id: this.id++, k: vang ? 5 : 4, loai: vang ? 1 : 2, x0, y0, x1: x0 + (dx / d) * L, y1: y0 + (dy / d) * L, t: 0, sat: FZ_CHUONG_SAT * g, fz: true });
       this.vetGa({ id: this.id++, x: x0, y: y0, t: 0, loai: 'chay', co: 0.6 });
       f.nap = undefined;
-      f.choChuong = FZ_CHUONG_HOI / g;
+      f.choChuong = vang ? FZ_VANG_CHUONG_HOI : FZ_CHUONG_HOI / g;
       return;
     }
     if (!muc) return;
     const dx = muc.x - f.x, dy = muc.y - f.y, d = hyp(dx, dy);
     if (Math.abs(dx) > 5) f.lat = dx < 0;
     if (f.danh > 0) return;
-    if (thay && d > FZ_CHUONG_XA && d < FZ_CHUONG_TAM && f.choChuong <= 0) {
+    // Dạng thường: chỉ bắn khi xa hơn FZ_CHUONG_XA; Golden Frieza bắn liên tục khi có thể (gần cũng bắn), tầm gấp FZ_VANG_TAM_GAP
+    const vangF = f.vang > 0;
+    if (thay && (vangF || d > FZ_CHUONG_XA) && d < FZ_CHUONG_TAM * (vangF ? FZ_VANG_TAM_GAP : 1) && f.choChuong <= 0) {
       f.nap = { t: 0, x: muc.x, y: muc.y - 70 };
       this.chuGa({ id: this.id++, x: f.x, y: f.y - 300, text: f.vang > 0 ? '✨ GOLDEN FRIEZA VẬN CHƯỞNG!' : '💜 FRIEZA VẬN CHƯỞNG!', mau: f.vang > 0 ? '#ffd23f' : '#d9b3ff', t: 0 });
       return;
@@ -6660,7 +6667,7 @@ export class Game {
       const t = this.tamGa(tot);
       return { x: t.x, y: t.y };
     }
-    const xa = nhomSoc ? 500 : n.nv.nhom === 2 ? 600 : 250;
+    const xa = nhomSoc ? 500 : n.nv.nhom === 2 ? 600 * (this.hopThe?.chu === p ? SB_TAM_GAP : 1) : 250;
     return { x: n.x + ux * xa, y: n.y + uy * xa - 60 };
   }
 

@@ -67,6 +67,9 @@ export const FZ_CHAM = 150;
 export const FZ_CHUONG_XA = 350;
 export const FZ_CHUONG_TAM = 500;
 export const FZ_CHUONG_NAP = 0.8;
+/** Golden Frieza: tầm chưởng gấp FZ_VANG_TAM_GAP, hồi chưởng FZ_VANG_CHUONG_HOI giây, bắn liên tục bất kể gần / xa (không cần xa hơn FZ_CHUONG_XA) */
+export const FZ_VANG_TAM_GAP = 2;
+export const FZ_VANG_CHUONG_HOI = 0.5;
 /** Bán kính thân (trúng đòn), tâm thân cao (dạng thường / vàng) */
 export const FZ_BK = 110;
 export const FZ_TAM_CAO = 120;
