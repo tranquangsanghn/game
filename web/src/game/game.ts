@@ -6,8 +6,8 @@ import { NhanVat } from './nhan-vat-sprite';
 import { NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
-import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
+import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
+import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
 import { taoFrieza, capNhatFrieza, fzDiToi, fzVeDuong, fzGap, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
@@ -4042,15 +4042,11 @@ export class Game {
     return !!n && !n.vang && !this.khuat(n) && trongNui(n.x, n.y, GY_NUI_LE);
   }
 
-  /** Bóng ma nhìn thấy nhân vật p: hợp lệ và trong tầm nhìn TAM_NHIN */
+  /** Bóng ma nhận ra nhân vật p ở bất kỳ đâu trên núi đá (chống câu giờ): chỉ cần hợp lệ */
   private gyThay(p: number): boolean {
-    if (!this.gyHopLe(p)) return false;
-    const n = this.nguoi[p], g = this.ginyu;
-    const dx = n.x - g.x, dy = n.y - g.y;
-    return dx * dx + dy * dy < TAM_NHIN * TAM_NHIN;
+    return this.gyHopLe(p);
   }
 
-  /** Đang được nhân vật nhìn thấy: chỉ khi đó mới bắt đầu khiêu khích / lao / ra đòn */
   // ─── Frieza (thần điện) ───
   // Không ai thì đi tuần quanh điện thờ; nhân vật trên thần điện nhìn thấy Frieza thì Frieza đuổi đánh người gần nhất (đấm khi chạm, xa thì vận chưởng),
   // cứ ~10s biến thành Golden Frieza 15s (mọi chỉ số ×2). Mabu / Zinbu chưa hợp thể đánh không mất máu: phải hợp thể Super Bư (chỉ làm được trên thần điện).
@@ -4125,7 +4121,7 @@ export class Game {
   }
 
   /** Frieza đánh nhau với mục tiêu `muc` (null = hết mục tiêu, chỉ làm nốt chưởng đang vận) */
-  private fzChien(muc: NguoiChoi | null, dt: number): void {
+  private fzChien(muc: NguoiChoi | null, thay: boolean, dt: number): void {
     const f = this.frieza;
     const g = fzGap(f);
     f.nghi = 0.1;
@@ -4148,7 +4144,7 @@ export class Game {
     const dx = muc.x - f.x, dy = muc.y - f.y, d = hyp(dx, dy);
     if (Math.abs(dx) > 5) f.lat = dx < 0;
     if (f.danh > 0) return;
-    if (d > FZ_CHUONG_XA && d < FZ_CHUONG_TAM && f.choChuong <= 0) {
+    if (thay && d > FZ_CHUONG_XA && d < FZ_CHUONG_TAM && f.choChuong <= 0) {
       f.nap = { t: 0, x: muc.x, y: muc.y - 70 };
       this.chuGa({ id: this.id++, x: f.x, y: f.y - 300, text: f.vang > 0 ? '✨ GOLDEN FRIEZA VẬN CHƯỞNG!' : '💜 FRIEZA VẬN CHƯỞNG!', mau: f.vang > 0 ? '#ffd23f' : '#d9b3ff', t: 0 });
       return;
@@ -4191,8 +4187,8 @@ export class Game {
     if (f.hp < max && f.bien < 0) f.hp = Math.min(max, f.hp + FZ_HOI_MAU * fzGap(f) * dt);
     const cao = f.bien >= 0 || f.vang > 0 ? 768 * FZ_VANG_TO * 0.4 : 120;
     const thay = this.nvThay(f.x, f.y - cao, 300, 60);
-    // Chiêu / đánh nhau chỉ khi nhân vật nhìn thấy Frieza (đang dở chưởng thì làm nốt)
-    const muc = thay ? this.fzMuc() : null;
+    // Nhận ra nhân vật ở bất kỳ đâu trên thần điện và đuổi đánh (chống câu giờ); chưởng / biến hình chỉ khi nhân vật nhìn thấy Frieza
+    const muc = this.fzMuc();
     if (muc && !f.chien) {
       f.chien = true;
       this.chuGa({ id: this.id++, x: f.x, y: f.y - 360, text: '⚔ FRIEZA XUẤT TRẬN!', mau: '#d9b3ff', t: 0 });
@@ -4207,7 +4203,7 @@ export class Game {
       }
     }
     const su = capNhatFrieza(f, dt, thay && !f.nap && f.danh <= 0, gan?.x);
-    if (f.chien && f.bien < 0) this.fzChien(muc, dt);
+    if (f.chien && f.bien < 0) this.fzChien(muc, thay, dt);
     giuTrongMap(f, LE_FZ, false, 'dao');
     if (!su) return;
     const tamY = f.y - 768 * FZ_VANG_TO * 0.4;
@@ -4365,7 +4361,7 @@ export class Game {
     // ── Dạng bóng ma ──
     if (g.lao !== undefined) { this.gyLao(dt); return; }
     // "Một chấm": ở nhà và không ai ở gần thì không tính gì thêm
-    if (g.khieu === undefined && Math.abs(g.x - g.hx) + Math.abs(g.y - g.hy) < 30 && !this.nguoi.some((n) => !n.vang && Math.abs(n.x - g.x) < TAM_NHIN + 200 && Math.abs(n.y - g.y) < TAM_NHIN + 200)) {
+    if (g.khieu === undefined && Math.abs(g.x - g.hx) + Math.abs(g.y - g.hy) < 30 && !this.nguoi.some((n) => !n.vang && trongNui(n.x, n.y, GY_NUI_LE))) {
       g.chay = false;
       return;
     }
@@ -4399,7 +4395,14 @@ export class Game {
       this.am.phat('gokuMa'); // tiếng hét kéo dài suốt khiêu khích → lao → biến hình
       return;
     }
-    // Không thấy ai: lượn về giữa núi
+    // Có người trên núi mà chưa ai nhìn thấy bóng ma: lượn tới người gần nhất (đuổi khắp núi, không cho câu giờ)
+    if (thay.length) {
+      const gan = this.nguoi[thay.reduce((a, b) => (hyp(this.nguoi[a]!.x - g.x, this.nguoi[a]!.y - g.y) <= hyp(this.nguoi[b]!.x - g.x, this.nguoi[b]!.y - g.y) ? a : b))]!;
+      if (hyp(gan.x - g.x, gan.y - g.y) > 300) this.gyDiToi(gan.x, gan.y, dt);
+      else g.chay = false;
+      return;
+    }
+    // Không có ai trên núi: lượn về giữa núi
     if (hyp(g.hx - g.x, g.hy - g.y) > 20) this.gyDiToi(g.hx, g.hy, dt);
     else g.chay = false;
   }
@@ -4800,9 +4803,9 @@ export class Game {
 
   /**
    * Đội hình Cell mỗi khung (mỗi đảo một đội, chiến đấu theo đồng đội):
-   * - Chưa thấy ai: dự tiệc. Có nhân vật trên đảo lại gần (TIEC_NGUI khi đang tiệc, CELL_NGUI khi không) hoặc Cell bị đánh thì xuất trận.
+   * - Chưa có ai: dự tiệc. Có nhân vật ở bất kỳ đâu trong vòng đảo (chống câu giờ) hoặc Cell bị đánh thì xuất trận.
    * - Luôn có đúng CELL_TACH_SO con tách đàn ('tach', con gần nhân vật nhất; đảo 4 là 2 con) đuổi một người; cả đàn còn lại ('dan') đuổi người kia — con tách đàn là điểm yếu.
-   * - Chỉ có 1 người trên đảo (chơi 1 người, người kia gục / trốn / ở nơi khác): chỉ con tách đàn đi đánh, số còn lại vẫn ngồi tiệc.
+   * - Chỉ có 1 người trên đảo (chơi 1 người, người kia gục / trốn / ở nơi khác): cả đàn cùng đuổi người đó.
    * - Con tách đàn chết thì con gần nhất trong đàn tách ra thay. Hết người trên đảo thì cả đội về vòng tiệc.
    */
   private doiHinhCell(): void {
@@ -4817,7 +4820,8 @@ export class Game {
         this.cellXuatTran(dao);
         this.chu.push({ id: this.id++, x: this.mayBay.x, y: this.mayBay.y - 420, text: '🎯 CELL NHẮM BẮN MÁY BAY!', mau: '#ff6b6b', t: 0 });
       }
-      if (!doi.chien && ds.length && ke.some((p) => ds.some((c) => hyp(this.nguoi[p].x - c.x, this.nguoi[p].y - c.y) < (c.tiec ? TIEC_NGUI : CELL_NGUI)))) {
+      // Có nhân vật ở bất kỳ đâu trong vòng đảo là xuất trận (chống câu giờ)
+      if (!doi.chien && ds.length && ke.length) {
         doi.chien = true;
         this.cellXuatTran(dao);
       }
@@ -4870,8 +4874,8 @@ export class Game {
       doi.tach = tach.map((c) => c.id);
       if (!ke.includes(doi.muc)) doi.muc = ke[0]!;
       const khac = ke.find((p) => p !== doi.muc);
-      // Người kia ngồi máy bay (đậu chờ): cả đàn bắn máy bay
-      const muc2 = khac ?? (mb ? MUC_MB : undefined);
+      // Người kia ngồi máy bay (đậu chờ): cả đàn bắn máy bay; chỉ 1 người trên đảo thì cả đàn cùng đuổi người đó
+      const muc2 = khac ?? (mb ? MUC_MB : doi.muc);
       for (const c of chien) {
         const vai = tach.includes(c) ? 'tach' : muc2 !== undefined ? 'dan' : undefined;
         this.cellRaTran(c, vai, vai === 'tach' ? doi.muc : vai === 'dan' ? muc2 : undefined);

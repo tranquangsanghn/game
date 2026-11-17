@@ -1,6 +1,6 @@
 // Tiệc sinh nhật của Cell: lúc bắt đầu ván, Cell của MỌI đảo (1 con hay nhiều con) đi vòng tròn quanh một cái bánh, bắn chưởng vào bánh (đi vòng 2s rồi dừng bắn); nhạc "Happy Birthday" là nhạc nền của khu đảo (am-thanh.ts).
-// Có nhân vật trên đảo lại gần (Cell ngửi thấy) hoặc Cell bị đánh thì đội Cell xuất trận (xem `doiHinhCell()` trong game.ts): một con tách đàn đuổi một người,
-// cả đàn đuổi người còn lại; chỉ có một người thì chỉ con tách đàn đi đánh, số còn lại vẫn tiệc. Hết người trên đảo thì cả đội về vòng tiệc. Bánh không bao giờ mất.
+// Có nhân vật ở bất kỳ đâu trong vòng đảo hoặc Cell bị đánh thì đội Cell xuất trận (xem `doiHinhCell()` trong game.ts): một con tách đàn đuổi một người,
+// cả đàn đuổi người còn lại; chỉ có một người thì cả đàn cùng đuổi người đó. Hết người trên đảo thì cả đội về vòng tiệc. Bánh không bao giờ mất.
 // File này chỉ có dữ liệu + hàm thuần; logic chạy trong Game (`capNhatTiec()`), vẽ trong ve-canvas.ts (`veBanh()`).
 import { hyp } from './toan';
 import type { KhungSprite } from './sprite';
@@ -14,8 +14,6 @@ export const BANH_KHUNG = 8;
 /** Độ to của bánh (nhân kích thước khung) và số khung lửa mỗi giây */
 export const BANH_TO = 0.3; // bánh nhỏ: cho Cell có k ≈ 3,9 (đảo 4); đảo khác nhân theo k
 export const BANH_FPS = 9;
-/** Cell đang tiệc chỉ ngửi thấy nhân vật trong tầm này (nhỏ hơn bình thường: đang mải hát) */
-export const TIEC_NGUI = 450;
 /** Chưởng (kamehameha) bay tới bánh trong `TIEC_CHUONG_T` giây */
 export const TIEC_CHUONG_T = 0.7;
 /** Chu trình của Cell dự tiệc (giây), lặp liên tục: biến hình (người méo + gió xanh) → vận nội công (hào quang bùng lên) → phóng một trong 3 loại chưởng (ngẫu nhiên) → biến hình… */

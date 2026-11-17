@@ -118,8 +118,7 @@ export const cellK = (cap: number) => CELL_TO[cap]! * 0.9;
 /** Điểm khi hạ */
 export const CELL_DIEM = [40, 60, 90, 130, 300];
 export const CELL_TEN = ['Cell Junior', 'Cell dạng 1', 'Cell dạng 2', 'Cell hoàn hảo', 'Cell bạo nộ'];
-/** Tầm ngửi thấy nhân vật (đội Cell xuất trận); chạm nhân vật trong CELL_CHAM × độ to */
-export const CELL_NGUI = 800;
+/** Chạm nhân vật trong CELL_CHAM × độ to */
 export const CELL_CHAM = 30;
 /** Bán kính trúng đòn quanh tâm thân × độ to */
 export const CELL_BK = 14;

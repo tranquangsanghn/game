@@ -1,4 +1,4 @@
-// Frieza: quái của thần điện (map `THAN` trong ban-do.ts). Không có ai thì đi loanh quanh điện thờ; nhân vật lên thần điện mà nhìn thấy Frieza thì Frieza đuổi đánh (đấm, chưởng; logic trong Game `capNhatFz()`)
+// Frieza: quái của thần điện (map `THAN` trong ban-do.ts). Không có ai thì đi loanh quanh điện thờ; nhân vật ở bất kỳ đâu trên thần điện thì Frieza đuổi đánh (đấm, chưởng; logic trong Game `capNhatFz()`)
 // và cứ ~10s biến thành Golden Frieza 15s (mọi chỉ số ×2). Chỉ Super Bư (hợp thể) đánh Frieza mất máu.
 // Đường đi: chuỗi điểm hình chữ U ôm điện thờ (hông trái → sân trước → hông phải), đều nằm ngoài vật cản thần điện (THAN_VAT) nên đi thẳng giữa hai điểm liền nhau.
 // Mỗi lượt: đứng thở FZ_NGHI giây rồi chọn ngẫu nhiên một điểm khác trên chuỗi, đi lần lượt qua các điểm ở giữa tới đó.
