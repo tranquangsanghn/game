@@ -112,6 +112,8 @@ export interface Frieza {
   /** Trúng đòn nháy sáng (giây), lần cuối hiện chữ "không xước" */
   nhay: number; chuMien: number;
   chet: boolean; tChet: number;
+  /** Đang bay lơ lửng (truy sát ngoài thần điện, Game đặt mỗi khung) */
+  bay?: boolean;
   /** Mây của Mabu chạm lần kế tiếp sau thời điểm này */
   chamMay?: number;
 }

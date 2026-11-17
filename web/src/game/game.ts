@@ -269,7 +269,7 @@ export interface TrangThaiLuu {
   /** Frieza: máu (dạng thường) và đã bị hạ chưa (thiếu = Frieza mới) */
   frieza?: { hp: number; chet: boolean };
   /** Đã có người ra khỏi vườn gà / Cell đỏ đã truy sát vì ở lì vườn gà quá CELL_TRUY_VUON_T (thiếu = ván lưu cũ: coi như đã ra vườn) */
-  truyVuon?: { ra: boolean; on: boolean };
+  truyVuon?: { ra: boolean; on: boolean; li?: boolean; fz?: boolean };
   nguoi: (Omit<NguoiChoi, 'nv' | 'nham' | 'ngam' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
 }
 
@@ -277,6 +277,11 @@ export interface TrangThaiLuu {
 const W_MAC_DINH = 1600;
 /** Chơi chừng này giây mà chưa ai ra khỏi vườn gà thì Cell đỏ đi truy sát (kiemTraOLiVuon()) */
 const CELL_TRUY_VUON_T = 300;
+/** Đã ở lì vườn gà 5 phút đầu (CELL_TRUY_VUON_T) mà chơi tới chừng này giây thì Frieza rời thần điện bay đi truy sát, hợp thể mở khoá khắp nơi (kiemTraFzTruy()) */
+const FZ_TRUY_T = 600;
+/** Tốc độ Frieza bay đi truy sát (px/s): 1/2 máy bay; gần mục tiêu trong FZ_BAY_GAN thì chạy đánh như thường */
+const FZ_BAY_TOC = MB_TOC / 2;
+const FZ_BAY_GAN = 600;
 const W_TOI_THIEU = 1100;
 const W_TOI_DA = 2800;
 const BAR = 80;
@@ -1082,6 +1087,10 @@ export class Game {
   private daRaVuon = false;
   /** Hết CELL_TRUY_VUON_T giây mà chưa ai ra khỏi vườn gà: Cell đỏ truy sát cả ván, máy bay bay ra không còn đặt lại máu / mana */
   private cellTruyVuon = false;
+  /** Đã ở lì vườn gà CELL_TRUY_VUON_T giây đầu (kể cả khi Cell đỏ đã chết): tới FZ_TRUY_T thì Frieza đi truy sát */
+  private liVuon = false;
+  /** Frieza bay đi truy sát Mabu / Zinbu khắp thế giới (cả ván); hợp thể Super Bư làm được và giữ được ở mọi nơi */
+  fzTruy = false;
   ngocBay: { x: number; y: number; t: number; slot: number; sao: number }[] = [];
   readonly NGOC_BAY_T = 1.1;
   // Gà mẹ đang đánh (phụ gần nhân vật nhất; chưa có thì gà mẹ gốc): chiêu hiện trên thanh đen phía trên
@@ -1341,7 +1350,7 @@ export class Game {
     this.mayBay = taoMayBay(kep(gx + vao * 700, TUONG + MB_LE, MAP - TUONG - MB_LE), kep(gy + xuong * 380, TUONG + MB_LE, MAP - TUONG - MB_LE));
     this.mbCatVuon = false;
     this.mbRaVuon = this.ptRaVuon = false;
-    this.daRaVuon = this.cellTruyVuon = false;
+    this.daRaVuon = this.cellTruyVuon = this.liVuon = this.fzTruy = false;
     this.cellTruyBao = false;
     this.phiThuyen = taoPhiThuyen(this.mayBay);
     this.ga = [];
@@ -1414,7 +1423,7 @@ export class Game {
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       thanVo: thanVo.flatMap((v, i) => (v ? [i] : [])),
       frieza: { hp: Math.min(FZ_HP, Math.max(1, this.frieza.hp / fzGap(this.frieza))), chet: this.frieza.chet },
-      truyVuon: { ra: this.daRaVuon, on: this.cellTruyVuon },
+      truyVuon: { ra: this.daRaVuon, on: this.cellTruyVuon, li: this.liVuon, fz: this.fzTruy },
       nguoi: this.nguoi.map((n, p) => {
         const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
         void nham; void ngam; void cuaCan; void dich;
@@ -1462,6 +1471,8 @@ export class Game {
     this.mbRaVuon = this.ptRaVuon = false;
     this.daRaVuon = d.truyVuon?.ra ?? true;
     this.cellTruyVuon = d.truyVuon?.on ?? false;
+    this.liVuon = d.truyVuon?.li ?? this.cellTruyVuon;
+    this.fzTruy = d.truyVuon?.fz ?? false;
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const i of d.thanVo ?? []) if (i >= 0 && i < thanVo.length) thanVo[i] = true;
     this.frieza = taoFrieza();
@@ -1687,6 +1698,7 @@ export class Game {
     this.dayPhu = this.soMePhu >= ME_PHU_TOI_DA;
     this.capNhatVuon(dtE);
     this.kiemTraOLiVuon();
+    this.kiemTraFzTruy();
     HN.moc('cn.vuon');
     this.capNhatTrungGa(dt);
     HN.moc('cn.trung');
@@ -4086,12 +4098,12 @@ export class Game {
     return Math.abs(dx) < r && Math.abs(dy) < r && dx * dx + dy * dy < r * r;
   }
 
-  /** Mục tiêu của Frieza: nhân vật gần nhất đang đứng trên thần điện (không ẩn / gục / mây / trong máy bay / bị nhập) */
+  /** Mục tiêu của Frieza: nhân vật gần nhất đang đứng trên thần điện (đang truy sát fzTruy: ở bất kỳ đâu) (không ẩn / gục / mây / trong máy bay / bị nhập) */
   private fzMuc(): NguoiChoi | null {
     const f = this.frieza;
     let kq: NguoiChoi | null = null, dMin = Infinity;
     for (const n of this.nguoi) {
-      if (n.vang || this.khuat(n) || !trongThan(n.x, n.y)) continue;
+      if (n.vang || this.khuat(n) || (!this.fzTruy && !trongThan(n.x, n.y))) continue;
       const d = hyp(n.x - f.x, n.y - f.y);
       if (d < dMin) { dMin = d; kq = n; }
     }
@@ -4184,6 +4196,14 @@ export class Game {
       return;
     }
     f.nghi = 0;
+    // Truy sát ngoài thần điện: bay thẳng (qua vực, qua tường vườn) tốc độ FZ_BAY_TOC, gần thì chạy tới như thường
+    if (this.fzTruy && (!trongThan(muc.x, muc.y) || !trongThan(f.x, f.y))) {
+      const toc = d > FZ_BAY_GAN ? Math.max(FZ_BAY_TOC, FZ_TOC_DANH * g) : FZ_TOC_DANH * g;
+      const b = Math.min(d, toc * dt);
+      f.x += (dx / d) * b;
+      f.y += (dy / d) * b;
+      return;
+    }
     const w = this.fzDuongToi(muc.x, muc.y);
     this.fzDuoi(f, w.x, w.y, FZ_TOC_DANH * g, dt);
     if (Math.abs(dx) > 5) f.lat = dx < 0;
@@ -4347,7 +4367,7 @@ export class Game {
     if (muc && !f.chien) {
       f.chien = true;
       this.chuGa({ id: this.id++, x: f.x, y: f.y - 360, text: '⚔ FRIEZA XUẤT TRẬN!', mau: '#d9b3ff', t: 0 });
-    } else if (!muc && f.chien && f.bien < 0 && !f.nap) fzVeDuong(f);
+    } else if (!muc && f.chien && f.bien < 0 && !f.nap && (!this.fzTruy || trongThan(f.x, f.y))) fzVeDuong(f);
     let gan: NguoiChoi | null = muc;
     if (!gan) {
       let dMin = Infinity;
@@ -4359,7 +4379,10 @@ export class Game {
     }
     const su = capNhatFrieza(f, dt, thay && !f.nap && f.danh <= 0, gan?.x);
     if (f.chien && f.bien < 0) this.fzChien(muc, thay, dt);
-    giuTrongMap(f, LE_FZ, false, 'dao');
+    // Truy sát: ra khỏi thần điện thì bay lơ lửng (qua vực), vào vườn gà thì kẹp trong tường như mọi vật
+    f.bay = this.fzTruy && !trongThan(f.x, f.y);
+    if (this.fzTruy) giuTrongMap(f, LE_FZ, f.bay);
+    else giuTrongMap(f, LE_FZ, false, 'dao');
     if (!su) return;
     const tamY = f.y - 768 * FZ_VANG_TO * 0.4;
     if (su === 'batDau') {
@@ -5336,6 +5359,7 @@ export class Game {
     if (this.nguoi.some((n) => !n.vang && !trongVuon(n.x, n.y))) { this.daRaVuon = true; return; }
     if (this.tGame < CELL_TRUY_VUON_T) return;
     this.daRaVuon = true;
+    this.liVuon = true;
     if (!this.cell.some((c) => c.cap === SO_CAP - 1 && !c.chet)) return;
     this.cellTruyVuon = true;
     this.mbCatVuon = false;
@@ -5343,6 +5367,19 @@ export class Game {
     if (n) {
       this.chu.push({ id: this.id++, x: n.x, y: n.y - 360, text: '🔥 Ở LÌ VƯỜN GÀ 5 PHÚT: CELL ĐỎ ĐANG TỚI TRUY SÁT!', mau: '#ff3b30', t: 0 });
       this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: '✈ Máy bay ra khỏi vườn không còn hồi đầy máu / mana', mau: '#ffd23f', t: 0 });
+    }
+    this.rungMan(0.5, 8);
+  }
+
+  /** Ở lì vườn gà 5 phút đầu mà chơi tới FZ_TRUY_T: Frieza (còn sống) rời thần điện bay đi truy sát cả ván, hợp thể Super Bư mở khoá ở mọi nơi */
+  private kiemTraFzTruy(): void {
+    if (this.fzTruy || !this.liVuon || this.tGame < FZ_TRUY_T || this.frieza.chet || banDoHt !== 'sa') return;
+    this.fzTruy = true;
+    const n = this.nguoi.find((m) => !m.vang && !m.het) ?? this.nguoi.find((m) => !m.vang);
+    if (n) {
+      this.chu.push({ id: this.id++, x: n.x, y: n.y - 360, text: '💜 10 PHÚT: FRIEZA BAY ĐI TRUY SÁT!', mau: '#d9b3ff', t: 0 });
+      const doi = this.nguoi.length === 2 && this.nguoi[0]!.ki + this.nguoi[1]!.ki === 1 && this.nguoi[0]!.ki !== this.nguoi[1]!.ki;
+      if (doi) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: '✨ MỞ KHOÁ HỢP THỂ SUPER BƯ Ở MỌI NƠI!', mau: '#ffd23f', t: 0 });
     }
     this.rungMan(0.5, 8);
   }
@@ -6505,7 +6542,12 @@ export class Game {
     if (!a || !b || this.hopThe || a.ki + b.ki !== 1 || a.ki === b.ki) return false;
     const tot = (n: NguoiChoi, p: number) => !n.vang && !n.het && !n.bay && !n.nv.laMay && !n.may.dang && !n.nv.khoa && !this.trongMb(p) && !this.trongCau(p);
     // Chỉ hợp thể được trên thần điện (tháp của Frieza): cả hai phải đứng trên thần điện
-    return tot(a, 0) && tot(b, 1) && trongThan(a.x, a.y) && trongThan(b.x, b.y) && hyp(a.x - b.x, a.y - b.y) <= HOP_THE_GAN;
+    return tot(a, 0) && tot(b, 1) && this.hopTheCho(a, b) && hyp(a.x - b.x, a.y - b.y) <= HOP_THE_GAN;
+  }
+
+  /** Chỗ được hợp thể: cả hai trên thần điện, hoặc ở bất kỳ đâu khi Frieza đã bay đi truy sát (fzTruy) */
+  private hopTheCho(a: NguoiChoi, b: NguoiChoi): boolean {
+    return this.fzTruy || (trongThan(a.x, a.y) && trongThan(b.x, b.y));
   }
 
   /** Chữ gợi ý (chỉ trên đầu người còn đứng đầu tiên): đang chờ hồi hợp thể, hoặc đã sẵn sàng (đứng gần nhau) */
@@ -6514,7 +6556,7 @@ export class Game {
     const [a, b] = this.nguoi;
     if (!a || !b || a.ki + b.ki !== 1 || a.ki === b.ki || a.vang || b.vang) return null;
     if (p !== this.nguoi.findIndex((n) => !n.het)) return null;
-    if (!trongThan(a.x, a.y) || !trongThan(b.x, b.y)) return null;
+    if (!this.hopTheCho(a, b)) return null;
     if (this.hopTheHoi > 0) return `🔄 Hợp thể sau ${Math.ceil(this.hopTheHoi)}s`;
     return this.hopTheDuoc() ? '✨ Cùng bấm 1 nút: HỢP THỂ!' : null;
   }
@@ -6527,7 +6569,7 @@ export class Game {
     if (this.hopThe) return;
     if (this.hopTheHoi > 0) {
       const [m, n] = this.nguoi;
-      if (m && n && trongThan(m.x, m.y) && trongThan(n.x, n.y) && hyp(m.x - n.x, m.y - n.y) <= HOP_THE_GAN) this.chu.push({ id: this.id++, x: (m.x + n.x) / 2, y: (m.y + n.y) / 2 - 300, text: `⏳ CHƯA HỢP THỂ ĐƯỢC: CHỜ ${Math.ceil(this.hopTheHoi)}s`, mau: '#ffd23f', t: 0 });
+      if (m && n && this.hopTheCho(m, n) && hyp(m.x - n.x, m.y - n.y) <= HOP_THE_GAN) this.chu.push({ id: this.id++, x: (m.x + n.x) / 2, y: (m.y + n.y) / 2 - 300, text: `⏳ CHƯA HỢP THỂ ĐƯỢC: CHỜ ${Math.ceil(this.hopTheHoi)}s`, mau: '#ffd23f', t: 0 });
       return;
     }
     if (this.hopTheDuoc()) this.batDauHopThe();
@@ -6627,7 +6669,7 @@ export class Game {
     N.dangDi = false;
     if (h.con <= 0 || C.het) { this.tachHopThe(C.het); return; }
     // Hợp thể chỉ có trên thần điện: ra khỏi thần điện (đi qua cổng, đáp xuống ngoài) thì tự tách luôn; đang bay thì chờ hạ xuống
-    if (!C.bay && !trongThan(C.x, C.y)) {
+    if (!this.fzTruy && !C.bay && !trongThan(C.x, C.y)) {
       this.tachHopThe(false);
       this.chu.push({ id: this.id++, x: C.x, y: C.y - 440, text: '🏯 RA KHỎI THẦN ĐIỆN: TÁCH HỢP THỂ!', mau: '#9be7ff', t: 0 });
     }

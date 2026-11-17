@@ -1584,6 +1584,8 @@ export class VeCanvas {
     if (f.chet) ctx.globalAlpha *= Math.max(0, 1 - f.tChet / FZ_CHET_T);
     ctx.translate(f.x, f.y);
     if (f.chet) ctx.rotate((f.lat ? -1 : 1) * Math.min(1, f.tChet * 4) * Math.PI / 2);
+    // Bay đi truy sát (ngoài thần điện): lơ lửng nhấp nhô
+    if (f.bay && !f.chet) ctx.translate(0, -70 - 12 * Math.sin(c.t * 3));
     // Ra đòn: lao người về phía trước rồi lùi lại
     if (f.danh > 0) ctx.translate((f.lat ? -1 : 1) * Math.sin((1 - f.danh / FZ_DANH_T) * Math.PI) * 50, 0);
     // Vận chưởng: quả cầu năng lượng lớn dần ở tay (tím; dạng vàng vàng), gradient không shadowBlur
