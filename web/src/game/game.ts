@@ -278,6 +278,8 @@ const W_MAC_DINH = 1600;
 /** Chơi tới chừng này giây thì Cell đỏ (còn sống) rời đảo đi truy sát mọi nơi (kiemTraCellTruy()); nếu tới lúc này chưa ai ra khỏi vườn gà thì
  *  máy bay / phi thuyền thôi hồi máu / mana (kiemTraOLiVuon()) */
 const CELL_TRUY_T = 300;
+/** Hạ đủ 4 trùm xong chờ chừng này giây rồi mới hiện màn chiến thắng (kiemTraThang()) */
+const THANG_CHO = 3;
 /** Chơi tới chừng này giây thì Frieza (còn sống) rời thần điện bay đi truy sát mọi nơi, hợp thể mở khoá khắp nơi (kiemTraFzTruy()) */
 const FZ_TRUY_T = 600;
 /** Chơi tới chừng này giây mà bóng ma Goku chưa bị hạ hẳn thì nó rời núi đá bay đi truy sát (tốc độ lao GY_LAO_TOC, kiemTraGyTruy()) */
@@ -1094,6 +1096,8 @@ export class Game {
   private cellTruyVuon = false;
   /** Đã chơi tới CELL_TRUY_T: Cell đỏ (còn sống) truy sát mọi nơi cả ván */
   private cellTruyT = false;
+  /** Giây đã trôi từ lúc hạ đủ 4 trùm (-1 = chưa đủ); đủ THANG_CHO thì thắng (kiemTraThang(), không lưu ván) */
+  private tThang = -1;
   /** Frieza bay đi truy sát Mabu / Zinbu khắp thế giới (cả ván); hợp thể Super Bư làm được và giữ được ở mọi nơi */
   fzTruy = false;
   /** Bóng ma Goku đã rời núi đá đi truy sát (sau GY_TRUY_T giây mà chưa bị hạ hẳn), cả ván */
@@ -1390,6 +1394,7 @@ export class Game {
     this.dungHinh = 0;
     this.henTuong = CHO_TUONG_DAU;
     this.soLanTuong = 0;
+    this.tThang = -1;
     this.vuonNgu = false;
     this.toTrung = null;
     this.toDe = 0;
@@ -1709,6 +1714,7 @@ export class Game {
     this.kiemTraCellTruy();
     this.kiemTraFzTruy();
     this.kiemTraGyTruy();
+    this.kiemTraThang(dt);
     HN.moc('cn.vuon');
     this.capNhatTrungGa(dt);
     HN.moc('cn.trung');
@@ -5423,6 +5429,33 @@ export class Game {
     this.rungMan(0.5, 8);
   }
 
+  /** Bốn trùm đã bị hạ hẳn chưa: Cell đỏ, Frieza, bóng ma Goku (hết lượt hồi sinh), vua gà (đã xuất hiện và không còn sống) */
+  private trumDaHa(): { cell: boolean; fz: boolean; gy: boolean; vua: boolean } {
+    const g = this.ginyu;
+    return {
+      cell: !this.cell.some((c) => c.cap === SO_CAP - 1 && !c.chet),
+      fz: this.frieza.chet,
+      gy: g.chet && !g.choHoi,
+      vua: this.soLanTuong > TUONG_HOI_SINH && !this.ga.some((x) => x.goc && !x.chet),
+    };
+  }
+
+  /** Hạ đủ 4 trùm (Cell đỏ, Frieza, bóng ma Goku, vua gà) thì thắng sau THANG_CHO giây (cho hoạt ảnh chết chạy xong) */
+  private kiemTraThang(dt: number): void {
+    if (banDoHt !== 'sa') return;
+    if (this.tThang < 0) {
+      const h = this.trumDaHa();
+      if (!(h.cell && h.fz && h.gy && h.vua)) return;
+      this.tThang = 0;
+      const n = this.nguoi.find((m) => !m.vang && !m.het) ?? this.nguoi.find((m) => !m.vang);
+      if (n) this.chu.push({ id: this.id++, x: n.x, y: n.y - 360, text: '🏆 ĐÃ HẠ ĐỦ 4 TRÙM: CHIẾN THẮNG!', mau: '#ffd23f', t: 0 });
+      this.nguoi.forEach((_, q) => this.chuongLenTroi(q));
+      return;
+    }
+    this.tThang += dt;
+    if (this.tThang >= THANG_CHO) this.ketThuc(true);
+  }
+
   /** Chơi tới FZ_TRUY_T: Frieza (còn sống) rời thần điện bay đi truy sát mọi nơi cả ván (như bóng ma Goku), hợp thể Super Bư mở khoá ở mọi nơi */
   private kiemTraFzTruy(): void {
     if (this.fzTruy || this.tGame < FZ_TRUY_T || this.frieza.chet || banDoHt !== 'sa') return;
@@ -6432,7 +6465,7 @@ export class Game {
     this.chu.push({ id: this.id++, x, y, text, mau: this.nguoi[p].mau, t: 0 });
   }
 
-  // nguoiThang: true = hai nhân vật diệt hết gà mẹ và gà con; false = cả hai nhân vật cùng gục, quái vật thắng
+  // nguoiThang: true = đã hạ đủ 4 trùm (Cell đỏ, Frieza, bóng ma Goku, vua gà); false = cả hai nhân vật cùng gục, quái vật thắng
   private ketThuc(nguoiThang: boolean): void {
     this.nguoiThangTran = nguoiThang;
     this.man = 'over';
