@@ -1526,7 +1526,7 @@ export class Game {
       this.camNgay = false;
       HN.moc('view');
     }
-    this.am.nhacNen(this.man === 'play', this.trenDao && !this.trenNui && !this.trenThan);
+    this.am.nhacNen(this.man === 'play', this.trenNui || this.trenThan ? 'ma' : this.trenDao ? 'dao' : 'thuong');
     if (this.ctx) this.ve.ve(this.ctx, this, this.dpr, this.ctxNen, NEN_TL);
     // Màn chơi chỉ vẽ canvas; phần HTML (màn bắt đầu / tạm dừng / kết thúc, nút) chỉ cập nhật khi cần
     if (this.man !== 'play' || this.manDaVe !== this.man) this.onManPhu();

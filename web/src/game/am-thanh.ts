@@ -17,6 +17,10 @@ const DUONG_DAN = 'assets/am-thanh/';
 const AM_LUONG: Record<TenAm, number> = { dam: 0.7, da: 0.7, chuong: 0.7, anTao: 0.8, deTrung: 0.6, meChet: 0.9, nvChet: 0.9, gokuMa: 0.9 };
 const AM_LUONG_NHAC = 0.12;
 const AM_LUONG_NHAC_DAO = 0.3;
+const AM_LUONG_NHAC_MA = 0.35;
+
+/** Nhạc nền theo vùng: thường (vườn gà) · đảo Cell (sinh nhật) · núi đá bóng ma Goku + thần điện Frieza (piano u buồn) */
+export type VungNhac = 'thuong' | 'dao' | 'ma';
 const GIAN_CACH = 0.06; // giây: cùng một tiếng không phát lại dày hơn mức này
 const TOI_DA_CHONG = 4; // số bản phát chồng tối đa của một tiếng
 
@@ -28,7 +32,8 @@ export class AmThanh {
   private tat = false;
   private ac: AudioContext | null = null;
   private nhacDao: HTMLAudioElement | null = null;
-  private oDao = false;
+  private nhacMa: HTMLAudioElement | null = null;
+  private vung: VungNhac = 'thuong';
 
   constructor() {
     if (typeof Audio === 'undefined') return;
@@ -46,8 +51,13 @@ export class AmThanh {
     this.nhacDao.loop = true;
     this.nhacDao.volume = AM_LUONG_NHAC_DAO;
     this.nhacDao.preload = 'auto';
+    // Nhạc núi đá (bóng ma Goku) và thần điện (Frieza)
+    this.nhacMa = new Audio(DUONG_DAN + 'nhac-ma.mp3');
+    this.nhacMa.loop = true;
+    this.nhacMa.volume = AM_LUONG_NHAC_MA;
+    this.nhacMa.preload = 'auto';
     // Sau cú bấm đầu tiên của người chơi, thử lại nhạc nền nếu trước đó bị chặn
-    const mo = () => { if (this.muonNhac) this.nhacNen(true, this.oDao); this.ac?.resume().catch(() => { /* chưa được phép */ }); };
+    const mo = () => { if (this.muonNhac) this.nhacNen(true, this.vung); this.ac?.resume().catch(() => { /* chưa được phép */ }); };
     for (const s of ['pointerdown', 'keydown']) window.addEventListener(s, mo, { capture: true });
   }
 
@@ -105,12 +115,11 @@ export class AmThanh {
   }
 
   /** Bật / dừng nhạc nền theo trạng thái ván (gọi mỗi khung hình đều được). `dao`: đang ở khu đảo thì phát bài sinh nhật thay nhạc nền thường */
-  nhacNen(bat: boolean, dao = false): void {
+  nhacNen(bat: boolean, vung: VungNhac = 'thuong'): void {
     this.muonNhac = bat;
-    this.oDao = dao;
-    const dung = dao ? this.nhacDao : this.nhac;
-    const tat = dao ? this.nhac : this.nhacDao;
-    if (tat && !tat.paused) tat.pause();
+    this.vung = vung;
+    const dung = vung === 'dao' ? this.nhacDao : vung === 'ma' ? this.nhacMa : this.nhac;
+    for (const tat of [this.nhac, this.nhacDao, this.nhacMa]) if (tat && tat !== dung && !tat.paused) tat.pause();
     if (!dung) return;
     if (bat && !this.tat) {
       if (dung.paused) dung.play().catch(() => { /* chờ lần bấm đầu tiên */ });
