@@ -268,11 +268,15 @@ export interface TrangThaiLuu {
   thanVo?: number[];
   /** Frieza: máu (dạng thường) và đã bị hạ chưa (thiếu = Frieza mới) */
   frieza?: { hp: number; chet: boolean };
+  /** Đã có người ra khỏi vườn gà / Cell đỏ đã truy sát vì ở lì vườn gà quá CELL_TRUY_VUON_T (thiếu = ván lưu cũ: coi như đã ra vườn) */
+  truyVuon?: { ra: boolean; on: boolean };
   nguoi: (Omit<NguoiChoi, 'nv' | 'nham' | 'ngam' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
 }
 
 // Chiều rộng khung nhìn (đơn vị khung) thay đổi theo tỉ lệ cửa sổ để map tràn hai bên; H cố định. Phía trên map có thanh đen cao BAR chứa các chiêu của gà mẹ (toạ độ y âm).
 const W_MAC_DINH = 1600;
+/** Chơi chừng này giây mà chưa ai ra khỏi vườn gà thì Cell đỏ đi truy sát (kiemTraOLiVuon()) */
+const CELL_TRUY_VUON_T = 300;
 const W_TOI_THIEU = 1100;
 const W_TOI_DA = 2800;
 const BAR = 80;
@@ -1074,6 +1078,10 @@ export class Game {
   ngocNhat: number[] = [];
   /** Đã báo chữ Cell đỏ truy sát (không lưu ván) */
   private cellTruyBao = false;
+  /** Đã có nhân vật ra khỏi vườn gà (lần đầu, kể cả ngồi máy bay / phi thuyền) */
+  private daRaVuon = false;
+  /** Hết CELL_TRUY_VUON_T giây mà chưa ai ra khỏi vườn gà: Cell đỏ truy sát cả ván, máy bay bay ra không còn đặt lại máu / mana */
+  private cellTruyVuon = false;
   ngocBay: { x: number; y: number; t: number; slot: number; sao: number }[] = [];
   readonly NGOC_BAY_T = 1.1;
   // Gà mẹ đang đánh (phụ gần nhân vật nhất; chưa có thì gà mẹ gốc): chiêu hiện trên thanh đen phía trên
@@ -1333,6 +1341,8 @@ export class Game {
     this.mayBay = taoMayBay(kep(gx + vao * 700, TUONG + MB_LE, MAP - TUONG - MB_LE), kep(gy + xuong * 380, TUONG + MB_LE, MAP - TUONG - MB_LE));
     this.mbCatVuon = false;
     this.mbRaVuon = this.ptRaVuon = false;
+    this.daRaVuon = this.cellTruyVuon = false;
+    this.cellTruyBao = false;
     this.phiThuyen = taoPhiThuyen(this.mayBay);
     this.ga = [];
     this.keoGa = [];
@@ -1404,6 +1414,7 @@ export class Game {
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       thanVo: thanVo.flatMap((v, i) => (v ? [i] : [])),
       frieza: { hp: Math.min(FZ_HP, Math.max(1, this.frieza.hp / fzGap(this.frieza))), chet: this.frieza.chet },
+      truyVuon: { ra: this.daRaVuon, on: this.cellTruyVuon },
       nguoi: this.nguoi.map((n, p) => {
         const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
         void nham; void ngam; void cuaCan; void dich;
@@ -1449,6 +1460,8 @@ export class Game {
     if (this.ginyu.chet) this.ginyu.tChet = GY_CHET_T;
     this.mbCatVuon = false;
     this.mbRaVuon = this.ptRaVuon = false;
+    this.daRaVuon = d.truyVuon?.ra ?? true;
+    this.cellTruyVuon = d.truyVuon?.on ?? false;
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const i of d.thanVo ?? []) if (i >= 0 && i < thanVo.length) thanVo[i] = true;
     this.frieza = taoFrieza();
@@ -1673,6 +1686,7 @@ export class Game {
     this.dayCon = this.soGaCon >= GA_CON_TOI_DA;
     this.dayPhu = this.soMePhu >= ME_PHU_TOI_DA;
     this.capNhatVuon(dtE);
+    this.kiemTraOLiVuon();
     HN.moc('cn.vuon');
     this.capNhatTrungGa(dt);
     HN.moc('cn.trung');
@@ -5310,9 +5324,27 @@ export class Game {
     return true;
   }
 
-  /** Cell đỏ (cấp cao nhất) còn sống mà ngọc 2 sao của nó đã bị lấy: truy sát Mabu / Zinbu tới bất kỳ đâu, bỏ qua vòng đảo */
+  /** Cell đỏ (cấp cao nhất) còn sống mà ngọc 2 sao của nó đã bị lấy, hoặc Mabu / Zinbu ở lì vườn gà quá CELL_TRUY_VUON_T: truy sát tới bất kỳ đâu, bỏ qua vòng đảo */
   private cellTruy(c: Cell): boolean {
-    return c.cap === SO_CAP - 1 && !c.chet && this.ngocNhat.includes(NGOC_TIEC_SAO);
+    return c.cap === SO_CAP - 1 && !c.chet && (this.cellTruyVuon || this.ngocNhat.includes(NGOC_TIEC_SAO));
+  }
+
+  /** Chống ở lì vườn gà: chưa ai ra khỏi vườn mà đã chơi CELL_TRUY_VUON_T giây thì Cell đỏ rời đảo đi truy sát (cả ván),
+   *  và từ đó máy bay bay ra khỏi vườn không còn đặt lại máu / mana (Mabu / Zinbu giữ nguyên máu, sức mạnh tới hết ván) */
+  private kiemTraOLiVuon(): void {
+    if (this.daRaVuon || banDoHt !== 'sa') return;
+    if (this.nguoi.some((n) => !n.vang && !trongVuon(n.x, n.y))) { this.daRaVuon = true; return; }
+    if (this.tGame < CELL_TRUY_VUON_T) return;
+    this.daRaVuon = true;
+    if (!this.cell.some((c) => c.cap === SO_CAP - 1 && !c.chet)) return;
+    this.cellTruyVuon = true;
+    this.mbCatVuon = false;
+    const n = this.nguoi.find((m) => !m.vang && !m.het) ?? this.nguoi.find((m) => !m.vang);
+    if (n) {
+      this.chu.push({ id: this.id++, x: n.x, y: n.y - 360, text: '🔥 Ở LÌ VƯỜN GÀ 5 PHÚT: CELL ĐỎ ĐANG TỚI TRUY SÁT!', mau: '#ff3b30', t: 0 });
+      this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: '✈ Máy bay ra khỏi vườn không còn hồi đầy máu / mana', mau: '#ffd23f', t: 0 });
+    }
+    this.rungMan(0.5, 8);
   }
 
   /** Chọn mục tiêu cho Cell đang truy sát: người đi bộ gần nhất (không ẩn / gục / mây / trong cầu), không thì máy bay có người ngồi, không thì đứng chờ */
@@ -5770,7 +5802,7 @@ export class Game {
       if (m.ngoi.length >= co && m.ngoi.length > 0) {
         m.pha = 'cat';
         m.t = 0;
-        this.mbCatVuon = banDoHt === 'sa' && trongVuon(m.x, m.y);
+        this.mbCatVuon = banDoHt === 'sa' && trongVuon(m.x, m.y) && !this.cellTruyVuon;
         this.am.phat('chuong');
         this.rungMan(0.4, 5);
         this.chu.push({ id: this.id++, x: m.x, y: m.y - 330, text: '✈ CẤT CÁNH!', mau: '#ffd23f', t: 0 });
