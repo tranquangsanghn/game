@@ -268,16 +268,17 @@ export interface TrangThaiLuu {
   thanVo?: number[];
   /** Frieza: máu (dạng thường) và đã bị hạ chưa (thiếu = Frieza mới) */
   frieza?: { hp: number; chet: boolean };
-  /** Đã có người ra khỏi vườn gà / Cell đỏ đã truy sát vì ở lì vườn gà quá CELL_TRUY_VUON_T (thiếu = ván lưu cũ: coi như đã ra vườn) */
-  truyVuon?: { ra: boolean; on: boolean; li?: boolean; fz?: boolean; gy?: boolean };
+  /** Đã có người ra khỏi vườn gà / ở lì vườn gà 5 phút (on: máy bay thôi hồi máu) / Cell đỏ, Frieza, bóng ma Goku đang truy sát (thiếu = ván lưu cũ: coi như đã ra vườn) */
+  truyVuon?: { ra: boolean; on: boolean; cell?: boolean; fz?: boolean; gy?: boolean };
   nguoi: (Omit<NguoiChoi, 'nv' | 'nham' | 'ngam' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
 }
 
 // Chiều rộng khung nhìn (đơn vị khung) thay đổi theo tỉ lệ cửa sổ để map tràn hai bên; H cố định. Phía trên map có thanh đen cao BAR chứa các chiêu của gà mẹ (toạ độ y âm).
 const W_MAC_DINH = 1600;
-/** Chơi chừng này giây mà chưa ai ra khỏi vườn gà thì Cell đỏ đi truy sát (kiemTraOLiVuon()) */
-const CELL_TRUY_VUON_T = 300;
-/** Đã ở lì vườn gà 5 phút đầu (CELL_TRUY_VUON_T) mà chơi tới chừng này giây thì Frieza rời thần điện bay đi truy sát, hợp thể mở khoá khắp nơi (kiemTraFzTruy()) */
+/** Chơi tới chừng này giây thì Cell đỏ (còn sống) rời đảo đi truy sát mọi nơi (kiemTraCellTruy()); nếu tới lúc này chưa ai ra khỏi vườn gà thì
+ *  máy bay / phi thuyền thôi hồi máu / mana (kiemTraOLiVuon()) */
+const CELL_TRUY_T = 300;
+/** Chơi tới chừng này giây thì Frieza (còn sống) rời thần điện bay đi truy sát mọi nơi, hợp thể mở khoá khắp nơi (kiemTraFzTruy()) */
 const FZ_TRUY_T = 600;
 /** Chơi tới chừng này giây mà bóng ma Goku chưa bị hạ hẳn thì nó rời núi đá bay đi truy sát (tốc độ lao GY_LAO_TOC, kiemTraGyTruy()) */
 const GY_TRUY_T = 900;
@@ -1089,10 +1090,10 @@ export class Game {
   private cellTruyBao = false;
   /** Đã có nhân vật ra khỏi vườn gà (lần đầu, kể cả ngồi máy bay / phi thuyền) */
   private daRaVuon = false;
-  /** Hết CELL_TRUY_VUON_T giây mà chưa ai ra khỏi vườn gà: Cell đỏ truy sát cả ván, máy bay bay ra không còn đặt lại máu / mana */
+  /** Hết CELL_TRUY_T giây mà chưa ai ra khỏi vườn gà: máy bay / phi thuyền không còn đặt lại máu / mana (cả ván) */
   private cellTruyVuon = false;
-  /** Đã ở lì vườn gà CELL_TRUY_VUON_T giây đầu (kể cả khi Cell đỏ đã chết): tới FZ_TRUY_T thì Frieza đi truy sát */
-  private liVuon = false;
+  /** Đã chơi tới CELL_TRUY_T: Cell đỏ (còn sống) truy sát mọi nơi cả ván */
+  private cellTruyT = false;
   /** Frieza bay đi truy sát Mabu / Zinbu khắp thế giới (cả ván); hợp thể Super Bư làm được và giữ được ở mọi nơi */
   fzTruy = false;
   /** Bóng ma Goku đã rời núi đá đi truy sát (sau GY_TRUY_T giây mà chưa bị hạ hẳn), cả ván */
@@ -1356,7 +1357,7 @@ export class Game {
     this.mayBay = taoMayBay(kep(gx + vao * 700, TUONG + MB_LE, MAP - TUONG - MB_LE), kep(gy + xuong * 380, TUONG + MB_LE, MAP - TUONG - MB_LE));
     this.mbCatVuon = false;
     this.mbRaVuon = this.ptRaVuon = false;
-    this.daRaVuon = this.cellTruyVuon = this.liVuon = this.fzTruy = this.gyTruy = false;
+    this.daRaVuon = this.cellTruyVuon = this.cellTruyT = this.fzTruy = this.gyTruy = false;
     this.cellTruyBao = false;
     this.phiThuyen = taoPhiThuyen(this.mayBay);
     this.ga = [];
@@ -1429,7 +1430,7 @@ export class Game {
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       thanVo: thanVo.flatMap((v, i) => (v ? [i] : [])),
       frieza: { hp: Math.min(FZ_HP, Math.max(1, this.frieza.hp / fzGap(this.frieza))), chet: this.frieza.chet },
-      truyVuon: { ra: this.daRaVuon, on: this.cellTruyVuon, li: this.liVuon, fz: this.fzTruy, gy: this.gyTruy },
+      truyVuon: { ra: this.daRaVuon, on: this.cellTruyVuon, cell: this.cellTruyT, fz: this.fzTruy, gy: this.gyTruy },
       nguoi: this.nguoi.map((n, p) => {
         const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
         void nham; void ngam; void cuaCan; void dich;
@@ -1477,7 +1478,7 @@ export class Game {
     this.mbRaVuon = this.ptRaVuon = false;
     this.daRaVuon = d.truyVuon?.ra ?? true;
     this.cellTruyVuon = d.truyVuon?.on ?? false;
-    this.liVuon = d.truyVuon?.li ?? this.cellTruyVuon;
+    this.cellTruyT = d.truyVuon?.cell ?? this.cellTruyVuon;
     this.fzTruy = d.truyVuon?.fz ?? false;
     this.gyTruy = d.truyVuon?.gy ?? false;
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
@@ -1705,6 +1706,7 @@ export class Game {
     this.dayPhu = this.soMePhu >= ME_PHU_TOI_DA;
     this.capNhatVuon(dtE);
     this.kiemTraOLiVuon();
+    this.kiemTraCellTruy();
     this.kiemTraFzTruy();
     this.kiemTraGyTruy();
     HN.moc('cn.vuon');
@@ -5383,28 +5385,32 @@ export class Game {
     return true;
   }
 
-  /** Cell đỏ (cấp cao nhất) còn sống mà ngọc 2 sao của nó đã bị lấy, hoặc Mabu / Zinbu ở lì vườn gà quá CELL_TRUY_VUON_T: truy sát tới bất kỳ đâu, bỏ qua vòng đảo */
+  /** Cell đỏ (cấp cao nhất) còn sống mà ngọc 2 sao của nó đã bị lấy, hoặc đã chơi tới CELL_TRUY_T: truy sát tới bất kỳ đâu, bỏ qua vòng đảo */
   private cellTruy(c: Cell): boolean {
-    return c.cap === SO_CAP - 1 && !c.chet && (this.cellTruyVuon || this.ngocNhat.includes(NGOC_TIEC_SAO));
+    return c.cap === SO_CAP - 1 && !c.chet && (this.cellTruyT || this.ngocNhat.includes(NGOC_TIEC_SAO));
   }
 
-  /** Chống ở lì vườn gà: chưa ai ra khỏi vườn mà đã chơi CELL_TRUY_VUON_T giây thì Cell đỏ rời đảo đi truy sát (cả ván),
-   *  và từ đó máy bay bay ra khỏi vườn không còn đặt lại máu / mana (Mabu / Zinbu giữ nguyên máu, sức mạnh tới hết ván) */
+  /** Chơi tới CELL_TRUY_T: Cell đỏ (còn sống) rời đảo đi truy sát Mabu / Zinbu mọi nơi cả ván (như bóng ma Goku) */
+  private kiemTraCellTruy(): void {
+    if (this.cellTruyT || this.tGame < CELL_TRUY_T || banDoHt !== 'sa') return;
+    this.cellTruyT = true;
+    if (!this.cell.some((c) => c.cap === SO_CAP - 1 && !c.chet)) return;
+    const n = this.nguoi.find((m) => !m.vang && !m.het) ?? this.nguoi.find((m) => !m.vang);
+    if (n) this.chu.push({ id: this.id++, x: n.x, y: n.y - 420, text: '🔥 5 PHÚT: CELL ĐỎ ĐI TRUY SÁT!', mau: '#ff3b30', t: 0 });
+    this.rungMan(0.5, 8);
+  }
+
+  /** Chống ở lì vườn gà: chưa ai ra khỏi vườn mà đã chơi CELL_TRUY_T giây thì từ đó máy bay / phi thuyền không còn đặt lại máu / mana
+   *  (Mabu / Zinbu giữ nguyên máu, sức mạnh tới hết ván) */
   private kiemTraOLiVuon(): void {
     if (this.daRaVuon || banDoHt !== 'sa') return;
     if (this.nguoi.some((n) => !n.vang && !trongVuon(n.x, n.y))) { this.daRaVuon = true; return; }
-    if (this.tGame < CELL_TRUY_VUON_T) return;
+    if (this.tGame < CELL_TRUY_T) return;
     this.daRaVuon = true;
-    this.liVuon = true;
-    if (!this.cell.some((c) => c.cap === SO_CAP - 1 && !c.chet)) return;
     this.cellTruyVuon = true;
     this.mbCatVuon = false;
     const n = this.nguoi.find((m) => !m.vang && !m.het) ?? this.nguoi.find((m) => !m.vang);
-    if (n) {
-      this.chu.push({ id: this.id++, x: n.x, y: n.y - 360, text: '🔥 Ở LÌ VƯỜN GÀ 5 PHÚT: CELL ĐỎ ĐANG TỚI TRUY SÁT!', mau: '#ff3b30', t: 0 });
-      this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: '✈ Máy bay ra khỏi vườn không còn hồi đầy máu / mana', mau: '#ffd23f', t: 0 });
-    }
-    this.rungMan(0.5, 8);
+    if (n) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: '✈ Ở LÌ VƯỜN GÀ 5 PHÚT: máy bay ra khỏi vườn không còn hồi đầy máu / mana', mau: '#ffd23f', t: 0 });
   }
 
   /** Chơi tới GY_TRUY_T mà bóng ma Goku chưa bị hạ hẳn (còn sống hoặc đang chờ hồi sinh): nó rời núi đá bay đi truy sát Mabu / Zinbu cả ván */
@@ -5417,9 +5423,9 @@ export class Game {
     this.rungMan(0.5, 8);
   }
 
-  /** Ở lì vườn gà 5 phút đầu mà chơi tới FZ_TRUY_T: Frieza (còn sống) rời thần điện bay đi truy sát cả ván, hợp thể Super Bư mở khoá ở mọi nơi */
+  /** Chơi tới FZ_TRUY_T: Frieza (còn sống) rời thần điện bay đi truy sát mọi nơi cả ván (như bóng ma Goku), hợp thể Super Bư mở khoá ở mọi nơi */
   private kiemTraFzTruy(): void {
-    if (this.fzTruy || !this.liVuon || this.tGame < FZ_TRUY_T || this.frieza.chet || banDoHt !== 'sa') return;
+    if (this.fzTruy || this.tGame < FZ_TRUY_T || this.frieza.chet || banDoHt !== 'sa') return;
     this.fzTruy = true;
     const n = this.nguoi.find((m) => !m.vang && !m.het) ?? this.nguoi.find((m) => !m.vang);
     if (n) {
