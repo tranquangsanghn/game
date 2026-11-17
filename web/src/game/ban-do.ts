@@ -156,9 +156,9 @@ export const TG_SA = (() => {
 })();
 
 /** Thần điện: khối đất nổi trên vực phía bắc vòng đảo (ảnh than_dien.png cắt từ ảnh người dùng gửi, tools/tao-than-dien.py),
- *  mỗi điểm ảnh = THAN_TL đơn vị thế giới. Không nối với đâu: vào bằng cổng dịch chuyển giữa đảo 4 (hoặc máy bay).
+ *  mỗi điểm ảnh = THAN_TL đơn vị thế giới (7,7: khung 5544 × 3696 ≈ 1/2 diện tích vườn gà). Không nối với đâu: vào bằng cổng dịch chuyển giữa đảo 4 (hoặc máy bay).
  *  Bờ là đa giác bậc thang THAN_VIEN (đất = trong đa giác), vật cản THAN_CHAN (điện thờ, vườn cây, hàng cọ, chân cột vòm). */
-export const THAN_TL = 9;
+export const THAN_TL = 7.7;
 const THAN_CACH = 2600;
 export const THAN = (() => {
   const w = THAN_ANH_W * THAN_TL, h = THAN_ANH_H * THAN_TL;
