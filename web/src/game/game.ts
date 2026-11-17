@@ -2979,7 +2979,12 @@ export class Game {
   private capNhatVuon(dtE: number): void {
     // Máy bay hoặc phi thuyền bay ra khỏi vườn (qua tường) thì vườn ngủ; xe nào còn đậu trong vườn mà không ai ở trong vườn cũng vậy
     // (đi phi thuyền sang núi đá, máy bay vẫn đậu trong vườn). Người ngồi xe đi theo xe nên chỉ cần xét vị trí nhân vật.
-    const ngoai = !this.nguoi.some((n) => !n.vang && trongVuon(n.x, n.y));
+    // Người ngồi xe tính theo vị trí xe (lúc bay, toạ độ nhân vật bị nâng lên theo độ cao)
+    const ngoai = !this.nguoi.some((n, p) => {
+      if (n.vang) return false;
+      const o = this.trongPt(p) ? this.phiThuyen : this.mayBay.ngoi.includes(p) ? this.mayBay : n;
+      return trongVuon(o.x, o.y);
+    });
     if (ngoai && !this.vuonNgu) {
       this.vuonNgu = true;
       // Vua gà còn sống (hoặc chưa xuất hiện) thì sẽ xuất hiện lại như mới; đã bị hạ thì không bao giờ có lại
