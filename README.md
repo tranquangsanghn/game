@@ -47,7 +47,7 @@ Chọn nhân vật xong sẽ vào màn hướng dẫn (ảnh `web/public/assets/
 
 Màn bắt đầu (chế độ tay cầm) hiện tên các tay cầm đã nối và nút vừa bấm (để dò tay cầm lạ có gửi đúng chỉ số nút không).
 
-**Hợp thể Super Bư** (đội Mabu + Zinbu, tay cầm): hai người đứng gần nhau (≤ 300) và **cùng bấm một nút đánh** (A, B, X hoặc Y) thì hợp thể thành Super Bư trong **40 giây** (đếm ngược trên đầu), mạnh gấp 5 lần Mabu + Zinbu cộng lại (máu, đấm, đá, chưởng; nút B bắn bóng ma nổ to). Người **ít máu hơn** lúc hợp thể chỉ điều khiển **đi lại / bay**, người **nhiều máu hơn** chỉ điều khiển **ra đòn**. Hết 40 giây thì tách ra (máu chia lại theo phần còn lại), **15 giây** sau mới hợp thể lại được. Super Bư vẫn đi qua cổng dịch chuyển ở đảo 4 để tới thần điện của Frieza.
+**Hợp thể Super Bư** (đội Mabu + Zinbu, tay cầm): hai người đứng gần nhau (≤ 300) và **cùng bấm một nút đánh** (A, B, X hoặc Y) thì hợp thể thành Super Bư trong **50 giây** (đếm ngược trên đầu), mạnh gấp 3 lần Mabu + Zinbu cộng lại (máu, đấm, đá, chưởng; nút B bắn bóng ma nổ to). Người **ít máu hơn** lúc hợp thể chỉ điều khiển **đi lại / bay**, người **nhiều máu hơn** chỉ điều khiển **ra đòn**. Hết 50 giây thì tách ra (máu chia lại theo phần còn lại), **15 giây** sau mới hợp thể lại được. Chỉ hợp thể được trên thần điện của Frieza (đi qua cổng dịch chuyển ở đảo 4), ra khỏi thần điện thì tự tách ra. Chưởng và bóng ma của Super Bư hồi 0,5 giây.
 
 **Vegeta**: nhân vật chọn chơi thứ 3 (chơi 1 người, hoặc 2 người cùng Mabu / Zinbu; màn chọn có 6 thẻ, tay cầm ◀ ▶ ▲ ▼ để chọn). Sức mạnh giữa Mabu và Zinbu (Đấm 50 · Đá 85 · Chưởng 160), chỉ có Đấm / Đá / Chiêu đặc biệt; nút B tự dùng chưởng. Chưởng là quả cầu sáng có đuôi, nổ thành đám lửa lớn.
 
