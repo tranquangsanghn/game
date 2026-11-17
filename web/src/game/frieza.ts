@@ -5,6 +5,7 @@
 // Sprite: web/public/assets/game/frieza_atlas.png (dựng bằng tools/tao-atlas-frieza.py từ sheet người dùng gửi), 6 khung 80×84, neo đáy giữa, quay mặt PHẢI.
 import type { KhungSprite } from './sprite';
 import { THAN, THAN_TL } from './ban-do';
+import { CELL_HP, CELL_SAT, CELL_CHUONG_SAT, CELL_TOC, CELL_HOI, CELL_CHUONG_HOI, CELL_NE, CELL_GIAP, SO_CAP } from './cell';
 
 export const SP_FRIEZA: KhungSprite = { atlas: 'assets/game/frieza_atlas.png', atlasW: 480, atlasH: 84, w: 80, h: 84, cot: 6, neoX: 40, neoY: 82 };
 export const FZ_KHUNG = { dung: [0, 1], di: [2, 3, 4, 5] } as const;
@@ -18,6 +19,25 @@ export const FZ_NGHI: [number, number] = [1.5, 4];
 /** Nhịp animation (khung / giây) */
 export const FZ_FPS_DI = 7;
 export const FZ_FPS_DUNG = 1.5;
+
+/**
+ * Chỉ số chiến đấu của Frieza: gấp `FZ_GAP` = 2 lần Cell đỏ (Cell bạo nộ, cấp cao nhất) hiện tại, tính thẳng từ hằng của Cell nên chỉnh Cell đỏ thì Frieza theo.
+ * Máu, sát thương đấm / đá, sát thương chưởng, tốc độ chạy khi đánh, tự hồi máu: ×2. Tốc độ đánh / hồi chưởng nhanh gấp 2 (thời gian chờ ÷2).
+ * Né và giáp là tỉ lệ (Cell đỏ 70%) nên không nhân 2 được (sẽ quá 100%): gấp 2 "phần còn trúng" theo nghĩa ngược, tức phần lọt qua chỉ còn một nửa
+ * (né 70% → 85%, giáp 70% → 85%). Hiện Frieza chưa đánh nhau (chỉ đi loanh quanh), các số này dùng khi code chiến đấu.
+ */
+export const FZ_GAP = 2;
+const DO = SO_CAP - 1;
+export const FZ_HP = CELL_HP[DO]! * FZ_GAP;
+export const FZ_SAT = CELL_SAT[DO]! * FZ_GAP;
+export const FZ_CHUONG_SAT = CELL_CHUONG_SAT[DO]! * FZ_GAP;
+export const FZ_TOC_DANH = CELL_TOC[DO]! * FZ_GAP;
+export const FZ_HOI = CELL_HOI[DO]! / FZ_GAP;
+export const FZ_CHUONG_HOI = CELL_CHUONG_HOI[DO]! / FZ_GAP;
+/** Cell đỏ tự hồi 30 máu/s (`CELL_HOI_MAU_NGOC` trong game.ts) */
+export const FZ_HOI_MAU = 30 * FZ_GAP;
+export const FZ_NE = 1 - (1 - CELL_NE[DO]!) / FZ_GAP;
+export const FZ_GIAP = 1 - (1 - CELL_GIAP) / FZ_GAP;
 
 /** Chuỗi điểm quanh điện thờ (điểm ảnh của than_dien.png) */
 const DUONG_ANH: [number, number][] = [
@@ -35,12 +55,14 @@ export interface Frieza {
   nghi: number;
   /** Đồng hồ animation */
   t: number;
+  /** Máu (khởi đầu FZ_HP) */
+  hp: number;
 }
 
 export function taoFrieza(): Frieza {
   const i = 4;
   const p = FZ_DUONG[i]!;
-  return { x: p.x, y: p.y, lat: false, i, dich: i, nghi: 2, t: 0 };
+  return { x: p.x, y: p.y, lat: false, i, dich: i, nghi: 2, t: 0, hp: FZ_HP };
 }
 
 /** Đi loanh quanh điện thờ */
