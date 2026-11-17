@@ -26,19 +26,11 @@ export const GY_TAM_CAO = 110;
 export const GY_THANH_CAO = 270;
 /** Tốc độ lượn thật (px/s; nhân vật đi bộ 460) */
 export const GY_TOC = 380;
-/** Giữa 2 lần lao: lượn quanh mục tiêu ở khoảng cách này */
-export const GY_GIU_XA = 520;
 /** Người đứng trong núi đá (cộng lề) mới là mục tiêu; bóng ma không rời núi (trừ lúc đang lao) */
 export const GY_NUI_LE = 250;
-/** Chiêu duy nhất "Lao thẳng": gồng GY_NAP giây (đứng yên, hào quang) → bay bám theo mục tiêu tốc độ GY_LAO_TOC, chạm (GY_LAO_CHAM) là trúng, không né được;
- *  lao quá GY_LAO_TOI_DA giây thì thôi. Hồi GY_LAO_HOI giây; trúng xong bật lùi GY_LUI_T giây. */
-export const GY_NAP = 0.8;
+/** Lao: bay bám theo mục tiêu tốc độ GY_LAO_TOC, chạm (GY_LAO_CHAM) là trúng (thành bản sao), không né được */
 export const GY_LAO_TOC = 1500;
 export const GY_LAO_CHAM = 110;
-export const GY_LAO_TOI_DA = 2.5;
-export const GY_LAO_HOI = 3;
-export const GY_LUI_T = 0.35;
-export const GY_LUI_TOC = 900;
 /** Khiêu khích (đứng yên, dùng các animation của bóng ma) trước mỗi lần lao */
 export const GY_KHIEU_T = 3;
 /** Quãng lao tối đa = 3 × quãng bay của Mabu / Zinbu (BAY_CAN = 600) */
@@ -55,13 +47,7 @@ export const GY_TI_LE_DAM = 0.25;
 export const GY_TI_LE_DA = 0.25;
 /** Tâm thân bản sao cao hơn chân (trúng đòn) */
 export const GY_SAO_TAM = 80;
-/** Thời gian quay người tạo dáng lúc mới gặp (vẫn bị đánh được) */
-export const GY_DANG_T = 1.4;
-/** Không thấy ai trong chừng này giây thì thôi chạm trán, về giữa núi (lần gặp sau sao chép lại) */
-export const GY_QUEN = 4;
-/** Thời gian nháy sáng khi trúng đòn / hiện khung lao sau khi đâm trúng / xác mờ dần */
-export const GY_NHAY_T = 0.18;
-export const GY_DANH_T = 0.3;
+/** Xác bản sao mờ dần (giây) */
 export const GY_CHET_T = 2.5;
 /** Hoá socola (trúng Biến socola mà chưa chết): đứng yên giây */
 export const GY_SOCOLA_T = 4;

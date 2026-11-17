@@ -1,11 +1,12 @@
+import { hyp } from './toan';
 import type { KhungSprite } from './sprite';
 import { VeCanvas } from './ve-canvas';
 import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
-import { MABU, NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
+import { NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
+import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
 import { taoFrieza, capNhatFrieza, fzDiToi, fzVeDuong, fzGap, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
@@ -713,14 +714,14 @@ function taoTrangTri(): TrangTri[] {
       if (r() > 0.6) continue;
       const x = gx + r() * O;
       const y = gy + 60 + r() * (O - 60);
-      if (Math.hypot(x - MAP / 2, y - MAP / 2) < 450) continue;
+      if (hyp(x - MAP / 2, y - MAP / 2) < 450) continue;
       const k = r();
       const loai = k < 0.35 ? 0 : k < 0.65 ? 1 : k < 0.85 ? 2 : 3;
       const lat = r() < 0.5;
       // Để trống quanh 2 quả cầu trốn (bỏ sau khi đã rút số ngẫu nhiên để phần còn lại của map không đổi)
       // Không mọc sát / trong tường gạch quanh map
       if (Math.min(x, y, MAP - x, MAP - y) < TUONG + 150) continue;
-      if (CAU_VI_TRI.some(([dx, dy]) => Math.hypot(x - MAP / 2 - dx, y - MAP / 2 - dy) < 500)) continue;
+      if (CAU_VI_TRI.some(([dx, dy]) => hyp(x - MAP / 2 - dx, y - MAP / 2 - dy) < 500)) continue;
       // Một phần cây là cây to (chọn theo toạ độ, không dùng r() để map không đổi)
       kq.push({ x, y, loai, lat, to: loai === 0 && Math.floor(x * 7 + y * 13) % 4 === 0 });
     }
@@ -753,7 +754,7 @@ function taoTrangTriSa(): TrangTri[] {
       const lat = r() < 0.5;
       if (trongVuon(x, y) || trongNui(x, y, 300) || doSau(x, y) < (loai === 0 ? 260 : 120)) continue;
       // Để trống quanh chỗ xuất phát
-      if (Math.hypot(x - XUAT_PHAT.x, y - XUAT_PHAT.y) < 500) continue;
+      if (hyp(x - XUAT_PHAT.x, y - XUAT_PHAT.y) < 500) continue;
       if (loai === 0) {
         const d = daoCua(x, y);
         if (soCay[d]! >= (d % 2 ? CAY_SA_LE : CAY_SA_CHAN)) loai = 1;
@@ -789,8 +790,8 @@ function taoCayThemSa(cu: TrangTri[]): TrangTri[] {
       const x = dao.x + Math.cos(g) * rr, y = dao.y + Math.sin(g) * rr;
       const lat = r() < 0.5;
       if (rr < 600 || daoCua(x, y) !== d || doSau(x, y) < 260 || !trongVongDao(x, y, d) || trongVuon(x, y) || trongNui(x, y, 300)) continue;
-      if (Math.hypot(x - XUAT_PHAT.x, y - XUAT_PHAT.y) < 500) continue;
-      if ([...cay, ...kq].some((t) => Math.hypot(t.x - x, t.y - y) < 450)) continue;
+      if (hyp(x - XUAT_PHAT.x, y - XUAT_PHAT.y) < 500) continue;
+      if ([...cay, ...kq].some((t) => hyp(t.x - x, t.y - y) < 450)) continue;
       kq.push({ x, y, loai: 0, lat, sa: true, to: false });
       them++;
     }
@@ -1309,7 +1310,7 @@ export class Game {
     this.viTriVua = { x: ngauNhien(600, MAP - 600), y: ngauNhien(600, MAP - 600) };
     const le = TUONG + 320;
     const goc = [[le, le], [MAP - le, le], [le, MAP - le], [MAP - le, MAP - le]] as const;
-    const [gx, gy] = goc.reduce((a, b) => (Math.hypot(b[0] - this.viTriVua!.x, b[1] - this.viTriVua!.y) > Math.hypot(a[0] - this.viTriVua!.x, a[1] - this.viTriVua!.y) ? b : a));
+    const [gx, gy] = goc.reduce((a, b) => (hyp(b[0] - this.viTriVua!.x, b[1] - this.viTriVua!.y) > hyp(a[0] - this.viTriVua!.x, a[1] - this.viTriVua!.y) ? b : a));
     const vao = gx < MAP / 2 ? 1 : -1;
     const xuong = gy < MAP / 2 ? 1 : -1;
     const hai = this.soNguoi > 1;
@@ -1713,7 +1714,7 @@ export class Game {
     HN.moc('cn.vatPham');
     this.capNhatNgocTiec();
     HN.moc('cn.ngocTiec');
-    this.capNhatHieuUng(dt, dtE);
+    this.capNhatHieuUng(dt);
     HN.moc('cn.hieuUng');
   }
 
@@ -1763,14 +1764,14 @@ export class Game {
 
   /** Cell giữ ngọc đang ngồi trên viên ngọc (còn sống, ở đúng chỗ ngồi, không chạy, ngọc chưa ai nhặt) */
   cellNgoiNgoc(c: Cell): boolean {
-    return !!c.ngoi && !c.chet && !c.chay && c.danh <= 0 && c.nap === undefined && Math.hypot(c.x - c.hx, c.y - c.hy) < 5 && !this.ngocNhat.includes(NGOC_TIEC_SAO);
+    return !!c.ngoi && !c.chet && !c.chay && c.danh <= 0 && c.nap === undefined && hyp(c.x - c.hx, c.y - c.hy) < 5 && !this.ngocNhat.includes(NGOC_TIEC_SAO);
   }
 
   /** Ngọc rồng giữa vòng tiệc của Cell: nhân vật (không ẩn / gục / mây, không đang bay) chạm vào thì nhặt; chỗ đó thành bánh sinh nhật thường */
   private capNhatNgocTiec(): void {
     for (const tc of this.tiec) {
       if (!tc.ngoc) continue;
-      const m = this.nguoi.find((q) => !q.vang && !this.khuat(q) && !q.bay && Math.hypot(q.x - tc.x, q.y - tc.y) < NGOC_BAN_KINH + 60 * this.ngocTiecTo(tc));
+      const m = this.nguoi.find((q) => !q.vang && !this.khuat(q) && !q.bay && hyp(q.x - tc.x, q.y - tc.y) < NGOC_BAN_KINH + 60 * this.ngocTiecTo(tc));
       if (!m) continue;
       this.nhatNgoc(m, tc.x, tc.y - 60, tc.ngoc);
       delete tc.ngoc;
@@ -1791,9 +1792,9 @@ export class Game {
       const ngoc = v.loai === 'ngoc';
       if (!ngoc && v.t >= VP_TON_TAI) continue;
       if (ngoc) {
-        const m = this.nguoi.find((q) => !this.khuat(q) && !q.bay && Math.hypot(q.x - v.x, q.y - v.y) < NGOC_BAN_KINH * (v.to ? v.to / 0.55 : 1));
+        const m = this.nguoi.find((q) => !this.khuat(q) && !q.bay && hyp(q.x - v.x, q.y - v.y) < NGOC_BAN_KINH * (v.to ? v.to / 0.55 : 1));
         // Cell giữ ngọc đang ngồi trên viên ngọc thì không lấy được: phải dụ / đánh nó rời chỗ (hoặc hạ nó)
-        const giu = m && this.cell.find((c) => this.cellNgoiNgoc(c) && Math.hypot(c.x - v.x, c.y - v.y) < 40);
+        const giu = m && this.cell.find((c) => this.cellNgoiNgoc(c) && hyp(c.x - v.x, c.y - v.y) < 40);
         if (giu) {
           if (this.t >= this.baoGiuNgoc) {
             this.baoGiuNgoc = this.t + 2;
@@ -1806,7 +1807,7 @@ export class Game {
       }
       const xanh = v.loai === 'xanh';
       const dau = v.loai === 'dau';
-      const n = this.nguoi.find((m) => !this.khuat(m) && Math.hypot(m.x - v.x, m.y - v.y) < VP_BAN_KINH);
+      const n = this.nguoi.find((m) => !this.khuat(m) && hyp(m.x - v.x, m.y - v.y) < VP_BAN_KINH);
       if (n) {
         this.am.phat('anTao');
         if (v.loai === 'socola') {
@@ -1828,7 +1829,7 @@ export class Game {
       }
       // Cell đi qua cũng ăn socola: +CELL_AN_TI_LE máu của con đã hoá socola và +sức mạnh (không giới hạn)
       if (v.loai === 'socola') {
-        const ce = this.cell.find((c) => !c.chet && !((c.socola ?? 0) > 0) && Math.hypot(c.x - v.x, c.y - v.y) < CELL_BK * cellK(c.cap));
+        const ce = this.cell.find((c) => !c.chet && !((c.socola ?? 0) > 0) && hyp(c.x - v.x, c.y - v.y) < CELL_BK * cellK(c.cap));
         if (ce) {
           const hoi = Math.max(1, Math.round((v.hpGa ?? HP_GA) * CELL_AN_TI_LE));
           const them = v.sucAn ?? CELL_AN_SUC;
@@ -1842,7 +1843,7 @@ export class Game {
       }
       // Cell đi qua cũng ăn đậu thần: +DAU_MAU máu (không giới hạn); chỉ ăn đậu nằm trong vòng đảo của chính nó
       if (dau) {
-        const ce = this.cell.find((c) => !c.chet && !((c.socola ?? 0) > 0) && Math.hypot(c.x - v.x, c.y - v.y) < CELL_BK * cellK(c.cap)
+        const ce = this.cell.find((c) => !c.chet && !((c.socola ?? 0) > 0) && hyp(c.x - v.x, c.y - v.y) < CELL_BK * cellK(c.cap)
           && this.cellDuocAnDau(c, v));
         if (ce) {
           // Như Mabu / Zinbu: +DAU_MAU máu; Cell không có mana nên sát thương cộng thêm nhiều hơn (CELL_DAU_SAT mỗi đòn, không giới hạn)
@@ -1857,7 +1858,7 @@ export class Game {
       }
       // Gà đi qua chỉ mổ ăn táo đỏ (táo xanh gà không ăn): hồi VP_HOI máu, không có trần. Socola thì mọi gà (con, mẹ gốc, mẹ phụ) đều ăn
       const socola = v.loai === 'socola';
-      const ga = xanh || dau ? undefined : this.ga.find((g) => !g.chet && Math.hypot(g.x - v.x, g.y - v.y) < (g.loai === 'boss' ? VP_GA_BAN_KINH * 2.5 : VP_GA_BAN_KINH));
+      const ga = xanh || dau ? undefined : this.ga.find((g) => !g.chet && hyp(g.x - v.x, g.y - v.y) < (g.loai === 'boss' ? VP_GA_BAN_KINH * 2.5 : VP_GA_BAN_KINH));
       if (ga) {
         ga.mo = MO_THOI_GIAN;
         ga.lat = v.x < ga.x;
@@ -1955,13 +1956,13 @@ export class Game {
       if (n.dich) {
         dx = n.dich.x - n.x;
         dy = n.dich.y - n.y;
-        if (Math.hypot(dx, dy) < 6) {
+        if (hyp(dx, dy) < 6) {
           n.dich = null;
           dx = dy = 0;
           n.nv.tiepDat();
         }
       }
-      const d = Math.hypot(dx, dy);
+      const d = hyp(dx, dy);
       n.dangDi = d > 0;
       if (n.dangDi) {
         const buoc = Math.min(TOC_DO_DI * (n.may.dang ? MAY_TOC_DO : 1) * dt, n.dich ? d : Infinity);
@@ -2112,7 +2113,7 @@ export class Game {
             let dm = HEN_DAN;
             for (const o of this.ga) {
               if (o === g || o.chet || o.loai !== 'hen') continue;
-              const dd = Math.hypot(o.x - g.x, o.y - g.y);
+              const dd = hyp(o.x - g.x, o.y - g.y);
               if (dd > 80 && dd < dm) { dm = dd; ban = o; }
             }
             if (ban) goc = Math.atan2(ban.y - g.y, ban.x - g.x);
@@ -2128,7 +2129,7 @@ export class Game {
       const cham = giuTrongMap(g, leCuaGa(g), false, 'vuon');
       if (g.tron) {
         // Vua gà đang chạy trốn nhanh: trừ quãng đã chạy, chạm mép map thì thôi
-        g.tron = Math.max(0, g.tron - Math.hypot(g.vx, g.vy) * dt * HE_SO_TOC_GA);
+        g.tron = Math.max(0, g.tron - hyp(g.vx, g.vy) * dt * HE_SO_TOC_GA);
         if (cham.cx || cham.cy) g.tron = 0;
       }
       if (g.chieu) {
@@ -2180,7 +2181,7 @@ export class Game {
     for (const g of this.ga) {
       if (g.chet || d.da?.includes(g.id)) continue;
       const tam = this.tamGa(g);
-      if (Math.hypot(tam.x - vt.x, tam.y - vt.y) >= CHUONG_XUYEN + BAN_KINH_GA * tlGa(g) * S_GA * 0.8) continue;
+      if (hyp(tam.x - vt.x, tam.y - vt.y) >= CHUONG_XUYEN + BAN_KINH_GA * tlGa(g) * S_GA * 0.8) continue;
       (d.da ??= []).push(g.id);
       if (this.danAn(d, g)) continue;
       if (this.trungGa(g, d.p, d.sat, 2)) this.dungKhung(0.03);
@@ -2188,7 +2189,7 @@ export class Game {
     for (const c of this.cell) {
       if (c.chet || d.da?.includes(c.id)) continue;
       const tam = this.tamCell(c);
-      if (Math.hypot(tam.x - vt.x, tam.y - vt.y) >= CHUONG_XUYEN + CELL_BK * cellK(c.cap) * 3) continue;
+      if (hyp(tam.x - vt.x, tam.y - vt.y) >= CHUONG_XUYEN + CELL_BK * cellK(c.cap) * 3) continue;
       (d.da ??= []).push(c.id);
       if (this.trungCell(c, d.p, d.sat)) this.dungKhung(0.03);
     }
@@ -2305,12 +2306,12 @@ export class Game {
     const trungDon = this.ga.filter((v) => {
       if (v.chet) return false;
       const tam = this.tamGa(v);
-      return Math.hypot(tam.x - x, tam.y - y) < BAN_KINH_GA * tlGa(v) * S_GA * 1.25;
+      return hyp(tam.x - x, tam.y - y) < BAN_KINH_GA * tlGa(v) * S_GA * 1.25;
     });
     // Gà nhỏ đứng trước mặt gà tướng thì ưu tiên gà nhỏ
     const g = trungDon.find((v) => v.loai !== 'boss') ?? trungDon[0];
     if (!g) {
-      const ce = this.cell.find((c) => !c.chet && Math.hypot(this.tamCell(c).x - x, this.tamCell(c).y - y) < CELL_BK * cellK(c.cap) * 3.5);
+      const ce = this.cell.find((c) => !c.chet && hyp(this.tamCell(c).x - x, this.tamCell(c).y - y) < CELL_BK * cellK(c.cap) * 3.5);
       if (ce) {
         if (this.trungCell(ce, p, d.sat) && (d.nhom === 0 || d.nhom === 1)) {
           this.hoiMana(this.nguoi[p], MANA_DAM);
@@ -2380,7 +2381,7 @@ export class Game {
       const ty = n.y - 10;
       const dx = n.x - g.x;
       const dy = ty - g.y;
-      const d = Math.hypot(dx, dy);
+      const d = hyp(dx, dy);
       const buoc = KEO_TOC * dt;
       g.h = Math.max(0, g.h - 600 * dt);
       if (d > buoc + 50) {
@@ -2410,10 +2411,10 @@ export class Game {
     const trung = this.ga.filter((g) => {
       if (g.chet || d.da?.includes(g.id)) return false;
       const tam = this.tamGa(g);
-      return Math.hypot(tam.x - d.x1, tam.y - d.y1) < bk;
+      return hyp(tam.x - d.x1, tam.y - d.y1) < bk;
     });
     trung.forEach((g) => { if (!this.danAn(d, g)) this.trungGa(g, d.p, d.sat, 2); });
-    const ceTrung = this.cell.filter((c) => !c.chet && !d.da?.includes(c.id) && Math.hypot(this.tamCell(c).x - d.x1, this.tamCell(c).y - d.y1) < bk + CELL_BK * cellK(c.cap) * 2);
+    const ceTrung = this.cell.filter((c) => !c.chet && !d.da?.includes(c.id) && hyp(this.tamCell(c).x - d.x1, this.tamCell(c).y - d.y1) < bk + CELL_BK * cellK(c.cap) * 2);
     ceTrung.forEach((c) => this.trungCell(c, d.p, d.sat));
     const gyTrung = !this.ginyu.chet && !d.da?.includes(-1) && this.gyGan(d.x1, d.y1, bk + GY_BK);
     if (gyTrung) this.trungGy(d.p, d.sat);
@@ -2442,7 +2443,7 @@ export class Game {
     const trung = this.ga.filter((g) => {
       if (g.chet) return false;
       const tam = this.tamGa(g);
-      return Math.hypot(tam.x - d.x1, tam.y - d.y1) < BAN_KINH_SOCOLA + (g.loai === 'boss' ? 150 : 0);
+      return hyp(tam.x - d.x1, tam.y - d.y1) < BAN_KINH_SOCOLA + (g.loai === 'boss' ? 150 : 0);
     });
     this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 1.3 });
     this.rung = Math.max(this.rung, 0.15);
@@ -2450,7 +2451,7 @@ export class Game {
     for (const g of trung.filter((v) => v.loai !== 'boss')) this.bienSocolaGa(g, d.p);
     for (const g of trung.filter((v) => v.loai === 'boss')) this.socolaTuong(g, d.p, d.sat);
     // Cell nhận sát thương; riêng Cell bạo nộ trúng thì hoá socola (chờ mây của Mabu để combo)
-    const ceTrung = this.cell.filter((c) => !c.chet && Math.hypot(this.tamCell(c).x - d.x1, this.tamCell(c).y - d.y1) < BAN_KINH_SOCOLA + CELL_BK * cellK(c.cap));
+    const ceTrung = this.cell.filter((c) => !c.chet && hyp(this.tamCell(c).x - d.x1, this.tamCell(c).y - d.y1) < BAN_KINH_SOCOLA + CELL_BK * cellK(c.cap));
     ceTrung.forEach((c) => { if (this.trungCell(c, d.p, SAT_SOCOLA, false, true)) this.socolaCell(c); });
     // Ginyu: đủ giết thì thành thanh socola, không thì hoá socola GY_SOCOLA_T giây (đứng yên)
     const gyTrung = !this.ginyu.chet && this.gyGan(d.x1, d.y1, BAN_KINH_SOCOLA + GY_BK * 0.5);
@@ -2517,7 +2518,7 @@ export class Game {
     this.rung = Math.max(this.rung, 0.1);
   }
 
-  private capNhatHieuUng(dt: number, dtE: number): void {
+  private capNhatHieuUng(dt: number): void {
     for (const c of this.chu) {
       c.t += dt;
       c.y -= 55 * dt;
@@ -2554,23 +2555,29 @@ export class Game {
 
   /** Nhân vật còn sống nào cũng đang ngoài vườn gà (ở đảo / trên biển): hiệu ứng của vườn gà tắt, avatar trên thanh đen là Cell đỏ */
   get trenDao(): boolean {
+    return this.moiNguoiSong((n) => !trongVuon(n.x, n.y));
+  }
+
+  /** Có ít nhất một nhân vật đang chơi còn sống và mọi người như vậy đều thoả `dk` (không tạo mảng, gọi mỗi khung) */
+  private moiNguoiSong(dk: (n: NguoiChoi) => boolean): boolean {
     if (banDoHt !== 'sa') return false;
-    const song = this.nguoi.filter((n) => !n.vang && !n.het);
-    return song.length > 0 && song.every((n) => !trongVuon(n.x, n.y));
+    let co = false;
+    for (const n of this.nguoi) {
+      if (n.vang || n.het) continue;
+      if (!dk(n)) return false;
+      co = true;
+    }
+    return co;
   }
 
   /** Nhân vật còn sống nào cũng đang trên núi đá (không Cell, không tiệc): avatar trên thanh đen để trống, nhạc nền thường */
   get trenNui(): boolean {
-    if (banDoHt !== 'sa') return false;
-    const song = this.nguoi.filter((n) => !n.vang && !n.het);
-    return song.length > 0 && song.every((n) => trongNui(n.x, n.y, 300));
+    return this.moiNguoiSong((n) => trongNui(n.x, n.y, 300));
   }
 
   /** Nhân vật còn sống nào cũng đang trên thần điện: avatar / tên trên thanh đen là quái của thần điện, nhạc nền thường */
   get trenThan(): boolean {
-    if (banDoHt !== 'sa') return false;
-    const song = this.nguoi.filter((n) => !n.vang && !n.het);
-    return song.length > 0 && song.every((n) => trongThan(n.x, n.y));
+    return this.moiNguoiSong((n) => trongThan(n.x, n.y));
   }
 
   rungTrung(e: TrungGa): number {
@@ -2592,10 +2599,10 @@ export class Game {
     if (pha > HUONG_HIEN) return kq;
     const a = Math.sin((Math.PI * pha) / HUONG_HIEN) * 0.5;
     // Chỉ nhân vật còn sống và gần đích hơn mới có mũi tên
-    const n = [...song].sort((p, q) => Math.hypot(p.x - dich.x, p.y - dich.y) - Math.hypot(q.x - dich.x, q.y - dich.y))[0];
+    const n = [...song].sort((p, q) => hyp(p.x - dich.x, p.y - dich.y) - hyp(q.x - dich.x, q.y - dich.y))[0];
     const dx = dich.x - n.x;
     const dy = dich.y - n.y;
-    const d = Math.hypot(dx, dy);
+    const d = hyp(dx, dy);
     const ux = d ? dx / d : 0;
     const uy = d ? dy / d : 0;
     if (d >= HUONG_GAN) {
@@ -2656,7 +2663,7 @@ export class Game {
     // Bản đồ nhỏ góc trên phải khi có người ngồi máy bay: vị trí + hướng bay (theo quãng vừa đi)
     const mbv = this.mayBay;
     const ddx = mbv.x - this.mbCu.x, ddy = mbv.y - this.mbCu.y;
-    if (Math.hypot(ddx, ddy) > 2) this.mbHuong = Math.atan2(ddy, ddx);
+    if (hyp(ddx, ddy) > 2) this.mbHuong = Math.atan2(ddy, ddx);
     this.mbCu = { x: mbv.x, y: mbv.y };
     const ptv = this.phiThuyen;
     if (ptv.pha === 'bay') this.ptHuong = Math.atan2(ptv[ptv.noi === 'vuon' ? 'nui' : 'vuon'].y - ptv.y, ptv[ptv.noi === 'vuon' ? 'nui' : 'vuon'].x - ptv.x);
@@ -2701,7 +2708,7 @@ export class Game {
     this.congThanView = trong(THAN_CONG.x, THAN_CONG.y - 150 * CONG_TO, 260 * CONG_TO);
     if (this.congThanView) xep.push({ loai: 'cong', y: THAN_CONG.y, than: true });
     this.chuongTiecView = this.chuongTiec.filter((q) => {
-      const dai = Math.hypot(q.x1 - q.x0, q.y1 - q.y0);
+      const dai = hyp(q.x1 - q.x0, q.y1 - q.y0);
       // Chưởng hiện theo con Cell bắn ra nó (đầu x0, y0)
       return trong((q.x0 + q.x1) / 2, (q.y0 + q.y1) / 2, dai / 2 + 60 * q.k) && this.doRo(q.x0, q.y0) > 0;
     });
@@ -2721,7 +2728,7 @@ export class Game {
     this.mbDemView = dem && trong(dem.x, dem.y, 300) ? dem : null;
     this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && !this.trongMb(i) && !this.biNhap(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
     const xe = this.xeDuoiDat();
-    for (const t of this.trangTri) if (!t.mat && !this.cayCheXe(t, xe) && trong(t.x, t.y, t.to ? 700 : 400) && this.doRo(t.x, t.y) > 0) xep.push({ loai: 'td', y: t.y, td: t });
+    for (const t of this.trangTri) if (!t.mat && trong(t.x, t.y, t.to ? 700 : 400) && !this.cayCheXe(t, xe) && this.doRo(t.x, t.y) > 0) xep.push({ loai: 'td', y: t.y, td: t });
     xep.sort((a, b) => a.y - b.y);
     this.xep = xep;
     this.gaBayView = this.ga.filter((g) => g.loai === 'flyer' && trong(g.x, g.y, 400) && this.thay(g.x, g.y));
@@ -2743,7 +2750,7 @@ export class Game {
     for (const g of cacTuong) {
       if (!laMePhu(g)) continue;
       for (const n of song) {
-        const d = Math.hypot(n.x - g.x, n.y - g.y);
+        const d = hyp(n.x - g.x, n.y - g.y);
         if (d < dGan || !tuongGan) { dGan = d; tuongGan = g; }
       }
       if (!song.length && !tuongGan) tuongGan = g;
@@ -2776,9 +2783,15 @@ export class Game {
   doRo(x: number, y: number): number {
     // Trong vườn gà mà có người đang ở trong vườn (đi bộ hay bay ngang) thì vật của vườn luôn rõ; ra khỏi vườn thì vườn cũng bị sương mù, chỉ còn nền cỏ + tường
     if (this.vuonRo && trongVuon(x, y)) return 1;
-    let r = 0;
-    for (const o of this.nhinNguon) r = Math.max(r, (TAM_NHIN - Math.hypot(o.x - x, o.y - y)) / MO_RO);
-    return Math.min(1, r);
+    // Nguồn nhìn gần nhất quyết định độ rõ: tìm bình phương khoảng cách nhỏ nhất (không sqrt), chỉ một sqrt ở cuối
+    let d2 = Infinity;
+    for (const o of this.nhinNguon) {
+      const dx = o.x - x, dy = o.y - y;
+      const k = dx * dx + dy * dy;
+      if (k < d2) d2 = k;
+    }
+    if (d2 >= TAM_NHIN * TAM_NHIN) return 0;
+    return Math.min(1, (TAM_NHIN - Math.sqrt(d2)) / MO_RO);
   }
 
   // Điểm có nằm trong tầm nhìn của nhân vật hoặc chưởng nào không
@@ -2786,7 +2799,7 @@ export class Game {
   private gaThua(g: Ga): boolean {
     if (g.chet || g.chieu || (g.nhao && g.nhao.pha !== 'vong') || g.tron || (g.choang ?? 0) > 0 || (g.socola ?? 0) > 0) return false;
     if (this.trenCam(g.x, g.y, GA_THUA_LE)) return false;
-    for (const n of this.nguoi) if (!n.vang && Math.abs(n.x - g.x) < GA_THUA_XA && Math.abs(n.y - g.y) < GA_THUA_XA && Math.hypot(n.x - g.x, n.y - g.y) < GA_THUA_XA) return false;
+    for (const n of this.nguoi) if (!n.vang && Math.abs(n.x - g.x) < GA_THUA_XA && Math.abs(n.y - g.y) < GA_THUA_XA && hyp(n.x - g.x, n.y - g.y) < GA_THUA_XA) return false;
     return true;
   }
 
@@ -2854,12 +2867,17 @@ export class Game {
   private cellThua(c: Cell): boolean {
     if (c.chet || (c.nap !== undefined && c.chien) || (c.socola ?? 0) > 0) return false;
     if (this.trenCam(c.x, c.y - 32 * cellK(c.cap), CELL_THUA_LE * cellK(c.cap) + 300)) return false;
-    for (const n of this.nguoi) if (!n.vang && Math.abs(n.x - c.x) < CELL_THUA_XA && Math.abs(n.y - c.y) < CELL_THUA_XA && Math.hypot(n.x - c.x, n.y - c.y) < CELL_THUA_XA) return false;
+    for (const n of this.nguoi) if (!n.vang && Math.abs(n.x - c.x) < CELL_THUA_XA && Math.abs(n.y - c.y) < CELL_THUA_XA && hyp(n.x - c.x, n.y - c.y) < CELL_THUA_XA) return false;
     return true;
   }
 
   private thay(x: number, y: number): boolean {
-    return this.nhinNguon.some((o) => Math.hypot(o.x - x, o.y - y) < TAM_NHIN);
+    const r2 = TAM_NHIN * TAM_NHIN;
+    for (const o of this.nhinNguon) {
+      const dx = o.x - x, dy = o.y - y;
+      if (dx * dx + dy * dy < r2) return true;
+    }
+    return false;
   }
 
   /** Núi đá (bóng ma Goku) chỉ vào được khi chơi 2 người: chơi 1 người thì bước vào núi bị chặn lại (đang ở trong sẵn, ví dụ rơi máy bay, thì được đi ra) */
@@ -2891,7 +2909,7 @@ export class Game {
     const coSao = this.gySao;
     const gTruoc = this.gyTruocDay ?? { x: g.x, y: g.y };
     // Người tham gia dây: 2 nhân vật (không vắng) + bản sao; người trên máy bay không bị bản sao kéo
-    const moi = (o: { x: number; y: number }, t: { x: number; y: number }) => ({ o, m: Math.hypot(o.x - t.x, o.y - t.y) });
+    const moi = (o: { x: number; y: number }, t: { x: number; y: number }) => ({ o, m: hyp(o.x - t.x, o.y - t.y) });
     const va = moi(a, truoc[0]!), vb = moi(b, truoc[1]!);
     const vg = moi(g, gTruoc);
     const cap: [typeof va, typeof va][] = [];
@@ -2949,17 +2967,6 @@ export class Game {
 
   // ─── Sinh đối tượng ───
 
-  private khoangCachGanNhat(x: number, y: number): number {
-    return Math.min(...this.nguoi.map((n) => Math.hypot(n.x - x, n.y - y)));
-  }
-
-  private diemQuanh(p: number, rMin: number, rMax: number) {
-    const n = this.nguoi[p];
-    const goc = ngauNhien(0, Math.PI * 2);
-    const r = ngauNhien(rMin, rMax);
-    return { x: kepX(n.x + Math.cos(goc) * r), y: kepY(n.y + Math.sin(goc) * r) };
-  }
-
   // Máy bay ra khỏi vườn gà → vườn ngủ (gà, trứng biến mất, không hoạt động). Máy bay về → tổ trứng ẩn đẻ / ấp đủ ME_PHU_HIEN_VUA gà mẹ phụ thì vua gà mới xuất hiện lại (nếu vua gà chưa bị hạ)
   private capNhatVuon(dtE: number): void {
     const ngoai = !trongVuon(this.mayBay.x, this.mayBay.y);
@@ -2984,7 +2991,7 @@ export class Game {
         for (let i = 0; i < 30; i++) {
           x = ngauNhien(900, MAP - 900);
           y = ngauNhien(900, MAP - 900);
-          if (co.every((n) => Math.hypot(n.x - x, n.y - y) >= 1500)) break;
+          if (co.every((n) => hyp(n.x - x, n.y - y) >= 1500)) break;
         }
         this.toTrung = { x, y };
         this.toDe = 0;
@@ -3070,7 +3077,7 @@ export class Game {
       for (let i = 0; i < 30; i++) {
         x = ngauNhien(600, MAP - 600);
         y = ngauNhien(600, MAP - 600);
-        if (co.every((n) => Math.hypot(n.x - x, n.y - y) >= 2000)) break;
+        if (co.every((n) => hyp(n.x - x, n.y - y) >= 2000)) break;
       }
     } else {
       // Hồi sinh: ở điểm xa nhất so với Mabu / Zinbu lúc hồi sinh (lớn nhất khoảng cách tới nhân vật gần nhất), dò lưới trên map
@@ -3081,7 +3088,7 @@ export class Game {
         for (let j = 0; j <= BUOC; j++) {
           const cx = LE + ((MAP - 2 * LE) * i) / BUOC;
           const cy = LE + ((MAP - 2 * LE) * j) / BUOC;
-          const d = Math.min(...co.map((n) => Math.hypot(n.x - cx, n.y - cy)));
+          const d = Math.min(...co.map((n) => hyp(n.x - cx, n.y - cy)));
           if (d > tot) { tot = d; x = cx; y = cy; }
         }
       }
@@ -3177,7 +3184,7 @@ export class Game {
     for (const v of this.vatPham) {
       if (v.loai !== 'socola' && !(khongGioiHan && (v.loai ?? 'do') === 'do')) continue;
       if (khongGioiHan && !trongVuon(v.x, v.y)) continue;
-      const d = Math.hypot(v.x - g.x, v.y - g.y);
+      const d = hyp(v.x - g.x, v.y - g.y);
       if (d < xa) { xa = d; kq = v; }
     }
     return kq;
@@ -3199,11 +3206,11 @@ export class Game {
     let gan = TAM_NHIN_TUONG;
     for (const n of this.nguoi) {
       if (this.khuat(n)) continue;
-      const d = Math.hypot(n.x - g.x, n.y - g.y);
+      const d = hyp(n.x - g.x, n.y - g.y);
       if (d < gan) { gan = d; muc = n; }
     }
     if (!muc) return false;
-    const d = Math.hypot(g.x - muc.x, g.y - muc.y) || 1;
+    const d = hyp(g.x - muc.x, g.y - muc.y) || 1;
     const ux = (g.x - muc.x) / d;
     const uy = (g.y - muc.y) / d;
     let toc = TOC_TRON;
@@ -3228,7 +3235,7 @@ export class Game {
     if (this.tronNhanh(g)) return;
     const e = this.trungDe.find((t) => t.db && t.me === g.id);
     if (e) {
-      const d = Math.hypot(e.x - g.x, e.y - g.y);
+      const d = hyp(e.x - g.x, e.y - g.y);
       if (d > TRUNG_DB_BAO_VE) {
         g.vx = ((e.x - g.x) / d) * TOC_DO_TUONG * 4;
         g.vy = ((e.y - g.y) / d) * TOC_DO_TUONG * 4;
@@ -3251,20 +3258,20 @@ export class Game {
     let gan = TAM_NHIN_TUONG;
     for (const n of this.nguoi) {
       if (this.khuat(n)) continue;
-      const d = Math.hypot(n.x - g.x, n.y - g.y);
+      const d = hyp(n.x - g.x, n.y - g.y);
       if (d < gan) { gan = d; muc = n; }
     }
     // Không có nhân vật nào gần mà có socola trong tầm ngửi thì đi ăn
     const soc = this.socolaGan(g);
     if (soc && (!muc || gan > 800)) {
-      const d = Math.hypot(soc.x - g.x, soc.y - g.y) || 1;
+      const d = hyp(soc.x - g.x, soc.y - g.y) || 1;
       g.vx = ((soc.x - g.x) / d) * TOC_DO_TUONG * 3;
       g.vy = ((soc.y - g.y) / d) * TOC_DO_TUONG * 3;
       g.lat = g.vx < 0;
       return;
     }
     if (muc) {
-      const d = Math.hypot(muc.x - g.x, muc.y - g.y) || 1;
+      const d = hyp(muc.x - g.x, muc.y - g.y) || 1;
       g.vx = ((g.x - muc.x) / d) * TOC_TRON;
       g.vy = ((g.y - muc.y) / d) * TOC_TRON;
       g.lat = g.vx < 0;
@@ -3289,7 +3296,7 @@ export class Game {
     const day = this.dayCon;
     for (const n of this.nguoi) {
       if (this.khuat(n)) continue;
-      const d = Math.hypot(n.x - g.x, n.y - g.y);
+      const d = hyp(n.x - g.x, n.y - g.y);
       if (d < gan || (day && trongVuon(n.x, n.y) && (!muc || d < gan))) { gan = d; muc = n; }
     }
     // Nhân vật chưa vào tầm đánh (TAM_LAO) mà có táo đỏ trong tầm ngửi TAM_NGUI_TAO thì đi tới táo trước
@@ -3298,7 +3305,7 @@ export class Game {
       for (const v of this.vatPham) {
         if (v.loai === 'xanh' || v.loai === 'ngoc') continue;
         if (day && !trongVuon(v.x, v.y)) continue;
-        const d = Math.hypot(v.x - g.x, v.y - g.y);
+        const d = hyp(v.x - g.x, v.y - g.y);
         if (d < xa) { xa = d; muc = v; }
       }
     }
@@ -3335,7 +3342,7 @@ export class Game {
     }
     const dx = tx - g.x;
     const dy = ty - g.y;
-    const d = Math.hypot(dx, dy) || 1;
+    const d = hyp(dx, dy) || 1;
     // Gà đỏ lao DO_CHAY giây rồi khựng DO_KHUNG giây (thở dốc, nhận thêm sát thương)
     if (g.loai === 'rooster' && laNguoi && ((g.kiet ?? 0) > 0 || this.gaTrenCam(g))) {
       g.kiet = Math.max(0, (g.kiet ?? 0) - dt);
@@ -3352,7 +3359,7 @@ export class Game {
         return true;
       }
     }
-    const v = g.loai === 'flyer' ? Math.hypot(g.vx, g.vy) || 150 : d > 40 ? TOC_DO_LAO[g.loai] : 0;
+    const v = g.loai === 'flyer' ? hyp(g.vx, g.vy) || 150 : d > 40 ? TOC_DO_LAO[g.loai] : 0;
     g.vx = (dx / d) * v;
     g.vy = (dy / d) * v;
     g.doiHuong = 0;
@@ -3366,7 +3373,7 @@ export class Game {
     g.doiHuong = 0;
     const dx = n.x - g.x;
     const dy = n.y - g.y;
-    const d = Math.hypot(dx, dy) || 1;
+    const d = hyp(dx, dy) || 1;
     if (nh.pha === 'vong') {
       let tx = n.x;
       let ty = n.y;
@@ -3377,7 +3384,7 @@ export class Game {
       }
       const ex = tx - g.x;
       const ey = ty - g.y;
-      const e = Math.hypot(ex, ey) || 1;
+      const e = hyp(ex, ey) || 1;
       const v = Math.min(DEN_VONG_TOC * (d > DEN_VONG_BK * 1.6 ? 2 : 1), e * 4) / HE_SO_TOC_GA;
       g.vx = (ex / e) * v;
       g.vy = (ey / e) * v;
@@ -3507,7 +3514,7 @@ export class Game {
       let gan = Infinity;
       for (const n of this.nguoi) {
         if (this.khuat(n)) continue;
-        const d = Math.hypot(n.x - g.x, n.y - g.y);
+        const d = hyp(n.x - g.x, n.y - g.y);
         if (d < gan) { gan = d; muc = n; }
       }
       if (!muc) {
@@ -3545,7 +3552,7 @@ export class Game {
   private chamChieu(g: Ga, c: ChieuTuong): void {
     this.nguoi.forEach((n, p) => {
       if (c.trung[p] || this.khuat(n) || n.nv.khoa) return;
-      if (Math.hypot(n.x - g.x, n.y - g.y) >= CHAM_GA.boss) return;
+      if (hyp(n.x - g.x, n.y - g.y) >= CHAM_GA.boss) return;
       c.trung[p] = true;
       this.nhanSatThuong(n, satGa(g) * (c.loai === 'lao' ? LAO_SAT : BAY_SAT));
     });
@@ -3560,7 +3567,7 @@ export class Game {
     for (const g of this.ga) {
       if (g.chet || g.loai !== 'boss' || g.goc) continue;
       let d = Infinity;
-      for (const n of this.nguoi) if (!this.khuat(n)) d = Math.min(d, Math.hypot(n.x - g.x, n.y - g.y));
+      for (const n of this.nguoi) if (!this.khuat(n)) d = Math.min(d, hyp(n.x - g.x, n.y - g.y));
       ds.push({ id: g.id, d: g.chieu ? -1 : d });
     }
     ds.sort((a, b) => a.d - b.d);
@@ -3578,7 +3585,7 @@ export class Game {
       let muc: NguoiChoi | null = null;
       for (const n of this.nguoi) {
         if (this.khuat(n)) continue;
-        const d = Math.hypot(n.x - g.x, n.y - g.y);
+        const d = hyp(n.x - g.x, n.y - g.y);
         if (d < gan) { gan = d; muc = n; }
       }
       if (muc) {
@@ -3605,13 +3612,13 @@ export class Game {
     let gan = TAM_NHIN_TUONG;
     for (const n of this.nguoi) {
       if (this.khuat(n)) continue;
-      const d = Math.hypot(n.x - g.x, n.y - g.y);
+      const d = hyp(n.x - g.x, n.y - g.y);
       if (d < gan || (this.dayPhu && trongVuon(n.x, n.y) && (!muc || d < gan))) { gan = d; muc = n; }
     }
     // Nhân vật chưa vào tầm đánh mà có socola trong tầm ngửi thì đi ăn socola trước
     const soc = this.socolaGan(g, this.dayPhu);
     if (soc && (!muc || gan > TAM_LAO)) {
-      const d = Math.hypot(soc.x - g.x, soc.y - g.y) || 1;
+      const d = hyp(soc.x - g.x, soc.y - g.y) || 1;
       g.vx = ((soc.x - g.x) / d) * TOC_DO_TUONG * 2;
       g.vy = ((soc.y - g.y) / d) * TOC_DO_TUONG * 2;
       g.lat = g.vx < 0;
@@ -3622,7 +3629,7 @@ export class Game {
       if (this.batDauChieu(g, muc, gan)) return;
       const dx = muc.x - g.x;
       const dy = muc.y - g.y;
-      const d = Math.hypot(dx, dy) || 1;
+      const d = hyp(dx, dy) || 1;
       const v = d > 260 ? TOC_DO_TUONG * (1 + this.chang * 0.25) : 0;
       g.vx = (dx / d) * v;
       g.vy = (dy / d) * v;
@@ -3779,7 +3786,7 @@ export class Game {
     const tam = soc || ma ? TAM_SOCOLA : chieu ? TAM_CHIEU : TAM_DON[n.nv.donVuaRa ?? ''] ?? (n.nv.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN);
     const ddx = x - n.x;
     const ddy = y - n.y;
-    const dd = Math.hypot(ddx, ddy);
+    const dd = hyp(ddx, ddy);
     if (dd > tam) {
       x = n.x + (ddx / dd) * tam;
       y = n.y + (ddy / dd) * tam;
@@ -3795,7 +3802,7 @@ export class Game {
     lech.forEach((dx, i) => {
       const x1 = x + tanX + dx;
       const y1 = y + tanY + Math.abs(dx) * 0.3;
-      const T = Math.hypot(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
+      const T = hyp(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
       this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0, sat: soc ? SAT_SOCOLA : this.satNv(p, nhom), soc: soc && i === 0, nhom, an, vg: n.ki === 2 && !soc && !sb, sb: sb && !ma, ma: ma && i === 0 });
     });
     if (tren && chieu) this.trungMb();
@@ -3897,7 +3904,7 @@ export class Game {
         const nv = this.nguoi[p];
         const dx = g.x - nv.x;
         const dy = g.y - nv.y;
-        const dd = Math.hypot(dx, dy) || 1;
+        const dd = hyp(dx, dy) || 1;
         g.choang = DA_CHOANG;
         g.day = { vx: (dx / dd) * DA_DAY, vy: (dy / dd) * DA_DAY };
         g.vx = g.vy = 0;
@@ -4051,7 +4058,7 @@ export class Game {
     let kq: NguoiChoi | null = null, dMin = Infinity;
     for (const n of this.nguoi) {
       if (n.vang || this.khuat(n) || !trongThan(n.x, n.y)) continue;
-      const d = Math.hypot(n.x - f.x, n.y - f.y);
+      const d = hyp(n.x - f.x, n.y - f.y);
       if (d < dMin) { dMin = d; kq = n; }
     }
     return kq;
@@ -4114,7 +4121,7 @@ export class Game {
       // Phóng chưởng: chùm thẳng về chỗ mục tiêu lúc bắt đầu vận (chạy ngang để né), dạng vàng chùm vàng, thường chùm tím
       const vang = f.vang > 0;
       const x0 = f.x + (f.lat ? -1 : 1) * (vang ? 90 : 60), y0 = f.y - (vang ? 200 : 110);
-      const dx = f.nap.x - x0, dy = f.nap.y - y0, d = Math.hypot(dx, dy) || 1;
+      const dx = f.nap.x - x0, dy = f.nap.y - y0, d = hyp(dx, dy) || 1;
       const L = Math.min(FZ_CHUONG_TAM, d + 250);
       this.chuongTiec.push({ id: this.id++, k: vang ? 5 : 4, loai: vang ? 1 : 2, x0, y0, x1: x0 + (dx / d) * L, y1: y0 + (dy / d) * L, t: 0, sat: FZ_CHUONG_SAT * g, fz: true });
       this.vetGa({ id: this.id++, x: x0, y: y0, t: 0, loai: 'chay', co: 0.6 });
@@ -4123,7 +4130,7 @@ export class Game {
       return;
     }
     if (!muc) return;
-    const dx = muc.x - f.x, dy = muc.y - f.y, d = Math.hypot(dx, dy);
+    const dx = muc.x - f.x, dy = muc.y - f.y, d = hyp(dx, dy);
     if (Math.abs(dx) > 5) f.lat = dx < 0;
     if (f.danh > 0) return;
     if (d > FZ_CHUONG_XA && d < FZ_CHUONG_TAM && f.choChuong <= 0) {
@@ -4152,7 +4159,7 @@ export class Game {
       if (n.vang || this.khuat(n)) continue;
       const px = n.x, py = n.y - 70;
       const u = Math.max(0, Math.min(1, ((px - q.x0) * vx + (py - q.y0) * vy) / L2));
-      if (Math.hypot(px - (q.x0 + vx * u), py - (q.y0 + vy * u)) > rong) continue;
+      if (hyp(px - (q.x0 + vx * u), py - (q.y0 + vy * u)) > rong) continue;
       this.nhanSatThuong(n, q.sat!);
     }
   }
@@ -4180,7 +4187,7 @@ export class Game {
       let dMin = Infinity;
       for (const n of this.nguoi) {
         if (n.vang || n.het) continue;
-        const d = Math.hypot(n.x - f.x, n.y - f.y);
+        const d = hyp(n.x - f.x, n.y - f.y);
         if (d < dMin) { dMin = d; gan = n; }
       }
     }
@@ -4358,7 +4365,7 @@ export class Game {
       // Khiêu khích: đứng yên quay mặt về người gần nhất; ai cũng mất dạng thì thôi
       g.chay = false;
       if (!thay.length) { g.khieu = undefined; return; }
-      const gan = this.nguoi[thay.reduce((a, b) => (Math.hypot(this.nguoi[a]!.x - g.x, this.nguoi[a]!.y - g.y) <= Math.hypot(this.nguoi[b]!.x - g.x, this.nguoi[b]!.y - g.y) ? a : b))]!;
+      const gan = this.nguoi[thay.reduce((a, b) => (hyp(this.nguoi[a]!.x - g.x, this.nguoi[a]!.y - g.y) <= hyp(this.nguoi[b]!.x - g.x, this.nguoi[b]!.y - g.y) ? a : b))]!;
       g.lat = gan.x > g.x;
       if ((g.khieu -= dt) > 0) return;
       g.khieu = undefined;
@@ -4378,7 +4385,7 @@ export class Game {
       return;
     }
     // Không thấy ai: lượn về giữa núi
-    if (Math.hypot(g.hx - g.x, g.hy - g.y) > 20) this.gyDiToi(g.hx, g.hy, dt);
+    if (hyp(g.hx - g.x, g.hy - g.y) > 20) this.gyDiToi(g.hx, g.hy, dt);
     else g.chay = false;
   }
 
@@ -4395,7 +4402,7 @@ export class Game {
       g.nghi = GY_NGHI_T;
       return;
     }
-    const dx = ke.x - g.x, dy = ke.y - g.y, d = Math.hypot(dx, dy) || 1;
+    const dx = ke.x - g.x, dy = ke.y - g.y, d = hyp(dx, dy) || 1;
     g.vx = (dx / d) * GY_LAO_TOC;
     g.vy = (dy / d) * GY_LAO_TOC;
     g.lat = dx > 0;
@@ -4404,7 +4411,7 @@ export class Game {
     g.y += (dy / d) * b;
     g.quang = (g.quang ?? 0) + b;
     giuTrongMap(g, LE_GY, false, 'dao');
-    if (Math.hypot(ke.x - g.x, ke.y - g.y) > GY_LAO_CHAM) return;
+    if (hyp(ke.x - g.x, ke.y - g.y) > GY_LAO_CHAM) return;
     this.gyBienSao(p);
   }
 
@@ -4430,7 +4437,7 @@ export class Game {
         const ke = this.nguoi[s.muc]!;
         // Chưởng bắn từ xa (gần hết tầm chưởng), Đấm / Đá phải lại gần
         const tam = s.nhom === 2 ? TAM_CHIEU : s.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN;
-        const d = Math.hypot(ke.x - g.x, ke.y - g.y);
+        const d = hyp(ke.x - g.x, ke.y - g.y);
         if (d <= tam * 0.85 || s.danh < -3) this.gyRaDon(ke);
         else { tx = ke.x; ty = ke.y; }
       } else {
@@ -4449,7 +4456,7 @@ export class Game {
         if (s.dich) { tx = s.dich.x; ty = s.dich.y; }
       }
       if (tx !== undefined && ty !== undefined) {
-        const dx = tx - g.x, dy = ty - g.y, d = Math.hypot(dx, dy);
+        const dx = tx - g.x, dy = ty - g.y, d = hyp(dx, dy);
         if (d > 8) {
           dangDi = true;
           const b = Math.min(d, TOC_DO_DI * dt);
@@ -4488,7 +4495,7 @@ export class Game {
     const tay = { x: g.x + (nv.lat ? -dx : dx) * S_NV, y: g.y + (dy - nv.cao) * S_NV };
     const x1 = ke.x, y1 = ke.y - 80;
     const chieu = nhom === 2;
-    const T = Math.hypot(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
+    const T = hyp(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
     this.dan.push({ id: this.id++, p: s.p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: false, to: chieu, sat: Math.round(g.sat[nhom]! * (g.suc ?? 1)), nhom, vg: g.ki === 2 && chieu, gy: true });
     s.muc = undefined;
     s.danh = ngauNhien(GY_SAO_DANH[0], GY_SAO_DANH[1]);
@@ -4500,7 +4507,7 @@ export class Game {
     const r = cuoi ? (d.to ? BAN_KINH_NO + 60 : 110) : CHUONG_XUYEN + 70;
     this.nguoi.forEach((n, q) => {
       if (!this.gyHopLe(q) || d.da?.includes(-10 - q)) return;
-      if (Math.hypot(n.x - vt.x, n.y - 80 - vt.y) >= r) return;
+      if (hyp(n.x - vt.x, n.y - 80 - vt.y) >= r) return;
       (d.da ??= []).push(-10 - q);
       if (this.nhanSatThuong(n, d.sat, false, '#ff4d4d') && d.to) n.combo = 0;
     });
@@ -4521,7 +4528,7 @@ export class Game {
     let trung = false;
     this.nguoi.forEach((n, q) => {
       if (q === d.p || !this.gyHopLe(q) || d.da?.includes(-10 - q)) return;
-      if (Math.hypot(n.x - x, n.y - 80 - y) >= r) return;
+      if (hyp(n.x - x, n.y - 80 - y) >= r) return;
       (d.da ??= []).push(-10 - q);
       const songTruoc = !n.het;
       this.nhanSatThuong(n, sat * (a.suc ?? 1) + (a.satDau ?? 0), false, '#ff9f43');
@@ -4534,7 +4541,7 @@ export class Game {
 
   private gyDiToi(x: number, y: number, dt: number): void {
     const g = this.ginyu;
-    const dx = x - g.x, dy = y - g.y, d = Math.hypot(dx, dy);
+    const dx = x - g.x, dy = y - g.y, d = hyp(dx, dy);
     if (d < 1) { g.chay = false; return; }
     const b = Math.min(d, GY_TOC * dt);
     const nx = g.x + (dx / d) * b, ny = g.y + (dy / d) * b;
@@ -4706,7 +4713,6 @@ export class Game {
       }
     }
     const mat = Math.max(1, Math.round(sat * he));
-    const hp0 = c.hp;
     c.hp -= mat;
     c.nhay = CELL_NHAY_T;
     this.chu.push({ id: this.id++, x: tam.x + ngauNhien(-40, 40), y: tam.y - 40, text: `-${mat}`, mau: '#ffffff', t: 0 });
@@ -4796,7 +4802,7 @@ export class Game {
         this.cellXuatTran(dao);
         this.chu.push({ id: this.id++, x: this.mayBay.x, y: this.mayBay.y - 420, text: '🎯 CELL NHẮM BẮN MÁY BAY!', mau: '#ff6b6b', t: 0 });
       }
-      if (!doi.chien && ds.length && ke.some((p) => ds.some((c) => Math.hypot(this.nguoi[p].x - c.x, this.nguoi[p].y - c.y) < (c.tiec ? TIEC_NGUI : CELL_NGUI)))) {
+      if (!doi.chien && ds.length && ke.some((p) => ds.some((c) => hyp(this.nguoi[p].x - c.x, this.nguoi[p].y - c.y) < (c.tiec ? TIEC_NGUI : CELL_NGUI)))) {
         doi.chien = true;
         this.cellXuatTran(dao);
       }
@@ -4813,8 +4819,8 @@ export class Game {
         for (const c of ds) {
           if (doi.tach.includes(c.id)) continue;
           let d = Infinity;
-          for (const p of ke) d = Math.min(d, Math.hypot(this.nguoi[p].x - c.x, this.nguoi[p].y - c.y));
-          if (!ke.length) d = Math.hypot(this.mayBay.x - c.x, this.mayBay.y - c.y);
+          for (const p of ke) d = Math.min(d, hyp(this.nguoi[p].x - c.x, this.nguoi[p].y - c.y));
+          if (!ke.length) d = hyp(this.mayBay.x - c.x, this.mayBay.y - c.y);
           if (d > xa) { xa = d; an = c; }
         }
         if (an) this.chuGa({ id: this.id++, x: an.x, y: an.y - 60 * cellK(an.cap), text: '🫘 ĐI ĂN ĐẬU THẦN!', mau: '#7be04a', t: 0 });
@@ -4837,7 +4843,7 @@ export class Game {
         for (const c of chien) {
           if (tach.includes(c)) continue;
           for (const p of tach.length ? [doi.muc] : ke) {
-            const d = Math.hypot(this.nguoi[p].x - c.x, this.nguoi[p].y - c.y);
+            const d = hyp(this.nguoi[p].x - c.x, this.nguoi[p].y - c.y);
             if (d < gan) { gan = d; chon = c; if (!tach.length) doi.muc = p; }
           }
         }
@@ -4927,9 +4933,9 @@ export class Game {
       }
       // Đảo không có tiệc (ván lưu cũ): lang thang, hay tụ tập
       c.doi -= dt;
-      if (c.doi <= 0 || Math.hypot(c.dx - c.x, c.dy - c.y) < 30) {
+      if (c.doi <= 0 || hyp(c.dx - c.x, c.dy - c.y) < 30) {
         const k = cellK(c.cap);
-        const ban = this.cell.filter((o) => o !== c && !o.chet && Math.hypot(o.x - c.x, o.y - c.y) < CELL_TU_TAM);
+        const ban = this.cell.filter((o) => o !== c && !o.chet && hyp(o.x - c.x, o.y - c.y) < CELL_TU_TAM);
         const g = Math.random() * Math.PI * 2;
         if (ban.length && Math.random() < CELL_TU) {
           const o = ban[Math.floor(Math.random() * ban.length)]!;
@@ -4942,10 +4948,10 @@ export class Game {
         c.doi = 3 + Math.random() * 4;
       }
       const cu = { x: c.x, y: c.y };
-      const b = Math.min(Math.hypot(c.dx - c.x, c.dy - c.y), CELL_TOC[c.cap]! * 0.5 * dt);
+      const b = Math.min(hyp(c.dx - c.x, c.dy - c.y), CELL_TOC[c.cap]! * 0.5 * dt);
       this.cellDiToi(c, c.dx, c.dy, dt, 0.5);
       // Bị bờ biển chặn mà không nhích được thì chọn điểm khác
-      if (Math.hypot(c.x - cu.x, c.y - cu.y) < b * 0.3) c.doi = 0;
+      if (hyp(c.x - cu.x, c.y - cu.y) < b * 0.3) c.doi = 0;
     }
     // Xác nằm đủ lâu thì biến mất
     this.cell = this.cell.filter((c) => !c.chet || c.tChet < CELL_CHET_T);
@@ -4963,7 +4969,7 @@ export class Game {
     let gan = TAM_NHIN + CELL_BK * cellK(c.cap), dau: VatPham | undefined;
     for (const v of this.vatPham) {
       if (v.loai !== 'dau') continue;
-      const d = Math.hypot(v.x - c.x, v.y - c.y);
+      const d = hyp(v.x - c.x, v.y - c.y);
       if (d < gan && this.cellDuocAnDau(c, v)) { gan = d; dau = v; }
     }
     if (!dau) return false;
@@ -4981,7 +4987,7 @@ export class Game {
     // Gặp Mabu / Zinbu (lại gần trong CELL_AN_GAP, nhân vật nhìn thấy nó): dịch chuyển tức thời tới chỗ trên đảo xa mọi nhân vật nhất để trốn
     if ((c.choDich ?? 0) <= this.t && this.cellTrenCam(c)) {
       const ke = this.nguoi.filter((m) => !m.vang && !this.khuat(m));
-      const xaNhat = (x: number, y: number) => ke.reduce((d, m) => Math.min(d, Math.hypot(m.x - x, m.y - y)), Infinity);
+      const xaNhat = (x: number, y: number) => ke.reduce((d, m) => Math.min(d, hyp(m.x - x, m.y - y)), Infinity);
       if (ke.length && xaNhat(c.x, c.y) < CELL_AN_GAP) {
         let tot = -1, cho: { x: number; y: number } | undefined;
         for (let i = 0; i < 16; i++) {
@@ -5008,7 +5014,7 @@ export class Game {
     let gan = Infinity, dau: VatPham | undefined;
     for (const v of this.vatPham) {
       if (v.loai !== 'dau' || !trenDao(v.x, v.y)) continue;
-      const d = Math.hypot(v.x - c.x, v.y - c.y);
+      const d = hyp(v.x - c.x, v.y - c.y);
       if (d < gan) { gan = d; dau = v; }
     }
     if (dau) { this.cellDiToi(c, dau.x, dau.y, dt, CELL_AN_TOC); return; }
@@ -5016,7 +5022,7 @@ export class Game {
     let iCay = -1;
     this.trangTri.forEach((t, i) => {
       if (!t.sa || t.loai !== 0 || t.doLuc !== undefined || !trenDao(t.x, t.y)) return;
-      const d = Math.hypot(t.x - c.x, t.y - c.y);
+      const d = hyp(t.x - c.x, t.y - c.y);
       if (d < gan) { gan = d; iCay = i; }
     });
     if (iCay >= 0) {
@@ -5041,7 +5047,7 @@ export class Game {
     let gn = Infinity, n: NguoiChoi | undefined;
     for (const m of this.nguoi) {
       if (m.vang || this.khuat(m)) continue;
-      const d = Math.hypot(m.x - c.x, m.y - c.y);
+      const d = hyp(m.x - c.x, m.y - c.y);
       if (d < gn) { gn = d; n = m; }
     }
     if (!n || gn > CELL_AN_TRON) { c.chay = false; return; }
@@ -5075,7 +5081,7 @@ export class Game {
     const dao = this.daoCell(c);
     const duocO = (x: number, y: number) => doSau(x, y) > 60 && !trongVuon(x, y) && (truy || (daoCua(x, y) === dao && trongVongDao(x, y, dao)));
     const ke = this.nguoi.filter((m) => !m.vang && !this.khuat(m));
-    const xaNhat = (x: number, y: number) => ke.reduce((d, m) => Math.min(d, Math.hypot(m.x - x, m.y - y)), Infinity);
+    const xaNhat = (x: number, y: number) => ke.reduce((d, m) => Math.min(d, hyp(m.x - x, m.y - y)), Infinity);
     const cayDung = (t: TrangTri) => !!t.sa && t.loai === 0 && t.doLuc === undefined && duocO(t.x, t.y);
     // Dịch chuyển tức thời: lúc mới bắt đầu, hoặc nhân vật lại gần trong CELL_AN_GAP
     if ((c.choDich ?? 0) <= this.t && (c.hoi === 'dang' && (c.cay === undefined || xaNhat(c.x, c.y) < CELL_AN_GAP))) {
@@ -5117,7 +5123,7 @@ export class Game {
     let gan = Infinity, dau: VatPham | undefined;
     for (const v of this.vatPham) {
       if (v.loai !== 'dau' || !duocO(v.x, v.y)) continue;
-      const d = Math.hypot(v.x - c.x, v.y - c.y);
+      const d = hyp(v.x - c.x, v.y - c.y);
       if (d < gan) { gan = d; dau = v; }
     }
     if (dau && gan < CELL_AN_TRON) { this.cellDiToi(c, dau.x, dau.y, dt, 1); return true; }
@@ -5127,12 +5133,12 @@ export class Game {
       gan = Infinity; c.cay = undefined; cay = undefined;
       this.trangTri.forEach((t, i) => {
         if (!cayDung(t)) return;
-        const d = Math.hypot(t.x - c.x, t.y - c.y);
+        const d = hyp(t.x - c.x, t.y - c.y);
         if (d < gan) { gan = d; c.cay = i; cay = t; }
       });
     }
     if (!cay) { c.chay = false; return true; }
-    if (Math.hypot(cay.x - c.x, cay.y - c.y) < CELL_AN_TAM) {
+    if (hyp(cay.x - c.x, cay.y - c.y) < CELL_AN_TAM) {
       c.chay = false;
       c.lat = cay.x < c.x;
       if ((c.choChuong ?? 0) > this.t) return true;
@@ -5158,7 +5164,7 @@ export class Game {
     let gan = Infinity, chon = -1;
     this.nguoi.forEach((n, p) => {
       if (n.vang || this.khuat(n)) return;
-      const d = Math.hypot(n.x - c.x, n.y - c.y);
+      const d = hyp(n.x - c.x, n.y - c.y);
       if (d < gan) { gan = d; chon = p; }
     });
     const m = this.mayBay;
@@ -5168,7 +5174,7 @@ export class Game {
 
   /** Cell đi về (x, y) với tốc độ CELL_TOC × he, quay mặt theo hướng đi; trả về khoảng cách còn lại */
   private cellDiToi(c: Cell, x: number, y: number, dt: number, he: number): number {
-    const dx = x - c.x, dy = y - c.y, dd = Math.hypot(dx, dy);
+    const dx = x - c.x, dy = y - c.y, dd = hyp(dx, dy);
     c.chay = dd > 20 && c.danh <= 0;
     if (!c.chay) return dd;
     const cx = c.x, cy = c.y;
@@ -5192,14 +5198,14 @@ export class Game {
     const d = DAO[dao];
     if (!d) return;
     if (trongVongDao(cx, cy, dao) && !trongVongDao(c.x, c.y, dao)) {
-      const kc = Math.hypot(c.x - d.x, c.y - d.y) || 1;
+      const kc = hyp(c.x - d.x, c.y - d.y) || 1;
       const r = d.r * 0.999;
       c.x = d.x + ((c.x - d.x) / kc) * r;
       c.y = d.y + ((c.y - d.y) / kc) * r;
     }
     // Đang ở ngoài vòng sẵn (ván lưu cũ): chỉ cho đi vào trong
     const ngoai = !trongVongDao(cx, cy, dao);
-    const xa = (x: number, y: number) => Math.hypot(x - d.x, y - d.y);
+    const xa = (x: number, y: number) => hyp(x - d.x, y - d.y);
     if (doSau(c.x, c.y) <= 0 || daoCua(c.x, c.y) !== dao || (!ngoai && !trongVongDao(c.x, c.y, dao)) || (ngoai && xa(c.x, c.y) > xa(cx, cy))) { c.x = cx; c.y = cy; }
   }
 
@@ -5210,7 +5216,7 @@ export class Game {
   private cellBanMb(c: Cell, dt: number): void {
     if (c.nap !== undefined && c.chien) { this.cellBanChien(c, dt); return; }
     const t = this.tamMb();
-    const d = Math.hypot(t.x - c.x, t.y - c.y);
+    const d = hyp(t.x - c.x, t.y - c.y);
     c.lat = t.x < c.x;
     if ((c.choChuong ?? 0) <= this.t && d < CELL_MB_CHUONG_TAM && this.cellThayMb(c) && Math.random() < dt * 3) { this.cellVanChuong(c); return; }
     if (d > CELL_MB_CHUONG_TAM * 0.6) this.cellDiToi(c, this.mayBay.x, this.mayBay.y, dt, 1);
@@ -5226,7 +5232,7 @@ export class Game {
     const to = CELL_TO[c.cap]!;
     const cham = CELL_CHAM * to;
     if (c.nap !== undefined && c.chien) { this.cellBanChien(c, dt); return; }
-    const d = Math.hypot(ke.x - c.x, ke.y - c.y);
+    const d = hyp(ke.x - c.x, ke.y - c.y);
     c.lat = ke.x < c.x;
     const doi = this.cellDoi[this.daoCell(c)];
     // Dịch chuyển tức thời tới sát mục tiêu
@@ -5252,7 +5258,7 @@ export class Game {
     const g = vay ? c.id * 2.399 : 0;
     const r = vay ? cham * 0.6 : 0;
     const tx = ke.x + Math.cos(g) * r, ty = ke.y + Math.sin(g) * r * 0.6;
-    if (Math.hypot(tx - c.x, ty - c.y) > cham * 0.5) this.cellDiToi(c, tx, ty, dt, 1);
+    if (hyp(tx - c.x, ty - c.y) > cham * 0.5) this.cellDiToi(c, tx, ty, dt, 1);
     else c.chay = false;
     c.lat = ke.x < c.x;
   }
@@ -5284,7 +5290,7 @@ export class Game {
       const l = CHUONG_LOAI[c.loaiChuong ?? 0]!;
       const hx = c.x + (c.lat ? -1 : 1) * l.tayX * k, hy = c.y - l.tayY * k;
       const tx = ke.x, ty = ke.y - 70;
-      const dd = Math.hypot(tx - hx, ty - hy) || 1;
+      const dd = hyp(tx - hx, ty - hy) || 1;
       const dai = cay ? dd : Math.min(banMb ? CELL_MB_CHUONG_TAM : CELL_CHUONG_TAM, Math.max(dd + 250, 500));
       this.chuongTiec.push({
         id: this.id++, k, loai: c.loaiChuong ?? 0, x0: hx, y0: hy,
@@ -5415,7 +5421,7 @@ export class Game {
     if (m.pha !== 'trung' && m.pha !== 'no') {
       const t = this.tamMb();
       const u = Math.max(0, Math.min(1, ((t.x - q.x0) * vx + (t.y - q.y0) * vy) / L2));
-      if (Math.hypot(t.x - (q.x0 + vx * u), t.y - (q.y0 + vy * u)) < rong + MB_TRUNG_BK * 0.7) {
+      if (hyp(t.x - (q.x0 + vx * u), t.y - (q.y0 + vy * u)) < rong + MB_TRUNG_BK * 0.7) {
         if (m.ngoi.length) this.chu.push({ id: this.id++, x: t.x, y: t.y - 260, text: '🎯 CELL BẮN RƠI MÁY BAY!', mau: '#ff6b6b', t: 0 });
         this.trungMb();
       }
@@ -5424,7 +5430,7 @@ export class Game {
       if (n.vang || this.khuat(n)) continue;
       const px = n.x, py = n.y - 70;
       const u = Math.max(0, Math.min(1, ((px - q.x0) * vx + (py - q.y0) * vy) / L2));
-      if (Math.hypot(px - (q.x0 + vx * u), py - (q.y0 + vy * u)) > rong) continue;
+      if (hyp(px - (q.x0 + vx * u), py - (q.y0 + vy * u)) > rong) continue;
       const p = this.nguoi.indexOf(n);
       const he = CELL_COMBO_CHUONG[q.cap ?? 0] ?? 1;
       const combo = he > 1 && this.t - (this.cellChuongLuc[p] ?? -99) <= (CELL_COMBO_CUA[q.cap ?? 0] ?? 0.5);
@@ -5461,7 +5467,7 @@ export class Game {
       if (g.chet || g.chieu || g.goc || g.dtThua || (g.socola ?? 0) > 0 || (g.choang ?? 0) > 0 || (g.choDanh ?? 0) > this.t) continue;
       for (const n of muc) {
         if (n.het) continue;
-        if (Math.hypot(n.x - g.x, n.y - g.y) >= CHAM_GA[g.loai] * (g.to ?? 1)) continue;
+        if (hyp(n.x - g.x, n.y - g.y) >= CHAM_GA[g.loai] * (g.to ?? 1)) continue;
         g.choDanh = this.t + HOI_DANH_GA[g.loai];
         g.mo = MO_THOI_GIAN;
         if (g.loai === 'boss') g.kieuMo = ((g.kieuMo ?? 0) + 1) % 2;
@@ -5536,7 +5542,7 @@ export class Game {
         // Bám theo người còn sống: trôi tới điểm cách CUU_BAM, đứng cùng phía với lúc đầu
         const dx = c.x - s.x;
         const dy = c.y - s.y;
-        const d = Math.hypot(dx, dy) || 1;
+        const d = hyp(dx, dy) || 1;
         if (d > CUU_BAM) {
           const b = Math.min(d - CUU_BAM, Math.max(CUU_TOC_BAM * dt, (d - CUU_BAM) * Math.min(1, dt * 6)));
           c.x -= (dx / d) * b;
@@ -5593,7 +5599,7 @@ export class Game {
     if (m.pha === 'dau') {
       this.nguoi.forEach((n, p) => {
         if (n.vang || this.hopThe || m.ngoi.includes(p) || this.trongPt(p) || n.het || n.nv.laMay || n.bay || n.nv.khoa || this.trongCau(p) || this.dangCuu(p)) return;
-        if (Math.hypot(n.x - m.x, (n.y - m.y) / EP_GA) >= MB_BK) return;
+        if (hyp(n.x - m.x, (n.y - m.y) / EP_GA) >= MB_BK) return;
         m.ngoi.push(p);
         n.dich = null;
         n.dangDi = false;
@@ -5621,7 +5627,7 @@ export class Game {
       if (pl?.dich) {
         const dx = pl.dich.x - m.x;
         const dy = pl.dich.y - m.y;
-        const d = Math.hypot(dx, dy);
+        const d = hyp(dx, dy);
         if (d < 10) pl.dich = null;
         else {
           const b = Math.min(MB_TOC * dt, d);
@@ -5690,7 +5696,7 @@ export class Game {
   private danTrungBanh(d: Dan, t0: number): void {
     const k0 = Math.min(1, t0 / d.T), k1 = Math.min(1, d.t / d.T);
     const dx = d.x1 - d.x0, dy = d.y1 - d.y0;
-    const buoc = Math.max(1, Math.ceil((Math.hypot(dx, dy) * (k1 - k0)) / 40));
+    const buoc = Math.max(1, Math.ceil((hyp(dx, dy) * (k1 - k0)) / 40));
     for (const tc of this.tiec) {
       if (tc.vo || tc.ngoc || d.da?.includes(-1000 - tc.dao)) continue;
       const rx = 90 * tc.to + 50, tren = 480 * tc.to + 40;
@@ -5723,7 +5729,7 @@ export class Game {
     const c = this.tamMb();
     const k0 = Math.min(1, t0 / d.T), k1 = Math.min(1, d.t / d.T);
     const dx = d.x1 - d.x0, dy = d.y1 - d.y0;
-    const buoc = Math.max(1, Math.ceil((Math.hypot(dx, dy) * (k1 - k0)) / 40));
+    const buoc = Math.max(1, Math.ceil((hyp(dx, dy) * (k1 - k0)) / 40));
     for (let i = 0; i <= buoc; i++) {
       const k = k0 + ((k1 - k0) * i) / buoc;
       const px = d.x0 + dx * k, py = d.y0 + dy * k;
@@ -5854,7 +5860,7 @@ export class Game {
     const dung = this.nguoi.filter((n) => !n.vang);
     const hai = dung.length >= 2;
     const lenDuoc = (n: NguoiChoi, p: number) => !n.vang && !this.hopThe && !n.het && !n.nv.laMay && !n.bay && !n.nv.khoa && !this.trongMb(p) && !this.trongCau(p) && !this.dangCuu(p);
-    const cach = (n: NguoiChoi) => Math.hypot(n.x - m.x, (n.y - m.y) / EP_GA);
+    const cach = (n: NguoiChoi) => hyp(n.x - m.x, (n.y - m.y) / EP_GA);
     m.cho = m.cho.filter((p) => !this.nguoi[p] || cach(this.nguoi[p]) < PT_BK * 1.5);
     if (m.pha === 'dau') {
       if (hai) {
@@ -5888,7 +5894,7 @@ export class Game {
     } else if (m.pha === 'bay') {
       const den = m[m.noi === 'vuon' ? 'nui' : 'vuon'];
       const dx = den.x - m.x, dy = den.y - m.y;
-      const d = Math.hypot(dx, dy);
+      const d = hyp(dx, dy);
       const b = PT_TOC * dt;
       if (Math.abs(dx) > d * 0.2) m.lat = dx < 0;
       if (d <= b) {
@@ -5937,7 +5943,7 @@ export class Game {
       { a: this.cong, b: THAN_CONG, chu: '🌀 DỊCH CHUYỂN TỚI THẦN ĐIỆN!' },
       { a: THAN_CONG, b: this.cong, chu: '🌀 DỊCH CHUYỂN VỀ ĐẢO CELL!' },
     ];
-    const cach = (n: { x: number; y: number }, c: { x: number; y: number }) => Math.hypot(n.x - c.x, n.y - c.y);
+    const cach = (n: { x: number; y: number }, c: { x: number; y: number }) => hyp(n.x - c.x, n.y - c.y);
     // Lần đầu (vào / tải ván): ai đang đứng sẵn trong cổng thì coi như vừa ra
     if (!this.congCho) this.congCho = this.nguoi.map((n, p) => (cap.some((c) => cach(n, c.a) < CONG_RA) ? p : -1)).filter((p) => p >= 0);
     this.congCho = this.congCho.filter((p) => cap.some((c) => cach(this.nguoi[p]!, c.a) < CONG_RA));
@@ -5993,7 +5999,7 @@ export class Game {
     m.cho = [...ra];
     const nui = m.noi === 'nui';
     const hx = nui ? NUI.x - m.x : 0, hy = nui ? NUI.y - m.y : 1;
-    const hd = Math.hypot(hx, hy) || 1;
+    const hd = hyp(hx, hy) || 1;
     ra.forEach((p, i) => {
       const n = this.nguoi[p];
       n.x = m.x + 70 * PT_TO + (i === 0 ? -40 : 40);
@@ -6048,7 +6054,7 @@ export class Game {
       q.t += dt;
       if (q.pha === 'san') {
         const p = this.nguoi.findIndex((n, i) => i === q.cua && !this.hopThe && !n.vang && !n.het && !n.nv.laMay && !n.bay && !n.nv.khoa && !this.trongCau(i) && !this.trongMb(i)
-          && Math.hypot(n.x - q.x, (n.y - q.y) / EP_GA) < CAU_BAN_KINH);
+          && hyp(n.x - q.x, (n.y - q.y) / EP_GA) < CAU_BAN_KINH);
         if (p < 0) continue;
         const n = this.nguoi[p];
         q.pha = 'trong';
@@ -6161,14 +6167,14 @@ export class Game {
 
   // Chuột có nằm trên vùng không phải map không: thanh đen trên / hai bên, nửa vòng tròn của gà mẹ và của Mabu / Zinbu
   private tronBang(x: number, y: number): boolean {
-    return y < 0 || x < 0 || x > this.W || Math.hypot(x - this.GIUA, y) <= R_BANG * HE_BANG_TUONG
-      || [0, 1].some((p) => Math.hypot(x - this.tamNv(p).x, y - this.tamNv(p).y) <= R_NV);
+    return y < 0 || x < 0 || x > this.W || hyp(x - this.GIUA, y) <= R_BANG * HE_BANG_TUONG
+      || [0, 1].some((p) => hyp(x - this.tamNv(p).x, y - this.tamNv(p).y) <= R_NV);
   }
 
   // Bấm vào nút chiêu thức ở thanh đen thì chọn chiêu đó (chiêu hết mana / đang khoá thì không chọn được)
   private chonNut(x: number, y: number): void {
     for (const p of [0, 1]) {
-      const n = this.nutBang(p).find((b) => Math.hypot(b.x - x, b.y - y) <= R_NUT * 0.8 + 6);
+      const n = this.nutBang(p).find((b) => hyp(b.x - x, b.y - y) <= R_NUT * 0.8 + 6);
       if (n) {
         if (this.hetMana(p, n.k)) return;
         this.nguoi[p].nv.datNhom(n.k, this.t);
@@ -6287,7 +6293,7 @@ export class Game {
     if (!a || !b || this.hopThe || a.ki + b.ki !== 1 || a.ki === b.ki) return false;
     const tot = (n: NguoiChoi, p: number) => !n.vang && !n.het && !n.bay && !n.nv.laMay && !n.may.dang && !n.nv.khoa && !this.trongMb(p) && !this.trongCau(p);
     // Chỉ hợp thể được trên thần điện (tháp của Frieza): cả hai phải đứng trên thần điện
-    return tot(a, 0) && tot(b, 1) && trongThan(a.x, a.y) && trongThan(b.x, b.y) && Math.hypot(a.x - b.x, a.y - b.y) <= HOP_THE_GAN;
+    return tot(a, 0) && tot(b, 1) && trongThan(a.x, a.y) && trongThan(b.x, b.y) && hyp(a.x - b.x, a.y - b.y) <= HOP_THE_GAN;
   }
 
   /** Chữ gợi ý (chỉ trên đầu người còn đứng đầu tiên): đang chờ hồi hợp thể, hoặc đã sẵn sàng (đứng gần nhau) */
@@ -6309,7 +6315,7 @@ export class Game {
     if (this.hopThe) return;
     if (this.hopTheHoi > 0) {
       const [m, n] = this.nguoi;
-      if (m && n && trongThan(m.x, m.y) && trongThan(n.x, n.y) && Math.hypot(m.x - n.x, m.y - n.y) <= HOP_THE_GAN) this.chu.push({ id: this.id++, x: (m.x + n.x) / 2, y: (m.y + n.y) / 2 - 300, text: `⏳ CHƯA HỢP THỂ ĐƯỢC: CHỜ ${Math.ceil(this.hopTheHoi)}s`, mau: '#ffd23f', t: 0 });
+      if (m && n && trongThan(m.x, m.y) && trongThan(n.x, n.y) && hyp(m.x - n.x, m.y - n.y) <= HOP_THE_GAN) this.chu.push({ id: this.id++, x: (m.x + n.x) / 2, y: (m.y + n.y) / 2 - 300, text: `⏳ CHƯA HỢP THỂ ĐƯỢC: CHỜ ${Math.ceil(this.hopTheHoi)}s`, mau: '#ffd23f', t: 0 });
       return;
     }
     if (this.hopTheDuoc()) this.batDauHopThe();
@@ -6535,7 +6541,7 @@ export class Game {
     const bay = this.canGat(g, 0, 1, VUNG_BAY_CAN);
     // Cần trái gạt nhẹ (chưa tới ngưỡng bay) thì chạy theo hướng gạt; chữ thập vẫn ưu tiên
     const canNhe = this.canGat(g, 0, 1);
-    const chay = dx || dy ? { x: dx, y: dy, m: Math.hypot(dx, dy) } : canNhe;
+    const chay = dx || dy ? { x: dx, y: dy, m: hyp(dx, dy) } : canNhe;
     // Hướng nhìn theo hướng đang bay / chạy; không có điều khiển nào thì giữ nguyên
     const huong = bay.m > 0 ? bay : chay;
     if (huong.m > 0) n.nhin = { x: huong.x / huong.m, y: huong.y / huong.m };
@@ -6558,7 +6564,7 @@ export class Game {
   private canGat(g: Gamepad, ax: number, ay: number, vung = VUNG_CHET_CAN): { x: number; y: number; m: number } {
     const x = g.axes[ax] ?? 0;
     const y = g.axes[ay] ?? 0;
-    const m = Math.hypot(x, y);
+    const m = hyp(x, y);
     return m < vung ? { x: 0, y: 0, m: 0 } : { x, y, m };
   }
 
@@ -6596,7 +6602,7 @@ export class Game {
   // Tay cầm: đánh theo hướng đang quay mặt (hướng chạy / bay gần nhất). Có gà trong tầm và trong góc ~45° phía trước thì đòn trúng con gần nhất đó, không thì đánh thẳng về phía trước
   private diemHuong(p: number): { x: number; y: number } {
     const n = this.nguoi[p];
-    const len = Math.hypot(n.nhin.x, n.nhin.y) || 1;
+    const len = hyp(n.nhin.x, n.nhin.y) || 1;
     const ux = n.nhin.x / len;
     const uy = n.nhin.y / len;
     const nhomSoc = n.nv.nhom === NHOM_MAY && !n.nv.sp.nhomDon[NHOM_MAY]?.may;
@@ -6608,8 +6614,8 @@ export class Game {
       const t = this.tamGa(g);
       const dx = t.x - n.x;
       const dy = t.y - n.y;
-      const d = Math.hypot(dx, dy) - (g.loai === 'boss' ? 125 : 0);
-      if (d >= dm || (dx * ux + dy * uy) / (Math.hypot(dx, dy) || 1) < 0.7) continue;
+      const d = hyp(dx, dy) - (g.loai === 'boss' ? 125 : 0);
+      if (d >= dm || (dx * ux + dy * uy) / (hyp(dx, dy) || 1) < 0.7) continue;
       dm = d;
       tot = g;
     }
@@ -6655,7 +6661,7 @@ export class Game {
       y: kep(y, o.y - MAX_DY, o.y + MAX_DY),
     };
     giuTrongMap(dich, le, false, vungCua(n));
-    let d = Math.hypot(dich.x - n.x, dich.y - n.y);
+    let d = hyp(dich.x - n.x, dich.y - n.y);
     if (d > BAY_TOI_DA) {
       // Chỉ xa hơn tầm bay tối đa thì bay tới mép tầm theo hướng chuột
       dich = { x: n.x + ((dich.x - n.x) / d) * BAY_TOI_DA, y: n.y + ((dich.y - n.y) / d) * BAY_TOI_DA };
@@ -6697,7 +6703,7 @@ export class Game {
       if (g.chet || g.dtThua || Math.abs(g.x - n.x) > dm + 700 || Math.abs(g.y - n.y) > dm + 700) continue;
       const t = this.tamGa(g);
       // Gà tướng rất to: tính khoảng cách tới mép thân chứ không phải tới tâm
-      const d = Math.hypot(t.x - n.x, t.y - n.y) - (g.loai === 'boss' ? 125 : 0);
+      const d = hyp(t.x - n.x, t.y - n.y) - (g.loai === 'boss' ? 125 : 0);
       if (d < dm) {
         dm = d;
         tot = g;
@@ -6851,10 +6857,6 @@ export class Game {
     const nhip = g.loai === 'boss' ? 0.5 : 1;
     if (g.vx || g.vy) return KHUNG_CHAY[Math.floor(g.phase * 10 * nhip) % KHUNG_CHAY.length];
     return KHUNG_DUNG[Math.floor(g.phase * 3 * nhip) % KHUNG_DUNG.length];
-  }
-
-  bongGa(g: Ga): number {
-    return Math.max(0.35, 1 - g.h / 400);
   }
 
   // Thanh máu gà tướng

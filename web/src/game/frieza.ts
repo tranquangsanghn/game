@@ -4,6 +4,7 @@
 // Mỗi lượt: đứng thở FZ_NGHI giây rồi chọn ngẫu nhiên một điểm khác trên chuỗi, đi lần lượt qua các điểm ở giữa tới đó.
 // File này chỉ có dữ liệu + hàm thuần; Game gọi `capNhatFrieza()` mỗi khung, vẽ ở ve-canvas.ts (`veFrieza()`). Không lưu ván (tải lại thì đứng ở sân trước).
 // Sprite: web/public/assets/game/frieza_atlas.png (dựng bằng tools/tao-atlas-frieza.py từ sheet người dùng gửi), 6 khung 80×84, neo đáy giữa, quay mặt PHẢI.
+import { hyp } from './toan';
 import type { KhungSprite } from './sprite';
 import { THAN, THAN_TL } from './ban-do';
 
@@ -163,7 +164,7 @@ export function capNhatFrieza(f: Frieza, dt: number, thay = false, huongX?: numb
   const toc = FZ_TOC * fzGap(f);
   // Vừa hết trận: đi thẳng về điểm f.i trên chuỗi rồi mới đi tuần tiếp
   const ve = FZ_DUONG[f.i]!;
-  if (Math.hypot(ve.x - f.x, ve.y - f.y) > 2 && f.nghi <= 0 && f.dich === f.i) {
+  if (hyp(ve.x - f.x, ve.y - f.y) > 2 && f.nghi <= 0 && f.dich === f.i) {
     fzDiToi(f, ve.x, ve.y, toc, dt);
     return su;
   }
@@ -185,7 +186,7 @@ export function capNhatFrieza(f: Frieza, dt: number, thay = false, huongX?: numb
     }
     const tiep = f.i + Math.sign(f.dich - f.i);
     const p = FZ_DUONG[tiep]!;
-    const dx = p.x - f.x, dy = p.y - f.y, d = Math.hypot(dx, dy);
+    const dx = p.x - f.x, dy = p.y - f.y, d = hyp(dx, dy);
     if (Math.abs(dx) > 1) f.lat = dx < 0;
     if (d <= con) { f.x = p.x; f.y = p.y; f.i = tiep; con -= d; }
     else { f.x += (dx / d) * con; f.y += (dy / d) * con; con = 0; }
@@ -205,7 +206,7 @@ export function fzHpMax(f: Frieza): number {
 
 /** Đi thẳng tới (x, y) tốc độ `toc` (Game kẹp lại trong thần điện / ra khỏi vật cản sau đó) */
 export function fzDiToi(f: Frieza, x: number, y: number, toc: number, dt: number): void {
-  const dx = x - f.x, dy = y - f.y, d = Math.hypot(dx, dy);
+  const dx = x - f.x, dy = y - f.y, d = hyp(dx, dy);
   if (d < 1) return;
   const b = Math.min(d, toc * dt);
   f.x += (dx / d) * b;
@@ -216,7 +217,7 @@ export function fzDiToi(f: Frieza, x: number, y: number, toc: number, dt: number
 /** Hết trận: về điểm gần nhất trên chuỗi đường đi */
 export function fzVeDuong(f: Frieza): void {
   let iMin = 0, dMin = Infinity;
-  FZ_DUONG.forEach((p, i) => { const d = Math.hypot(p.x - f.x, p.y - f.y); if (d < dMin) { dMin = d; iMin = i; } });
+  FZ_DUONG.forEach((p, i) => { const d = hyp(p.x - f.x, p.y - f.y); if (d < dMin) { dMin = d; iMin = i; } });
   f.chien = false;
   f.nap = undefined;
   f.i = f.dich = iMin;

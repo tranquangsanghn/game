@@ -2,6 +2,7 @@
 // File này chỉ có dữ liệu + hàm thuần (không đụng canvas / trạng thái game); logic chạy trong Game (`capNhatCell()`), vẽ trong ve-canvas.ts (`veCell()`).
 // Sprite: web/public/assets/game/cell_atlas.png, 10 cột × 5 hàng (hàng = cấp), khung 80×64, neo ở đáy giữa chân.
 // Ảnh gốc: Cell từ Dragon Ball Z: Legendary Super Warriors (GBC); cấp 0 Cell Junior, 1 Imperfect 1, 2 Imperfect 2, 3 Perfect, 4 Perfect nhuộm đỏ + hào quang.
+import { hyp } from './toan';
 import type { KhungSprite } from './sprite';
 import { DAO, daoCua, diemTrenDao, doSau, SO_DAO } from './ban-do';
 
@@ -216,7 +217,7 @@ export function taoCell(layId: () => number): Cell[] {
       for (let t = 0; t < 60; t++) {
         const g = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * bk * (1 + t / 30);
         p = { x: tam.x + Math.cos(g) * r, y: tam.y + Math.sin(g) * r };
-        if (doSau(p.x, p.y) > 250 && daoCua(p.x, p.y) === i && !cua.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < 30 * k)) break;
+        if (doSau(p.x, p.y) > 250 && daoCua(p.x, p.y) === i && !cua.some((q) => hyp(q.x - p.x, q.y - p.y) < 30 * k)) break;
         p = tam;
       }
       cua.push(p);

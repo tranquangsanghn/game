@@ -4,10 +4,6 @@ import { BanLuu, DiemCao, bangDiem, guiDiem, layLuu, luuGame, nhoTen, tenDaNho, 
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const phut = (g: number) => `${Math.floor(g / 60)}:${String(Math.floor(g % 60)).padStart(2, '0')}`;
-const luc = (iso: string) => {
-  const d = new Date(iso);
-  return isNaN(d.getTime()) ? '' : d.toLocaleString('vi-VN');
-};
 
 /**
  * Phần HTML bao quanh game: canvas, nút Đóng / Tạm dừng và các màn phủ (bắt đầu, tạm dừng, kết thúc).
@@ -267,14 +263,6 @@ export class GiaoDien {
         <button type="button" tabindex="-1" class="nut-phu" data-act="quay">◀ Quay lại</button>
         <button type="button" tabindex="-1" class="nut-chinh" data-act="vao">${tay ? 'Vào chơi (A)' : 'Vào chơi'}</button>
       </div></div>`;
-  }
-
-  private htmlLuu(): string {
-    if (this.luu) {
-      return `<div class="luu-tin">💾 Có ván đã lưu của <b>${esc(this.ten)}</b>: ${this.luu.diem} điểm · ${phut(this.luu.thoiGian)} · ${esc(luc(this.luu.luuLuc))}
-        <button type="button" tabindex="-1" class="nut-phu" data-act="xoaLuu" style="margin:0 0 0 8px;padding:2px 12px;font-size:12px">Xoá</button></div>`;
-    }
-    return '';
   }
 
   private htmlThongBao(): string {

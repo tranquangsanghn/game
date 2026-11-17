@@ -1,3 +1,4 @@
+import { hyp } from './toan';
 import type { ChuongTiec, Tiec } from './tiec';
 import { HN } from './do-hieu-nang';
 import type { Game, Ga, TrangTri, Cuu, CauTron, MbHinh } from './game';
@@ -292,9 +293,12 @@ export class VeCanvas {
     }
 
     for (const p of [0, 1]) if (!c.nguoi[p].vang) this.veThanhBen(ctx, c, p);
+    HN.moc('ve.thanhBen');
     // Bố cục đen ngoài map là layout chung, luôn hiện; chỉ nội dung đổi theo nhân vật
     this.veThanhTuong(ctx, c);
+    HN.moc('ve.thanhTren');
     this.veNgocTrenBang(ctx, c);
+    HN.moc('ve.ngoc');
     if (c.man === 'play' || c.man === 'pause') this.veHud(ctx, c);
     HN.moc('ve.hud');
   }
@@ -988,8 +992,8 @@ export class VeCanvas {
       } else if (o.loai === 'cong') {
         this.veCong(ctx, c, o.than ? THAN_CONG : c.cong);
       }
-      else if (o.loai === 'mb') this.veMayBay(ctx, c, c.mbView, c.SP_MB, true);
-      else if (o.loai === 'pt') this.veMayBay(ctx, c, c.ptView, c.SP_PT, false);
+      else if (o.loai === 'mb') this.veMayBay(ctx, c.mbView, c.SP_MB, true);
+      else if (o.loai === 'pt') this.veMayBay(ctx, c.ptView, c.SP_PT, false);
       else this.veNhanVat(ctx, c, o.p);
     }
     HN.moc('ve.xep');
@@ -1410,7 +1414,7 @@ export class VeCanvas {
   }
 
   // Máy bay / phi thuyền: bóng dưới đất (khi đang bay), thân (theo khung atlas), nhãn số người đã lên trên đầu
-  private veMayBay(ctx: CanvasRenderingContext2D, c: Game, h: MbHinh | null, sp: KhungSprite, muot: boolean): void {
+  private veMayBay(ctx: CanvasRenderingContext2D, h: MbHinh | null, sp: KhungSprite, muot: boolean): void {
     if (!h || h.a <= 0) return;
     ctx.save();
     ctx.globalAlpha = h.a;
@@ -1510,7 +1514,7 @@ export class VeCanvas {
     const { w, h, bw, nk0, nk1, hx } = l;
     const s = q.k * l.ti;
     const dx = q.x1 - q.x0, dy = q.y1 - q.y0;
-    const D = Math.hypot(dx, dy) / s;
+    const D = hyp(dx, dy) / s;
     const e = Math.min(1, q.t / TIEC_CHUONG_T);
     const hw = w - hx;
     const dau = Math.max(bw * 0.6, bw * 0.6 + (D - hw - bw * 0.6) * e);
@@ -1662,7 +1666,7 @@ export class VeCanvas {
     const anh = g.chet ? 0.55 : 0.72 + 0.12 * Math.sin(c.t * 4.3);
     // Đang lao: 3 bóng mờ phía sau theo hướng bay
     if (g.lao !== undefined && !g.chet) {
-      const v = Math.hypot(g.vx ?? 0, g.vy ?? 0) || 1;
+      const v = hyp(g.vx ?? 0, g.vy ?? 0) || 1;
       const ux = (g.vx ?? 0) / v, uy = (g.vy ?? 0) / v;
       const a0 = ctx.globalAlpha;
       for (let i = 3; i >= 1; i--) {
@@ -1881,7 +1885,6 @@ export class VeCanvas {
 
   private veGa(ctx: CanvasRenderingContext2D, c: Game, g: Ga): void {
     const h = c.gaHinh(g);
-    const bong = c.bongGa(g);
     ctx.save();
     ctx.globalAlpha = dongHe(g.chet ? 1 - g.tChet / (g.loai === 'boss' ? 2 : 1) : 1);
     // Vòng đốt cháy của gà tướng màu đỏ: vẽ trong không gian thế giới (bán kính DOT_BAN_KINH, dẹt theo EP_GA)
@@ -2428,8 +2431,8 @@ export class VeCanvas {
    *  đúng cỡ điểm ảnh trên màn hình (làm tròn 4px) một lần rồi dán nguyên, không phóng / thu (dán 1:1 rẻ hơn ~5 lần). a = độ đậm (nhấp nháy). */
   private elipSan(ctx: CanvasRenderingContext2D, rx: number, ry: number, nen: string, vien: string, day: number, a: number): void {
     const m = ctx.getTransform();
-    const sx = Math.hypot(m.a, m.b);
-    const sy = Math.hypot(m.c, m.d);
+    const sx = hyp(m.a, m.b);
+    const sy = hyp(m.c, m.d);
     const RX = Math.max(4, Math.round((rx * sx) / 4) * 4);
     const RY = Math.max(4, Math.round((ry * sy) / 4) * 4);
     const D = Math.max(1, Math.round(day * (sx + sy) / 2));
@@ -2466,7 +2469,7 @@ export class VeCanvas {
       // Hiệu năng: thu nhỏ ảnh to bằng imageSmoothingQuality 'high' mỗi lần vẽ rất tốn (vài trăm gà là tụt FPS).
       // Chọn bản thu nhỏ sẵn (mip) nhỏ nhất mà khung vẫn ≥ cỡ thật trên màn hình rồi vẽ bằng 'low' (tỉ lệ < 2 nên vẫn mịn).
       const m = ctx.getTransform();
-      const dich = Math.hypot(m.a, m.b) * sp.w;
+      const dich = hyp(m.a, m.b) * sp.w;
       let L = 1;
       while (L < 8 && (sp.w * f) / (L * 2) >= dich) L *= 2;
       if (L > 1) {

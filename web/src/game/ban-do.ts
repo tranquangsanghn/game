@@ -3,6 +3,7 @@
 // Chỉ có dữ liệu / logic (không đụng canvas): `doSau()` = khoảng cách có dấu tới bờ đảo (dương = cát, âm = biển, đơn vị thế giới),
 // lưới đi được để đẩy vật đang đứng dưới nước lên bờ gần nhất (`veDat()`). Phần vẽ nằm trong ve-canvas.ts.
 
+import { hyp } from './toan';
 import { THAN_ANH_H, THAN_ANH_W, THAN_VIEN } from './than-dien-vien';
 import { THAN_VAT } from './than-dien-vat';
 
@@ -47,7 +48,7 @@ const NUA_RONG_NOI = 260;
 function diemNoi(i: number, j: number, t: number): [number, number] {
   const a = DAO[i]!, b = DAO[j]!;
   const mx = (a.x + b.x) / 2 - TAM, my = (a.y + b.y) / 2 - TAM;
-  const ml = Math.hypot(mx, my);
+  const ml = hyp(mx, my);
   const lech = Math.sin(t * Math.PI) * 900 + Math.sin(t * Math.PI * 3) * 120;
   return [a.x + (b.x - a.x) * t + (mx / ml) * lech, a.y + (b.y - a.y) * t + (my / ml) * lech];
 }
@@ -56,12 +57,12 @@ function doDaiCat(diem: (t: number) => [number, number], trong: (x: number, y: n
   let L = 0, cu = diem(0);
   for (let k = 1; k <= 2000; k++) {
     const p = diem(k / 2000);
-    if (!trong(p[0], p[1])) L += Math.hypot(p[0] - cu[0], p[1] - cu[1]);
+    if (!trong(p[0], p[1])) L += hyp(p[0] - cu[0], p[1] - cu[1]);
     cu = p;
   }
   return L;
 }
-const trongDaoTron = (x: number, y: number, i: number) => Math.hypot(x - DAO[i]!.x, y - DAO[i]!.y) <= DAO[i]!.r;
+const trongDaoTron = (x: number, y: number, i: number) => hyp(x - DAO[i]!.x, y - DAO[i]!.y) <= DAO[i]!.r;
 
 /** Núi đá: một khối mesa hình elip (diện tích 2/3 vườn gà, rộng gấp 1,5 cao) nằm phía nam đảo 0 (đảo Cell đỏ), nối với đảo 0
  *  bằng một dải cát cong chữ S (`DUONG_NUI`) dài gấp DUONG_NUI_GAP = 3 lần dải cát nối giữa hai đảo sa mạc (trung bình phần cát).
@@ -76,7 +77,7 @@ const DUONG_NUI_UON = 1400;
 const trongElip = (x: number, y: number, cx: number, cy: number) => ((x - cx) / NUI_RX) ** 2 + ((y - cy) / NUI_RY) ** 2 <= 1;
 function duongNuiTheo(kc: number) {
   const d0 = DAO[0]!, ux = Math.cos(DUONG_NUI_HUONG), uy = Math.sin(DUONG_NUI_HUONG);
-  const rr = (NUI_RX * NUI_RY) / Math.hypot(NUI_RY * ux, NUI_RX * uy);
+  const rr = (NUI_RX * NUI_RY) / hyp(NUI_RY * ux, NUI_RX * uy);
   const dai = d0.r + kc + rr;
   const nx = d0.x + ux * dai, ny = d0.y + uy * dai;
   const diem = (t: number): [number, number] => {
@@ -121,7 +122,7 @@ function kcDuongNui(x: number, y: number): number {
       const [ax, ay] = DUONG_NUI[k - 1]!, [bx, by] = DUONG_NUI[k]!;
       const vx = bx - ax, vy = by - ay;
       const t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy)));
-      m = Math.min(m, Math.hypot(x - ax - vx * t, y - ay - vy * t));
+      m = Math.min(m, hyp(x - ax - vx * t, y - ay - vy * t));
     }
   }
   return m;
@@ -134,10 +135,10 @@ export function trongNui(x: number, y: number, le = 0): boolean {
 /** Khoảng cách có dấu (theo tia từ tâm) tới bờ núi đá: dương = trên núi */
 function doSauNui(x: number, y: number): number {
   const dx = x - NUI.x, dy = y - NUI.y;
-  const kc = Math.hypot(dx, dy);
+  const kc = hyp(dx, dy);
   if (kc < 1) return NUI.ry;
   const c = dx / kc, s = dy / kc;
-  return (NUI.rx * NUI.ry) / Math.hypot(NUI.ry * c, NUI.rx * s) - kc;
+  return (NUI.rx * NUI.ry) / hyp(NUI.ry * c, NUI.rx * s) - kc;
 }
 
 /** Giới hạn thế giới cũ (bao hết các đảo, núi đá + một dải biển), chưa tính thần điện: trang trí sa mạc vẫn rải theo khung này
@@ -185,14 +186,14 @@ export const trongThan = (x: number, y: number, le = 0) => x >= THAN.x0 - le && 
 /** Khoảng cách có dấu tới bờ thần điện (dương = trên nền đá); xa khung thì trả khoảng cách tới khung (không quá xa thật) */
 function doSauThan(x: number, y: number): number {
   const dx = Math.max(THAN.x0 - x, 0, x - THAN.x1), dy = Math.max(THAN.y0 - y, 0, y - THAN.y1);
-  if (dx > 400 || dy > 400) return -Math.hypot(dx, dy);
+  if (dx > 400 || dy > 400) return -hyp(dx, dy);
   let m = Infinity, vao = false;
   for (let i = 0, j = THAN_DA.length - 1; i < THAN_DA.length; j = i++) {
     const [ax, ay] = THAN_DA[j]!, [bx, by] = THAN_DA[i]!;
     if (ay > y !== by > y && x < ((bx - ax) * (y - ay)) / (by - ay) + ax) vao = !vao;
     const vx = bx - ax, vy = by - ay;
     const t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy)));
-    m = Math.min(m, Math.hypot(x - ax - vx * t, y - ay - vy * t));
+    m = Math.min(m, hyp(x - ax - vx * t, y - ay - vy * t));
   }
   return vao ? m : -m;
 }
@@ -228,8 +229,6 @@ export function nhieu(x: number, y: number): number {
   const a = bam(ix, iy), b = bam(ix + 1, iy), c = bam(ix, iy + 1), d = bam(ix + 1, iy + 1);
   return (a + (b - a) * fx) * (1 - fy) + (c + (d - c) * fx) * fy;
 }
-/** Số ngẫu nhiên 0..1 cố định theo điểm (lấp lánh trên biển) */
-export const bamDiem = bam;
 
 // Hợp mềm hai vùng (max mềm) để chỗ dải cát nối vào đảo loe ra tự nhiên
 const maxMem = (a: number, b: number, k: number) => {
@@ -251,7 +250,7 @@ function doSauGoc(x: number, y: number): number {
   let s = -1e9;
   for (const d of DAO) {
     const dx = x - d.x, dy = y - d.y;
-    const kc = Math.hypot(dx, dy);
+    const kc = hyp(dx, dy);
     // Quá xa đảo này (kể cả độ méo) thì bỏ qua, đỡ tính atan2
     if (d.r * 1.25 - kc < s) continue;
     const g = Math.atan2(dy, dx);
@@ -270,18 +269,12 @@ function doSauGoc(x: number, y: number): number {
     const t = Math.max(0, Math.min(1, ((x - a.x) * vx + (y - a.y) * vy) / (vx * vx + vy * vy)));
     // Dải cát cong ra phía ngoài vòng (xa vườn gà) cho giống vành tròn
     const [px, py] = diemNoi(i, j, t);
-    noi = Math.max(noi, NUA_RONG_NOI - Math.hypot(x - px, y - py));
+    noi = Math.max(noi, NUA_RONG_NOI - hyp(x - px, y - py));
   }
   // Dải cát chữ S từ đảo 0 lên núi đá
   noi = Math.max(noi, NUA_RONG_NOI - kcDuongNui(x, y));
   if (noi > -2000) noi += (nhieu(x / 500 + 7, y / 500) - 0.5) * 90;
   return Math.max(maxMem(s, noi, 380), doSauNui(x, y), doSauThan(x, y));
-}
-
-/** Khoảng cách tới vườn gà (âm ngoài vườn, đơn vị thế giới): chỉ để tô biển nông / bọt quanh tường */
-export function doSauVuon(x: number, y: number): number {
-  const dx = Math.max(-x, 0, x - VUON), dy = Math.max(-y, 0, y - VUON);
-  return -Math.hypot(dx, dy);
 }
 
 /** Điểm nằm trong vườn gà (kể cả tường) */
@@ -405,7 +398,7 @@ export function veDat(o: { x: number; y: number }): { cx: boolean; cy: boolean }
 export function daoCua(x: number, y: number): number {
   let k = 0, gan = Infinity;
   DAO.forEach((d, i) => {
-    const v = Math.hypot(x - d.x, y - d.y) - d.r;
+    const v = hyp(x - d.x, y - d.y) - d.r;
     if (v < gan) { gan = v; k = i; }
   });
   return k;
@@ -501,7 +494,7 @@ function luocDiem(p: [number, number][]): number[] {
     while (st.length) {
       const [u, v] = st.pop()!;
       const [ax, ay] = p[u]!, [bx, by] = p[v]!;
-      const dx = bx - ax, dy = by - ay, l = Math.hypot(dx, dy) || 1;
+      const dx = bx - ax, dy = by - ay, l = hyp(dx, dy) || 1;
       let xa = -1, xk = LUOC;
       for (let i = u + 1; i < v; i++) {
         const e = Math.abs((p[i]![0] - ax) * dy - (p[i]![1] - ay) * dx) / l;
@@ -526,5 +519,5 @@ function luocDiem(p: [number, number][]): number[] {
 export const VONG_DAO = 1.0;
 export function trongVongDao(x: number, y: number, i: number, them = 0): boolean {
   const d = DAO[i];
-  return !!d && Math.hypot(x - d.x, y - d.y) <= d.r * VONG_DAO + them;
+  return !!d && hyp(x - d.x, y - d.y) <= d.r * VONG_DAO + them;
 }

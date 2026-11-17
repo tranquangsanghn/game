@@ -2,6 +2,7 @@
 // Có nhân vật trên đảo lại gần (Cell ngửi thấy) hoặc Cell bị đánh thì đội Cell xuất trận (xem `doiHinhCell()` trong game.ts): một con tách đàn đuổi một người,
 // cả đàn đuổi người còn lại; chỉ có một người thì chỉ con tách đàn đi đánh, số còn lại vẫn tiệc. Hết người trên đảo thì cả đội về vòng tiệc. Bánh không bao giờ mất.
 // File này chỉ có dữ liệu + hàm thuần; logic chạy trong Game (`capNhatTiec()`), vẽ trong ve-canvas.ts (`veBanh()`).
+import { hyp } from './toan';
 import type { KhungSprite } from './sprite';
 import type { Cell } from './cell';
 import { cellK } from './cell';
@@ -13,8 +14,6 @@ export const BANH_KHUNG = 8;
 /** Độ to của bánh (nhân kích thước khung) và số khung lửa mỗi giây */
 export const BANH_TO = 0.3; // bánh nhỏ: cho Cell có k ≈ 3,9 (đảo 4); đảo khác nhân theo k
 export const BANH_FPS = 9;
-/** Bán kính vòng tròn Cell quanh bánh */
-export const TIEC_BK = 280;
 /** Cell đang tiệc chỉ ngửi thấy nhân vật trong tầm này (nhỏ hơn bình thường: đang mải hát) */
 export const TIEC_NGUI = 450;
 /** Chưởng (kamehameha) bay tới bánh trong `TIEC_CHUONG_T` giây */
@@ -53,7 +52,7 @@ export function viTriCong(tiec: Tiec[]): { x: number; y: number } {
   const d = DAO[CONG_DAO]!;
   const tc = tiec.find((t) => t.dao === CONG_DAO);
   if (!tc) return { x: d.x, y: d.y };
-  const kc = Math.hypot(d.x - tc.x, d.y - tc.y), can = tc.bk + CONG_CACH;
+  const kc = hyp(d.x - tc.x, d.y - tc.y), can = tc.bk + CONG_CACH;
   if (kc >= can) return { x: d.x, y: d.y };
   const ux = kc > 1 ? (d.x - tc.x) / kc : 0, uy = kc > 1 ? (d.y - tc.y) / kc : 1;
   // thử dời theo hướng ra xa bánh, xoay dần nếu rơi xuống biển
@@ -105,7 +104,7 @@ export function taoTiec(cell: Cell[]): Tiec[] {
         if (doSau(x, y) < 220 || daoCua(x, y) !== dao) return false;
       }
       // Đảo có cổng dịch chuyển: vòng tiệc không đè lên cổng (giữa đảo)
-      if (dao === CONG_DAO && Math.hypot(cx - d.x, cy - d.y) < bk + CONG_CACH) return false;
+      if (dao === CONG_DAO && hyp(cx - d.x, cy - d.y) < bk + CONG_CACH) return false;
       return doSau(cx, cy) > 220;
     };
     let tam = { x: d.x, y: d.y }, bk = bk0, xong = false;
