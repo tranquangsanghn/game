@@ -3,6 +3,8 @@
 // Chỉ có dữ liệu / logic (không đụng canvas): `doSau()` = khoảng cách có dấu tới bờ đảo (dương = cát, âm = biển, đơn vị thế giới),
 // lưới đi được để đẩy vật đang đứng dưới nước lên bờ gần nhất (`veDat()`). Phần vẽ nằm trong ve-canvas.ts.
 
+import { THAN_ANH_H, THAN_ANH_W, THAN_CHAN, THAN_VIEN } from './than-dien-vien';
+
 export type LoaiBanDo = 'co' | 'sa';
 
 /** Cỡ vườn gà (= map đồng cỏ), đặt ở 0..VUON */
@@ -137,9 +139,10 @@ function doSauNui(x: number, y: number): number {
   return (NUI.rx * NUI.ry) / Math.hypot(NUI.ry * c, NUI.rx * s) - kc;
 }
 
-/** Giới hạn thế giới (bao hết các đảo, núi đá + một dải biển) */
+/** Giới hạn thế giới cũ (bao hết các đảo, núi đá + một dải biển), chưa tính thần điện: trang trí sa mạc vẫn rải theo khung này
+ *  để vị trí cây (và chỉ số cây đổ trong ván lưu) không đổi */
 const LE_BIEN = 1400;
-export const TG = (() => {
+export const TG_SA = (() => {
   let x0 = Math.min(0, NUI.x - NUI.rx), y0 = Math.min(0, NUI.y - NUI.ry), x1 = Math.max(VUON, NUI.x + NUI.rx), y1 = Math.max(VUON, NUI.y + NUI.ry);
   for (const d of DAO) {
     x0 = Math.min(x0, d.x - d.r * 1.25); x1 = Math.max(x1, d.x + d.r * 1.25);
@@ -151,6 +154,60 @@ export const TG = (() => {
     x1: Math.ceil((x1 + LE_BIEN) / o) * o, y1: Math.ceil((y1 + LE_BIEN) / o) * o,
   };
 })();
+
+/** Thần điện: khối đất nổi trên vực phía bắc vòng đảo (ảnh than_dien.png cắt từ ảnh người dùng gửi, tools/tao-than-dien.py),
+ *  mỗi điểm ảnh = THAN_TL đơn vị thế giới. Không nối với đâu: vào bằng cổng dịch chuyển giữa đảo 4 (hoặc máy bay).
+ *  Bờ là đa giác bậc thang THAN_VIEN (đất = trong đa giác), vật cản THAN_CHAN (điện thờ, vườn cây, hàng cọ, chân cột vòm). */
+export const THAN_TL = 9;
+const THAN_CACH = 2600;
+export const THAN = (() => {
+  const w = THAN_ANH_W * THAN_TL, h = THAN_ANH_H * THAN_TL;
+  const x0 = Math.round(VUON / 2 - w / 2), y0 = Math.round(TG_SA.y0 - THAN_CACH - h);
+  return { x0, y0, x1: x0 + w, y1: y0 + h, w, h };
+})();
+const THAN_DA: [number, number][] = THAN_VIEN.map(([x, y]) => [THAN.x0 + x * THAN_TL, THAN.y0 + y * THAN_TL]);
+/** Vật cản thần điện theo toạ độ thế giới */
+export const THAN_CHAN_TG = THAN_CHAN.map(([x0, y0, x1, y1]) => ({
+  x0: THAN.x0 + x0 * THAN_TL, y0: THAN.y0 + y0 * THAN_TL, x1: THAN.x0 + x1 * THAN_TL, y1: THAN.y0 + y1 * THAN_TL,
+}));
+/** Cổng dịch chuyển trên thần điện (giữa hai hàng cọ, trước điện thờ; điểm ảnh 360, 300) */
+export const THAN_CONG = { x: THAN.x0 + 360 * THAN_TL, y: THAN.y0 + 300 * THAN_TL };
+/** Đường viền thần điện (toạ độ thế giới) để bộ vẽ dựng vách đá */
+export const THAN_DA_GIAC = THAN_DA;
+/** Điểm nằm trong khung thần điện (nới thêm `le`) */
+export const trongThan = (x: number, y: number, le = 0) => x >= THAN.x0 - le && x <= THAN.x1 + le && y >= THAN.y0 - le && y <= THAN.y1 + le;
+/** Khoảng cách có dấu tới bờ thần điện (dương = trên nền đá); xa khung thì trả khoảng cách tới khung (không quá xa thật) */
+function doSauThan(x: number, y: number): number {
+  const dx = Math.max(THAN.x0 - x, 0, x - THAN.x1), dy = Math.max(THAN.y0 - y, 0, y - THAN.y1);
+  if (dx > 400 || dy > 400) return -Math.hypot(dx, dy);
+  let m = Infinity, vao = false;
+  for (let i = 0, j = THAN_DA.length - 1; i < THAN_DA.length; j = i++) {
+    const [ax, ay] = THAN_DA[j]!, [bx, by] = THAN_DA[i]!;
+    if (ay > y !== by > y && x < ((bx - ax) * (y - ay)) / (by - ay) + ax) vao = !vao;
+    const vx = bx - ax, vy = by - ay;
+    const t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy)));
+    m = Math.min(m, Math.hypot(x - ax - vx * t, y - ay - vy * t));
+  }
+  return vao ? m : -m;
+}
+/** Đẩy điểm chân (x, y) ra khỏi vật cản thần điện (nới `le`): ra mép gần nhất. Trả cờ bị đẩy theo từng trục */
+export function raKhoiChanThan(o: { x: number; y: number }, le = 30): { cx: boolean; cy: boolean } {
+  const r = { cx: false, cy: false };
+  if (!trongThan(o.x, o.y)) return r;
+  for (const c of THAN_CHAN_TG) {
+    if (o.x <= c.x0 - le || o.x >= c.x1 + le || o.y <= c.y0 - le || o.y >= c.y1 + le) continue;
+    const t = o.x - (c.x0 - le), p = c.x1 + le - o.x, tr = o.y - (c.y0 - le), d = c.y1 + le - o.y;
+    const m = Math.min(t, p, tr, d);
+    if (m === t) { o.x = c.x0 - le; r.cx = true; }
+    else if (m === p) { o.x = c.x1 + le; r.cx = true; }
+    else if (m === tr) { o.y = c.y0 - le; r.cy = true; }
+    else { o.y = c.y1 + le; r.cy = true; }
+  }
+  return r;
+}
+
+/** Giới hạn thế giới (thêm thần điện + dải vực phía trên) */
+export const TG = { ...TG_SA, y0: Math.floor((THAN.y0 - LE_BIEN) / 400) * 400 };
 
 // Nhiễu giá trị (value noise) có hạt giống cố định: bờ đảo lượn sóng tự nhiên, mỗi ván như nhau
 const bam = (x: number, y: number) => {
@@ -212,7 +269,7 @@ function doSauGoc(x: number, y: number): number {
   // Dải cát chữ S từ đảo 0 lên núi đá
   noi = Math.max(noi, NUA_RONG_NOI - kcDuongNui(x, y));
   if (noi > -2000) noi += (nhieu(x / 500 + 7, y / 500) - 0.5) * 90;
-  return Math.max(maxMem(s, noi, 380), doSauNui(x, y));
+  return Math.max(maxMem(s, noi, 380), doSauNui(x, y), doSauThan(x, y));
 }
 
 /** Khoảng cách tới vườn gà (âm ngoài vườn, đơn vị thế giới): chỉ để tô biển nông / bọt quanh tường */
@@ -251,7 +308,7 @@ function layLuoiSau(): Float32Array {
           if (xa) { L[j * NX_SAU + i] = -VUC_XA; continue; }
           const x = TG.x0 + i * O_SAU, y = TG.y0 + j * O_SAU;
           // Cộng thêm nhiễu nhỏ (khấc bờ); núi đá giữ đúng elip (vẽ bằng ellipse) nên không cộng
-          L[j * NX_SAU + i] = Math.max(-VUC_XA, doSauGoc(x, y) + (trongNui(x, y, 400) ? 0 : (nhieu(x / 130 + 50, y / 130) - 0.5) * 40));
+          L[j * NX_SAU + i] = Math.max(-VUC_XA, doSauGoc(x, y) + (trongNui(x, y, 400) || trongThan(x, y, 400) ? 0 : (nhieu(x / 130 + 50, y / 130) - 0.5) * 40));
         }
       }
     }

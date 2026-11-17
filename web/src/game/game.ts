@@ -4,7 +4,7 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { MABU, NHAN_VAT } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
-import { chuanBiSaMac, daoCua, diemTrenDao, doSau, trongNui, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
+import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN_CONG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_DANH, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
@@ -121,7 +121,7 @@ type VatXep =
   | { loai: 'cell'; y: number; ce: Cell }
   | { loai: 'gy'; y: number }
   | { loai: 'banh'; y: number; tc: Tiec }
-  | { loai: 'cong'; y: number };
+  | { loai: 'cong'; y: number; than?: boolean };
 
 /** Quả cầu trốn: san = sẵn sàng · trong = có nhân vật p đang trốn · vo = đang vỡ ra (hoạt ảnh) · moc = đã vỡ, chờ CAU_MOC giây mọc quả mới. t = số giây của pha hiện tại */
 /** cua = chủ quả cầu (0 Mabu · 1 Zinbu): chỉ đúng người đó chui vào được, quả cầu có avatar của người đó */
@@ -188,6 +188,11 @@ const PT_TO = 2.6;
 const PT_NANG = 480;
 /** Bán kính lên phi thuyền và bán kính lại gần thì cửa mở */
 const PT_BK = 190;
+/** Cổng dịch chuyển (đảo 4 ↔ thần điện): bước vào trong CONG_BK quanh chân cổng thì dịch chuyển; ra đứng cách chân cổng CONG_RA_Y
+ *  về phía trước, phải đi xa hơn CONG_RA mới vào lại được */
+const CONG_BK = 200;
+const CONG_RA = 450;
+const CONG_RA_Y = 320;
 const PT_MO_BK = 520;
 const PT_TOC = MB_TOC * 5;
 const PT_CAT = 2;
@@ -711,8 +716,9 @@ function taoTrangTriSa(): TrangTri[] {
   const kq: TrangTri[] = [];
   const soCay = new Array<number>(SO_DAO).fill(0);
   const O = 300;
-  for (let gx = TG.x0; gx < TG.x1; gx += O) {
-    for (let gy = TG.y0; gy < TG.y1; gy += O) {
+  // Rải theo khung thế giới cũ (TG_SA, chưa có thần điện) để vị trí cây không đổi
+  for (let gx = TG_SA.x0; gx < TG_SA.x1; gx += O) {
+    for (let gy = TG_SA.y0; gy < TG_SA.y1; gy += O) {
       if (r() > 0.55) continue;
       const x = gx + r() * O;
       const y = gy + 60 + r() * (O - 60);
@@ -814,8 +820,10 @@ function giuTrongMap(o: { x: number; y: number }, le: Le, quaNuoc = false, vung?
     o.y = y;
     if (!quaNuoc) {
       const d = veDat(o);
-      r.cx ||= d.cx;
-      r.cy ||= d.cy;
+      // Thần điện: không đi xuyên điện thờ / vườn cây / hàng cọ / chân cột vòm
+      const c = raKhoiChanThan(o);
+      r.cx ||= d.cx || c.cx;
+      r.cy ||= d.cy || c.cy;
     }
     return r;
   }
@@ -923,6 +931,14 @@ export class Game {
   /** Cổng dịch chuyển giữa đảo Cell 10 con (trang trí, tính từ vị trí tiệc, không lưu ván); congView = có vẽ không */
   cong = { x: 0, y: 0 };
   congView = false;
+  /** Cổng dịch chuyển trên thần điện (cặp với `cong`): có vẽ không */
+  congThanView = false;
+  /** Người vừa bước ra khỏi cổng dịch chuyển: phải đi xa khỏi cổng rồi mới vào lại được (không lưu ván) */
+  private congCho: number[] | null = null;
+  /** Hẹn giờ chữ báo cổng không mở (đồng đội gục / đang trốn / đang bay) */
+  private congBao = 0;
+  /** Dịch chuyển xong: khung sau camera nhảy thẳng tới chỗ mới */
+  private camNgay = false;
   trungDe: TrungGa[] = [];
   trungView: TrungGa[] = [];
   huongView: { x: number; y: number; goc: number; a: number; mau: string }[] = [];
@@ -952,6 +968,8 @@ export class Game {
   /** Camera đã vào hẳn trong vườn gà (kẹp cứng theo tường) */
   private camVuon = false;
   thayDao = true;
+  /** Đang thấy thần điện (có nhân vật đứng trên đó hoặc có người ngồi máy bay) */
+  thayThan = true;
   // Gà mẹ GỐC còn sống (không lọc theo khung nhìn): avatar, số mạng, mũi tên chỉ hướng
   tuongSong: Ga | null = null;
   /** Ngọc rồng đã nhặt (số sao, theo thứ tự nhặt) xếp ở thanh đen trên, bên trái; ngocBay = viên đang bay từ chỗ nhặt lên thanh đen */
@@ -1492,10 +1510,11 @@ export class Game {
         this.capNhat(dtGame);
       }
       else this.nguoi.forEach((n) => this.capNhatNhanVat(n, dt));
-      this.capNhatView(dt);
+      this.capNhatView(dt, this.camNgay);
+      this.camNgay = false;
       HN.moc('view');
     }
-    this.am.nhacNen(this.man === 'play', this.trenDao && !this.trenNui);
+    this.am.nhacNen(this.man === 'play', this.trenDao && !this.trenNui && !this.trenThan);
     if (this.ctx) this.ve.ve(this.ctx, this, this.dpr, this.ctxNen, NEN_TL);
     // Màn chơi chỉ vẽ canvas; phần HTML (màn bắt đầu / tạm dừng / kết thúc, nút) chỉ cập nhật khi cần
     if (this.man !== 'play' || this.manDaVe !== this.man) this.onManPhu();
@@ -1514,7 +1533,7 @@ export class Game {
     kq['matMay'] = this.matMay;
     kq['fpsMucTieu'] = this.matMay ? FPS_MAT : FPS_TOI_DA;
     kq['man'] = this.man;
-    kq['vung'] = this.phiThuyen.ngoi.length && this.phiThuyen.pha !== 'dau' ? 'phiThuyen' : this.mayBay.ngoi.length && this.mayBay.pha !== 'dau' ? 'mayBay' : this.trenNui ? 'nui' : this.trenDao ? `dao${this.daoHienTai}` : 'vuon';
+    kq['vung'] = this.phiThuyen.ngoi.length && this.phiThuyen.pha !== 'dau' ? 'phiThuyen' : this.mayBay.ngoi.length && this.mayBay.pha !== 'dau' ? 'mayBay' : this.trenNui ? 'nui' : this.trenThan ? 'than' : this.trenDao ? `dao${this.daoHienTai}` : 'vuon';
     const n = this.nguoi.find((x) => !x.vang);
     if (n) { kq['x'] = Math.round(n.x); kq['y'] = Math.round(n.y); }
     kq['canvas'] = `${this.canvasEl.width}x${this.canvasEl.height}`;
@@ -1558,6 +1577,7 @@ export class Game {
     this.capNhatMb(dt);
     this.capNhatPt(dt);
     HN.moc('cn.mayBay');
+    this.capNhatCong(dt);
     this.nguoi.forEach((n, p) => this.mayQuet(n, p));
     HN.moc('cn.may');
     this.chonVay(dtE);
@@ -2391,6 +2411,13 @@ export class Game {
     return song.length > 0 && song.every((n) => trongNui(n.x, n.y, 300));
   }
 
+  /** Nhân vật còn sống nào cũng đang trên thần điện: avatar / tên trên thanh đen là quái của thần điện, nhạc nền thường */
+  get trenThan(): boolean {
+    if (banDoHt !== 'sa') return false;
+    const song = this.nguoi.filter((n) => !n.vang && !n.het);
+    return song.length > 0 && song.every((n) => trongThan(n.x, n.y));
+  }
+
   rungTrung(e: TrungGa): number {
     // Trứng đỏ rung mạnh dần theo thời gian
     if (e.db) return Math.sin(e.t * 30) * (2 + e.t * 1.2);
@@ -2469,7 +2496,8 @@ export class Game {
     const ngoai = banDoHt !== 'sa' || this.nguoi.some((_, i) => this.trongMb(i));
     this.thayVuon = ngoai || !dung.length || dung.some((n) => trongVuon(n.x, n.y));
     this.vuonRo = banDoHt !== 'sa' || dung.some((n) => trongVuon(n.x, n.y));
-    this.thayDao = ngoai || !dung.length || dung.some((n) => !trongVuon(n.x, n.y));
+    this.thayDao = ngoai || !dung.length || dung.some((n) => !trongVuon(n.x, n.y) && !trongThan(n.x, n.y));
+    this.thayThan = ngoai || !dung.length || dung.some((n) => trongThan(n.x, n.y));
     // Bản đồ nhỏ góc trên phải khi có người ngồi máy bay: vị trí + hướng bay (theo quãng vừa đi)
     const mbv = this.mayBay;
     const ddx = mbv.x - this.mbCu.x, ddy = mbv.y - this.mbCu.y;
@@ -2510,6 +2538,8 @@ export class Game {
     for (const tc of this.banhView) xep.push({ loai: 'banh', y: tc.y, tc });
     this.congView = trong(this.cong.x, this.cong.y - 150 * CONG_TO, 260 * CONG_TO) && this.doRo(this.cong.x, this.cong.y) > 0;
     if (this.congView) xep.push({ loai: 'cong', y: this.cong.y });
+    this.congThanView = trong(THAN_CONG.x, THAN_CONG.y - 150 * CONG_TO, 260 * CONG_TO) && this.doRo(THAN_CONG.x, THAN_CONG.y) > 0;
+    if (this.congThanView) xep.push({ loai: 'cong', y: THAN_CONG.y, than: true });
     this.chuongTiecView = this.chuongTiec.filter((q) => {
       const dai = Math.hypot(q.x1 - q.x0, q.y1 - q.y0);
       // Chưởng hiện theo con Cell bắn ra nó (đầu x0, y0)
@@ -2608,7 +2638,7 @@ export class Game {
 
   /** Khối đất chứa (x, y) (vườn gà / vòng đảo + núi đá nối liền) đang thấy: không lên máy bay thì chỉ thấy khối mình đứng */
   thayKhoi(x: number, y: number): boolean {
-    return trongVuon(x, y) ? this.thayVuon : this.thayDao;
+    return trongVuon(x, y) ? this.thayVuon : trongThan(x, y) ? this.thayThan : this.thayDao;
   }
 
   /**
@@ -5469,6 +5499,49 @@ export class Game {
       n.dangDi = false;
       n.dich = null;
       n.nv.lat = m.lat;
+    }
+  }
+
+  /** Cổng dịch chuyển: giữa đảo 4 (`cong`) ↔ thần điện (`THAN_CONG`). Nhân vật (chưa gục, không bay, không trong máy bay / cầu)
+   *  bước vào CONG_BK thì mọi người chơi đang đi bộ cùng được đưa sang cổng bên kia (giữ dây buộc), ra đứng phía trước cổng.
+   *  Đồng đội đang gục / trốn trong cầu / đang bay thì cổng không mở. Người vừa ra phải đi khỏi CONG_RA mới vào lại được. */
+  private capNhatCong(dt: number): void {
+    if (banDoHt !== 'sa') return;
+    this.congBao = Math.max(0, this.congBao - dt);
+    const cap = [
+      { a: this.cong, b: THAN_CONG, chu: '🌀 DỊCH CHUYỂN TỚI THẦN ĐIỆN!' },
+      { a: THAN_CONG, b: this.cong, chu: '🌀 DỊCH CHUYỂN VỀ ĐẢO CELL!' },
+    ];
+    const cach = (n: { x: number; y: number }, c: { x: number; y: number }) => Math.hypot(n.x - c.x, n.y - c.y);
+    // Lần đầu (vào / tải ván): ai đang đứng sẵn trong cổng thì coi như vừa ra
+    if (!this.congCho) this.congCho = this.nguoi.map((n, p) => (cap.some((c) => cach(n, c.a) < CONG_RA) ? p : -1)).filter((p) => p >= 0);
+    this.congCho = this.congCho.filter((p) => cap.some((c) => cach(this.nguoi[p]!, c.a) < CONG_RA));
+    const dung = this.nguoi.map((n, p) => ({ n, p })).filter(({ n, p }) => !n.vang && !this.trongMb(p));
+    for (const c of cap) {
+      const vao = dung.find(({ n, p }) => !n.het && !n.bay && !this.trongCau(p) && !this.congCho!.includes(p) && cach(n, c.a) < CONG_BK);
+      if (!vao) continue;
+      if (dung.some(({ n, p }) => n.het || n.bay || this.trongCau(p))) {
+        if (this.congBao <= 0) {
+          this.congBao = 2;
+          this.chu.push({ id: this.id++, x: c.a.x, y: c.a.y - 700, text: '🌀 CỔNG CHƯA MỞ: CHỜ ĐỒNG ĐỘI!', mau: '#c9a2ff', t: 0 });
+        }
+        return;
+      }
+      this.vet.push({ id: this.id++, x: c.a.x, y: c.a.y - 200, t: 0, loai: 'chay', co: 1.6 });
+      dung.forEach(({ n }, i) => {
+        n.x = c.b.x + (dung.length > 1 ? (i === 0 ? -170 : 170) : 0);
+        n.y = c.b.y + CONG_RA_Y;
+        n.dich = null;
+        n.dangDi = false;
+        giuTrongMap(n, leNhanVat(n.nv.heSoTo), false, 'dao');
+      });
+      this.congCho = dung.map(({ p }) => p);
+      this.vet.push({ id: this.id++, x: c.b.x, y: c.b.y - 200, t: 0, loai: 'chay', co: 1.6 });
+      this.chu.push({ id: this.id++, x: c.b.x, y: c.b.y - 700, text: c.chu, mau: '#c9a2ff', t: 0 });
+      this.am.phat('chuong');
+      this.rungMan(0.3, 8);
+      this.camNgay = true;
+      return;
     }
   }
 

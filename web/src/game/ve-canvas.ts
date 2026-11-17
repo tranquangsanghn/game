@@ -7,7 +7,7 @@ import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, T
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { MABU } from './nhan-vat-du-lieu';
 import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_LO_LUNG } from './ginyu';
-import { DAO, doSau, duongBo, NUI, TG } from './ban-do';
+import { DAO, doSau, duongBo, NUI, TG, THAN, THAN_CONG, THAN_DA_GIAC } from './ban-do';
 
 // Bộ vẽ Canvas 2D của game: chỉ vẽ, không đổi trạng thái game. Dữ liệu lấy từ component (các mảng *View / xep đã lọc theo camera, xem CLAUDE.md).
 // Toạ độ vẽ giữ nguyên như bản SVG cũ: viewBox (-SIDE, -BAR, W + 2·SIDE, H + BAR), căn giữa, giữ tỉ lệ.
@@ -68,6 +68,8 @@ const rad = (deg: number) => (deg * Math.PI) / 180;
 
 /** Sprite trang trí cắt từ gói "EPIC RPG World Pack – Grass Land" (map_co.png). Neo ở giữa đáy; k = tỉ lệ phóng */
 const MAP_CO = 'assets/game/map_co.png';
+/** Nền thần điện (pixel art cắt từ ảnh người dùng gửi, tools/tao-than-dien.py), phủ đúng khung THAN */
+const THAN_ANH = 'assets/game/than_dien.png';
 const TRANG_TRI_SPRITE = [
   { sx: 268, sy: 343, w: 98, h: 175, k: 1.7 }, // cây
   { sx: 200, sy: 497, w: 44, h: 29, k: 1.8 }, // bụi có hoa
@@ -166,12 +168,14 @@ export class VeCanvas {
   private mip = new Map<string, HTMLCanvasElement>();
   /** Elip (nền + viền) vẽ sẵn đúng cỡ điểm ảnh trên màn hình: khoá `rx|ry|dày|nền|viền` (điểm ảnh thật, làm tròn 4px) */
   private elip = new Map<string, HTMLCanvasElement>();
+  /** Đường viền thần điện (dựng một lần) */
+  private thanVien: Path2D | null = null;
 
   /** Nạp trước các atlas để khung hình đầu tiên đã có ảnh */
   napTruoc(...atlas: string[]): void {
     atlas.forEach((a) => this.lay(a));
     // Ảnh của đảo sa mạc (nhỏ) nạp luôn để chọn map nào cũng có ngay
-    [SA_TRANG_TRI, NUI_DAT, NUI_VACH, NUI_DA].forEach((a) => this.lay(a));
+    [SA_TRANG_TRI, NUI_DAT, NUI_VACH, NUI_DA, THAN_ANH].forEach((a) => this.lay(a));
   }
 
   /** Nhuộm sẵn atlas theo các bộ lọc ngay khi ảnh nạp xong, để lần đầu cần dùng không bị khựng */
@@ -842,6 +846,7 @@ export class VeCanvas {
       this.veNen(ctx, c);
       this.veTuong(ctx, c);
     }
+    if (c.thayThan) this.veThan(ctx, c);
 
     HN.moc('ve.nenVuon');
     for (const v of c.vetView) {
@@ -971,8 +976,9 @@ export class VeCanvas {
         else this.veBanh(ctx, c, o.tc);
         ctx.globalAlpha = 1;
       } else if (o.loai === 'cong') {
-        ctx.globalAlpha = c.doRo(c.cong.x, c.cong.y);
-        this.veCong(ctx, c);
+        const cg = o.than ? THAN_CONG : c.cong;
+        ctx.globalAlpha = c.doRo(cg.x, cg.y);
+        this.veCong(ctx, c, cg);
         ctx.globalAlpha = 1;
       }
       else if (o.loai === 'mb') this.veMayBay(ctx, c, c.mbView, c.SP_MB, true);
@@ -1633,9 +1639,40 @@ export class VeCanvas {
     }
   }
 
+  /** Thần điện: vách đá rơi xuống vực (đường viền dời xuống, như đảo) rồi ảnh nền pixel art phủ khung THAN.
+   *  Chỉ khi khung (kể cả vách) chạm khung nhìn; ảnh nhỏ (720×480) vẽ một lần, canvas tự cắt phần ngoài màn hình */
+  private veThan(ctx: CanvasRenderingContext2D, c: Game): void {
+    const cam = c.gocCamera();
+    const x0 = -cam.x / cam.k, x1 = (c.W - cam.x) / cam.k, y0 = -cam.y / cam.k, y1 = (c.H - cam.y) / cam.k;
+    if (THAN.x1 < x0 || THAN.x0 > x1 || THAN.y1 + SA_VACH_SAU < y0 || THAN.y0 > y1) return;
+    const img = this.lay(THAN_ANH);
+    if (!this.thanVien) {
+      const p = new Path2D();
+      THAN_DA_GIAC.forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y)));
+      p.closePath();
+      this.thanVien = p;
+    }
+    if (!this.mauNui) this.taoMauNui(ctx);
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.translate(0, SA_VACH_SAU);
+    ctx.fillStyle = '#1e0f16';
+    ctx.fill(this.thanVien);
+    ctx.translate(0, SA_VACH_CAO - SA_VACH_SAU);
+    ctx.fillStyle = this.mauNui?.vach ?? '#4a2a30';
+    ctx.fill(this.thanVien);
+    ctx.translate(0, -SA_VACH_CAO);
+    if (img) ctx.drawImage(img, THAN.x0, THAN.y0, THAN.w, THAN.h);
+    else {
+      ctx.fillStyle = '#d8d8d8';
+      ctx.fill(this.thanVien);
+    }
+    ctx.restore();
+  }
+
   // Cổng dịch chuyển giữa đảo Cell 10 con: 4 khung xoáy lặp, quầng tím nhấp nháy dưới chân (gradient, không shadowBlur)
-  private veCong(ctx: CanvasRenderingContext2D, c: Game): void {
-    const { x, y } = c.cong;
+  private veCong(ctx: CanvasRenderingContext2D, c: Game, cg: { x: number; y: number }): void {
+    const { x, y } = cg;
     ctx.save();
     ctx.translate(x, y);
     ctx.save();
@@ -1971,7 +2008,8 @@ export class VeCanvas {
     let ten: string;
     let mo: boolean;
     let so: number | null = null;
-    if (c.trenNui) { ten = GY_TEN; mo = c.ginyu.chet && !c.ginyu.choHoi; }
+    if (c.trenThan) { ten = 'Frieza'; mo = true; }
+    else if (c.trenNui) { ten = GY_TEN; mo = c.ginyu.chet && !c.ginyu.choHoi; }
     else if (c.trenDao) { ten = CELL_TEN[capCuaDao(c.daoHienTai)] ?? 'Cell'; so = c.soCellDao; mo = so <= 0; }
     else { ten = 'Vua gà'; mo = !tg; }
     ctx.save();
@@ -2005,7 +2043,9 @@ export class VeCanvas {
     ctx.clip();
     if (c.trenDao) {
       // Đang ở đảo: avatar là Cell của đảo đó, đứng nhún nhảy; núi đá: avatar bóng ma Goku xoay người (mờ khi đã bị hạ)
-      if (c.trenNui) {
+      if (c.trenThan) {
+        // Thần điện: chưa có sprite Frieza, avatar để trống
+      } else if (c.trenNui) {
         ctx.globalAlpha = c.ginyu.chet && !c.ginyu.choHoi ? 0.25 : 0.9;
         ctx.translate(0, 98);
         ctx.scale(0.5, 0.5);
