@@ -1510,6 +1510,7 @@ export class Game {
     this.fzTruy = d.truyVuon?.fz ?? false;
     this.gyTruy = d.truyVuon?.gy ?? false;
     this.trieuHoi = d.truyVuon?.th ?? false;
+    if (this.trieuHoi) thanVo.fill(true);
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const i of d.thanVo ?? []) if (i >= 0 && i < thanVo.length) thanVo[i] = true;
     this.frieza = taoFrieza();
@@ -2789,7 +2790,7 @@ export class Game {
     // Cổng luôn hiện (không bị sương mù), chỉ lọc theo khung nhìn / khối đất
     this.congView = trong(this.cong.x, this.cong.y - 150 * CONG_TO, 260 * CONG_TO);
     if (this.congView) xep.push({ loai: 'cong', y: this.cong.y });
-    this.congThanView = trong(THAN_CONG.x, THAN_CONG.y - 150 * CONG_TO, 260 * CONG_TO);
+    this.congThanView = !this.trieuHoi && trong(THAN_CONG.x, THAN_CONG.y - 150 * CONG_TO, 260 * CONG_TO);
     if (this.congThanView) xep.push({ loai: 'cong', y: THAN_CONG.y, than: true });
     this.chuongTiecView = this.chuongTiec.filter((q) => {
       const dai = hyp(q.x1 - q.x0, q.y1 - q.y0);
@@ -5471,6 +5472,12 @@ export class Game {
     const pt = this.phiThuyen;
     if (pt.ngoi.length) { pt.ngoi = []; pt.pha = 'dau'; pt.t = 0; pt.z = 0; pt.mo = 0; pt.noi = 'vuon'; pt.x = pt.vuon.x; pt.y = pt.vuon.y; pt.cho = []; }
     for (const q of this.cauTron) if (q.pha === 'trong' || q.pha === 'vo') { q.pha = 'moc'; q.t = 0; }
+    // Thần điện trơ trọi: mọi cây cối / vật dụng (điện thờ, chòi, cọ…) nổ tung, chỉ còn nền gạch (mất luôn vật cản); cổng cũng biến mất
+    THAN_VAT_TG.forEach((v, k) => {
+      if (thanVo[k]) return;
+      thanVo[k] = true;
+      this.vet.push({ id: this.id++, x: (v.x0 + v.x1) / 2, y: (v.y0 + v.y1) / 2, t: 0, loai: 'chay', co: 1.8 });
+    });
     const ds = this.nguoi.map((n, p) => ({ n, p })).filter(({ n }) => !n.vang);
     ds.forEach(({ n }, i) => {
       n.x = THAN_CONG.x + (ds.length > 1 ? (i === 0 ? -170 : 170) : 0);
