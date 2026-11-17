@@ -3792,7 +3792,7 @@ export class Game {
     this.gyNv = nv;
     this.vetGa({ id: this.id++, x: n.x, y: n.y - 80, t: 0, loai: 'no' });
     this.vetGa({ id: this.id++, x: n.x, y: n.y, t: 0, loai: 'bui' });
-    this.chuGa({ id: this.id++, x: n.x, y: n.y - 330, text: `${n.ki === 0 ? 'Bư' : n.ten} thật? ${n.ki === 0 ? 'bư' : n.ten} giả?`, mau: '#c39bff', t: 0 });
+    this.chuGa({ id: this.id++, x: n.x, y: n.y - 330, text: n.ki === 2 ? 'Vegeta thật? Vegeta giả?' : 'Bư thật? bư giả?', mau: '#c39bff', t: 0 });
     this.rungMan(0.25, 9);
   }
 
