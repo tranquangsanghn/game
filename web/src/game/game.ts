@@ -269,7 +269,7 @@ export interface TrangThaiLuu {
   /** Frieza: máu (dạng thường) và đã bị hạ chưa (thiếu = Frieza mới) */
   frieza?: { hp: number; chet: boolean };
   /** Đã có người ra khỏi vườn gà / ở lì vườn gà 5 phút (on: máy bay thôi hồi máu) / Cell đỏ, Frieza, bóng ma Goku đang truy sát (thiếu = ván lưu cũ: coi như đã ra vườn) */
-  truyVuon?: { ra: boolean; on: boolean; cell?: boolean; fz?: boolean; gy?: boolean };
+  truyVuon?: { ra: boolean; on: boolean; cell?: boolean; fz?: boolean; gy?: boolean; th?: boolean };
   nguoi: (Omit<NguoiChoi, 'nv' | 'nham' | 'ngam' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
 }
 
@@ -284,6 +284,12 @@ const THANG_CHO = 3;
 const FZ_TRUY_T = 600;
 /** Chơi tới chừng này giây mà bóng ma Goku chưa bị hạ hẳn thì nó rời núi đá bay đi truy sát (tốc độ lao GY_LAO_TOC, kiemTraGyTruy()) */
 const GY_TRUY_T = 900;
+/** Chơi tới chừng này giây mà còn người chơi sống: người chơi + Cell đỏ + Frieza + bóng ma Goku (còn sống) bị triệu hồi về thần điện,
+ *  không ai thoát ra được nữa (kiemTraTrieuHoi(), giamThan()); báo trước TRIEU_HOI_BAO giây */
+const TRIEU_HOI_T = 1200;
+const TRIEU_HOI_BAO = 60;
+/** Bị triệu hồi rồi mà sống tới chừng này giây (Mabu / Zinbu chưa gục cả hai) thì thắng (kiemTraThang()) */
+const SONG_SOT_T = 1500;
 /** Bóng ma đang truy sát: mục tiêu xa hơn chừng này thì bay thẳng tới (tốc độ GY_LAO_TOC, qua vực / tường vườn), gần thì khiêu khích → lao như trên núi */
 const GY_TRUY_GAN = 700;
 /** Tốc độ Frieza bay đi truy sát (px/s): 1/2 máy bay; gần mục tiêu trong FZ_BAY_GAN thì chạy đánh như thường */
@@ -921,6 +927,19 @@ function giuTrongMap(o: { x: number; y: number }, le: Le, quaNuoc = false, vung?
   return r;
 }
 
+/** Kéo vật về trong thần điện (đã triệu hồi, không ai thoát được): kẹp theo khung, đang không bay thì đẩy lên nền đá và ra khỏi vật cản */
+function giamThan(o: { x: number; y: number }, bay: boolean): void {
+  if (trongThan(o.x, o.y, -120) && (bay || doSau(o.x, o.y) > 0)) return;
+  o.x = kep(o.x, THAN.x0 + 120, THAN.x1 - 120);
+  o.y = kep(o.y, THAN.y0 + 120, THAN.y1 - 120);
+  if (bay) return;
+  if (doSau(o.x, o.y) <= 0) {
+    // Lưới đi lại có thể chỉ ra đảo gần nhất ngoài khung: kéo dần về cổng thần điện cho tới khi đứng trên nền đá
+    for (let k = 0; k < 20 && doSau(o.x, o.y) <= 40; k++) { o.x += (THAN_CONG.x - o.x) * 0.2; o.y += (THAN_CONG.y - o.y) * 0.2; }
+  }
+  raKhoiChanThan(o);
+}
+
 // Vùng của nhân vật theo vị trí hiện tại: trong vườn gà hay ngoài đảo (dùng để không cho đi bộ / bay vượt tường vườn)
 const vungCua = (o: { x: number; y: number }): 'vuon' | 'dao' | undefined => (banDoHt !== 'sa' ? undefined : trongVuon(o.x, o.y) ? 'vuon' : 'dao');
 
@@ -1102,6 +1121,10 @@ export class Game {
   fzTruy = false;
   /** Bóng ma Goku đã rời núi đá đi truy sát (sau GY_TRUY_T giây mà chưa bị hạ hẳn), cả ván */
   gyTruy = false;
+  /** Phút 20: người chơi và các trùm còn sống bị triệu hồi về thần điện, không ai thoát ra được nữa (cả ván) */
+  trieuHoi = false;
+  /** Thắng vì trụ vững trên thần điện tới SONG_SOT_T (không phải hạ đủ 4 trùm), cho màn kết thúc */
+  thangSongSot = false;
   ngocBay: { x: number; y: number; t: number; slot: number; sao: number }[] = [];
   readonly NGOC_BAY_T = 1.1;
   // Gà mẹ đang đánh (phụ gần nhân vật nhất; chưa có thì gà mẹ gốc): chiêu hiện trên thanh đen phía trên
@@ -1361,7 +1384,7 @@ export class Game {
     this.mayBay = taoMayBay(kep(gx + vao * 700, TUONG + MB_LE, MAP - TUONG - MB_LE), kep(gy + xuong * 380, TUONG + MB_LE, MAP - TUONG - MB_LE));
     this.mbCatVuon = false;
     this.mbRaVuon = this.ptRaVuon = false;
-    this.daRaVuon = this.cellTruyVuon = this.cellTruyT = this.fzTruy = this.gyTruy = false;
+    this.daRaVuon = this.cellTruyVuon = this.cellTruyT = this.fzTruy = this.gyTruy = this.trieuHoi = this.thangSongSot = false;
     this.cellTruyBao = false;
     this.phiThuyen = taoPhiThuyen(this.mayBay);
     this.ga = [];
@@ -1435,7 +1458,7 @@ export class Game {
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       thanVo: thanVo.flatMap((v, i) => (v ? [i] : [])),
       frieza: { hp: Math.min(FZ_HP, Math.max(1, this.frieza.hp / fzGap(this.frieza))), chet: this.frieza.chet },
-      truyVuon: { ra: this.daRaVuon, on: this.cellTruyVuon, cell: this.cellTruyT, fz: this.fzTruy, gy: this.gyTruy },
+      truyVuon: { ra: this.daRaVuon, on: this.cellTruyVuon, cell: this.cellTruyT, fz: this.fzTruy, gy: this.gyTruy, th: this.trieuHoi },
       nguoi: this.nguoi.map((n, p) => {
         const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
         void nham; void ngam; void cuaCan; void dich;
@@ -1486,6 +1509,7 @@ export class Game {
     this.cellTruyT = d.truyVuon?.cell ?? this.cellTruyVuon;
     this.fzTruy = d.truyVuon?.fz ?? false;
     this.gyTruy = d.truyVuon?.gy ?? false;
+    this.trieuHoi = d.truyVuon?.th ?? false;
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const i of d.thanVo ?? []) if (i >= 0 && i < thanVo.length) thanVo[i] = true;
     this.frieza = taoFrieza();
@@ -1714,6 +1738,7 @@ export class Game {
     this.kiemTraCellTruy();
     this.kiemTraFzTruy();
     this.kiemTraGyTruy();
+    this.kiemTraTrieuHoi();
     this.kiemTraThang(dt);
     HN.moc('cn.vuon');
     this.capNhatTrungGa(dt);
@@ -1736,6 +1761,7 @@ export class Game {
     // Nhân vật đi bộ / bay không đổi vùng: đang trong vườn gà thì ở lại trong vườn, đang ở đảo thì ở lại đảo (chỉ máy bay mới ra / vào vườn)
     this.nguoi.forEach((n, p) => { if (!this.trongMb(p)) giuTrongMap(n, leNhanVat(n.nv.heSoTo * (n.nv.sp.toBanDo ?? 1)), !!n.bay, vungCua(truoc[p])); });
     this.chanNuiMotNguoi(truoc);
+    if (this.trieuHoi) this.nguoi.forEach((n, p) => { if (!n.vang && !this.trongMb(p)) giamThan(n, !!n.bay); });
     HN.moc('cn.nhanVat');
     this.capNhatMb(dt);
     this.capNhatPt(dt);
@@ -1754,6 +1780,7 @@ export class Game {
     HN.moc('cn.cell');
     this.capNhatGinyu(dtE);
     this.capNhatFz(dtE);
+    this.giamTrumThan();
     HN.moc('cn.ginyu');
     this.capNhatTiec(dtE);
     HN.moc('cn.tiec');
@@ -5302,7 +5329,7 @@ export class Game {
    * Trả về true khi đang hồi (capNhatCell() bỏ qua phần đánh).
    */
   private cellHoiPhuc(c: Cell, dt: number): boolean {
-    if (c.cap !== SO_CAP - 1 || c.hoi === 'xong') return false;
+    if (c.cap !== SO_CAP - 1 || c.hoi === 'xong' || this.trieuHoi) return false;
     const max = CELL_HP[c.cap]!;
     const k = cellK(c.cap);
     if (c.hoi === undefined) {
@@ -5429,6 +5456,69 @@ export class Game {
     this.rungMan(0.5, 8);
   }
 
+  /** Phút 20 (TRIEU_HOI_T) mà còn người chơi sống: người chơi (cả người đang gục), Cell đỏ, Frieza, bóng ma Goku (chưa bị hạ hẳn) bị triệu hồi về thần điện.
+   *  Từ đó không ai ra khỏi thần điện được (giamThan(), cổng / máy bay / phi thuyền khoá), đánh tới khi một bên thua; trụ tới SONG_SOT_T thì thắng */
+  private kiemTraTrieuHoi(): void {
+    if (this.trieuHoi || this.tGame < TRIEU_HOI_T || banDoHt !== 'sa' || this.tThang >= 0) return;
+    if (!this.nguoi.some((m) => !m.vang && !m.het)) return;
+    this.trieuHoi = true;
+    this.cellTruyT = true;
+    if (!this.frieza.chet) this.fzTruy = true;
+    if (!(this.ginyu.chet && !this.ginyu.choHoi)) this.gyTruy = true;
+    // Ra khỏi máy bay / phi thuyền / quả cầu trốn
+    const m = this.mayBay;
+    if (m.ngoi.length) { m.ngoi = []; m.pha = 'dau'; m.t = 0; m.z = 0; m.x = m.goc.x; m.y = m.goc.y; }
+    const pt = this.phiThuyen;
+    if (pt.ngoi.length) { pt.ngoi = []; pt.pha = 'dau'; pt.t = 0; pt.z = 0; pt.mo = 0; pt.noi = 'vuon'; pt.x = pt.vuon.x; pt.y = pt.vuon.y; pt.cho = []; }
+    for (const q of this.cauTron) if (q.pha === 'trong' || q.pha === 'vo') { q.pha = 'moc'; q.t = 0; }
+    const ds = this.nguoi.map((n, p) => ({ n, p })).filter(({ n }) => !n.vang);
+    ds.forEach(({ n }, i) => {
+      n.x = THAN_CONG.x + (ds.length > 1 ? (i === 0 ? -170 : 170) : 0);
+      n.y = THAN_CONG.y + CONG_RA_Y;
+      n.dich = null;
+      n.dangDi = false;
+      n.bay = null;
+      giamThan(n, false);
+      this.vet.push({ id: this.id++, x: n.x, y: n.y - 120, t: 0, loai: 'chay', co: 1.4 });
+    });
+    // Trùm còn sống: Cell đỏ giữa sân trên, Frieza trước điện thờ, bóng ma Goku bên cạnh
+    const dat = (o: { x: number; y: number }, kx: number, ky: number) => {
+      o.x = THAN.x0 + THAN.w * kx;
+      o.y = THAN.y0 + THAN.h * ky;
+      giamThan(o, false);
+      this.vet.push({ id: this.id++, x: o.x, y: o.y - 150, t: 0, loai: 'chay', co: 2 });
+    };
+    for (const c of this.cell) if (c.cap === SO_CAP - 1 && !c.chet) { dat(c, 0.25, 0.55); c.hoi = 'xong'; c.cay = undefined; }
+    if (!this.frieza.chet) dat(this.frieza, 0.5, 0.5);
+    if (!(this.ginyu.chet && !this.ginyu.choHoi)) dat(this.ginyu, 0.75, 0.55);
+    this.congCho = ds.map(({ p }) => p);
+    this.camNgay = true;
+    this.am.phat('chuong');
+    this.rungMan(0.8, 14);
+    const n = ds.find(({ n }) => !n.het)?.n ?? ds[0]?.n;
+    if (n) {
+      this.chu.push({ id: this.id++, x: n.x, y: n.y - 420, text: '🏯 PHÚT 20: TẤT CẢ BỊ TRIỆU HỒI VỀ THẦN ĐIỆN!', mau: '#d9b3ff', t: 0 });
+      this.chu.push({ id: this.id++, x: n.x, y: n.y - 350, text: '⚔ KHÔNG AI THOÁT ĐƯỢC: TRỤ TỚI PHÚT 25 LÀ THẮNG!', mau: '#ffd23f', t: 0 });
+    }
+  }
+
+  /** Đã triệu hồi: Cell đỏ, Frieza, bóng ma Goku không ra khỏi thần điện (dịch chuyển / bay ra thì bị kéo lại) */
+  private giamTrumThan(): void {
+    if (!this.trieuHoi) return;
+    for (const c of this.cell) if (c.cap === SO_CAP - 1 && !c.chet) giamThan(c, false);
+    if (!this.frieza.chet) giamThan(this.frieza, false);
+    if (!this.ginyu.chet || this.ginyu.choHoi) giamThan(this.ginyu, true);
+  }
+
+  /** Đếm ngược trên thanh đen: phút cuối trước khi triệu hồi, và thời gian còn phải trụ trên thần điện */
+  demNguoc(): { chu: string; mau: string } | null {
+    if (banDoHt !== 'sa' || this.tThang >= 0) return null;
+    const mmss = (s: number) => { const g = Math.max(0, Math.ceil(s)); return `${Math.floor(g / 60)}:${String(g % 60).padStart(2, '0')}`; };
+    if (this.trieuHoi) return { chu: `🏯 Trụ vững: ${mmss(SONG_SOT_T - this.tGame)}`, mau: '#ffd23f' };
+    if (this.tGame >= TRIEU_HOI_T - TRIEU_HOI_BAO) return { chu: `⚠ Triệu hồi về thần điện: ${mmss(TRIEU_HOI_T - this.tGame)}`, mau: '#d9b3ff' };
+    return null;
+  }
+
   /** Bốn trùm đã bị hạ hẳn chưa: Cell đỏ, Frieza, bóng ma Goku (hết lượt hồi sinh), vua gà (đã xuất hiện và không còn sống) */
   private trumDaHa(): { cell: boolean; fz: boolean; gy: boolean; vua: boolean } {
     const g = this.ginyu;
@@ -5445,10 +5535,12 @@ export class Game {
     if (banDoHt !== 'sa') return;
     if (this.tThang < 0) {
       const h = this.trumDaHa();
-      if (!(h.cell && h.fz && h.gy && h.vua)) return;
+      const song = this.trieuHoi && this.tGame >= SONG_SOT_T && this.nguoi.some((m) => !m.vang && !m.het);
+      if (!(h.cell && h.fz && h.gy && h.vua) && !song) return;
       this.tThang = 0;
+      this.thangSongSot = song && !(h.cell && h.fz && h.gy && h.vua);
       const n = this.nguoi.find((m) => !m.vang && !m.het) ?? this.nguoi.find((m) => !m.vang);
-      if (n) this.chu.push({ id: this.id++, x: n.x, y: n.y - 360, text: '🏆 ĐÃ HẠ ĐỦ 4 TRÙM: CHIẾN THẮNG!', mau: '#ffd23f', t: 0 });
+      if (n) this.chu.push({ id: this.id++, x: n.x, y: n.y - 360, text: this.thangSongSot ? '🏆 TRỤ VỮNG TỚI PHÚT 25: CHIẾN THẮNG!' : '🏆 ĐÃ HẠ ĐỦ 4 TRÙM: CHIẾN THẮNG!', mau: '#ffd23f', t: 0 });
       this.nguoi.forEach((_, q) => this.chuongLenTroi(q));
       return;
     }
@@ -5912,7 +6004,7 @@ export class Game {
     const co = this.nguoi.filter((n) => !n.vang).length;
     if (m.pha === 'dau') {
       this.nguoi.forEach((n, p) => {
-        if (n.vang || this.hopThe || m.ngoi.includes(p) || this.trongPt(p) || n.het || n.nv.laMay || n.bay || n.nv.khoa || this.trongCau(p) || this.dangCuu(p)) return;
+        if (this.trieuHoi || n.vang || this.hopThe || m.ngoi.includes(p) || this.trongPt(p) || n.het || n.nv.laMay || n.bay || n.nv.khoa || this.trongCau(p) || this.dangCuu(p)) return;
         if (hyp(n.x - m.x, (n.y - m.y) / EP_GA) >= MB_BK) return;
         m.ngoi.push(p);
         n.dich = null;
@@ -6190,7 +6282,7 @@ export class Game {
     m.t += dt;
     const dung = this.nguoi.filter((n) => !n.vang);
     const hai = dung.length >= 2;
-    const lenDuoc = (n: NguoiChoi, p: number) => !n.vang && !this.hopThe && !n.het && !n.nv.laMay && !n.bay && !n.nv.khoa && !this.trongMb(p) && !this.trongCau(p) && !this.dangCuu(p);
+    const lenDuoc = (n: NguoiChoi, p: number) => !this.trieuHoi && !n.vang && !this.hopThe && !n.het && !n.nv.laMay && !n.bay && !n.nv.khoa && !this.trongMb(p) && !this.trongCau(p) && !this.dangCuu(p);
     const cach = (n: NguoiChoi) => hyp(n.x - m.x, (n.y - m.y) / EP_GA);
     m.cho = m.cho.filter((p) => !this.nguoi[p] || cach(this.nguoi[p]) < PT_BK * 1.5);
     if (m.pha === 'dau') {
@@ -6269,7 +6361,7 @@ export class Game {
    *  bước vào CONG_BK thì mọi người chơi đang đi bộ cùng được đưa sang cổng bên kia (giữ dây buộc), ra đứng phía trước cổng.
    *  Đồng đội đang gục / trốn trong cầu / đang bay thì cổng không mở. Người vừa ra phải đi khỏi CONG_RA mới vào lại được. */
   private capNhatCong(dt: number): void {
-    if (banDoHt !== 'sa') return;
+    if (banDoHt !== 'sa' || this.trieuHoi) return;
     this.congBao = Math.max(0, this.congBao - dt);
     const cap = [
       { a: this.cong, b: THAN_CONG, chu: '🌀 DỊCH CHUYỂN TỚI THẦN ĐIỆN!' },

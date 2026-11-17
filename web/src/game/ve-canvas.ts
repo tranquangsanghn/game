@@ -298,6 +298,7 @@ export class VeCanvas {
     this.veThanhTuong(ctx, c);
     HN.moc('ve.thanhTren');
     this.veNgocTrenBang(ctx, c);
+    this.veDemNguoc(ctx, c);
     HN.moc('ve.ngoc');
     if (c.man === 'play' || c.man === 'pause') this.veHud(ctx, c);
     HN.moc('ve.hud');
@@ -2207,6 +2208,21 @@ export class VeCanvas {
       ctx.lineCap = 'butt';
     }
     ctx.lineJoin = 'miter';
+  }
+
+  // ─── Thanh đen phía trên, bên phải: đếm ngược triệu hồi về thần điện (phút 20) / thời gian còn phải trụ (tới phút 25) ───
+
+  private veDemNguoc(ctx: CanvasRenderingContext2D, c: Game): void {
+    const d = c.demNguoc();
+    if (!d) return;
+    ctx.save();
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.font = `800 24px ${FONT}`;
+    ctx.fillStyle = d.mau;
+    ctx.globalAlpha = 0.75 + 0.25 * Math.sin(c.t * 6);
+    ctx.fillText(d.chu, c.W - 110, -c.BAR / 2);
+    ctx.restore();
   }
 
   // ─── Thanh đen phía trên, bên trái: ngọc rồng đã nhặt (viên mới nhặt bay từ chỗ nhặt lên đây) ───

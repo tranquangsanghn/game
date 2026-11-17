@@ -298,7 +298,7 @@ export class GiaoDien {
       ? 'Hai nhân vật bằng điểm nhau 🤝'
       : `👑 ${esc(g.nguoi[g.nguoiThang].ten)} ghi nhiều điểm nhất`;
     const kl = g.nguoiThangTran
-      ? `🏆 <b>${g.nguoi.filter((n) => !n.vang).map((n) => esc(n.ten)).join(' và ')} thắng!</b> Đã hạ đủ 4 trùm: Cell đỏ, Frieza, bóng ma Goku và vua gà.${mvp ? '<br>' + mvp : ''}`
+      ? `🏆 <b>${g.nguoi.filter((n) => !n.vang).map((n) => esc(n.ten)).join(' và ')} thắng!</b> ${g.thangSongSot ? 'Trụ vững trên thần điện tới phút 25 trước Cell đỏ, Frieza và bóng ma Goku.' : 'Đã hạ đủ 4 trùm: Cell đỏ, Frieza, bóng ma Goku và vua gà.'}${mvp ? '<br>' + mvp : ''}`
       : `🐔 <b>Quái vật thắng!</b> ${g.soNguoi < 2 ? 'Nhân vật đã gục.' : 'Cả hai nhân vật đã gục.'}${mvp ? '<br>' + mvp : ''}`;
     const top = this.bang && this.bang.length
       ? `<table class="xep-hang"><caption class="phu">Bảng điểm cao nhất</caption>${this.bang.map((d, i) => `<tr><td>${i + 1}.</td><td>${esc(d.nguoiChoi)}</td><td><b>${d.diem}</b></td><td class="phu">${phut(d.thoiGian)}</td></tr>`).join('')}</table>`
