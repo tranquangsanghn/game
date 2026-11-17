@@ -4431,6 +4431,13 @@ export class Game {
     return c.dao ?? (c.dao = daoCua(c.hx, c.hy));
   }
 
+  /** Cell còn sống cuối cùng của đảo nó (để vẽ thanh máu, `veMauCell()`) */
+  cellCuoi(c: Cell): boolean {
+    if (c.chet) return false;
+    const dao = this.daoCell(c);
+    return !this.cell.some((k) => k !== c && !k.chet && this.daoCell(k) === dao);
+  }
+
   /** Nhân vật p là mục tiêu hợp lệ của đội Cell đảo `dao`: đang chơi, không ẩn / gục / mây, đứng trên đảo đó (không ở vườn gà) */
   private cellThay(p: number, dao: number): boolean {
     const n = this.nguoi[p];
@@ -4550,6 +4557,7 @@ export class Game {
     if (vai && c.tiec) { c.tiec = false; c.nap = undefined; c.choDich ??= 0; c.choChuong ??= this.t + 0.5 + Math.random() * 2; }
     if (c.muc !== muc && c.nap !== undefined && c.chien && (c.muc === MUC_MB || muc === MUC_MB)) { c.nap = undefined; c.chien = false; }
     c.vai = vai;
+    if (vai === 'an') c.tungAn = true;
     c.muc = muc;
   }
 

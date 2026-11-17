@@ -148,6 +148,8 @@ export interface Cell {
   loaiChuong?: number;
   /** Chiến đấu theo đội: 'tach' = con tách đàn (đuổi một người), 'dan' = cả đàn (đuổi người còn lại), 'an' = con đi bắn cây ăn đậu thần (trốn, không đánh); không có = dự tiệc / về tiệc */
   vai?: 'tach' | 'dan' | 'an';
+  /** đã từng là con đi ăn đậu thần (giữ cả khi đổi vai, vd. thành con tách đàn lúc chỉ còn mình nó trên đảo; lưu ván theo `cell`) */
+  tungAn?: boolean;
   /** con 'an': chỉ số cây (trong `trangTri`) đang nhắm bắn */
   cay?: number;
   /** nhân vật đang đuổi (chỉ số người chơi); MUC_MB = bắn máy bay có Mabu / Zinbu ngồi */
