@@ -5,10 +5,10 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
-import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
+import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
-import { taoFrieza, capNhatFrieza, fzDiToi, fzVeDuong, fzGap, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_VANG_CHUONG_HOI, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
+import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_VANG_CHUONG_HOI, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -539,6 +539,10 @@ const TAM_DA_XA = 500;
 const TAM_CHIEU = 1200;
 /** Super Bư: chưởng (Chiêu đặc biệt) tầm gấp SB_TAM_GAP, hồi SB_CHUONG_HOI giây */
 const SB_TAM_GAP = 2;
+/** Cỡ ô lưới tìm đường của Frieza trên thần điện */
+const FZ_O = 60;
+/** Giá đi qua một ô bị chặn (so với 1 của ô đi được) */
+const FZ_O_CHAN = 30;
 const SB_CHUONG_HOI = 0.5;
 // Tầm nhìn (sương mù kiểu Dota) = 1,5 × tầm xa nhất của đấm xa / đá xa. Gà ngoài tầm nhìn thì ẩn; nhân vật và chưởng đang bay đều mang theo tầm nhìn.
 const TAM_DANH_XA = Math.max(TAM_DAM_XA, TAM_DA_XA);
@@ -2709,7 +2713,7 @@ export class Game {
     if (this.gyView) xep.push({ loai: 'gy', y: gy.y });
     // Frieza: khung nhìn trước, sương mù sau
     const fz = this.frieza;
-    this.fzView = (!fz.chet || fz.tChet < FZ_CHET_T) && (fz.bien >= 0 || fz.vang > 0 ? trong(fz.x, fz.y - 230, 330) : trong(fz.x, fz.y - 120, 220)) && this.doRo(fz.x, fz.y) > 0;
+    this.fzView = (!fz.chet || fz.tChet < FZ_CHET_T) && (fz.bien >= 0 || fz.vang > 0 ? trong(fz.x, fz.y - 230, 330) : trong(fz.x, fz.y - 120, 220)) && (this.doRo(fz.x, fz.y) > 0 || this.fzVangThay());
     if (this.fzView) xep.push({ loai: 'fz', y: fz.y });
     this.banhView = this.tiec.filter((tc) => !tc.vo && trong(tc.x, tc.y - 250 * tc.to, 400 * tc.to) && this.doRo(tc.x, tc.y) > 0);
     for (const tc of this.banhView) xep.push({ loai: 'banh', y: tc.y, tc });
@@ -4166,7 +4170,137 @@ export class Game {
       return;
     }
     f.nghi = 0;
-    fzDiToi(f, muc.x, muc.y, FZ_TOC_DANH * g, dt);
+    const w = this.fzDuongToi(muc.x, muc.y);
+    this.fzDuoi(f, w.x, w.y, FZ_TOC_DANH * g, dt);
+    if (Math.abs(dx) > 5) f.lat = dx < 0;
+  }
+
+  // Tìm đường cho Frieza trên lưới thần điện (ô FZ_O): ô đi được = trên nền đá và cách vật cản còn nguyên; giá đường (Dijkstra) tới ô của mục tiêu,
+  // ô bị chặn vẫn tính nhưng đắt FZ_O_CHAN lần (mục tiêu đứng trong góc kín thì Frieza vẫn tới sát chỗ gần nhất). Tính lại khi mục tiêu sang ô khác
+  // (tối đa 2 lần / giây) hoặc khi có vật bị phá. Đuổi khắp thần điện nên phải vòng qua điện thờ / hàng cọ.
+  private fzLuoi: Uint8Array | null = null;
+  private fzLuoiKhoa = '';
+  private fzKc: Int32Array | null = null;
+  private fzKcO = -1;
+  private fzKcT = -1;
+
+  private fzO(x: number, y: number): number {
+    const cot = Math.ceil(THAN.w / FZ_O), hang = Math.ceil(THAN.h / FZ_O);
+    const c = Math.floor((x - THAN.x0) / FZ_O), r = Math.floor((y - THAN.y0) / FZ_O);
+    return c < 0 || r < 0 || c >= cot || r >= hang ? -1 : r * cot + c;
+  }
+
+  /** Điểm kế tiếp Frieza nên đi tới để tới (tx, ty): tâm ô lân cận có giá đường thấp nhất; đã sát mục tiêu thì đi thẳng */
+  private fzDuongToi(tx: number, ty: number): { x: number; y: number } {
+    const f = this.frieza;
+    const cot = Math.ceil(THAN.w / FZ_O), hang = Math.ceil(THAN.h / FZ_O), so = cot * hang;
+    const khoa = thanVo.map((v) => (v ? 1 : 0)).join('');
+    if (!this.fzLuoi || khoa !== this.fzLuoiKhoa) {
+      const l = new Uint8Array(so);
+      for (let i = 0; i < so; i++) {
+        const v = { x: THAN.x0 + (i % cot + 0.5) * FZ_O, y: THAN.y0 + (Math.floor(i / cot) + 0.5) * FZ_O };
+        if (doSau(v.x, v.y) < 40) continue;
+        const c = raKhoiChanThan(v, 40);
+        l[i] = c.cx || c.cy ? 0 : 1;
+      }
+      this.fzLuoi = l;
+      this.fzLuoiKhoa = khoa;
+      this.fzKcO = -1;
+    }
+    const l = this.fzLuoi;
+    const oM = this.fzO(tx, ty), oF = this.fzO(f.x, f.y);
+    if (oM < 0 || oF < 0) return { x: tx, y: ty };
+    if (!this.fzKc || (oM !== this.fzKcO && this.t - this.fzKcT >= 0.5)) {
+      const kc = (this.fzKc ??= new Int32Array(so));
+      kc.fill(0x3fffffff);
+      kc[oM] = 0;
+      // Hàng đợi ưu tiên (đống nhị phân) theo giá
+      const dong: number[] = [oM];
+      const nho = (i: number, j: number) => kc[dong[i]!]! < kc[dong[j]!]!;
+      while (dong.length) {
+        const o = dong[0]!, cuoi = dong.pop()!;
+        if (dong.length) {
+          dong[0] = cuoi;
+          for (let i = 0; ;) {
+            const a = 2 * i + 1, b = a + 1;
+            let m = i;
+            if (a < dong.length && nho(a, m)) m = a;
+            if (b < dong.length && nho(b, m)) m = b;
+            if (m === i) break;
+            [dong[i], dong[m]] = [dong[m]!, dong[i]!];
+            i = m;
+          }
+        }
+        const c = o % cot, r = (o - c) / cot;
+        for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const nc = c + dc, nr = r + dr;
+          if (nc < 0 || nr < 0 || nc >= cot || nr >= hang) continue;
+          const n = nr * cot + nc, g = kc[o]! + (l[n] ? 1 : FZ_O_CHAN);
+          if (g >= kc[n]!) continue;
+          kc[n] = g;
+          dong.push(n);
+          for (let i = dong.length - 1; i > 0;) {
+            const cha = (i - 1) >> 1;
+            if (!nho(i, cha)) break;
+            [dong[i], dong[cha]] = [dong[cha]!, dong[i]!];
+            i = cha;
+          }
+        }
+      }
+      this.fzKcO = oM;
+      this.fzKcT = this.t;
+    }
+    const kc = this.fzKc!;
+    if (kc[oF]! <= 1) return { x: tx, y: ty };
+    const c = oF % cot, r = (oF - c) / cot;
+    let tot = -1, kcTot = kc[oF]!;
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      if (!dc && !dr) continue;
+      const nc = c + dc, nr = r + dr;
+      if (nc < 0 || nr < 0 || nc >= cot || nr >= hang) continue;
+      // Đi chéo chỉ khi hai ô cạnh đều đi được (không cắt góc vật cản)
+      if (dc && dr && (!l[r * cot + nc] || !l[nr * cot + c])) continue;
+      const n = nr * cot + nc;
+      if (kc[n]! < kcTot) { kcTot = kc[n]!; tot = n; }
+    }
+    return tot < 0 ? { x: tx, y: ty } : { x: THAN.x0 + (tot % cot + 0.5) * FZ_O, y: THAN.y0 + (Math.floor(tot / cot) + 0.5) * FZ_O };
+  }
+
+  /** Bên đang đi vòng vật cản (1 / −1) và thời gian còn giữ bên đó (đuổi khắp thần điện thì hay gặp điện thờ / hàng cọ chắn đường) */
+  private fzNe = 1;
+  private fzNeT = 0;
+
+  /** Frieza đuổi tới (tx, ty) có đi vòng vật cản: thử hướng thẳng, bị chắn thì xoay lệch dần sang một bên (giữ bên đó một lúc cho qua hẳn góc) */
+  private fzDuoi(f: Frieza, tx: number, ty: number, toc: number, dt: number): void {
+    const dx = tx - f.x, dy = ty - f.y, d = hyp(dx, dy);
+    if (d < 1) return;
+    const b = Math.min(d, toc * dt), g0 = Math.atan2(dy, dx), s = this.fzNe;
+    this.fzNeT -= dt;
+    const thu = this.fzNeT > 0 ? [s * 0.8, s * 1.2, s * 1.6, 0, -s * 0.8, -s * 1.6] : [0, s * 0.5, -s * 0.5, s, -s, s * 1.5, -s * 1.5];
+    for (const a of thu) {
+      const v = { x: f.x + Math.cos(g0 + a) * b, y: f.y + Math.sin(g0 + a) * b };
+      const nx = v.x, ny = v.y;
+      raKhoiChanThan(v);
+      if (!trongThan(v.x, v.y) || hyp(v.x - nx, v.y - ny) > b * 0.5) continue;
+      f.x = v.x;
+      f.y = v.y;
+      if (a !== 0) { this.fzNe = Math.sign(a); this.fzNeT = 0.6; }
+      break;
+    }
+    if (Math.abs(dx) > 1) f.lat = dx < 0;
+  }
+
+  /** Golden Frieza phát sáng: trên camera, cùng khối đất và có nhân vật trong tầm chưởng vàng thì nhìn thấy (vẽ, vận chưởng) dù ngoài TAM_NHIN */
+  private fzVangThay(): boolean {
+    const f = this.frieza;
+    if (!(f.vang > 0) || !this.trenCam(f.x, f.y - 230, 330) || !this.thayKhoi(f.x, f.y)) return false;
+    const r = FZ_CHUONG_TAM * FZ_VANG_TAM_GAP + 100;
+    for (const n of this.nguoi) {
+      if (n.vang || n.het) continue;
+      const dx = n.x - f.x, dy = n.y - f.y;
+      if (dx * dx + dy * dy < r * r) return true;
+    }
+    return false;
   }
 
   /** Chưởng của Frieza tới nơi: ai (không ẩn / gục / mây) nằm trên chùm thì trúng (vẫn né / giảm 50%); không bắn máy bay */
@@ -4193,7 +4327,7 @@ export class Game {
     const max = fzHpMax(f);
     if (f.hp < max && f.bien < 0) f.hp = Math.min(max, f.hp + FZ_HOI_MAU * fzGap(f) * dt);
     const cao = f.bien >= 0 || f.vang > 0 ? 768 * FZ_VANG_TO * 0.4 : 120;
-    const thay = this.nvThay(f.x, f.y - cao, 300, 60);
+    const thay = this.nvThay(f.x, f.y - cao, 300, 60) || this.fzVangThay();
     // Nhận ra nhân vật ở bất kỳ đâu trên thần điện và đuổi đánh (chống câu giờ); chưởng / biến hình chỉ khi nhân vật nhìn thấy Frieza
     const muc = this.fzMuc();
     if (muc && !f.chien) {

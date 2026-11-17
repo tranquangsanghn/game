@@ -162,7 +162,7 @@ export function capNhatFrieza(f: Frieza, dt: number, thay = false, huongX?: numb
     if (huongX !== undefined && Math.abs(huongX - f.x) > 1) f.lat = huongX < f.x;
     return 'batDau';
   }
-  // Đang đánh nhau: Game tự lái (fzDiToi), ở đây chỉ chạy chiêu biến hình
+  // Đang đánh nhau: Game tự lái (`fzDuoi()`, đi vòng vật cản), ở đây chỉ chạy chiêu biến hình
   if (f.chien) return su;
   const toc = FZ_TOC * fzGap(f);
   // Vừa hết trận: đi thẳng về điểm f.i trên chuỗi rồi mới đi tuần tiếp
@@ -208,7 +208,7 @@ export function fzHpMax(f: Frieza): number {
 }
 
 /** Đi thẳng tới (x, y) tốc độ `toc` (Game kẹp lại trong thần điện / ra khỏi vật cản sau đó) */
-export function fzDiToi(f: Frieza, x: number, y: number, toc: number, dt: number): void {
+function fzDiToi(f: Frieza, x: number, y: number, toc: number, dt: number): void {
   const dx = x - f.x, dy = y - f.y, d = hyp(dx, dy);
   if (d < 1) return;
   const b = Math.min(d, toc * dt);
