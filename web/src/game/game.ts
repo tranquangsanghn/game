@@ -269,7 +269,7 @@ export interface TrangThaiLuu {
   /** Frieza: máu (dạng thường) và đã bị hạ chưa (thiếu = Frieza mới) */
   frieza?: { hp: number; chet: boolean };
   /** Đã có người ra khỏi vườn gà / Cell đỏ đã truy sát vì ở lì vườn gà quá CELL_TRUY_VUON_T (thiếu = ván lưu cũ: coi như đã ra vườn) */
-  truyVuon?: { ra: boolean; on: boolean; li?: boolean; fz?: boolean };
+  truyVuon?: { ra: boolean; on: boolean; li?: boolean; fz?: boolean; gy?: boolean };
   nguoi: (Omit<NguoiChoi, 'nv' | 'nham' | 'ngam' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
 }
 
@@ -279,6 +279,10 @@ const W_MAC_DINH = 1600;
 const CELL_TRUY_VUON_T = 300;
 /** Đã ở lì vườn gà 5 phút đầu (CELL_TRUY_VUON_T) mà chơi tới chừng này giây thì Frieza rời thần điện bay đi truy sát, hợp thể mở khoá khắp nơi (kiemTraFzTruy()) */
 const FZ_TRUY_T = 600;
+/** Chơi tới chừng này giây mà bóng ma Goku chưa bị hạ hẳn thì nó rời núi đá bay đi truy sát (tốc độ lao GY_LAO_TOC, kiemTraGyTruy()) */
+const GY_TRUY_T = 900;
+/** Bóng ma đang truy sát: mục tiêu xa hơn chừng này thì bay thẳng tới (tốc độ GY_LAO_TOC, qua vực / tường vườn), gần thì khiêu khích → lao như trên núi */
+const GY_TRUY_GAN = 700;
 /** Tốc độ Frieza bay đi truy sát (px/s): 1/2 máy bay; gần mục tiêu trong FZ_BAY_GAN thì chạy đánh như thường */
 const FZ_BAY_TOC = MB_TOC / 2;
 const FZ_BAY_GAN = 600;
@@ -1091,6 +1095,8 @@ export class Game {
   private liVuon = false;
   /** Frieza bay đi truy sát Mabu / Zinbu khắp thế giới (cả ván); hợp thể Super Bư làm được và giữ được ở mọi nơi */
   fzTruy = false;
+  /** Bóng ma Goku đã rời núi đá đi truy sát (sau GY_TRUY_T giây mà chưa bị hạ hẳn), cả ván */
+  gyTruy = false;
   ngocBay: { x: number; y: number; t: number; slot: number; sao: number }[] = [];
   readonly NGOC_BAY_T = 1.1;
   // Gà mẹ đang đánh (phụ gần nhân vật nhất; chưa có thì gà mẹ gốc): chiêu hiện trên thanh đen phía trên
@@ -1350,7 +1356,7 @@ export class Game {
     this.mayBay = taoMayBay(kep(gx + vao * 700, TUONG + MB_LE, MAP - TUONG - MB_LE), kep(gy + xuong * 380, TUONG + MB_LE, MAP - TUONG - MB_LE));
     this.mbCatVuon = false;
     this.mbRaVuon = this.ptRaVuon = false;
-    this.daRaVuon = this.cellTruyVuon = this.liVuon = this.fzTruy = false;
+    this.daRaVuon = this.cellTruyVuon = this.liVuon = this.fzTruy = this.gyTruy = false;
     this.cellTruyBao = false;
     this.phiThuyen = taoPhiThuyen(this.mayBay);
     this.ga = [];
@@ -1423,7 +1429,7 @@ export class Game {
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       thanVo: thanVo.flatMap((v, i) => (v ? [i] : [])),
       frieza: { hp: Math.min(FZ_HP, Math.max(1, this.frieza.hp / fzGap(this.frieza))), chet: this.frieza.chet },
-      truyVuon: { ra: this.daRaVuon, on: this.cellTruyVuon, li: this.liVuon, fz: this.fzTruy },
+      truyVuon: { ra: this.daRaVuon, on: this.cellTruyVuon, li: this.liVuon, fz: this.fzTruy, gy: this.gyTruy },
       nguoi: this.nguoi.map((n, p) => {
         const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
         void nham; void ngam; void cuaCan; void dich;
@@ -1473,6 +1479,7 @@ export class Game {
     this.cellTruyVuon = d.truyVuon?.on ?? false;
     this.liVuon = d.truyVuon?.li ?? this.cellTruyVuon;
     this.fzTruy = d.truyVuon?.fz ?? false;
+    this.gyTruy = d.truyVuon?.gy ?? false;
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const i of d.thanVo ?? []) if (i >= 0 && i < thanVo.length) thanVo[i] = true;
     this.frieza = taoFrieza();
@@ -1699,6 +1706,7 @@ export class Game {
     this.capNhatVuon(dtE);
     this.kiemTraOLiVuon();
     this.kiemTraFzTruy();
+    this.kiemTraGyTruy();
     HN.moc('cn.vuon');
     this.capNhatTrungGa(dt);
     HN.moc('cn.trung');
@@ -2970,7 +2978,7 @@ export class Game {
         }
       }
     }
-    if (coSao) giuTrongMap(g, LE_NV, false, 'dao');
+    if (coSao) this.gyGiu(LE_NV);
     this.gyTruocDay = coSao ? { x: g.x, y: g.y } : null;
   }
 
@@ -4074,7 +4082,17 @@ export class Game {
   /** Nhân vật p là mục tiêu hợp lệ: đang chơi, không gục / mây / trong cầu / trên máy bay, đứng trong núi đá (cộng lề GY_NUI_LE) */
   private gyHopLe(p: number): boolean {
     const n = this.nguoi[p];
-    return !!n && !n.vang && !this.khuat(n) && trongNui(n.x, n.y, GY_NUI_LE);
+    return !!n && !n.vang && !this.khuat(n) && (this.gyTruy || trongNui(n.x, n.y, GY_NUI_LE));
+  }
+
+  /** Bản sao / bóng ma được đứng ở (x, y): trên núi đá; đang truy sát thì mọi chỗ trên đất (đảo, vườn gà, thần điện) */
+  private gyDuocDi(x: number, y: number): boolean {
+    return this.gyTruy ? trongVuon(x, y) || doSau(x, y) > 0 : trongNui(x, y);
+  }
+
+  /** Kẹp bóng ma / bản sao trong map: trên núi theo đảo; đang truy sát thì theo vùng đang đứng (vào được vườn gà), bay thì qua được vực */
+  private gyGiu(le: Le, bay = false): void {
+    giuTrongMap(this.ginyu, le, bay, this.gyTruy ? vungCua(this.ginyu) : 'dao');
   }
 
   /** Bóng ma nhận ra nhân vật p ở bất kỳ đâu trên núi đá (chống câu giờ): chỉ cần hợp lệ */
@@ -4426,7 +4444,7 @@ export class Game {
     this.nguoi.forEach((n, p) => {
       const truoc = this.gyHetTruoc[p] ?? n.het;
       this.gyHetTruoc[p] = n.het;
-      if (g.chet || n.vang || !n.het || truoc || !trongNui(n.x, n.y, GY_NUI_LE)) return;
+      if (g.chet || n.vang || !n.het || truoc || (!this.gyTruy && !trongNui(n.x, n.y, GY_NUI_LE))) return;
       const cu = g.suc ?? 1;
       g.suc = cu + GY_TANG_SUC;
       if (g.sao) {
@@ -4475,7 +4493,7 @@ export class Game {
     // Đứng chồng lên người thật (lệch rất ít) để không ai biết ai là ai
     g.x = n.x + ngauNhien(-30, 30);
     g.y = n.y + ngauNhien(-10, 10);
-    giuTrongMap(g, LE_NV, false, 'dao');
+    this.gyGiu(LE_NV);
     g.sao = { p, con: GY_SAO_T, danh: ngauNhien(GY_SAO_DANH[0], GY_SAO_DANH[1]), nhom: 0, doi: 0, di: false };
     const nv = new NhanVat(NHAN_VAT[n.ki]!);
     nv.lat = n.nv.lat;
@@ -4539,7 +4557,7 @@ export class Game {
     // ── Dạng bóng ma ──
     if (g.lao !== undefined) { this.gyLao(dt); return; }
     // "Một chấm": ở nhà và không ai ở gần thì không tính gì thêm
-    if (g.khieu === undefined && Math.abs(g.x - g.hx) + Math.abs(g.y - g.hy) < 30 && !this.nguoi.some((n) => !n.vang && trongNui(n.x, n.y, GY_NUI_LE))) {
+    if (!this.gyTruy && g.khieu === undefined && Math.abs(g.x - g.hx) + Math.abs(g.y - g.hy) < 30 && !this.nguoi.some((n) => !n.vang && trongNui(n.x, n.y, GY_NUI_LE))) {
       g.chay = false;
       return;
     }
@@ -4549,6 +4567,21 @@ export class Game {
       g.chay = false;
       if ((g.nghi -= dt) <= 0) g.nghi = undefined;
       return;
+    }
+    // Truy sát: người gần nhất còn xa (hoặc chạy xa khi đang khiêu khích) thì bay thẳng tới với tốc độ lao, qua vực / tường vườn
+    if (this.gyTruy && thay.length) {
+      const gan = this.nguoi[thay.reduce((a, b) => (hyp(this.nguoi[a]!.x - g.x, this.nguoi[a]!.y - g.y) <= hyp(this.nguoi[b]!.x - g.x, this.nguoi[b]!.y - g.y) ? a : b))]!;
+      const d = hyp(gan.x - g.x, gan.y - g.y);
+      if (d > (g.khieu !== undefined ? GY_LAO_QUANG : GY_TRUY_GAN)) {
+        g.khieu = undefined;
+        const b = Math.min(d, GY_LAO_TOC * dt);
+        g.x += ((gan.x - g.x) / d) * b;
+        g.y += ((gan.y - g.y) / d) * b;
+        this.gyGiu(LE_GY, true);
+        g.chay = true;
+        if (Math.abs(gan.x - g.x) > 5) g.lat = gan.x > g.x;
+        return;
+      }
     }
     if (g.khieu !== undefined) {
       // Khiêu khích: đứng yên quay mặt về người gần nhất; ai cũng mất dạng thì thôi
@@ -4580,6 +4613,8 @@ export class Game {
       else g.chay = false;
       return;
     }
+    // Truy sát mà không còn ai để đuổi: lơ lửng chờ tại chỗ (đang ở trên núi thì về giữa núi)
+    if (this.gyTruy && !trongNui(g.x, g.y)) { g.chay = false; return; }
     // Không có ai trên núi: lượn về giữa núi
     if (hyp(g.hx - g.x, g.hy - g.y) > 20) this.gyDiToi(g.hx, g.hy, dt);
     else g.chay = false;
@@ -4606,7 +4641,7 @@ export class Game {
     g.x += (dx / d) * b;
     g.y += (dy / d) * b;
     g.quang = (g.quang ?? 0) + b;
-    giuTrongMap(g, LE_GY, false, 'dao');
+    this.gyGiu(LE_GY, this.gyTruy);
     if (hyp(ke.x - g.x, ke.y - g.y) > GY_LAO_CHAM) return;
     this.gyBienSao(p);
   }
@@ -4646,7 +4681,7 @@ export class Game {
           else {
             const goc = ngauNhien(0, Math.PI * 2), r = ngauNhien(180, 480);
             const v = { x: b.x + Math.cos(goc) * r, y: b.y + Math.sin(goc) * r };
-            s.dich = trongNui(v.x, v.y) ? v : { x: b.x, y: b.y };
+            s.dich = this.gyDuocDi(v.x, v.y) ? v : { x: b.x, y: b.y };
           }
         }
         if (s.dich) { tx = s.dich.x; ty = s.dich.y; }
@@ -4657,9 +4692,10 @@ export class Game {
           dangDi = true;
           const b = Math.min(d, TOC_DO_DI * dt);
           const nx = g.x + (dx / d) * b, ny = g.y + (dy / d) * b;
-          if (trongNui(nx, ny) || !trongNui(g.x, g.y)) { g.x = nx; g.y = ny; }
-          else if (trongNui(nx, g.y)) g.x = nx;
-          else if (trongNui(g.x, ny)) g.y = ny;
+          const ok = (x: number, y: number) => this.gyDuocDi(x, y);
+          if (ok(nx, ny) || !ok(g.x, g.y)) { g.x = nx; g.y = ny; }
+          else if (ok(nx, g.y)) g.x = nx;
+          else if (ok(g.x, ny)) g.y = ny;
           else dangDi = false;
           // Đi như nhân vật thật: chủ yếu theo chiều dọc thì quay lên / xuống
           if (Math.abs(dy) > Math.abs(dx) * 1.2) nv.huong = dy < 0 ? 'len' : 'xuong';
@@ -4674,7 +4710,7 @@ export class Game {
     const truot = nv.capNhat(dt, dangDi);
     if (truot) g.x += truot * S_NV;
     // Dây buộc như người thật (chung dây với cả hai nhân vật, kéo qua lại trong `rangBuoc()`)
-    giuTrongMap(g, LE_NV, false, 'dao');
+    this.gyGiu(LE_NV);
     g.lat = !nv.lat;
   }
 
@@ -4741,10 +4777,10 @@ export class Game {
     if (d < 1) { g.chay = false; return; }
     const b = Math.min(d, GY_TOC * dt);
     const nx = g.x + (dx / d) * b, ny = g.y + (dy / d) * b;
-    if (!trongNui(g.x, g.y) || trongNui(nx, ny)) { g.x = nx; g.y = ny; }
+    if (this.gyTruy || !trongNui(g.x, g.y) || trongNui(nx, ny)) { g.x = nx; g.y = ny; }
     else if (trongNui(nx, g.y)) g.x = nx;
     else if (trongNui(g.x, ny)) g.y = ny;
-    giuTrongMap(g, LE_GY, false, 'dao');
+    this.gyGiu(LE_GY, this.gyTruy);
     g.chay = true;
     if (Math.abs(dx) > 5) g.lat = dx > 0;
   }
@@ -5368,6 +5404,16 @@ export class Game {
       this.chu.push({ id: this.id++, x: n.x, y: n.y - 360, text: '🔥 Ở LÌ VƯỜN GÀ 5 PHÚT: CELL ĐỎ ĐANG TỚI TRUY SÁT!', mau: '#ff3b30', t: 0 });
       this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: '✈ Máy bay ra khỏi vườn không còn hồi đầy máu / mana', mau: '#ffd23f', t: 0 });
     }
+    this.rungMan(0.5, 8);
+  }
+
+  /** Chơi tới GY_TRUY_T mà bóng ma Goku chưa bị hạ hẳn (còn sống hoặc đang chờ hồi sinh): nó rời núi đá bay đi truy sát Mabu / Zinbu cả ván */
+  private kiemTraGyTruy(): void {
+    const g = this.ginyu;
+    if (this.gyTruy || this.tGame < GY_TRUY_T || (g.chet && !g.choHoi) || banDoHt !== 'sa') return;
+    this.gyTruy = true;
+    const n = this.nguoi.find((m) => !m.vang && !m.het) ?? this.nguoi.find((m) => !m.vang);
+    if (n) this.chu.push({ id: this.id++, x: n.x, y: n.y - 360, text: '👻 15 PHÚT: BÓNG MA GOKU BAY ĐI TRUY SÁT!', mau: '#c39bff', t: 0 });
     this.rungMan(0.5, 8);
   }
 
