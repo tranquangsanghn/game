@@ -65,6 +65,10 @@ export const GY_SOCOLA_T = 4;
 export const GY_TANG_SUC = 0.5;
 /** Bóng ma chết thì biến thành viên ngọc rồng mấy sao */
 export const GY_NGOC_SAO = 3;
+/** Số lần hồi sinh (không tính mạng đầu): mỗi lần hồi sinh né thêm GY_HOI_NE và máu bản sao thêm GY_HOI_MAU (cộng trên chỉ số người bị sao chép) */
+export const GY_HOI_SINH = 2;
+export const GY_HOI_NE = 0.1;
+export const GY_HOI_MAU = 0.1;
 /** Điểm khi hạ */
 export const GY_DIEM = 500;
 /** Máu mặc định trước khi sao chép (chưa gặp ai) */
@@ -79,6 +83,8 @@ export interface Ginyu {
   hp: number; hpMax: number;
   /** Hệ số sức mạnh (thiếu = 1): +GY_TANG_SUC mỗi lần Mabu / Zinbu gục trên núi; nhân sát thương và máu bản sao */
   suc?: number;
+  /** Số lần đã hồi sinh (thiếu = 0); choHoi = đang chết nhưng sẽ hồi sinh khi xác mờ hết */
+  hoiSinh?: number; choHoi?: boolean;
   /** Sát thương gốc sao chép được: Đấm, Đá, Chiêu đặc biệt (đã nhân `suc` và cộng `satDau` của nhân vật); lao thẳng dùng Chiêu đặc biệt */
   sat: [number, number, number];
   /** Nhân vật bị sao chép (ki: 0 Mabu · 1 Zinbu · 2 Vegeta); undefined = chưa gặp ai */

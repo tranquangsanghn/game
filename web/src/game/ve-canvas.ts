@@ -1945,7 +1945,7 @@ export class VeCanvas {
     let ten: string;
     let mo: boolean;
     let so: number | null = null;
-    if (c.trenNui) { ten = GY_TEN; mo = c.ginyu.chet; }
+    if (c.trenNui) { ten = GY_TEN; mo = c.ginyu.chet && !c.ginyu.choHoi; }
     else if (c.trenDao) { ten = CELL_TEN[capCuaDao(c.daoHienTai)] ?? 'Cell'; so = c.soCellDao; mo = so <= 0; }
     else { ten = 'Vua gà'; mo = !tg; }
     ctx.save();
@@ -1980,7 +1980,7 @@ export class VeCanvas {
     if (c.trenDao) {
       // Đang ở đảo: avatar là Cell của đảo đó, đứng nhún nhảy; núi đá: avatar bóng ma Goku xoay người (mờ khi đã bị hạ)
       if (c.trenNui) {
-        ctx.globalAlpha = c.ginyu.chet ? 0.25 : 0.9;
+        ctx.globalAlpha = c.ginyu.chet && !c.ginyu.choHoi ? 0.25 : 0.9;
         ctx.translate(0, 98);
         ctx.scale(0.5, 0.5);
         this.sprite(ctx, SP_GINYU, GY_KHUNG.quay[Math.floor(c.t * 4) % GY_KHUNG.quay.length]!, false, true);

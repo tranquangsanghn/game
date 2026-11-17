@@ -7,7 +7,7 @@ import { HN } from './do-hieu-nang';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, trongNui, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NGUI, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NANG, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, TIEC_NGUI, type ChuongTiec, type Tiec } from './tiec';
-import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_DANH, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, type Ginyu } from './ginyu';
+import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_DANH, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
@@ -3801,7 +3801,7 @@ export class Game {
     const g = this.ginyu, n = this.nguoi[p];
     const suc = n.suc ?? 1;
     g.ki = n.ki;
-    g.hpMax = Math.max(1, Math.round(Math.max(1, n.hp) * GY_SAO_TI_LE * (g.suc ?? 1)));
+    g.hpMax = Math.max(1, Math.round(Math.max(1, n.hp) * GY_SAO_TI_LE * (g.suc ?? 1) * (1 + GY_HOI_MAU * (g.hoiSinh ?? 0))));
     g.hp = g.hpMax;
     g.sat = [0, 1, 2].map((i) => Math.round((SAT_THUONG[i]![n.ki]! * suc + (n.satDau ?? 0)) * GY_SAO_TI_LE)) as [number, number, number];
     g.lao = undefined;
@@ -3835,12 +3835,38 @@ export class Game {
     this.chuGa({ id: this.id++, x: tam.x, y: tam.y - 200, text: '👻 BÓNG MA GOKU HIỆN HÌNH!', mau: '#9fe8ff', t: 0 });
   }
 
+  /** Xác bản sao mờ hết mà còn lượt hồi sinh: sống lại thành bóng ma tại chỗ, né +GY_HOI_NE, máu bản sao +GY_HOI_MAU */
+  private gyHoiSinh(): void {
+    const g = this.ginyu;
+    const k = (g.hoiSinh ?? 0) + 1;
+    g.hoiSinh = k;
+    g.choHoi = undefined;
+    g.chet = false;
+    g.tChet = 0;
+    g.sao = undefined;
+    g.socola = undefined;
+    g.lao = undefined;
+    g.khieu = undefined;
+    g.muc = undefined;
+    g.nhay = 0;
+    g.hp = g.hpMax = GY_HP_GOC;
+    this.gyNv = null;
+    g.nghi = GY_NGHI_T;
+    const tam = this.tamGy();
+    this.vetGa({ id: this.id++, x: g.x, y: g.y - 80, t: 0, loai: 'no' });
+    this.vetGa({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'bui' });
+    this.chuGa({ id: this.id++, x: tam.x, y: tam.y - 300, text: `👻 BÓNG MA GOKU HỒI SINH! (${k}/${GY_HOI_SINH})`, mau: '#c39bff', t: 0 });
+    this.chuGa({ id: this.id++, x: tam.x, y: tam.y - 250, text: `NÉ +${Math.round(GY_HOI_NE * k * 100)}% · MÁU +${Math.round(GY_HOI_MAU * k * 100)}%`, mau: '#9fe8ff', t: 0 });
+    this.rungMan(0.3, 10);
+  }
+
   private capNhatGinyu(dt: number): void {
     const g = this.ginyu;
     this.gyTangSuc();
     if (g.chet) {
       g.tChet += dt;
       if (this.gyNv) this.gyNv.capNhat(dt, false);
+      if (g.choHoi && g.tChet >= GY_CHET_T) this.gyHoiSinh();
       return;
     }
     g.nhay = Math.max(0, g.nhay - dt);
@@ -4059,7 +4085,7 @@ export class Game {
     if (g.chet || !g.sao) return false;
     const n = this.nguoi[p];
     const tam = this.tamGy();
-    if (!khongNe && Math.random() < NE_NV) {
+    if (!khongNe && Math.random() < NE_NV + GY_HOI_NE * (g.hoiSinh ?? 0)) {
       this.chu.push({ id: this.id++, x: g.x, y: g.y - 220, text: 'NÉ!', mau: '#9be7ff', t: 0 });
       return false;
     }
@@ -4079,18 +4105,19 @@ export class Game {
     g.lao = undefined;
     g.socola = undefined;
     this.gyNv?.nga();
-    // Bóng ma chết thì biến thành viên ngọc rồng GY_NGOC_SAO sao (kể cả chết vì Biến socola)
-    if (!this.ngocNhat.includes(GY_NGOC_SAO) && !this.vatPham.some((v) => v.loai === 'ngoc' && v.sao === GY_NGOC_SAO)) {
+    // Còn lượt hồi sinh thì xác mờ hết rồi sống lại (gyHoiSinh); hết lượt mới chết hẳn và hoá viên ngọc rồng GY_NGOC_SAO sao (kể cả chết vì Biến socola)
+    const conMang = GY_HOI_SINH - (g.hoiSinh ?? 0);
+    if (conMang > 0) g.choHoi = true;
+    else if (!this.ngocNhat.includes(GY_NGOC_SAO) && !this.vatPham.some((v) => v.loai === 'ngoc' && v.sao === GY_NGOC_SAO)) {
       const v = { x: g.x, y: g.y };
       giuTrongMap(v, LE_VP, false, 'dao');
       this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'ngoc', sao: GY_NGOC_SAO });
       this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 300, text: `⭐ BÓNG MA HOÁ NGỌC RỒNG ${GY_NGOC_SAO} SAO!`, mau: '#ffb347', t: 0 });
     }
-    if (soc) g.tChet = GY_CHET_T;
     for (let i = 0; i < 3; i++) this.vet.push({ id: this.id++, x: g.x + ngauNhien(-80, 80), y: tam.y + ngauNhien(-80, 60), t: 0, loai: 'chay', co: 0.8 + i * 0.2 });
     this.rungMan(0.3, 12);
     this.dungKhung(0.15);
-    this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 220, text: '💥 BẢN SAO LÀ BÓNG MA GOKU! ĐÃ BỊ HẠ!', mau: '#ffd27a', t: 0 });
+    this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 220, text: conMang > 0 ? `💥 BẢN SAO LÀ BÓNG MA GOKU! CÒN ${conMang} LẦN HỒI SINH` : '💥 BẢN SAO LÀ BÓNG MA GOKU! ĐÃ BỊ HẠ!', mau: '#ffd27a', t: 0 });
     if (n) {
       n.combo++;
       const hs = this.heSo(p);
