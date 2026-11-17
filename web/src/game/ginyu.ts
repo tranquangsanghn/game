@@ -115,6 +115,11 @@ export interface Ginyu {
   khieu?: number; nghi?: number; quang?: number;
   /** Đang là bản sao của người chơi ô `p` (ki = nhân vật): con = giây còn lại; danh = giây tới đòn kế; muc = người sắp bị đánh; nhom = đòn sắp ra;
    *  dich = chỗ đang đi tới (lảng vảng cạnh đồng đội như người thật); doi = giây tới lúc đổi chỗ đi */
+  /** Phiên bản bản sao lần trước (máu tối đa, sát thương, hệ số suc × hồi sinh lúc đó): từ lần biến hình thứ 2, người bị sao chép yếu hơn bản này
+   *  thì bóng ma giữ nguyên máu / sức mạnh của bản này (`gyBienSao()`) */
+  truoc?: { hpMax: number; sat: [number, number, number]; heSo: number };
+  /** Máu tối đa "giả" của bản sao (theo người bị sao chép) khi đang giữ chỉ số cũ: thanh máu trên đầu chỉ để lừa, máu thật hiện trên thanh đen */
+  hpGia?: number;
   sao?: { p: number; con: number; danh: number; muc?: number; nhom: number; dich?: { x: number; y: number }; doi: number; di: boolean };
 }
 

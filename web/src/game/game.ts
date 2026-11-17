@@ -3929,6 +3929,8 @@ export class Game {
         const k = g.suc / cu;
         g.hpMax = Math.round(g.hpMax * k);
         g.hp = Math.round(g.hp * k);
+        if (g.hpGia) g.hpGia = Math.round(g.hpGia * k);
+        if (g.truoc) g.truoc = { ...g.truoc, hpMax: g.hpMax, heSo: g.truoc.heSo * k };
         if (g.sao.muc === p) g.sao.muc = undefined;
       }
       if (g.muc === p) g.muc = undefined;
@@ -3943,9 +3945,25 @@ export class Game {
     const g = this.ginyu, n = this.nguoi[p];
     const suc = n.suc ?? 1;
     g.ki = n.ki;
-    g.hpMax = Math.max(1, Math.round(Math.max(1, n.hp) * GY_SAO_TI_LE * (g.suc ?? 1) * (1 + GY_HOI_MAU * (g.hoiSinh ?? 0))));
+    const heSo = (g.suc ?? 1) * (1 + GY_HOI_MAU * (g.hoiSinh ?? 0));
+    const hpMax = Math.max(1, Math.round(Math.max(1, n.hp) * GY_SAO_TI_LE * heSo));
+    const sat = [0, 1, 2].map((i) => Math.round((SAT_THUONG[i]![n.ki]! * suc + (n.satDau ?? 0)) * GY_SAO_SAT)) as [number, number, number];
+    // Từ lần biến hình thứ 2: người bị sao chép yếu hơn bản sao lần trước (máu × tổng sát thương, bản trước nhân theo suc / hồi sinh hiện tại)
+    // thì giữ nguyên máu và sức mạnh của bản trước; thanh máu trên đầu vẫn theo người bị sao chép (`hpGia`) để lừa, máu thật hiện trên thanh đen
+    const tr = g.truoc;
+    const trMax = tr ? Math.max(1, Math.round(tr.hpMax * heSo / Math.max(0.01, tr.heSo))) : 0;
+    const tong = (a: number[]) => a[0]! + a[1]! + a[2]!;
+    if (tr && hpMax * tong(sat) < trMax * tong(tr.sat)) {
+      g.hpMax = trMax;
+      g.sat = [...tr.sat];
+      g.hpGia = hpMax;
+    } else {
+      g.hpMax = hpMax;
+      g.sat = sat;
+      g.hpGia = undefined;
+    }
     g.hp = g.hpMax;
-    g.sat = [0, 1, 2].map((i) => Math.round((SAT_THUONG[i]![n.ki]! * suc + (n.satDau ?? 0)) * GY_SAO_SAT)) as [number, number, number];
+    g.truoc = { hpMax: g.hpMax, sat: [...g.sat], heSo };
     g.lao = undefined;
     g.quang = undefined;
     g.khieu = undefined;
@@ -4310,7 +4328,14 @@ export class Game {
   /** Thanh máu bản sao: vị trí và tỉ lệ đầy như của nhân vật thật */
   gyThanh(): { x: number; y: number; mau: number } {
     const g = this.ginyu, nv = this.gyNv;
-    return { x: g.x, y: g.y - ((nv?.cao ?? 0) - (nv?.nhun ?? 0)) * S_NV - (DAU_NV[g.ki ?? 0] ?? 170), mau: Math.min(1, Math.max(0, g.hp) / Math.max(HP_NV, g.hp)) };
+    return { x: g.x, y: g.y - ((nv?.cao ?? 0) - (nv?.nhun ?? 0)) * S_NV - (DAU_NV[g.ki ?? 0] ?? 170), mau: this.gyMauGia() };
+  }
+
+  /** Tỉ lệ đầy thanh máu trên đầu bản sao: theo máu "giả" của người bị sao chép khi đang giữ chỉ số cũ (`hpGia`), chỉ để lừa người chơi */
+  private gyMauGia(): number {
+    const g = this.ginyu;
+    const hp = g.hpGia ? Math.max(0, g.hp) * g.hpGia / Math.max(1, g.hpMax) : Math.max(0, g.hp);
+    return Math.min(1, hp / Math.max(HP_NV, hp));
   }
 
   /** Dây buộc của bản sao với cả hai nhân vật (giống hệt dây buộc 2 nhân vật thật): mức căng và 2 đầu trên màn hình của từng dây */

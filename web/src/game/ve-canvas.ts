@@ -2031,10 +2031,14 @@ export class VeCanvas {
   private veBangTen(ctx: CanvasRenderingContext2D, c: Game, tg: Ga | null): void {
     let ten: string;
     let mo: boolean;
-    let so: number | null = null;
+    let so: number | string | null = null;
     if (c.trenThan) { ten = FZ_TEN; mo = false; }
-    else if (c.trenNui) { ten = GY_TEN; mo = c.ginyu.chet && !c.ginyu.choHoi; }
-    else if (c.trenDao) { ten = CELL_TEN[capCuaDao(c.daoHienTai)] ?? 'Cell'; so = c.soCellDao; mo = so <= 0; }
+    else if (c.trenNui) {
+      ten = GY_TEN; mo = c.ginyu.chet && !c.ginyu.choHoi;
+      // Đang là bản sao: máu THẬT hiện dưới tên (thanh máu trên đầu bản sao chỉ để lừa)
+      if (c.gySao && !c.ginyu.chet) so = `❤ ${Math.max(0, Math.ceil(c.ginyu.hp))} / ${c.ginyu.hpMax}`;
+    }
+    else if (c.trenDao) { ten = CELL_TEN[capCuaDao(c.daoHienTai)] ?? 'Cell'; so = c.soCellDao; mo = c.soCellDao <= 0; }
     else { ten = 'Vua gà'; mo = !tg; }
     ctx.save();
     ctx.textAlign = 'center';
