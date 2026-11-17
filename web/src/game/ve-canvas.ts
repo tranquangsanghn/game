@@ -1709,12 +1709,30 @@ export class VeCanvas {
     ctx.fill();
     ctx.restore();
     // Chìm chân xuống đất: dời sprite xuống CONG_CHIM rồi cắt phần dưới mặt đất (clip trong save / restore)
+    // mép cắt là nửa dưới elip mặt đất (phối cảnh) chứ không phải đường thẳng
+    const rx = 250 * CONG_TO, ry = 45 * CONG_TO;
+    ctx.save();
     ctx.beginPath();
-    ctx.rect(-300 * CONG_TO, -400 * CONG_TO, 600 * CONG_TO, 400 * CONG_TO);
+    ctx.moveTo(-rx, 0);
+    ctx.lineTo(-rx, -400 * CONG_TO);
+    ctx.lineTo(rx, -400 * CONG_TO);
+    ctx.lineTo(rx, 0);
+    ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI);
     ctx.clip();
     ctx.scale(CONG_TO, CONG_TO);
     ctx.translate(0, CONG_CHIM);
     this.sprite(ctx, SP_CONG, Math.floor(c.t * CONG_FPS) % 4, false, true);
+    ctx.restore();
+    // vệt đất tối đè lên chỗ chân cắm xuống để mép cắt liền với nền
+    ctx.scale(1, ry / rx);
+    const b = ctx.createRadialGradient(0, 0, rx * 0.55, 0, 0, rx * 1.05);
+    b.addColorStop(0, 'rgba(25,10,35,0)');
+    b.addColorStop(0.7, 'rgba(25,10,35,0.45)');
+    b.addColorStop(1, 'rgba(25,10,35,0)');
+    ctx.fillStyle = b;
+    ctx.beginPath();
+    ctx.arc(0, 0, rx * 1.05, 0, TAU);
+    ctx.fill();
     ctx.restore();
   }
 
