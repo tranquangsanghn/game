@@ -3792,7 +3792,7 @@ export class Game {
     this.gyNv = nv;
     this.vetGa({ id: this.id++, x: n.x, y: n.y - 80, t: 0, loai: 'no' });
     this.vetGa({ id: this.id++, x: n.x, y: n.y, t: 0, loai: 'bui' });
-    this.chuGa({ id: this.id++, x: n.x, y: n.y - 330, text: `👻 BÓNG MA NHẬP VÀO ${n.ten.toUpperCase()}! AI LÀ THẬT?`, mau: '#c39bff', t: 0 });
+    this.chuGa({ id: this.id++, x: n.x, y: n.y - 330, text: `${n.ki === 0 ? 'Bư' : n.ten} thật? ${n.ki === 0 ? 'bư' : n.ten} giả?`, mau: '#c39bff', t: 0 });
     this.rungMan(0.25, 9);
   }
 
@@ -3845,14 +3845,14 @@ export class Game {
       g.muc = thay.reduce((a, b) => (this.gySuc(b) > this.gySuc(a) ? b : a));
       g.lao = 0;
       g.quang = 0;
-      this.chuGa({ id: this.id++, x: g.x, y: g.y - GY_TAM_CAO - 160, text: `👻 BÓNG MA LAO VÀO ${this.nguoi[g.muc]!.ten.toUpperCase()}!`, mau: '#9fe8ff', t: 0 });
+      this.chuGa({ id: this.id++, x: g.x, y: g.y - GY_TAM_CAO - 160, text: 'Chạy đâu cho thoát', mau: '#9fe8ff', t: 0 });
       return;
     }
     if (thay.length && this.gyTrenCam()) {
       g.khieu = GY_KHIEU_T;
       g.gap = true;
       g.chay = false;
-      this.chuGa({ id: this.id++, x: g.x, y: g.y - GY_TAM_CAO - 160, text: '👻 BÓNG MA GOKU KHIÊU KHÍCH!', mau: '#c39bff', t: 0 });
+      this.chuGa({ id: this.id++, x: g.x, y: g.y - GY_TAM_CAO - 160, text: '👻 lêu lêu lêu nhé', mau: '#c39bff', t: 0 });
       return;
     }
     // Không thấy ai: lượn về giữa núi
