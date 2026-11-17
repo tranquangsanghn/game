@@ -324,16 +324,18 @@ const NE_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0 };
 const SAT_THUONG = [[50, 50, 50], [70, 100, 85], [130, 190, 160]];
 // Hợp thể Super Bư (chỉ đội Mabu + Zinbu, chế độ tay cầm): hai người đứng gần nhau trong HOP_THE_GAN và cùng bấm một nút đánh (A / B / X / Y)
 // trong HOP_THE_CUA giây thì hợp thể. Super Bư mạnh gấp HOP_THE_GAP lần Mabu + Zinbu cộng lại: máu = HOP_THE_GAP × tổng máu hai người lúc hợp thể,
-// mỗi đòn = HOP_THE_GAP × (đòn cùng nhóm của Mabu + của Zinbu). Tồn tại HOP_THE_T giây (đếm ngược trên đầu) rồi tách ra, chờ HOP_THE_HOI giây mới hợp thể lại.
+// mỗi đòn = HOP_THE_SAT_GAP × (đòn cùng nhóm của Mabu + của Zinbu). Tồn tại HOP_THE_T giây (đếm ngược trên đầu) rồi tách ra, chờ HOP_THE_HOI giây mới hợp thể lại.
 // Người ít máu hơn lúc hợp thể chỉ điều khiển đi lại / bay, người nhiều máu hơn (bằng nhau thì Mabu) chỉ điều khiển ra đòn.
 const HOP_THE_GAN = 300;
 const HOP_THE_CUA = 0.4;
 const HOP_THE_GAP = 5;
+/** Sát thương mỗi đòn của Super Bư = HOP_THE_SAT_GAP × (đòn Mabu + đòn Zinbu) (máu vẫn HOP_THE_GAP × tổng máu) */
+const HOP_THE_SAT_GAP = 6;
 const HOP_THE_T = 40;
 const HOP_THE_HOI = 15;
 /** Super Bư bị hạ: tách ra sớm, mỗi người còn HOP_THE_CON_MAU máu lúc hợp thể (tối thiểu 1) */
 const HOP_THE_CON_MAU = 0.1;
-/** Chiêu Bóng ma (nhóm 3 của Super Bư): sát thương = HOP_THE_GAP × (Biến mây Mabu + Biến socola Zinbu), nổ bán kính BAN_KINH_MA, hồi MA_HOI giây */
+/** Chiêu Bóng ma (nhóm 3 của Super Bư): sát thương = HOP_THE_SAT_GAP × (Biến mây Mabu + Biến socola Zinbu), nổ bán kính BAN_KINH_MA, hồi MA_HOI giây */
 const BAN_KINH_MA = 300;
 const MA_HOI = 3;
 /** Độ cao thanh máu trên đầu Super Bư (cao hơn Mabu / Zinbu) */
@@ -6226,11 +6228,11 @@ export class Game {
     return !!this.hopThe && this.hopThe.nhap === p;
   }
 
-  /** Sát thương gốc mỗi đòn của p theo nhóm đòn; Super Bư = HOP_THE_GAP × (Mabu + Zinbu) */
+  /** Sát thương gốc mỗi đòn của p theo nhóm đòn; Super Bư = HOP_THE_SAT_GAP × (Mabu + Zinbu) */
   private satNv(p: number, nhom: number): number {
     if (this.hopThe?.chu === p) {
       const goc = nhom === NHOM_MAY ? SAT_MAY + SAT_SOCOLA : SAT_THUONG[nhom]![0]! + SAT_THUONG[nhom]![1]!;
-      return HOP_THE_GAP * goc;
+      return HOP_THE_SAT_GAP * goc;
     }
     return SAT_THUONG[nhom]![this.nguoi[p].ki]!;
   }
@@ -6361,7 +6363,12 @@ export class Game {
     N.dich = null;
     N.bay = null;
     N.dangDi = false;
-    if (h.con <= 0 || C.het) this.tachHopThe(C.het);
+    if (h.con <= 0 || C.het) { this.tachHopThe(C.het); return; }
+    // Hợp thể chỉ có trên thần điện: ra khỏi thần điện (đi qua cổng, đáp xuống ngoài) thì tự tách luôn; đang bay thì chờ hạ xuống
+    if (!C.bay && !trongThan(C.x, C.y)) {
+      this.tachHopThe(false);
+      this.chu.push({ id: this.id++, x: C.x, y: C.y - 440, text: '🏯 RA KHỎI THẦN ĐIỆN: TÁCH HỢP THỂ!', mau: '#9be7ff', t: 0 });
+    }
   }
 
   private docTayCam(): void {
