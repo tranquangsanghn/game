@@ -5883,6 +5883,8 @@ export class Game {
 
   /** Nhảy xuống máy bay / phi thuyền vào trong vườn gà sau khi xe đã ra ngoài vườn: mỗi người (chưa gục) đặt lại VAO_VUON_MAU máu, VAO_VUON_MANA mana */
   private datLaiVaoVuon(ds: number[]): void {
+    // Ở lì vườn gà quá 5 phút (Cell đỏ truy sát cả ván): về vườn cũng giữ nguyên máu / mana
+    if (this.cellTruyVuon) return;
     for (const p of ds) {
       const n = this.nguoi[p];
       if (!n || n.vang || n.het || !trongVuon(n.x, n.y)) continue;
