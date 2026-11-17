@@ -6,7 +6,7 @@ import { CELL_HP, CELL_SO_DAO, CELL_TEN, capCuaDao, cellK, CELL_CHET_T, CELL_KHU
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T, SP_CONG, CONG_TO, CONG_FPS, CONG_CHIM } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { MABU } from './nhan-vat-du-lieu';
-import { SP_FRIEZA, FZ_TEN, FZ_TO, FZ_KHUNG, fzKhung } from './frieza';
+import { SP_FRIEZA, SP_FRIEZA_VANG, FZ_TEN, FZ_TEN_VANG, FZ_TO, FZ_VANG_TO, FZ_VANG_AURA, FZ_VANG_T, FZ_KHUNG, fzKhung, fzVang, fzKhungVang } from './frieza';
 import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_LO_LUNG } from './ginyu';
 import { DAO, doSau, duongBo, NUI, TG, THAN, THAN_CONG, THAN_DA_GIAC, THAN_VAT_TG, thanVo } from './ban-do';
 
@@ -1567,13 +1567,39 @@ export class VeCanvas {
 
   // Bóng ma Goku: lơ lửng nhấp nhô trên quầng sáng xanh lơ, thân trong mờ chập chờn (atlas đã tô màu bóng ma), quay mặt trái (lat = quay phải);
   // gồng thì hào quang xanh bùng lên + rung; lao thì kéo 3 bóng mờ phía sau; hoá socola nhuộm nâu, trúng đòn nháy sáng; xác mờ dần
-  /** Frieza (pixel art, không làm mịn) đi loanh quanh điện thờ */
+  /** Frieza (pixel art, không làm mịn) đi loanh quanh điện thờ; biến hình / dạng Golden Frieza thì vẽ sprite vàng (ảnh vẽ tay, làm mịn, quay mặt trái) */
   private veFrieza(ctx: CanvasRenderingContext2D, c: Game): void {
     const f = c.frieza;
     ctx.save();
     ctx.translate(f.x, f.y);
-    ctx.scale(FZ_TO, FZ_TO);
-    this.sprite(ctx, SP_FRIEZA, fzKhung(f), f.lat, false);
+    if (fzVang(f)) {
+      const k = fzKhungVang(f);
+      // Quầng vàng dưới chân (gradient, không shadowBlur vì sprite to); bùng mạnh từ khung hào quang, nhấp nháy khi ở dạng vàng
+      const manh = f.bien >= 0 ? (k >= FZ_VANG_AURA ? 1 : 0.5) : 0.6 + 0.2 * Math.sin(c.t * 6);
+      const r = 190 * (f.bien >= 0 && k >= FZ_VANG_AURA ? 1.3 : 1);
+      const gr = ctx.createRadialGradient(0, 0, 10, 0, 0, r);
+      gr.addColorStop(0, `rgba(255,225,90,${0.55 * manh})`);
+      gr.addColorStop(1, 'rgba(255,200,40,0)');
+      ctx.fillStyle = gr;
+      ctx.save();
+      ctx.scale(1, 0.35);
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      // Dạng vàng: đi thì nhún nhẹ; vài giây cuối nhấp nháy báo sắp hết
+      if (f.bien < 0) {
+        if (f.nghi <= 0) ctx.translate(0, -Math.abs(Math.sin(c.t * 9)) * 8);
+        if (f.vang < 3 && Math.floor(f.vang * 8) % 2 === 0) ctx.globalAlpha *= 0.55;
+      } else if (k >= FZ_VANG_AURA && k < 6) {
+        ctx.translate((Math.random() - 0.5) * 4, 0);
+      }
+      ctx.scale(FZ_VANG_TO, FZ_VANG_TO);
+      this.sprite(ctx, SP_FRIEZA_VANG, k, !f.lat, true);
+    } else {
+      ctx.scale(FZ_TO, FZ_TO);
+      this.sprite(ctx, SP_FRIEZA, fzKhung(f), f.lat, false);
+    }
     ctx.restore();
   }
 
@@ -2154,7 +2180,10 @@ export class VeCanvas {
     let ten: string;
     let mo: boolean;
     let so: number | string | null = null;
-    if (c.trenThan) { ten = FZ_TEN; mo = false; }
+    if (c.trenThan) {
+      ten = fzVang(c.frieza) ? FZ_TEN_VANG : FZ_TEN; mo = false;
+      if (c.frieza.vang > 0) so = `✨ ${Math.ceil(c.frieza.vang)}s / ${FZ_VANG_T}s`;
+    }
     else if (c.trenNui) {
       ten = GY_TEN; mo = c.ginyu.chet && !c.ginyu.choHoi;
       // Đang là bản sao: máu THẬT hiện dưới tên (thanh máu trên đầu bản sao chỉ để lừa)
@@ -2194,11 +2223,17 @@ export class VeCanvas {
     if (c.trenDao) {
       // Đang ở đảo: avatar là Cell của đảo đó, đứng nhún nhảy; núi đá: avatar bóng ma Goku xoay người (mờ khi đã bị hạ)
       if (c.trenThan) {
-        // Thần điện: avatar Frieza đứng thở
+        // Thần điện: avatar Frieza đứng thở (dạng vàng: Golden Frieza, khung đang biến hình)
         ctx.globalAlpha = 1;
-        ctx.translate(0, 72);
-        ctx.scale(1.1, 1.1);
-        this.sprite(ctx, SP_FRIEZA, FZ_KHUNG.dung[Math.floor(c.t * 1.5) % FZ_KHUNG.dung.length]!, false, false);
+        if (fzVang(c.frieza)) {
+          ctx.translate(0, 150);
+          ctx.scale(0.24, 0.24);
+          this.sprite(ctx, SP_FRIEZA_VANG, fzKhungVang(c.frieza), false, true);
+        } else {
+          ctx.translate(0, 72);
+          ctx.scale(1.1, 1.1);
+          this.sprite(ctx, SP_FRIEZA, FZ_KHUNG.dung[Math.floor(c.t * 1.5) % FZ_KHUNG.dung.length]!, false, false);
+        }
       } else if (c.trenNui) {
         ctx.globalAlpha = c.ginyu.chet && !c.ginyu.choHoi ? 0.25 : 0.9;
         ctx.translate(0, 98);
