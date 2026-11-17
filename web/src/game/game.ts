@@ -2620,21 +2620,39 @@ export class Game {
   private nuiBaoLuc = -99;
 
   // Dây buộc: 2 nhân vật không xa nhau quá mức camera chứa nổi. Người vừa di chuyển nhiều hơn là người bị chặn lại.
+  // Bóng ma Goku đang là bản sao cũng bị buộc chung dây với cả hai nhân vật (tam giác 3 người): ai đi xa thì kéo / bị kéo như nhau.
   private rangBuoc(truoc: { x: number; y: number }[]): void {
     const [a, b] = this.nguoi;
-    if (a.vang || b.vang) return;
-    const ma = Math.hypot(a.x - truoc[0].x, a.y - truoc[0].y);
-    const mb = Math.hypot(b.x - truoc[1].x, b.y - truoc[1].y);
-    const sa = ma + mb > 0.01 ? ma / (ma + mb) : 0.5;
-    for (const [k, max] of [['x', MAX_DX], ['y', MAX_DY]] as const) {
-      const d = a[k] - b[k];
-      const thua = Math.abs(d) - max;
-      if (thua <= 0) continue;
-      const dau = Math.sign(d);
-      a[k] -= dau * thua * sa;
-      b[k] += dau * thua * (1 - sa);
+    const g = this.ginyu;
+    const coSao = this.gySao;
+    const gTruoc = this.gyTruocDay ?? { x: g.x, y: g.y };
+    // Người tham gia dây: 2 nhân vật (không vắng) + bản sao; người trên máy bay không bị bản sao kéo
+    const moi = (o: { x: number; y: number }, t: { x: number; y: number }) => ({ o, m: Math.hypot(o.x - t.x, o.y - t.y) });
+    const va = moi(a, truoc[0]!), vb = moi(b, truoc[1]!);
+    const vg = moi(g, gTruoc);
+    const cap: [typeof va, typeof va][] = [];
+    if (!a.vang && !b.vang) cap.push([va, vb]);
+    if (coSao) this.nguoi.forEach((n, q) => { if (!n.vang && !this.trongMb(q)) cap.push([vg, q === 0 ? va : vb]); });
+    // Lặp vài lần để cả tam giác cùng thoả
+    for (let lan = 0; lan < (cap.length > 1 ? 3 : 1); lan++) {
+      for (const [u, v] of cap) {
+        const sa = u.m + v.m > 0.01 ? u.m / (u.m + v.m) : 0.5;
+        for (const [k, max] of [['x', MAX_DX], ['y', MAX_DY]] as const) {
+          const d = u.o[k] - v.o[k];
+          const thua = Math.abs(d) - max;
+          if (thua <= 0) continue;
+          const dau = Math.sign(d);
+          u.o[k] -= dau * thua * sa;
+          v.o[k] += dau * thua * (1 - sa);
+        }
+      }
     }
+    if (coSao) giuTrongMap(g, LE_NV, false, 'dao');
+    this.gyTruocDay = coSao ? { x: g.x, y: g.y } : null;
   }
+
+  /** Vị trí bản sao ở lần buộc dây trước (để biết bản sao vừa di chuyển bao nhiêu) */
+  private gyTruocDay: { x: number; y: number } | null = null;
 
   /** Zoom gốc khi đi bộ (ve-canvas dựng ô nền đảo theo mức này, máy bay zoom ra chỉ thu nhỏ ô đã dựng) */
   readonly zoomGoc = ZOOM;
@@ -3929,12 +3947,7 @@ export class Game {
     s.di = dangDi;
     const truot = nv.capNhat(dt, dangDi);
     if (truot) g.x += truot * S_NV;
-    // Dây buộc như người thật: không đi xa đồng đội quá mức camera chứa nổi
-    const b = this.gyDongDoi();
-    if (b) {
-      g.x = kep(g.x, b.x - MAX_DX, b.x + MAX_DX);
-      g.y = kep(g.y, b.y - MAX_DY, b.y + MAX_DY);
-    }
+    // Dây buộc như người thật (chung dây với cả hai nhân vật, kéo qua lại trong `rangBuoc()`)
     giuTrongMap(g, LE_NV, false, 'dao');
     g.lat = !nv.lat;
   }
@@ -4101,14 +4114,15 @@ export class Game {
     return { x: g.x, y: g.y - ((nv?.cao ?? 0) - (nv?.nhun ?? 0)) * S_NV - (DAU_NV[g.ki ?? 0] ?? 170), mau: Math.min(1, Math.max(0, g.hp) / Math.max(HP_NV, g.hp)) };
   }
 
-  /** Dây buộc của bản sao với đồng đội người bị sao chép (giống hệt dây buộc 2 nhân vật thật): mức căng và 2 đầu trên màn hình */
-  gyDay(): { tet: number; a: { x: number; y: number }; b: { x: number; y: number } } | null {
-    if (!this.gySao) return null;
-    const g = this.ginyu, b = this.gyDongDoi();
-    if (!b || b.het) return null;
-    const tet = Math.max(Math.abs(g.x - b.x) / MAX_DX, Math.abs(g.y - b.y) / MAX_DY);
+  /** Dây buộc của bản sao với cả hai nhân vật (giống hệt dây buộc 2 nhân vật thật): mức căng và 2 đầu trên màn hình của từng dây */
+  gyDay(): { tet: number; a: { x: number; y: number }; b: { x: number; y: number } }[] {
+    if (!this.gySao) return [];
+    const g = this.ginyu;
     const man = (x: number, y: number) => ({ x: this.W / 2 + (x - this.camX) * this.camZ, y: TAM_VIEW_Y + (y - this.camY) * this.camZ });
-    return { tet, a: man(g.x, g.y), b: man(b.x, b.y) };
+    return this.nguoi.filter((n, q) => !n.vang && !n.het && !this.trongMb(q)).map((n) => ({
+      tet: Math.max(Math.abs(g.x - n.x) / MAX_DX, Math.abs(g.y - n.y) / MAX_DY),
+      a: man(g.x, g.y), b: man(n.x, n.y),
+    }));
   }
 
   /** Mũi tên ở mép màn hình chỉ bản sao khi nó ra ngoài khung nhìn (như nhân vật thật), màu của người bị sao chép */

@@ -2032,23 +2032,24 @@ export class VeCanvas {
       ctx.stroke();
       ctx.restore();
     }
-    // Bản sao bóng ma Goku cũng có dây buộc với đồng đội của người bị sao chép (giống hệt người thật)
+    // Bản sao bóng ma Goku buộc chung dây với cả hai nhân vật (giống hệt người thật)
     const day = c.gyDay();
-    if (day && day.tet > 0.7) {
+    for (const d of day) {
+      if (d.tet <= 0.7) continue;
       ctx.save();
-      ctx.globalAlpha = dongHe(c.kepTet(day.tet));
+      ctx.globalAlpha = dongHe(c.kepTet(d.tet));
       ctx.strokeStyle = '#ff4d4d';
       ctx.lineWidth = 5;
       ctx.setLineDash([14, 10]);
       ctx.beginPath();
-      ctx.moveTo(day.a.x, day.a.y);
-      ctx.lineTo(day.b.x, day.b.y);
+      ctx.moveTo(d.a.x, d.a.y);
+      ctx.lineTo(d.b.x, d.b.y);
       ctx.stroke();
       ctx.restore();
     }
     ctx.lineJoin = 'round';
     ctx.textAlign = 'center';
-    if (tet > 0.9 || (day && day.tet > 0.9)) {
+    if (tet > 0.9 || day.some((d) => d.tet > 0.9)) {
       ctx.font = `800 30px ${FONT}`;
       ctx.lineWidth = 6;
       ctx.strokeStyle = '#fff';
