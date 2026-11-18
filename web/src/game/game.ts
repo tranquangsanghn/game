@@ -5,8 +5,8 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
-import { MC, MC_COT, MC_HANG, MC_HAM, datLaiMeCung, oCua, oCung, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
-import { taoMeCung, O_VAO_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, TRANG_LUOI, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, GIAY_TOC, GIAY_TOI_DA, QUAI_CACH, QUAI_TOI_DA, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DL, LOAI_QUAI, QUAI_TIA_SAT, QUAI_TIA_T, QUAI_CHET_T, QUAI_DAU_T, SP_QUAI, type LoaiQuai, type TiaMc, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_BOM_TAM, BA_DAY, BA_DIEM, BA_CHET_T, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
+import { MC, MC_COT, MC_HANG, MC_HAM, MC_O, datLaiMeCung, oCua, oCung, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
+import { taoMeCung, O_VAO_MC, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, TRANG_LUOI, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, GIAY_TOC, GIAY_TOI_DA, QUAI_CACH, QUAI_TOI_DA, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DL, LOAI_QUAI, QUAI_TIA_SAT, QUAI_TIA_T, QUAI_CHET_T, QUAI_DAU_T, SP_QUAI, type LoaiQuai, type TiaMc, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_BOM_TAM, BA_DAY, BA_DIEM, BA_CHET_T, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
@@ -126,7 +126,7 @@ type VatXep =
   | { loai: 'gy'; y: number }
   | { loai: 'fz'; y: number }
   | { loai: 'banh'; y: number; tc: Tiec }
-  | { loai: 'cong'; y: number; than?: boolean }
+  | { loai: 'cong'; y: number; than?: boolean; mc?: boolean }
   | { loai: 'quai'; y: number; q: QuaiMc }
   | { loai: 'ba'; y: number };
 
@@ -1058,7 +1058,6 @@ export class Game {
   mcVpView: VpMc[] = [];
   mcDoView: DoMc[] = [];
   /** p đã ở trong mê cung ở khung trước (để nhắc cách dùng bom lúc vừa vào; không lưu ván) */
-  private mcTruoc: boolean[] = [];
   /** Hệ số to của từng nhân vật (MC_TO_NV khi ở mê cung / đường hầm, đổi dần) */
   toMc = [1, 1];
   /** Nhân vật p đang đứng trên thần điện (khung trước); null = chưa đo (vào / tải ván: không đặt lại) */
@@ -2848,6 +2847,8 @@ export class Game {
     if (this.congView) xep.push({ loai: 'cong', y: this.cong.y });
     this.congThanView = !this.trieuHoi && trong(THAN_CONG.x, THAN_CONG.y - 150 * CONG_TO, 260 * CONG_TO);
     if (this.congThanView) xep.push({ loai: 'cong', y: THAN_CONG.y, than: true });
+    const raMc = tamO(O_RA_MC.i, O_RA_MC.j);
+    if (banDoHt === 'sa' && trong(raMc.x, raMc.y, 300)) xep.push({ loai: 'cong', y: raMc.y + MC_O * 0.3, mc: true });
     this.chuongTiecView = this.chuongTiec.filter((q) => {
       const dai = hyp(q.x1 - q.x0, q.y1 - q.y0);
       // Chưởng hiện theo con Cell bắn ra nó (đầu x0, y0)
@@ -2880,7 +2881,8 @@ export class Game {
     });
     this.longView = this.long.filter((l) => trong(l.x, l.y, 100));
     this.nhamView = this.nguoi.flatMap((n) => (n.nham && trong(n.nham.x, n.nham.y, 100) ? [{ x: n.nham.x, y: n.nham.y, mau: n.mau }] : []));
-    this.chuView = this.chu.filter((c) => trong(c.x, c.y, 300));
+    // Mê cung bom: không có chữ bay trên đầu nhân vật / quái (nhân vật, quái nhỏ so với cả mê cung nên chữ không đọc được)
+    this.chuView = this.chu.filter((c) => trong(c.x, c.y, 300) && !this.vungMc(c));
     // Chỉ nhân vật và gà mẹ (gốc + phụ) có thanh máu trên đầu; chỉ lấy khi nằm trong khung nhìn
     const cacTuong = this.ga.filter((g) => g.loai === 'boss' && !g.chet);
     this.tuongSong = cacTuong.find((g) => g.goc) ?? null;
@@ -7440,7 +7442,7 @@ export class Game {
   }
 
   /** Đang ở chính map mê cung bom (lưới mê cung, hoặc đoạn đường hầm đã ra khỏi đảo 1): chỉ ở đây nhân vật mới to hơn / camera mới lùi xa */
-  private vungMc(n: { x: number; y: number }): boolean {
+  vungMc(n: { x: number; y: number }): boolean {
     if (banDoHt !== 'sa') return false;
     if (trongMeCung(n.x, n.y, 300)) return true;
     const d = DAO[1]!;
@@ -7806,6 +7808,33 @@ export class Game {
     else this.batDauCuu(n);
   }
 
+  /** Lối ra mê cung: mọi người đang đi bộ (kể cả người gục) dịch chuyển tới núi đá, chỗ bóng ma Goku; ra khỏi lưới mê cung
+   *  nên máu / mana trả lại đúng như lúc bước vào (người gục thì trả lại khi được cứu sống) */
+  private mcRaNui(raT: { x: number; y: number }): void {
+    const dung = this.nguoi.map((n, p) => ({ n, p })).filter(({ n, p }) => !n.vang && !this.trongMb(p) && !this.trongCau(p));
+    this.vet.push({ id: this.id++, x: raT.x, y: raT.y - 120, t: 0, loai: 'chay', co: 1.2 });
+    const dx = NUI.x, dy = NUI.y + NUI.ry * 0.5;
+    dung.forEach(({ n, p }, i) => {
+      n.x = dx + (dung.length > 1 ? (i === 0 ? -170 : 170) : 0);
+      n.y = dy;
+      n.dich = null;
+      n.dangDi = false;
+      giuTrongMap(n, leNhanVat(n.nv.heSoTo), false, 'dao');
+      const s = this.mc.nv[p]!;
+      s.toi = null;
+      s.di = null;
+      s.duong = [];
+      s.nap = null;
+      s.trang = null;
+      for (const cu of this.cuu) if (cu.p === p) { cu.x = n.x; cu.y = n.y; }
+    });
+    this.vet.push({ id: this.id++, x: dx, y: dy - 200, t: 0, loai: 'chay', co: 1.6 });
+    this.chu.push({ id: this.id++, x: dx, y: dy - 600, text: '👻 RA KHỎI MÊ CUNG: TỚI NÚI ĐÁ CỦA BÓNG MA GOKU!', mau: '#c9a2ff', t: 0 });
+    this.am.phat('chuong');
+    this.rungMan(0.3, 8);
+    this.camNgay = true;
+  }
+
   /** Mỗi khung: bom, lửa / nước, trạng thái cháy / bong bóng / lưới, cứu người, nhặt đồ, quái ăn thịt.
    *  Không ai ở mê cung / đường hầm thì quái đứng im ("một chấm"), chỉ bom / lửa còn dở chạy nốt */
   private capNhatMeCung(dt: number): void {
@@ -7817,6 +7846,9 @@ export class Game {
       const dich = !n.vang && !this.trongMb(p) && this.vungMc(n) ? MC_TO_NV : 1;
       this.toMc[p] = this.toMc[p]! + (dich - this.toMc[p]!) * Math.min(1, dt * 4);
     });
+    // Lối ra góc dưới phải: ai (còn sống, không bị cháy / bong bóng / lưới) tới tâm ô lối ra thì cả đội dịch chuyển tới núi đá
+    const raT = tamO(O_RA_MC.i, O_RA_MC.j);
+    if (this.nguoi.some((n, p) => this.oMeCung(p) && !n.het && !mc.nv[p]!.trang && hyp(n.x - raT.x, n.y - raT.y) < MC_O * 0.3)) this.mcRaNui(raT);
     // 1 mạng trong mê cung: nhớ máu / mana lúc bước vào, ra khỏi mê cung (còn sống) thì trả lại đúng như cũ
     this.nguoi.forEach((n, p) => {
       const s = mc.nv[p]!;
@@ -7828,16 +7860,6 @@ export class Game {
         s.luu = null;
         this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: `↩ ${n.ten} RA KHỎI MÊ CUNG: MÁU ${Math.ceil(n.hp)} · MANA ${Math.ceil(n.mana)}`, mau: n.mau, t: 0 });
       }
-    });
-    // Vừa bước vào mê cung: nhắc cách dùng bom (mỗi người một lần mỗi lần vào)
-    this.nguoi.forEach((n, p) => {
-      const vao = this.oMeCung(p) && !n.het;
-      if (vao && !this.mcTruoc[p]) {
-        const huong = this.cheDo === 'chuot' ? 'Chuột trái: giữ để ném xa, bấm lại để kích nổ · phím 1/2/3 chọn bom' : 'A lửa · X nước · Y nổ: giữ để ném xa · B kích nổ';
-        this.chu.push({ id: this.id++, x: n.x, y: n.y - 330, text: `💣 MÊ CUNG BOM: ${huong}`, mau: '#ffd27a', t: -1.5 });
-        this.chu.push({ id: this.id++, x: n.x, y: n.y - 430, text: '❤ CHỈ CÓ 1 MẠNG! RA KHỎI MÊ CUNG THÌ MÁU / MANA NHƯ CŨ', mau: '#ff7a7a', t: -1.5 });
-      }
-      this.mcTruoc[p] = vao;
     });
     this.nguoi.forEach((n, p) => {
       const s = mc.nv[p]!;

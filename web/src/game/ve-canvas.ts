@@ -10,7 +10,7 @@ import { MABU } from './nhan-vat-du-lieu';
 import { SP_FRIEZA, SP_FRIEZA_VANG, FZ_TEN, FZ_TEN_VANG, FZ_TO, FZ_VANG_TO, FZ_VANG_AURA, FZ_VANG_T, FZ_KHUNG, FZ_CHET_T, FZ_DANH_T, FZ_CHUONG_NAP, fzKhung, fzVang, fzKhungVang, fzHpMax, fzGap } from './frieza';
 import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_LO_LUNG } from './ginyu';
 import { MC, MC_HAM, MC_O, MC_COT, MC_HANG, mcO, tamO } from './ban-do';
-import { bayBom, BOM_NO_T, BOM_TAM_MAX, LOAI_BOM, LUA_T, MC_TEN, QUAI_TEN, QUAI_RA, QUAI_DL, QUAI_TIA_T, QUAI_CHET_T, QUAI_HU_LUA, QUAI_HU_TIA, SP_QUAI, SP_QUAI_HU, khungQuai, SP_BOM, NO_KHUNG, SP_BA, BA_TO, BA_NGOC_R, BA_TAY, BA_TEN, BA_HP, BA_CHET_T, type BomMc, type LoaiBom, type QuaiMc, type TiaMc } from './me-cung';
+import { O_RA_MC, bayBom, BOM_NO_T, BOM_TAM_MAX, LOAI_BOM, LUA_T, MC_TEN, QUAI_TEN, QUAI_RA, QUAI_DL, QUAI_TIA_T, QUAI_CHET_T, QUAI_HU_LUA, QUAI_HU_TIA, SP_QUAI, SP_QUAI_HU, khungQuai, SP_BOM, NO_KHUNG, SP_BA, BA_TO, BA_NGOC_R, BA_TAY, BA_TEN, BA_HP, BA_CHET_T, type BomMc, type LoaiBom, type QuaiMc, type TiaMc } from './me-cung';
 import { DAO, doSau, duongBo, NUI, TG, THAN, THAN_CONG, THAN_DA_GIAC, THAN_VAT_TG, thanVo } from './ban-do';
 
 /** Con ma của chiêu Bóng ma (Super Bư), tách nền bằng tools/tao-atlas-super-buu.py */
@@ -995,7 +995,15 @@ export class VeCanvas {
         else this.veBanh(ctx, c, o.tc);
         ctx.globalAlpha = 1;
       } else if (o.loai === 'cong') {
-        this.veCong(ctx, c, o.than ? THAN_CONG : c.cong);
+        if (o.mc) {
+          // Lối ra mê cung bom: cổng dịch chuyển thu nhỏ vừa một ô
+          const t = tamO(O_RA_MC.i, O_RA_MC.j);
+          ctx.save();
+          ctx.translate(t.x, t.y + MC_O * 0.3);
+          ctx.scale(0.42, 0.42);
+          this.veCong(ctx, c, { x: 0, y: 0 });
+          ctx.restore();
+        } else this.veCong(ctx, c, o.than ? THAN_CONG : c.cong);
       }
       else if (o.loai === 'quai') {
         ctx.globalAlpha = c.doRo(o.q.x, o.q.y);
@@ -1371,7 +1379,8 @@ export class VeCanvas {
       this.veSocola(ctx, { x: 0, y: 0, t: c.t % 10 });
       ctx.restore();
     }
-    // Số giây đếm ngược (15 → 0) trên đầu
+    // Số giây đếm ngược (15 → 0) trên đầu; mê cung bom thì không có chữ
+    if (c.vungMc(cu)) { ctx.restore(); return; }
     ctx.translate(0, -230);
     ctx.font = `800 64px ${FONT}`;
     ctx.textAlign = 'center';
@@ -1866,8 +1875,10 @@ export class VeCanvas {
     ctx.fillRect(MC.x0 - T, MC.y0 - T * 1.6, MC.w + 2 * T, T * 1.6);
     ctx.fillRect(MC.x0 - T, MC.y1, MC.w + 2 * T, T);
     ctx.fillRect(MC.x0 - T, MC.y0, T, MC.h);
-    ctx.fillRect(MC.x1, MC.y0, T, H.y - H.r - 30 - MC.y0);
-    ctx.fillRect(MC.x1, H.y + H.r + 30, T, MC.y1 - H.y - H.r - 30);
+    // Tường đông chừa cửa vào (góc trên phải, đường hầm) và lối ra (góc dưới phải, cổng tới núi đá)
+    const raY = MC.y0 + O_RA_MC.j * MC_O;
+    if (H.y - H.r - 30 > MC.y0) ctx.fillRect(MC.x1, MC.y0, T, H.y - H.r - 30 - MC.y0);
+    ctx.fillRect(MC.x1, H.y + H.r + 30, T, raY - H.y - H.r - 30);
     const i0 = Math.max(0, Math.floor((x0 - MC.x0) / MC_O) - 1), i1 = Math.min(MC_COT - 1, Math.floor((x1 - MC.x0) / MC_O) + 1);
     const j0 = Math.max(0, Math.floor((y0 - MC.y0) / MC_O) - 1), j1 = Math.min(MC_HANG - 1, Math.floor((y1 - MC.y0) / MC_O) + 1);
     const O = MC_O;
@@ -2314,14 +2325,6 @@ export class VeCanvas {
       ctx.fillStyle = tr.loai === 'bong' ? '#5ab4ff' : tr.loai === 'chay' ? '#ff6a2a' : '#d9c27a';
       tronCD(ctx, cx - 114, yb + 6, 228 * dongHe(tr.con / tr.max), 22, 11);
       ctx.fill();
-      ctx.font = `900 52px ${FONT}`;
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#fff';
-      ctx.strokeStyle = '#000';
-      ctx.lineWidth = 8;
-      const chu = tr.loai === 'bong' ? `🫧 ${tr.con.toFixed(1)}s · cần 🗡` : tr.loai === 'chay' ? `🔥 ${tr.con.toFixed(1)}s · cần 🪣` : `🕸 ${tr.con.toFixed(1)}s`;
-      ctx.strokeText(chu, cx, yb - 16);
-      ctx.fillText(chu, cx, yb - 16);
     }
     // Đồ cứu người đang cầm (góc trên đầu)
     if (s.do) {
@@ -2548,7 +2551,8 @@ export class VeCanvas {
     const h = c.hopThe;
     if (h?.chu === p) this.veDemHopThe(ctx, t.x, t.y - 40, h.con);
     // Combo đang chạy (từ 3 đòn); combo đủ cao thì chưởng hồi nhanh (⚡)
-    if (n.het) return;
+    // Mê cung bom: không có chữ trên đầu (nhỏ quá, không đọc được)
+    if (n.het || c.vungMc(n)) return;
     const dong: string[] = [];
     if (n.combo >= 3) dong.push(`COMBO ${n.combo}${n.combo >= c.COMBO_GIAM_HOI ? ' ⚡' : ''}`);
     // Hợp thể: đang chờ hồi / đã sẵn sàng (đứng gần nhau)
@@ -2972,7 +2976,7 @@ export class VeCanvas {
     }
     ctx.lineJoin = 'round';
     ctx.textAlign = 'center';
-    if (tet > 0.9 || day.some((d) => d.tet > 0.9)) {
+    if ((tet > 0.9 || day.some((d) => d.tet > 0.9)) && !c.nguoi.some((n) => !n.vang && c.vungMc(n))) {
       ctx.font = `800 30px ${FONT}`;
       ctx.lineWidth = 6;
       ctx.strokeStyle = '#fff';

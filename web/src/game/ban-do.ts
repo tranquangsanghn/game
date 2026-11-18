@@ -216,28 +216,28 @@ export function raKhoiChanThan(o: { x: number; y: number }, le = 30): { cx: bool
 /** Mê cung bom: khối đất nổi trên vực phía tây đảo 1 (đảo Cell 3 con), lưới MC_COT × MC_HANG ô vuông cạnh MC_O.
  *  Nối với đảo 1 bằng một đường hầm đi bộ thẳng (MC_HAM, nửa bề rộng MC_HAM_RONG) cắm vào ô vào mê cung (hàng MC_VAO_HANG, mép đông).
  *  Ký hiệu ô (MC_BO): '#' gạch (không phá được, che bom nổ) · 'w' thùng gỗ (bom phá được) · '?' ô bí ẩn (bom phá được, rơi vật phẩm / bẫy)
- *  · 'H' hang quái · 'S' chỗ vào (cửa đường hầm) · 'D' ngọc rồng 4 sao (cuối mê cung) · 'K' kiếm · 'X' xô nước · '.' nền trống. */
+ *  · 'H' hang quái · 'S' chỗ vào (cửa đường hầm, góc trên phải) · 'E' lối ra (góc dưới phải, dịch chuyển tới núi đá) · 'D' ngọc rồng 4 sao (cuối mê cung) · 'K' kiếm · 'X' xô nước · '.' nền trống. */
 export const MC_O = 360;
 /** Khung cố định: chỉ các ô đặc biệt (cửa vào, ngọc, kiếm, xô nước, 5 hang); '.' là ô sinh ngẫu nhiên mỗi ván (datLaiMeCung) */
 export const MC_BO = [
-  '...............',
-  '...............',
-  '..H.........H..',
-  '...............',
-  '....K..........',
-  '...............',
-  'D.......H.....S',
-  '..........X....',
-  '...............',
-  '...............',
-  '....H.....H....',
-  '...............',
-  '...............',
+  '..................S',
+  '...................',
+  '....H.........H....',
+  '...................',
+  '......K............',
+  '...................',
+  'D.........H........',
+  '............X......',
+  '...................',
+  '...................',
+  '......H.....H......',
+  '...................',
+  '..................E',
 ];
 export const MC_COT = MC_BO[0]!.length;
 export const MC_HANG = MC_BO.length;
-/** Hàng có cửa vào (mép đông) và ô ngọc (mép tây) */
-const MC_VAO_HANG = 6;
+/** Hàng có cửa vào (mép đông, hàng trên cùng) */
+const MC_VAO_HANG = 0;
 /** Khoảng vực giữa mép đảo 1 và mép đông mê cung (phần đường hầm nằm ngoài đảo) */
 const MC_HAM_CACH = 2400;
 const MC_HAM_RONG = 210;
@@ -257,7 +257,7 @@ const MC_TI_LE_GACH = 0.3;
 const MC_TI_LE_THUNG = 0.32;
 const MC_TI_LE_BI_AN = 0.09;
 /** Ô luôn để trống quanh cửa vào (chỗ đứng ném bom đầu tiên) */
-const MC_TRONG_VAO: [number, number][] = [[-1, 0], [-2, 0], [-1, -1], [-1, 1]];
+const MC_TRONG_VAO: [number, number][] = [[-1, 0], [-2, 0], [0, 1], [-1, 1]];
 /** Sinh mê cung mới (mỗi ván): ô '.' của MC_BO rải ngẫu nhiên gạch / thùng gỗ / ô bí ẩn / nền trống, không có khối gạch 2 × 2;
  *  rồi đập bớt gạch (thành thùng gỗ) cho tới khi mọi ô không phải gạch đều tới được từ cửa vào (thùng / ô bí ẩn phá được bằng bom),
  *  mỗi hang có ít nhất một ô trống cạnh bên cho quái chui ra. */
