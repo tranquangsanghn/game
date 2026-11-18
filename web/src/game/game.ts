@@ -7511,6 +7511,26 @@ export class Game {
   }
 
   /** Ô (i, j) bước vào được: trong lưới thì không phải ô chắn / ô bà phù thuỷ / bom đã chạm đất; ngoài lưới chỉ đường hầm (ra khỏi mê cung) */
+  /** Ô (i, j) đang có người (trừ boP) hoặc quái (trừ boQ) đứng / đang đi tới. Mỗi ô mê cung chỉ chứa MỘT thứ:
+   *  một người, hoặc một quái, hoặc thùng / ô bí ẩn / gạch; đang đi giữa 2 ô thì giữ cả ô đi tới */
+  private mcChiem(i: number, j: number, boP = -1, boQ: QuaiMc | null = null): boolean {
+    for (let k = 0; k < this.nguoi.length; k++) {
+      const n = this.nguoi[k]!;
+      if (k === boP || n.vang || this.trongMb(k) || !trongMeCung(n.x, n.y)) continue;
+      const o = oCua(n.x, n.y);
+      if (o.i === i && o.j === j) return true;
+      const t = this.mc.nv[k]?.toi;
+      if (t && t.i === i && t.j === j) return true;
+    }
+    for (const q of this.mc.quai) {
+      if (q === boQ || q.chet !== undefined) continue;
+      if (q.ti === i && q.tj === j) return true;
+      const o = oCua(q.x, q.y);
+      if (o.i === i && o.j === j) return true;
+    }
+    return false;
+  }
+
   private mcVao(i: number, j: number): boolean {
     if (i < 0 || j < 0 || i >= MC_COT || j >= MC_HANG) { const t = tamO(i, j); return trongHam(t.x, t.y); }
     return !oCung(oMc(i, j)) && !this.oBa(i, j) && !this.mc.bom.some((b) => b.i === i && b.j === j && b.t >= bayBom(b));
@@ -7562,11 +7582,20 @@ export class Game {
       const o = oCua(n.x, n.y);
       if (!s.toi) {
         const t = tamO(o.i, o.j);
-        if (Math.abs(n.x - t.x) + Math.abs(n.y - t.y) > 0.5) s.toi = o;
-        else {
+        if (Math.abs(n.x - t.x) + Math.abs(n.y - t.y) > 0.5) {
+          // Vừa bước từ đường hầm vào ô cửa mà ô đó đã có người / quái: lùi lại ra đường hầm, chờ ô trống
+          if (lan === 0 && this.mcChiem(o.i, o.j, p) && o.i === MC_COT - 1) { n.x = MC.x1 + 2; n.dangDi = false; return false; }
+          s.toi = o;
+        } else {
           n.x = t.x;
           n.y = t.y;
           const ke = s.di ? { i: o.i + s.di.x, j: o.j + s.di.y } : s.duong.shift();
+          if (ke && Math.abs(ke.i - o.i) + Math.abs(ke.j - o.j) === 1 && this.mcVao(ke.i, ke.j) && this.mcChiem(ke.i, ke.j, p)) {
+            // Ô kế đang có người / quái: đứng chờ ở tâm ô (đường chuột bấm giữ nguyên)
+            if (!s.di) s.duong.unshift(ke);
+            else this.mcQuay(n, s.di.x, s.di.y);
+            break;
+          }
           if (ke && Math.abs(ke.i - o.i) + Math.abs(ke.j - o.j) === 1 && this.mcVao(ke.i, ke.j)) s.toi = ke;
           else {
             s.duong = [];
@@ -7578,7 +7607,7 @@ export class Game {
         // Đang đi giữa 2 ô mà bấm hướng ngược lại: quay về ô vừa rời
         const t = tamO(s.toi.i, s.toi.j);
         const mx = Math.sign(t.x - n.x), my = Math.sign(t.y - n.y);
-        if (Math.abs(mx) + Math.abs(my) === 1 && s.di.x === -mx && s.di.y === -my) s.toi = { i: s.toi.i - mx, j: s.toi.j - my };
+        if (Math.abs(mx) + Math.abs(my) === 1 && s.di.x === -mx && s.di.y === -my && !this.mcChiem(s.toi.i - mx, s.toi.j - my, p)) s.toi = { i: s.toi.i - mx, j: s.toi.j - my };
       }
       // Đi thẳng theo trục tới tâm ô (lệch tâm lúc mới vào lưới thì đi ngang trước rồi dọc)
       const t = tamO(s.toi.i, s.toi.j);
@@ -7866,7 +7895,12 @@ export class Game {
       mc.hang[k]! -= dt;
       if (mc.hang[k]! > 0) return;
       mc.hang[k] = QUAI_CACH;
-      if (mc.quai.filter((q) => q.hang === k && q.chet === undefined).length < QUAI_TOI_DA) this.mcSinhQuai(h.i, h.j, k);
+      if (mc.quai.filter((q) => q.hang === k && q.chet === undefined).length >= QUAI_TOI_DA) return;
+      // Quái chui ra ô trống cạnh hang (ô đó không có người / quái / bom)
+      const ra = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const).map(([x, y]) => ({ i: h.i + x, j: h.j + y }))
+        .filter((o) => !oCung(oMc(o.i, o.j)) && !this.oBa(o.i, o.j) && !this.mcChiem(o.i, o.j) && !mc.bom.some((b) => b.i === o.i && b.j === o.j));
+      if (ra.length) { const o = ra[Math.floor(Math.random() * ra.length)]!; this.mcSinhQuai(o.i, o.j, k); }
+      else mc.hang[k] = 1;
     });
     for (const q of [...mc.quai]) if (q.chet === undefined) this.mcQuai(q, dt);
     this.mcBa(dt);
@@ -8020,8 +8054,7 @@ export class Game {
     if (q.ban > 0) return;
     const HUONG = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
     const diDuoc = (i: number, j: number) => {
-      const c = oMc(i, j);
-      return (dl.bay ? c !== '#' && c !== 'H' : !oCung(c)) && !this.mc.bom.some((b) => b.i === i && b.j === j && b.t >= bayBom(b));
+      return !oCung(oMc(i, j)) && !this.oBa(i, j) && !this.mcChiem(i, j, -1, q) && !this.mc.bom.some((b) => b.i === i && b.j === j && b.t >= bayBom(b));
     };
     // Người trong mê cung (không ẩn / gục) gần nhất theo ô
     let muc: { i: number; j: number } | null = null;
@@ -8090,7 +8123,7 @@ export class Game {
     }
     if (q.choCan > 0) return;
     for (const n of this.nguoi) {
-      if (n.vang || this.khuat(n) || hyp(n.x - q.x, n.y - q.y) >= QUAI_CHAM) continue;
+      if (n.vang || this.khuat(n) || !trongMeCung(n.x, n.y) || hyp(n.x - q.x, n.y - q.y) >= QUAI_CHAM) continue;
       q.choCan = QUAI_HOI;
       q.danh = 0.35;
       if (n.x !== q.x) q.lat = n.x < q.x;

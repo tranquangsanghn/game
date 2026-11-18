@@ -99,14 +99,14 @@ export const GIAY_TOI_DA = 3;
  *  (đường không bị ô chắn) thì vận chiêu `nap` giây (vạch báo trên đất) rồi bắn dọc hàng / cột, hồi `hoi` giây:
  *  - so19 (Số 19, Android 19): tia đỏ từ tay, nhanh, 1 máu
  *  - khi (Khỉ đột, Oozaru): to, chậm, 2 máu, tia tím từ miệng bắn xa
- *  - quy (Quỷ canh cổng, Guardian): bay qua thùng gỗ / ô bí ẩn (không qua gạch / hang), phun cầu lửa: ô lửa làm bốc cháy như bom lửa */
+ *  - quy (Quỷ canh cổng, Guardian): bay lơ lửng (vẫn đi theo ô như mọi quái), phun cầu lửa: ô lửa làm bốc cháy như bom lửa */
 export type LoaiQuai = 'so19' | 'khi' | 'quy';
 export const LOAI_QUAI: LoaiQuai[] = ['so19', 'khi', 'quy'];
 export interface DlQuai {
   ten: string; toc: number; mau: number; ngui: number; duoi: number;
   tam: number; nap: number; hoi: number;
   /** độ to khi vẽ (khung sprite 200), độ cao tia so với chân (đơn vị thế giới), bay lơ lửng */
-  to: number; tiaY: number; bay: boolean; diem: number;
+  to: number; tiaY: number; /** vẽ lơ lửng */ bay: boolean; diem: number;
 }
 export const QUAI_DL: Record<LoaiQuai, DlQuai> = {
   so19: { ten: 'Số 19', toc: 220, mau: 1, ngui: 6, duoi: 0.5, tam: 4, nap: 0.7, hoi: 4, to: 2.4, tiaY: 250, bay: false, diem: 40 },
@@ -116,8 +116,9 @@ export const QUAI_DL: Record<LoaiQuai, DlQuai> = {
 export const QUAI_DAU = 6;
 export const QUAI_CACH = 12;
 export const QUAI_TOI_DA = 2;
-/** Cắn / đấm / húc: chạm trong QUAI_CHAM thì đánh QUAI_SAT mỗi QUAI_HOI giây (nhân vật vẫn né 25%, giảm 50%) */
-export const QUAI_CHAM = 150;
+/** Đấm / cắn / húc người ở ô bên cạnh (mỗi ô chỉ một người hoặc một quái nên không bao giờ đứng chung ô): cách trong QUAI_CHAM (hơn 1 ô MC_O = 360 một chút, ô chéo 509 không tính)
+ *  thì đánh QUAI_SAT mỗi QUAI_HOI giây (nhân vật vẫn né 25%, giảm 50%) */
+export const QUAI_CHAM = 400;
 export const QUAI_SAT = 60;
 export const QUAI_HOI = 1;
 /** Tia của Số 19 / Khỉ đột trúng ai thì sát thương QUAI_TIA_SAT (trong mê cung 1 mạng: khiên đỡ, không thì gục); tia hiện QUAI_TIA_T giây */
