@@ -60,7 +60,7 @@ export const MC_NGOC_SAO = 4;
 
 /** Trong / quanh mê cung và đường hầm: nhân vật vẽ to gấp MC_TO_NV; trên đường hầm camera lùi xa (zoom × MC_ZOOM_HE),
  *  mọi người đã vào lưới mê cung thì camera đặt ở tâm mê cung, zoom vừa đủ thấy toàn bộ (cộng lề MC_CAM_LE mỗi bên) */
-export const MC_TO_NV = 1.5;
+export const MC_TO_NV = 2.5;
 export const MC_ZOOM_HE = 0.75;
 export const MC_CAM_LE = 160;
 
