@@ -6,7 +6,7 @@ import { NhanVat } from './nhan-vat-sprite';
 import { NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
 import { MC, MC_COT, MC_HANG, MC_HAM, datLaiMeCung, oCua, oCung, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
-import { taoMeCung, O_VAO_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, TRANG_LUOI, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, GIAY_TOC, GIAY_TOI_DA, QUAI_CACH, QUAI_TOI_DA, QUAI_TOC, QUAI_NGUI, QUAI_DUOI, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DIEM, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_BOM_TAM, BA_DAY, BA_DIEM, BA_CHET_T, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
+import { taoMeCung, O_VAO_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, TRANG_LUOI, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, GIAY_TOC, GIAY_TOI_DA, QUAI_CACH, QUAI_TOI_DA, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DL, LOAI_QUAI, QUAI_TIA_SAT, QUAI_TIA_T, QUAI_CHET_T, QUAI_DAU_T, SP_QUAI, type LoaiQuai, type TiaMc, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_BOM_TAM, BA_DAY, BA_DIEM, BA_CHET_T, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
@@ -1054,6 +1054,7 @@ export class Game {
   mc: TrangThaiMc = taoMeCung();
   mcBomView: BomMc[] = [];
   mcLuaView: LuaMc[] = [];
+  mcTiaView: TiaMc[] = [];
   mcVpView: VpMc[] = [];
   mcDoView: DoMc[] = [];
   /** p đã ở trong mê cung ở khung trước (để nhắc cách dùng bom lúc vừa vào; không lưu ván) */
@@ -1317,7 +1318,7 @@ export class Game {
       this.canvasNen.setAttribute('aria-hidden', 'true');
       this.canvasEl.before(this.canvasNen);
       this.ctxNen = this.canvasNen.getContext('2d');
-      this.ve.napTruoc(...NHAN_VAT.map((v) => v.atlas), SP_VG_CHUONG.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas, SP_PT.atlas, SP_CELL.atlas, SP_CELL_TIEC.atlas, SP_CONG.atlas, SP_GINYU.atlas, SP_FRIEZA.atlas, SP_FRIEZA_VANG.atlas, SP_BOM.atlas, SP_BA.atlas, ...CHUONG_LOAI.map((l) => l.atlas));
+      this.ve.napTruoc(...NHAN_VAT.map((v) => v.atlas), SP_VG_CHUONG.atlas, 'assets/game/map_co.png', 'assets/game/tuong_gach.png', SP_CAU.atlas, SP_NGOC.atlas, SP_MB.atlas, SP_PT.atlas, SP_CELL.atlas, SP_CELL_TIEC.atlas, SP_CONG.atlas, SP_GINYU.atlas, SP_FRIEZA.atlas, SP_FRIEZA_VANG.atlas, SP_BOM.atlas, SP_BA.atlas, SP_QUAI.atlas, ...CHUONG_LOAI.map((l) => l.atlas));
       for (const sp of [GA_TRANG, GA_DO, GA_DEN]) this.ve.nhuomTruoc(sp.atlas, [MAU_SANG, LOC_SOCOLA, LOC_SOCOLA_HONG]);
       this.ve.nhuomTruoc(GA_TUONG.atlas, [MAU_SANG, LOC_BAO, LOC_DEN, LOC_VANG, LOC_DO, LOC_SOCOLA, ...LOC_PHU]);
       this.ve.nhuomTruoc(SP_CELL.atlas, [LOC_SOCOLA]);
@@ -2825,7 +2826,8 @@ export class Game {
     // Cell, bánh sinh nhật, chưởng tiệc: bị sương mù (chỉ vẽ trong tầm nhìn, mờ dần ở dải MO_RO cuối, doRo()) và lọc theo khung nhìn. Lề theo kích thước sprite thật.
     this.cellView = this.cell.filter((c) => trong(c.x, c.y - 32 * cellK(c.cap), (c.cap === SO_CAP - 1 ? 58 : 40) * cellK(c.cap) + 60) && this.doRo(c.x, c.y) > 0);
     for (const c of this.cellView) xep.push({ loai: 'cell', y: c.y, ce: c });
-    for (const q of mc.quai) if (trong(q.x, q.y - 80, 200) && this.doRo(q.x, q.y) > 0) xep.push({ loai: 'quai', y: q.y, q });
+    for (const q of mc.quai) if (trong(q.x, q.y - 150, 400) && this.doRo(q.x, q.y) > 0) xep.push({ loai: 'quai', y: q.y, q });
+    this.mcTiaView = mc.tia.filter((t) => trong((t.x0 + t.x1) / 2, (t.y0 + t.y1) / 2, 300 + Math.abs(t.x1 - t.x0) / 2 + Math.abs(t.y1 - t.y0) / 2));
     // Bà phù thuỷ (cao ~600 trên viên ngọc): khung nhìn trước, sương mù sau (ngọc phát sáng nên thấy xa hơn, baThay()); bị hạ thì mờ dần BA_CHET_T giây
     if (banDoHt === 'sa' && (!mc.ba.chet || mc.ba.tChet < BA_CHET_T)) {
       const v = this.viTriBa();
@@ -7476,7 +7478,9 @@ export class Game {
 
   /** Số quái ăn thịt đang sống trong mê cung */
   get soQuaiMc(): number {
-    return this.mc.quai.length;
+    let k = 0;
+    for (const q of this.mc.quai) if (q.chet === undefined) k++;
+    return k;
   }
 
   /** Mức nạp hiện tại của p (0 = không giữ nút, 1..BOM_MUC = số ô sẽ ném xa) */
@@ -7713,15 +7717,30 @@ export class Game {
     let r = Math.random();
     const loai = TI_LE_O_BI_AN.find(([, x]) => (r -= x) < 0)?.[0] ?? 'giay';
     if (loai === 'quai') {
-      this.mcSinhQuai(i, j, -1, QUAI_RA * 1.5);
-      this.chu.push({ id: this.id++, x: t.x, y: t.y - 160, text: '👾 QUÁI ĂN THỊT NHẢY RA!', mau: '#b46bff', t: 0 });
+      const q = this.mcSinhQuai(i, j, -1, QUAI_RA * 1.5);
+      this.chu.push({ id: this.id++, x: t.x, y: t.y - 160, text: `👾 ${QUAI_DL[q.loai].ten.toUpperCase()} NHẢY RA!`, mau: '#b46bff', t: 0 });
     } else this.mc.vp.push({ id: this.id++, i, j, loai });
   }
 
-  private mcSinhQuai(i: number, j: number, hang: number, ra = QUAI_RA): void {
+  private mcSinhQuai(i: number, j: number, hang: number, ra = QUAI_RA): QuaiMc {
     const t = tamO(i, j);
-    this.mc.quai.push({ id: this.id++, x: t.x, y: t.y, ti: i, tj: j, dang: false, huong: 0, hang, ra, choCan: 0, ph: Math.random() * 6 });
+    const loai: LoaiQuai = LOAI_QUAI[Math.floor(Math.random() * LOAI_QUAI.length)]!;
+    const q: QuaiMc = {
+      id: this.id++, loai, x: t.x, y: t.y, ti: i, tj: j, dang: false, huong: 0, hang, ra, choCan: 0, ph: Math.random() * 6,
+      mau: QUAI_DL[loai].mau, lat: Math.random() < 0.5, nap: 0, tia: [], ban: 0, hoiChieu: QUAI_DL[loai].hoi / 2, danh: 0, dau: 0,
+    };
+    this.mc.quai.push(q);
     this.vetGa({ id: this.id++, x: t.x, y: t.y, t: 0, loai: 'bui', co: 1.4 });
+    return q;
+  }
+
+  /** Quái bị hạ: xác nằm mờ dần QUAI_CHET_T giây; người ném bom (p ≥ 0) được điểm theo loài */
+  private mcQuaiChet(q: QuaiMc, p: number): void {
+    q.chet = 0;
+    q.nap = 0;
+    this.vetGa({ id: this.id++, x: q.x, y: q.y - 80, t: 0, loai: 'chay', co: 1 });
+    const d = QUAI_DL[q.loai].diem;
+    if (p >= 0 && !this.nguoi[p]!.vang) this.congDiem(p, d, q.x, q.y - 260, `👾 +${d}`);
   }
 
   /** p dính lửa / nước / bom nổ: khiên đỡ một lần; bom nổ trừ máu; lửa → bốc cháy, nước → sặc trong bong bóng (chờ đồng đội cứu) */
@@ -7810,7 +7829,10 @@ export class Game {
       if (dat >= 0 && (b.kich || dat >= (b.loai === 'no' ? BOM_NO_T : b.p < 0 ? BA_BOM_CHO : BOM_TAM_MAX))) this.mcNo(b);
     }
     // Lửa / nước còn trên ô: ai (người, quái) đứng trong ô đó thì dính
-    const chet = new Set<QuaiMc>();
+    for (const t of mc.tia) t.t += dt;
+    mc.tia = mc.tia.filter((t) => t.t < QUAI_TIA_T);
+    for (const q of mc.quai) if (q.chet !== undefined) q.chet += dt;
+    mc.quai = mc.quai.filter((q) => q.chet === undefined || q.chet < QUAI_CHET_T);
     for (const f of mc.lua) {
       f.con -= dt;
       this.nguoi.forEach((n, p) => {
@@ -7820,16 +7842,22 @@ export class Game {
         f.da.push(p);
         this.mcTrung(p, f.loai);
       });
+      // Lửa quỷ canh cổng phun ra không hại quái; bom nổ trừ 2 máu, lửa / nước trừ 1 (mỗi ngọn trúng một con một lần)
+      if (f.p === -2) continue;
       for (const q of mc.quai) {
-        if (q.ra > 0 || chet.has(q)) continue;
+        if (q.ra > 0 || q.chet !== undefined || f.quaiDa?.includes(q.id)) continue;
         const o = oCua(q.x, q.y);
         if (o.i !== f.i || o.j !== f.j) continue;
-        chet.add(q);
-        this.vetGa({ id: this.id++, x: q.x, y: q.y - 60, t: 0, loai: 'chay', co: 0.9 });
-        if (f.p >= 0 && !this.nguoi[f.p]!.vang) this.congDiem(f.p, QUAI_DIEM, q.x, q.y - 200, `👾 +${QUAI_DIEM}`);
+        (f.quaiDa ??= []).push(q.id);
+        q.mau -= f.loai === 'no' ? 2 : 1;
+        if (q.mau <= 0) this.mcQuaiChet(q, f.p);
+        else {
+          q.dau = QUAI_DAU_T;
+          q.nap = 0;
+          this.chuGa({ id: this.id++, x: q.x, y: q.y - 380, text: `💢 ${QUAI_DL[q.loai].ten.toUpperCase()} CÒN ${q.mau} MÁU`, mau: '#ffb347', t: 0 });
+        }
       }
     }
-    if (chet.size) mc.quai = mc.quai.filter((q) => !chet.has(q));
     for (const f of mc.lua) if (f.p >= 0 && !f.baDa && this.oBa(f.i, f.j)) { f.baDa = true; this.mcTrungBa(f); }
     mc.lua = mc.lua.filter((f) => f.con > 0);
     if (!hoat) return;
@@ -7838,9 +7866,9 @@ export class Game {
       mc.hang[k]! -= dt;
       if (mc.hang[k]! > 0) return;
       mc.hang[k] = QUAI_CACH;
-      if (mc.quai.filter((q) => q.hang === k).length < QUAI_TOI_DA) this.mcSinhQuai(h.i, h.j, k);
+      if (mc.quai.filter((q) => q.hang === k && q.chet === undefined).length < QUAI_TOI_DA) this.mcSinhQuai(h.i, h.j, k);
     });
-    for (const q of mc.quai) this.mcQuai(q, dt);
+    for (const q of [...mc.quai]) if (q.chet === undefined) this.mcQuai(q, dt);
     this.mcBa(dt);
     // Cứu người: đồng đội cầm xô nước (dập lửa) / kiếm (chém bong bóng) đứng gần
     this.nguoi.forEach((n, p) => {
@@ -7973,31 +8001,71 @@ export class Game {
     if (ba.pha >= BA_PHA[2]!) { ba.pha = -1; ba.nem = BA_NEM_CACH; }
   }
 
-  /** Quái ăn thịt: đi từng ô (không qua ô chắn / bom đã chạm đất), đánh hơi người trong QUAI_NGUI ô thì hay đi về phía đó; chạm thì cắn */
+  /** Quái mê cung (Số 19, Khỉ đột, Quỷ canh cổng): đi từng ô (không qua ô chắn / bom đã chạm đất; quỷ bay qua thùng / ô bí ẩn),
+   *  đánh hơi người thì hay đi về phía đó; đứng thẳng hàng / cột với người trong tầm thì vận chiêu rồi bắn dọc hàng / cột; chạm thì đánh */
   private mcQuai(q: QuaiMc, dt: number): void {
+    const dl = QUAI_DL[q.loai];
     q.ph += dt * 6;
     q.choCan = Math.max(0, q.choCan - dt);
+    q.hoiChieu = Math.max(0, q.hoiChieu - dt);
+    q.danh = Math.max(0, q.danh - dt);
+    q.ban = Math.max(0, q.ban - dt);
     if (q.ra > 0) { q.ra -= dt; return; }
+    if (q.dau > 0) { q.dau -= dt; return; }
+    if (q.nap > 0) {
+      q.nap -= dt;
+      if (q.nap <= 0) this.mcQuaiBan(q);
+      return;
+    }
+    if (q.ban > 0) return;
     const HUONG = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
-    let con = QUAI_TOC * dt;
+    const diDuoc = (i: number, j: number) => {
+      const c = oMc(i, j);
+      return (dl.bay ? c !== '#' && c !== 'H' : !oCung(c)) && !this.mc.bom.some((b) => b.i === i && b.j === j && b.t >= bayBom(b));
+    };
+    // Người trong mê cung (không ẩn / gục) gần nhất theo ô
+    let muc: { i: number; j: number } | null = null;
+    let gan = dl.ngui + 1;
+    for (const n of this.nguoi) {
+      if (n.vang || this.khuat(n) || !trongMeCung(n.x, n.y)) continue;
+      const o = oCua(n.x, n.y);
+      const d = Math.abs(o.i - q.ti) + Math.abs(o.j - q.tj);
+      if (d < gan) { gan = d; muc = o; }
+    }
+    // Đứng ở tâm ô, thẳng hàng / cột với người trong tầm, đường không bị chắn: vận chiêu
+    const thuChieu = (): boolean => {
+      if (q.hoiChieu > 0 || q.danh > 0) return false;
+      for (const n of this.nguoi) {
+        if (n.vang || this.khuat(n) || !trongMeCung(n.x, n.y)) continue;
+        const o = oCua(n.x, n.y);
+        if (o.i !== q.ti && o.j !== q.tj) continue;
+        const d = Math.abs(o.i - q.ti) + Math.abs(o.j - q.tj);
+        if (d < 1 || d > dl.tam) continue;
+        const hi = Math.sign(o.i - q.ti), hj = Math.sign(o.j - q.tj);
+        let thong = true;
+        for (let k = 1; k < d; k++) if (oCung(oMc(q.ti + hi * k, q.tj + hj * k))) { thong = false; break; }
+        if (!thong) continue;
+        // Các ô chiêu bay qua: tới hết tầm hoặc tới trước ô chắn
+        q.tia = [];
+        for (let k = 1; k <= dl.tam; k++) {
+          const i = q.ti + hi * k, j = q.tj + hj * k;
+          if (oCung(oMc(i, j))) break;
+          q.tia.push({ i, j });
+        }
+        if (hi) q.lat = hi < 0;
+        q.nap = dl.nap;
+        return true;
+      }
+      return false;
+    };
+    if (!q.dang && thuChieu()) return;
+    let con = dl.toc * dt;
     for (let g = 0; g < 4 && con > 0; g++) {
       if (!q.dang) {
-        const mo = [0, 1, 2, 3].filter((h) => {
-          const ni = q.ti + HUONG[h]![0], nj = q.tj + HUONG[h]![1];
-          return !oCung(oMc(ni, nj)) && !this.mc.bom.some((b) => b.i === ni && b.j === nj && b.t >= bayBom(b));
-        });
+        const mo = [0, 1, 2, 3].filter((h) => diDuoc(q.ti + HUONG[h]![0], q.tj + HUONG[h]![1]));
         if (!mo.length) break;
-        // Người gần nhất (trong mê cung, không ẩn / gục) trong tầm đánh hơi
-        let muc: { i: number; j: number } | null = null;
-        let gan = QUAI_NGUI + 1;
-        for (const n of this.nguoi) {
-          if (n.vang || this.khuat(n) || !trongMeCung(n.x, n.y)) continue;
-          const o = oCua(n.x, n.y);
-          const d = Math.abs(o.i - q.ti) + Math.abs(o.j - q.tj);
-          if (d < gan) { gan = d; muc = o; }
-        }
         let h: number;
-        if (muc && Math.random() < QUAI_DUOI) {
+        if (muc && Math.random() < dl.duoi) {
           h = mo.reduce((a, b) => {
             const da = Math.abs(q.ti + HUONG[a]![0] - muc!.i) + Math.abs(q.tj + HUONG[a]![1] - muc!.j);
             const db = Math.abs(q.ti + HUONG[b]![0] - muc!.i) + Math.abs(q.tj + HUONG[b]![1] - muc!.j);
@@ -8010,30 +8078,62 @@ export class Game {
           h = ds[Math.floor(Math.random() * ds.length)]!;
         }
         q.huong = h;
+        if (HUONG[h]![0]) q.lat = HUONG[h]![0] < 0;
         q.ti += HUONG[h]![0];
         q.tj += HUONG[h]![1];
         q.dang = true;
       }
       const t = tamO(q.ti, q.tj);
       const dx = t.x - q.x, dy = t.y - q.y, d = Math.abs(dx) + Math.abs(dy);
-      if (d <= con) { q.x = t.x; q.y = t.y; con -= d; q.dang = false; }
+      if (d <= con) { q.x = t.x; q.y = t.y; con -= d; q.dang = false; if (thuChieu()) return; }
       else { q.x += Math.sign(dx) * con; q.y += Math.sign(dy) * con; con = 0; }
     }
     if (q.choCan > 0) return;
     for (const n of this.nguoi) {
       if (n.vang || this.khuat(n) || hyp(n.x - q.x, n.y - q.y) >= QUAI_CHAM) continue;
       q.choCan = QUAI_HOI;
+      q.danh = 0.35;
+      if (n.x !== q.x) q.lat = n.x < q.x;
       const s = this.mc.nv[this.nguoi.indexOf(n)]!;
       if (s.khien) {
         // Khiên đẩy lùi quái: khiên vỡ, quái chết
         s.khien = false;
-        q.ra = -1;
-        this.mc.quai = this.mc.quai.filter((o) => o !== q);
+        this.mcQuaiChet(q, -1);
         this.chu.push({ id: this.id++, x: n.x, y: n.y - 260, text: '🛡 KHIÊN ĐẨY LÙI QUÁI!', mau: '#7fd0ff', t: 0 });
-        this.vet.push({ id: this.id++, x: q.x, y: q.y - 60, t: 0, loai: 'chay', co: 0.9 });
       } else this.nhanSatThuong(n, QUAI_SAT);
       break;
     }
+  }
+
+  /** Hết vận chiêu: Số 19 / Khỉ đột bắn tia dọc các ô đã chọn (ai đứng trên đó trúng, khiên đỡ); quỷ phun cầu lửa: các ô thành lửa (bốc cháy như bom lửa) */
+  private mcQuaiBan(q: QuaiMc): void {
+    const dl = QUAI_DL[q.loai];
+    q.nap = 0;
+    q.ban = QUAI_TIA_T;
+    q.hoiChieu = dl.hoi;
+    const cuoi = q.tia[q.tia.length - 1];
+    if (!cuoi) return;
+    const t1 = tamO(cuoi.i, cuoi.j);
+    const hi = Math.sign(cuoi.i - q.ti), hj = Math.sign(cuoi.j - q.tj);
+    const nua = 180;
+    this.mc.tia.push({ loai: q.loai, x0: q.x + hi * 70, y0: q.y, x1: t1.x + hi * nua, y1: t1.y + hj * nua, t: 0 });
+    if (q.loai === 'quy') {
+      for (const o of q.tia) this.mc.lua.push({ i: o.i, j: o.j, loai: 'lua', con: 0.6, p: -2, da: [] });
+      this.am.phat('chuong');
+      return;
+    }
+    this.am.phat('chuong');
+    this.rungMan(0.12, q.loai === 'khi' ? 8 : 5);
+    this.nguoi.forEach((n, p) => {
+      if (n.vang || this.khuat(n) || this.trongMb(p)) return;
+      const o = oCua(n.x, n.y);
+      if (!q.tia.some((x) => x.i === o.i && x.j === o.j)) return;
+      const s = this.mc.nv[p]!;
+      if (s.khien) {
+        s.khien = false;
+        this.chu.push({ id: this.id++, x: n.x, y: n.y - 260, text: '🛡 KHIÊN ĐỠ TIA!', mau: '#7fd0ff', t: 0 });
+      } else this.nhanSatThuong(n, QUAI_TIA_SAT, true, q.loai === 'khi' ? '#c77dff' : '#ff4d4d');
+    });
   }
 
   // ─── Khởi tạo ───

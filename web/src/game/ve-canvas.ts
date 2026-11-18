@@ -10,7 +10,7 @@ import { MABU } from './nhan-vat-du-lieu';
 import { SP_FRIEZA, SP_FRIEZA_VANG, FZ_TEN, FZ_TEN_VANG, FZ_TO, FZ_VANG_TO, FZ_VANG_AURA, FZ_VANG_T, FZ_KHUNG, FZ_CHET_T, FZ_DANH_T, FZ_CHUONG_NAP, fzKhung, fzVang, fzKhungVang, fzHpMax, fzGap } from './frieza';
 import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_LO_LUNG } from './ginyu';
 import { MC, MC_HAM, MC_O, MC_COT, MC_HANG, mcO, tamO } from './ban-do';
-import { bayBom, BOM_NO_T, BOM_TAM_MAX, LOAI_BOM, LUA_T, MC_TEN, QUAI_TEN, QUAI_RA, SP_BOM, NO_KHUNG, SP_BA, BA_TO, BA_NGOC_R, BA_TAY, BA_TEN, BA_HP, BA_CHET_T, type BomMc, type LoaiBom, type QuaiMc } from './me-cung';
+import { bayBom, BOM_NO_T, BOM_TAM_MAX, LOAI_BOM, LUA_T, MC_TEN, QUAI_TEN, QUAI_RA, QUAI_DL, QUAI_TIA_T, QUAI_CHET_T, QUAI_HU_LUA, QUAI_HU_TIA, SP_QUAI, SP_QUAI_HU, khungQuai, SP_BOM, NO_KHUNG, SP_BA, BA_TO, BA_NGOC_R, BA_TAY, BA_TEN, BA_HP, BA_CHET_T, type BomMc, type LoaiBom, type QuaiMc, type TiaMc } from './me-cung';
 import { DAO, doSau, duongBo, NUI, TG, THAN, THAN_CONG, THAN_DA_GIAC, THAN_VAT_TG, thanVo } from './ban-do';
 
 /** Con ma của chiêu Bóng ma (Super Bư), tách nền bằng tools/tao-atlas-super-buu.py */
@@ -999,7 +999,7 @@ export class VeCanvas {
       }
       else if (o.loai === 'quai') {
         ctx.globalAlpha = c.doRo(o.q.x, o.q.y);
-        this.veQuai(ctx, o.q);
+        this.veQuai(ctx, c, o.q);
         ctx.globalAlpha = 1;
       }
       else if (o.loai === 'ba') this.veBa(ctx, c);
@@ -1019,6 +1019,7 @@ export class VeCanvas {
     }
 
     this.veLuaMc(ctx, c);
+    for (const t of c.mcTiaView) this.veTiaMc(ctx, t);
     for (let p = 0; p < c.nguoi.length; p++) this.veThanhTrenDau(ctx, c, p);
     for (let p = 0; p < c.nguoi.length; p++) this.veTrangMc(ctx, c, p);
     for (const g of c.tuongView) this.veMauTuong(ctx, c, g);
@@ -1932,47 +1933,74 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  /** Quái ăn thịt (thân tím, miệng há đóng theo pha `ph`); gốc toạ độ ở chân, k = độ to (0..1 lúc chui ra) */
-  private veQuaiHinh(ctx: CanvasRenderingContext2D, ph: number, k: number): void {
+  /** Quái mê cung (Số 19, Khỉ đột, Quỷ canh cổng) từ atlas SP_QUAI; đang vận chiêu thì các ô sắp bị bắn nháy đỏ / tím / cam trên đất.
+   *  Số 19 / Khỉ đột là pixel art (không làm mịn), quỷ vẽ mịn và lơ lửng; chui ra thì lớn dần, trúng bom nháy, bị hạ thì mờ dần */
+  private veQuai(ctx: CanvasRenderingContext2D, c: Game, q: QuaiMc): void {
+    const dl = QUAI_DL[q.loai];
+    if (q.nap > 0 && q.chet === undefined) {
+      ctx.save();
+      ctx.globalAlpha *= 0.25 + 0.2 * Math.abs(Math.sin(c.t * 14));
+      ctx.fillStyle = q.loai === 'so19' ? '#ff3030' : q.loai === 'khi' ? '#b45cff' : '#ff8a1c';
+      for (const o of q.tia) {
+        const t = tamO(o.i, o.j);
+        ctx.fillRect(t.x - MC_O / 2 + 20, t.y - MC_O / 2 + 20, MC_O - 40, MC_O - 40);
+      }
+      ctx.restore();
+    }
     ctx.save();
-    ctx.translate(0, -90 + Math.sin(ph) * 6);
+    ctx.translate(q.x, q.y);
+    if (q.chet !== undefined) ctx.globalAlpha *= Math.max(0, 1 - q.chet / QUAI_CHET_T);
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    duongElip(ctx, 40 * dl.to, 22);
+    ctx.fill();
+    const k = (q.ra > 0 ? Math.max(0.15, 1 - q.ra / QUAI_RA) : 1) * dl.to;
+    if (dl.bay && q.chet === undefined) ctx.translate(0, -60 + Math.sin(q.ph * 0.8) * 14);
     ctx.scale(k, k);
-    ctx.fillStyle = '#7b3fb3';
-    ctx.strokeStyle = '#2c0f45';
-    ctx.lineWidth = 9;
-    duongTron(ctx, 90);
-    ctx.fill();
-    ctx.stroke();
-    const mo = 20 + Math.abs(Math.sin(ph)) * 22;
-    ctx.fillStyle = '#2c0f45';
-    duongElip(ctx, 56, mo, 0, 24);
-    ctx.fill();
-    ctx.fillStyle = '#fff';
-    for (let i = -2; i <= 2; i++) {
-      ctx.beginPath();
-      ctx.moveTo(i * 22 - 10, 24 - mo);
-      ctx.lineTo(i * 22 + 10, 24 - mo);
-      ctx.lineTo(i * 22, 24 - mo + 22);
-      ctx.fill();
+    if (q.dau > 0 && Math.floor(q.dau * 20) % 2) ctx.globalAlpha *= 0.4;
+    if (q.nap > 0) {
+      // Vận chiêu: rung nhẹ, quầng sáng theo màu chiêu
+      ctx.translate(Math.sin(c.t * 60) * 2, 0);
+      this.sang(ctx, q.loai === 'so19' ? '#ff4040' : q.loai === 'khi' ? '#c77dff' : '#ffb347');
     }
-    for (const o of [-36, 36]) {
-      ctx.fillStyle = '#ffe14d';
-      duongTron(ctx, 20, o, -36);
-      ctx.fill();
-      ctx.fillStyle = '#000';
-      duongTron(ctx, 9, o, -36);
-      ctx.fill();
-    }
+    this.sprite(ctx, SP_QUAI, khungQuai(q), q.lat, dl.bay);
     ctx.restore();
   }
 
-  private veQuai(ctx: CanvasRenderingContext2D, q: QuaiMc): void {
+  /** Tia đỏ của Số 19 / tia tím của Khỉ đột (ngang ngực / miệng, mờ dần), cầu lửa của quỷ bay dọc các ô */
+  private veTiaMc(ctx: CanvasRenderingContext2D, t: TiaMc): void {
+    const dl = QUAI_DL[t.loai];
+    const u = t.t / QUAI_TIA_T;
+    const y0 = t.y0 - dl.tiaY, y1 = t.y1 - dl.tiaY;
     ctx.save();
-    ctx.translate(q.x, q.y);
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    duongElip(ctx, 80, 22);
-    ctx.fill();
-    this.veQuaiHinh(ctx, q.ph, q.ra > 0 ? Math.max(0.15, 1 - q.ra / QUAI_RA) : 1);
+    if (t.loai === 'quy') {
+      const x = t.x0 + (t.x1 - t.x0) * Math.min(1, u * 1.3), y = y0 + (y1 - y0) * Math.min(1, u * 1.3);
+      ctx.translate(x, y + (t.y1 - t.y0 ? 0 : 60));
+      ctx.rotate(Math.atan2(y1 - y0, t.x1 - t.x0) - Math.PI / 4);
+      ctx.scale(1.8, 1.8);
+      this.sprite(ctx, SP_QUAI_HU, QUAI_HU_LUA + (Math.floor(t.t * 12) % 2), false, true);
+      ctx.restore();
+      return;
+    }
+    const khi = t.loai === 'khi';
+    const rong = (khi ? 70 : 42) * (1 - u * 0.6);
+    ctx.globalAlpha *= 1 - u * u;
+    ctx.lineCap = 'round';
+    this.sang(ctx, khi ? '#b45cff' : '#ff3030');
+    ctx.strokeStyle = khi ? '#9b4dff' : '#ff2a2a';
+    ctx.lineWidth = rong;
+    ctx.beginPath();
+    ctx.moveTo(t.x0, y0);
+    ctx.lineTo(t.x1, y1);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = rong * 0.4;
+    ctx.stroke();
+    if (!khi) {
+      ctx.translate(t.x1, y1);
+      ctx.scale(2.5, 2.5);
+      this.sprite(ctx, SP_QUAI_HU, QUAI_HU_TIA, false, false);
+    }
     ctx.restore();
   }
 
@@ -2863,16 +2891,16 @@ export class VeCanvas {
           this.sprite(ctx, SP_FRIEZA, FZ_KHUNG.dung[Math.floor(c.t * 1.5) % FZ_KHUNG.dung.length]!, false, false);
         }
       } else if (c.trenMeCung) {
-        // Mê cung bom: avatar bà phù thuỷ (đã bị hạ thì quái ăn thịt há miệng)
+        // Mê cung bom: avatar bà phù thuỷ (đã bị hạ thì khỉ đột gầm)
         ctx.globalAlpha = 1;
         if (c.baSong) {
           ctx.translate(0, 92);
           ctx.scale(0.32, 0.32);
           this.sprite(ctx, SP_BA, c.khungBa(), false, true);
         } else {
-          ctx.translate(0, 52);
-          ctx.scale(0.36, 0.36);
-          this.veQuaiHinh(ctx, c.t * 6, 1);
+          ctx.translate(0, 70);
+          ctx.scale(0.42, 0.42);
+          this.sprite(ctx, SP_QUAI, Math.floor(c.t * 2) % 2 ? 14 : 16, false, false);
         }
       } else if (c.trenNui) {
         ctx.globalAlpha = c.ginyu.chet && !c.ginyu.choHoi ? 0.25 : 0.9;

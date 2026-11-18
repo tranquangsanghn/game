@@ -10,7 +10,7 @@ export type LoaiBom = 'lua' | 'nuoc' | 'no';
 export const LOAI_BOM: LoaiBom[] = ['lua', 'nuoc', 'no'];
 export const TEN_BOM: Record<LoaiBom, string> = { lua: 'Bom lửa', nuoc: 'Bom nước', no: 'Bom nổ' };
 export const MC_TEN = 'Mê cung bom';
-export const QUAI_TEN = 'Quái ăn thịt';
+export const QUAI_TEN = 'Quái vật';
 
 /** Sprite bom (tools/tao-atlas-bom.py): hàng 0 = quả bom lửa · nước · nổ (tâm quả ở giữa khung, cao ~120);
  *  hàng 1..3 = vụ nổ lửa (5 khung) · nước (4) · nổ (4), vật ở giữa khung 200 */
@@ -93,23 +93,65 @@ export const DO_MC_HOI = 15;
 export const GIAY_TOC = 0.25;
 export const GIAY_TOI_DA = 3;
 
-/** Quái ăn thịt: chui ra từ hang, lần đầu sau QUAI_DAU giây (có người trong mê cung), sau đó mỗi QUAI_CACH giây, mỗi hang tối đa QUAI_TOI_DA con */
+/** 3 loài quái của mê cung (thay quái ăn thịt cũ): chui ra từ hang (lần đầu sau QUAI_DAU giây có người trong mê cung,
+ *  sau đó mỗi QUAI_CACH giây, mỗi hang tối đa QUAI_TOI_DA con, loài ngẫu nhiên) hoặc nhảy ra từ ô bí ẩn.
+ *  Đi từng ô; đánh hơi người trong `ngui` ô thì `duoi` phần bước đi về phía đó; đứng thẳng hàng / cột với người trong `tam` ô
+ *  (đường không bị ô chắn) thì vận chiêu `nap` giây (vạch báo trên đất) rồi bắn dọc hàng / cột, hồi `hoi` giây:
+ *  - so19 (Số 19, Android 19): tia đỏ từ tay, nhanh, 1 máu
+ *  - khi (Khỉ đột, Oozaru): to, chậm, 2 máu, tia tím từ miệng bắn xa
+ *  - quy (Quỷ canh cổng, Guardian): bay qua thùng gỗ / ô bí ẩn (không qua gạch / hang), phun cầu lửa: ô lửa làm bốc cháy như bom lửa */
+export type LoaiQuai = 'so19' | 'khi' | 'quy';
+export const LOAI_QUAI: LoaiQuai[] = ['so19', 'khi', 'quy'];
+export interface DlQuai {
+  ten: string; toc: number; mau: number; ngui: number; duoi: number;
+  tam: number; nap: number; hoi: number;
+  /** độ to khi vẽ (khung sprite 200), độ cao tia so với chân (đơn vị thế giới), bay lơ lửng */
+  to: number; tiaY: number; bay: boolean; diem: number;
+}
+export const QUAI_DL: Record<LoaiQuai, DlQuai> = {
+  so19: { ten: 'Số 19', toc: 220, mau: 1, ngui: 6, duoi: 0.5, tam: 4, nap: 0.7, hoi: 4, to: 2.4, tiaY: 250, bay: false, diem: 40 },
+  khi: { ten: 'Khỉ đột', toc: 140, mau: 2, ngui: 6, duoi: 0.45, tam: 6, nap: 1.1, hoi: 6, to: 2.8, tiaY: 340, bay: false, diem: 60 },
+  quy: { ten: 'Quỷ canh cổng', toc: 250, mau: 1, ngui: 5, duoi: 0.4, tam: 3, nap: 0.8, hoi: 5, to: 2.3, tiaY: 260, bay: true, diem: 50 },
+};
 export const QUAI_DAU = 6;
 export const QUAI_CACH = 12;
 export const QUAI_TOI_DA = 2;
-/** Tốc độ (đơn vị thế giới / giây), tầm đánh hơi người (ô), xác suất đi về phía người khi đánh hơi được */
-export const QUAI_TOC = 200;
-export const QUAI_NGUI = 5;
-export const QUAI_DUOI = 0.4;
-/** Cắn: chạm trong QUAI_CHAM thì cắn QUAI_SAT mỗi QUAI_HOI giây (nhân vật vẫn né 25%, giảm 50%) */
+/** Cắn / đấm / húc: chạm trong QUAI_CHAM thì đánh QUAI_SAT mỗi QUAI_HOI giây (nhân vật vẫn né 25%, giảm 50%) */
 export const QUAI_CHAM = 150;
 export const QUAI_SAT = 60;
 export const QUAI_HOI = 1;
-/** Giây chui ra khỏi hang (chưa đi, chưa cắn, bom chưa giết được) */
+/** Tia của Số 19 / Khỉ đột trúng ai thì sát thương QUAI_TIA_SAT (trong mê cung 1 mạng: khiên đỡ, không thì gục); tia hiện QUAI_TIA_T giây */
+export const QUAI_TIA_SAT = 300;
+export const QUAI_TIA_T = 0.4;
+/** Giây chui ra khỏi hang (chưa đi, chưa đánh, bom chưa giết được); giây xác nằm mờ dần; giây nháy khi trúng bom mà chưa chết */
 export const QUAI_RA = 0.7;
-export const QUAI_DIEM = 30;
+export const QUAI_CHET_T = 0.8;
+export const QUAI_DAU_T = 0.5;
+/** Sprite 3 quái (tools/tao-atlas-quai-mc.py): 10 cột × 4 hàng khung 200, chân ở (100, 196), quay mặt phải;
+ *  hàng 0 Số 19 · 1 Khỉ đột · 2 Quỷ · 3 hiệu ứng (0–1 cầu lửa của quỷ, đầu quay xuống phải 45° · 2 đầu tia đỏ) */
+export const SP_QUAI: KhungSprite = { atlas: 'assets/game/quai_mc.png', atlasW: 2000, atlasH: 800, w: 200, h: 200, cot: 10, neoX: 100, neoY: 196 };
+export const SP_QUAI_HU: KhungSprite = { ...SP_QUAI, neoY: 100 };
+export const QUAI_HU_LUA = 30;
+export const QUAI_HU_TIA = 32;
+/** Chỉ số khung trong atlas: đi (đứng yên = khung đầu; quỷ luôn vỗ cánh), đánh khi chạm, vận chiêu, bắn, trúng đòn, gục */
+const KHUNG_QUAI: Record<LoaiQuai, { di: number[]; dam: number; nap: number; ban: number; dau: number; chet: number }> = {
+  so19: { di: [0, 1, 0, 2], dam: 3, nap: 4, ban: 4, dau: 5, chet: 6 },
+  khi: { di: [10, 11], dam: 12, nap: 16, ban: 13, dau: 15, chet: 15 },
+  quy: { di: [20, 21, 22, 23, 24, 25], dam: 29, nap: 26, ban: 26, dau: 27, chet: 28 },
+};
+/** Khung sprite đang vẽ của quái (chỉ đọc trạng thái) */
+export function khungQuai(q: QuaiMc): number {
+  const k = KHUNG_QUAI[q.loai];
+  if (q.chet !== undefined) return k.chet;
+  if (q.dau > 0) return k.dau;
+  if (q.nap > 0) return k.nap;
+  if (q.ban > 0) return k.ban;
+  if (q.danh > 0) return k.dam;
+  if (q.loai === 'quy') return k.di[Math.floor(q.ph * 1.6) % k.di.length]!;
+  return q.dang ? k.di[Math.floor(q.ph * 1.2) % k.di.length]! : k.di[0]!;
+}
 
-/** Ô bí ẩn vỡ ra: giày, khiên, lưới (bẫy) hoặc quái ăn thịt; tỉ lệ cộng dồn theo thứ tự */
+/** Ô bí ẩn vỡ ra: giày, khiên, lưới (bẫy) hoặc một con quái (loài ngẫu nhiên); tỉ lệ cộng dồn theo thứ tự */
 export type LoaiVpMc = 'giay' | 'khien' | 'luoi';
 export const TI_LE_O_BI_AN: [LoaiVpMc | 'quai', number][] = [['giay', 0.3], ['khien', 0.25], ['luoi', 0.25], ['quai', 0.2]];
 
@@ -124,13 +166,20 @@ export interface BomMc {
   /** bom của bà phù thuỷ (p = -1): thời gian bay, tầm tia cố định */
   bay?: number; tam?: number;
 }
-export interface LuaMc { i: number; j: number; loai: LoaiBom; con: number; /** người ném (tính điểm hạ quái; -1 = bà phù thuỷ) */ p: number; /** nhân vật đã dính (mỗi ngọn lửa trúng một người một lần) */ da: number[]; /** đã trúng bà phù thuỷ */ baDa?: boolean; }
+export interface LuaMc { i: number; j: number; loai: LoaiBom; con: number; /** người ném (tính điểm hạ quái; -1 = bà phù thuỷ, -2 = lửa quỷ canh cổng phun: không hại quái) */ p: number; /** nhân vật đã dính (mỗi ngọn lửa trúng một người một lần) */ da: number[]; /** đã trúng bà phù thuỷ */ baDa?: boolean; /** quái đã dính (id) */ quaiDa?: number[]; }
 export interface QuaiMc {
-  id: number; x: number; y: number;
+  id: number; loai: LoaiQuai; x: number; y: number;
   /** ô đang đi tới */ ti: number; tj: number; dang: boolean; huong: number;
   /** hang sinh ra (-1 = từ ô bí ẩn) */ hang: number;
   ra: number; choCan: number; ph: number;
+  mau: number; lat: boolean;
+  /** đang vận chiêu (giây còn lại), các ô chiêu sẽ bắn qua, đang bắn (giây), hồi chiêu, động tác đánh khi chạm, nháy trúng đòn */
+  nap: number; tia: { i: number; j: number }[]; ban: number; hoiChieu: number; danh: number; dau: number;
+  /** bị hạ: giây từ lúc chết (xác mờ dần QUAI_CHET_T rồi mất) */
+  chet?: number;
 }
+/** Tia / cầu lửa quái bắn ra (chỉ để vẽ; sát thương tính lúc bắn) */
+export interface TiaMc { loai: LoaiQuai; x0: number; y0: number; x1: number; y1: number; t: number; }
 export interface VpMc { id: number; i: number; j: number; loai: LoaiVpMc; }
 export interface DoMc { i: number; j: number; loai: 'kiem' | 'xo'; cho: number; }
 /** Trạng thái riêng từng nhân vật trong mê cung (không lưu ván) */
@@ -150,7 +199,7 @@ export interface NvMc {
   duong: { i: number; j: number }[];
 }
 export interface TrangThaiMc {
-  bom: BomMc[]; lua: LuaMc[]; quai: QuaiMc[]; vp: VpMc[]; doCuu: DoMc[];
+  bom: BomMc[]; lua: LuaMc[]; quai: QuaiMc[]; tia: TiaMc[]; vp: VpMc[]; doCuu: DoMc[];
   /** đếm ngược sinh quái của từng hang (theo thứ tự HANG_MC) */
   hang: number[];
   nv: NvMc[];
@@ -170,7 +219,7 @@ export const O_VAO_MC = oTheo('S')[0]!;
 export const taoNvMc = (): NvMc => ({ nap: null, chon: 'lua', giay: 0, khien: false, do: null, trang: null, luu: null, toi: null, di: null, duong: [] });
 export function taoMeCung(): TrangThaiMc {
   return {
-    bom: [], lua: [], quai: [], vp: [],
+    bom: [], lua: [], quai: [], tia: [], vp: [],
     doCuu: [...oTheo('K').map((o) => ({ ...o, loai: 'kiem' as const, cho: 0 })), ...oTheo('X').map((o) => ({ ...o, loai: 'xo' as const, cho: 0 }))],
     hang: HANG_MC.map((_, k) => QUAI_DAU + k * 2),
     nv: [taoNvMc(), taoNvMc()],
