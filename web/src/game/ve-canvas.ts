@@ -2171,11 +2171,12 @@ export class VeCanvas {
   private veBomMc(ctx: CanvasRenderingContext2D, c: Game, b: BomMc): void {
     const t = tamO(b.i, b.j);
     const bay = Math.min(1, b.t / bayBom(b));
-    const x = b.x0 + (t.x - b.x0) * bay, y = b.y0 + (t.y + 40 - b.y0) * bay - Math.sin(bay * Math.PI) * 260;
+    // Bom luôn đáp đúng giữa ô
+    const x = b.x0 + (t.x - b.x0) * bay, y = b.y0 + (t.y - b.y0) * bay - Math.sin(bay * Math.PI) * 260;
     ctx.save();
     if (bay >= 1) {
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      duongElip(ctx, 70, 20, t.x, t.y + 110);
+      duongElip(ctx, 70, 20, t.x, t.y + 75);
       ctx.fill();
     }
     ctx.translate(x, y);

@@ -5,8 +5,8 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
-import { MC_HAM, datLaiMeCung, oCua, oCung, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
-import { taoMeCung, MC_TO_NV, MC_ZOOM_HE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, TRANG_LUOI, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, GIAY_TOC, GIAY_TOI_DA, QUAI_CACH, QUAI_TOI_DA, QUAI_TOC, QUAI_NGUI, QUAI_DUOI, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DIEM, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_BOM_TAM, BA_DAY, BA_DIEM, BA_CHET_T, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
+import { MC, MC_HAM, datLaiMeCung, oCua, oCung, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
+import { taoMeCung, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, TRANG_LUOI, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, GIAY_TOC, GIAY_TOI_DA, QUAI_CACH, QUAI_TOI_DA, QUAI_TOC, QUAI_NGUI, QUAI_DUOI, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DIEM, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_BOM_TAM, BA_DAY, BA_DIEM, BA_CHET_T, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
@@ -2742,14 +2742,18 @@ export class Game {
     // Chơi 1 người: camera chỉ bám nhân vật có mặt (coi như hai điểm trùng nhau)
     const a = a0.vang ? b0 : a0;
     const b = b0.vang ? a0 : b0;
-    const tx = (a.x + b.x) / 2;
+    // Mê cung bom: mọi người đã vào lưới thì camera đứng giữa mê cung, lùi cao lên thấy toàn bộ (không sương mù)
+    const toanMc = this.camMcToan();
+    const zMc = Math.min(this.W / (MC.w + 2 * MC_CAM_LE), H / (MC.h + 2 * MC_CAM_LE + 120));
+    const tx = toanMc ? (MC.x0 + MC.x1) / 2 : (a.x + b.x) / 2;
     // Máy bay bay cao: camera lùi ra (thấy xa hơn, vật dưới đất nhỏ đi) và nâng lên theo độ cao
     const zb = Math.max(this.mayBay.pha === 'bay' || this.mayBay.pha === 'trung' || this.mayBay.pha === 'cat' ? this.mayBay.z : 0, this.phiThuyen.ngoi.length ? this.phiThuyen.z : 0);
-    const ty = (a.y + b.y) / 2 - MB_NANG * zb * 0.5;
+    // Tâm khung nhìn nằm trên TAM_VIEW_Y (không phải giữa màn hình): dời camera để tâm mê cung nằm đúng giữa màn hình (bù 60 cho tường trên)
+    const ty = toanMc ? (MC.y0 + MC.y1) / 2 - 60 + (TAM_VIEW_Y - H / 2) / zMc : (a.y + b.y) / 2 - MB_NANG * zb * 0.5;
     const dx = Math.abs(a.x - b.x);
     const dy = Math.abs(a.y - b.y);
     // Hai người xa nhau thì thu nhỏ (cả vườn gà lẫn đảo), máy bay lùi ra; ô nền đảo dựng theo zoom gốc nên đổi zoom không phải dựng lại
-    const tz = kep(Math.min(ZOOM, dx > 1 ? VUNG_X / dx : ZOOM, dy > 1 ? VUNG_Y / dy : ZOOM), ZOOM_MIN, ZOOM) * (1 - (1 - MB_ZOOM) * zb) * (this.camMc() ? MC_ZOOM_HE : 1);
+    const tz = toanMc ? zMc : kep(Math.min(ZOOM, dx > 1 ? VUNG_X / dx : ZOOM, dy > 1 ? VUNG_Y / dy : ZOOM), ZOOM_MIN, ZOOM) * (1 - (1 - MB_ZOOM) * zb) * (this.camMc() ? MC_ZOOM_HE : 1);
     const kv = ngay ? 1 : 1 - Math.exp(-dt * 6);
     const kz = ngay ? 1 : 1 - Math.exp(-dt * 3);
     this.camZ += (tz - this.camZ) * kz;
@@ -2767,8 +2771,10 @@ export class Game {
     this.camY += (dy2 - this.camY) * kv;
     // Camera không ra khỏi bản đồ: chạm mép map thì mép đó nằm đúng mép màn hình, không lộ vùng đen
     const bien = banDoHt !== 'sa' || (giuVuon && (this.camVuon || ngay)) ? { x0: 0, y0: 0, x1: MAP, y1: MAP } : TG;
-    this.camX = kep(this.camX, bien.x0 + this.W / 2 / zc, bien.x1 - this.W / 2 / zc);
-    this.camY = kep(this.camY, bien.y0 + TAM_VIEW_Y / zc, bien.y1 - (H - TAM_VIEW_Y) / zc);
+    if (!toanMc) {
+      this.camX = kep(this.camX, bien.x0 + this.W / 2 / zc, bien.x1 - this.W / 2 / zc);
+      this.camY = kep(this.camY, bien.y0 + TAM_VIEW_Y / zc, bien.y1 - (H - TAM_VIEW_Y) / zc);
+    }
 
     const z = this.camZ;
     // Không lên máy bay thì không nhìn ra ngoài: chỉ thấy khối đất (vườn gà / vòng đảo) có nhân vật đang đứng; ai trên máy bay thì thấy hết
@@ -2914,6 +2920,8 @@ export class Game {
   doRo(x: number, y: number): number {
     // Trong vườn gà mà có người đang ở trong vườn (đi bộ hay bay ngang) thì vật của vườn luôn rõ; ra khỏi vườn thì vườn cũng bị sương mù, chỉ còn nền cỏ + tường
     if (this.vuonRo && trongVuon(x, y)) return 1;
+    // Mê cung bom không có sương mù
+    if (banDoHt === 'sa' && trongMeCung(x, y, 300)) return 1;
     // Nguồn nhìn gần nhất quyết định độ rõ: tìm bình phương khoảng cách nhỏ nhất (không sqrt), chỉ một sqrt ở cuối
     let d2 = Infinity;
     for (const o of this.nhinNguon) {
@@ -2951,6 +2959,8 @@ export class Game {
    */
   private nvThay(x: number, y: number, leCam: number, le = 0): boolean {
     if (!this.trenCam(x, y, leCam) || !this.thayKhoi(x, y)) return false;
+    // Mê cung bom không có sương mù: trên camera là thấy (còn người chơi chưa gục)
+    if (banDoHt === 'sa' && trongMeCung(x, y, 300)) return this.nguoi.some((n) => !n.vang && !n.het);
     const r = TAM_NHIN + le;
     for (const n of this.nguoi) {
       if (n.vang || n.het) continue;
@@ -3003,6 +3013,7 @@ export class Game {
   }
 
   private thay(x: number, y: number): boolean {
+    if (banDoHt === 'sa' && trongMeCung(x, y, 300)) return true;
     const r2 = TAM_NHIN * TAM_NHIN;
     for (const o of this.nhinNguon) {
       const dx = o.x - x, dy = o.y - y;
@@ -7412,6 +7423,18 @@ export class Game {
       const n = this.nguoi[p]!;
       if (n.vang) continue;
       if (this.trongMb(p) || !this.vungMc(n)) return false;
+      co = true;
+    }
+    return co;
+  }
+
+  /** Mọi nhân vật có mặt (không ngồi xe) đều đứng trong lưới mê cung: camera đặt ở tâm mê cung, thấy toàn bộ */
+  private camMcToan(): boolean {
+    let co = false;
+    for (let p = 0; p < this.nguoi.length; p++) {
+      const n = this.nguoi[p]!;
+      if (n.vang) continue;
+      if (this.trongMb(p) || banDoHt !== 'sa' || !trongMeCung(n.x, n.y)) return false;
       co = true;
     }
     return co;

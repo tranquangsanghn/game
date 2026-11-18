@@ -58,9 +58,11 @@ export interface BaMc {
 /** Số sao của viên ngọc ở cuối mê cung */
 export const MC_NGOC_SAO = 4;
 
-/** Trong / quanh mê cung và đường hầm: nhân vật vẽ to gấp MC_TO_NV, camera lùi xa (zoom × MC_ZOOM_HE) để thấy rộng hơn */
+/** Trong / quanh mê cung và đường hầm: nhân vật vẽ to gấp MC_TO_NV; trên đường hầm camera lùi xa (zoom × MC_ZOOM_HE),
+ *  mọi người đã vào lưới mê cung thì camera đặt ở tâm mê cung, zoom vừa đủ thấy toàn bộ (cộng lề MC_CAM_LE mỗi bên) */
 export const MC_TO_NV = 1.5;
 export const MC_ZOOM_HE = 0.75;
+export const MC_CAM_LE = 160;
 
 /** Giữ nút ném: mỗi BOM_NAP_BUOC giây thêm một mức (1..BOM_MUC), mức = số ô bom bay xa */
 export const BOM_MUC = 4;
