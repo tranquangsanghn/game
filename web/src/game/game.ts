@@ -7388,13 +7388,21 @@ export class Game {
     return banDoHt === 'sa' && (trongMeCung(n.x, n.y, 300) || trongHam(n.x, n.y, 200));
   }
 
+  /** Đang ở chính map mê cung bom (lưới mê cung, hoặc đoạn đường hầm đã ra khỏi đảo 1): chỉ ở đây nhân vật mới to hơn / camera mới lùi xa */
+  private vungMc(n: { x: number; y: number }): boolean {
+    if (banDoHt !== 'sa') return false;
+    if (trongMeCung(n.x, n.y, 300)) return true;
+    const d = DAO[1]!;
+    return trongHam(n.x, n.y, 200) && hyp(n.x - d.x, n.y - d.y) > d.r;
+  }
+
   /** Camera lùi xa (thấy rộng hơn) khi mọi nhân vật có mặt, không ngồi xe, đều ở mê cung / đường hầm */
   private camMc(): boolean {
     let co = false;
     for (let p = 0; p < this.nguoi.length; p++) {
       const n = this.nguoi[p]!;
       if (n.vang) continue;
-      if (this.trongMb(p) || !this.quanhMc(n)) return false;
+      if (this.trongMb(p) || !this.vungMc(n)) return false;
       co = true;
     }
     return co;
@@ -7609,7 +7617,7 @@ export class Game {
     for (const d of mc.doCuu) d.cho = Math.max(0, d.cho - dt);
     // Nhân vật to dần khi vào mê cung / đường hầm, nhỏ lại khi ra
     this.nguoi.forEach((n, p) => {
-      const dich = !n.vang && !this.trongMb(p) && this.quanhMc(n) ? MC_TO_NV : 1;
+      const dich = !n.vang && !this.trongMb(p) && this.vungMc(n) ? MC_TO_NV : 1;
       this.toMc[p] = this.toMc[p]! + (dich - this.toMc[p]!) * Math.min(1, dt * 4);
     });
     // 1 mạng trong mê cung: nhớ máu / mana lúc bước vào, ra khỏi mê cung (còn sống) thì trả lại đúng như cũ
