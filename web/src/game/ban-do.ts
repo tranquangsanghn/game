@@ -213,8 +213,88 @@ export function raKhoiChanThan(o: { x: number; y: number }, le = 30): { cx: bool
   return r;
 }
 
-/** Giới hạn thế giới (thêm thần điện + dải vực phía trên) */
-export const TG = { ...TG_SA, y0: Math.floor((THAN.y0 - LE_BIEN) / 400) * 400 };
+/** Mê cung bom: khối đất nổi trên vực phía tây đảo 1 (đảo Cell 3 con), lưới MC_COT × MC_HANG ô vuông cạnh MC_O.
+ *  Nối với đảo 1 bằng một đường hầm đi bộ thẳng (MC_HAM, nửa bề rộng MC_HAM_RONG) cắm vào ô vào mê cung (hàng MC_VAO_HANG, mép đông).
+ *  Ký hiệu ô (MC_BO): '#' gạch (không phá được, che bom nổ) · 'w' thùng gỗ (bom phá được) · '?' ô bí ẩn (bom phá được, rơi vật phẩm / bẫy)
+ *  · 'H' hang quái · 'S' chỗ vào (cửa đường hầm) · 'D' ngọc rồng 4 sao (cuối mê cung) · 'K' kiếm · 'X' xô nước · '.' nền trống. */
+export const MC_O = 360;
+export const MC_BO = [
+  'w.w.?.w.#.w.?.w',
+  '.#w#.#w#.#.#w#.',
+  'w.H.w.?.w.w...w',
+  '.#.#w#.#w#.#w#.',
+  'w.w.K.w.w.?.w.w',
+  '.#w#.#.#w#.#.#w',
+  'D.w.w.w.H.w.w.S',
+  '.#.#w#.#.#X#w#.',
+  'w.?.w.w.w.?.w..',
+  '.#w#.#w#.#w#.#w',
+  'w...w.?.w.H.w..',
+  '.#w#.#w#.#.#w#.',
+  'w.w.?.w.#.w.?.w',
+];
+export const MC_COT = MC_BO[0]!.length;
+export const MC_HANG = MC_BO.length;
+/** Hàng có cửa vào (mép đông) và ô ngọc (mép tây) */
+const MC_VAO_HANG = 6;
+/** Khoảng vực giữa mép đảo 1 và mép đông mê cung (phần đường hầm nằm ngoài đảo) */
+const MC_HAM_CACH = 2400;
+const MC_HAM_RONG = 210;
+export const MC = (() => {
+  const d = DAO[1]!;
+  const w = MC_COT * MC_O, h = MC_HANG * MC_O;
+  const x1 = Math.round(d.x - d.r * 1.15 - MC_HAM_CACH);
+  const y0 = Math.round(d.y - (MC_VAO_HANG + 0.5) * MC_O);
+  return { x0: x1 - w, y0, x1, y1: y0 + h, w, h };
+})();
+/** Đường hầm: đoạn thẳng ngang từ trong đảo 1 (x1) tới mép đông mê cung (x0), giữa hàng cửa vào */
+export const MC_HAM = { x0: MC.x1 - 20, x1: Math.round(DAO[1]!.x - DAO[1]!.r * 0.7), y: MC.y0 + (MC_VAO_HANG + 0.5) * MC_O, r: MC_HAM_RONG };
+/** Ô hiện tại của mê cung (thùng / ô ? bị bom phá thành '.'); Game đặt lại khi tạo ván / nạp ván (không lưu ván) */
+export const mcO: string[][] = MC_BO.map((r) => [...r]);
+export function datLaiMeCung(): void {
+  MC_BO.forEach((r, j) => { mcO[j] = [...r]; });
+}
+/** Điểm nằm trong khung mê cung (nới `le`) */
+export const trongMeCung = (x: number, y: number, le = 0) => x >= MC.x0 - le && x <= MC.x1 + le && y >= MC.y0 - le && y <= MC.y1 + le;
+/** Điểm nằm trên đường hầm (phần nối từ đảo 1 tới mê cung, nới `le`) */
+export const trongHam = (x: number, y: number, le = 0) => x >= MC_HAM.x0 - le && x <= MC_HAM.x1 + le && Math.abs(y - MC_HAM.y) <= MC_HAM.r + le;
+/** Ô (cột i, hàng j) chứa điểm (x, y); ngoài lưới thì trả chỉ số ngoài khoảng */
+export const oCua = (x: number, y: number) => ({ i: Math.floor((x - MC.x0) / MC_O), j: Math.floor((y - MC.y0) / MC_O) });
+export const tamO = (i: number, j: number) => ({ x: MC.x0 + (i + 0.5) * MC_O, y: MC.y0 + (j + 0.5) * MC_O });
+/** Ký hiệu ô (i, j); ngoài lưới coi như gạch */
+export const oMc = (i: number, j: number) => (i < 0 || j < 0 || i >= MC_COT || j >= MC_HANG ? '#' : mcO[j]![i]!);
+/** Ô chắn đường đi (gạch, thùng, ô bí ẩn, hang) */
+export const oCung = (c: string) => c === '#' || c === 'w' || c === '?' || c === 'H';
+function doSauMeCung(x: number, y: number): number {
+  const dx = Math.max(MC.x0 - x, 0, x - MC.x1), dy = Math.max(MC.y0 - y, 0, y - MC.y1);
+  if (dx > 0 || dy > 0) return -hyp(dx, dy);
+  return Math.min(x - MC.x0, MC.x1 - x, y - MC.y0, MC.y1 - y);
+}
+function doSauHam(x: number, y: number): number {
+  const cx = Math.max(MC_HAM.x0, Math.min(MC_HAM.x1, x));
+  return MC_HAM.r - hyp(x - cx, y - MC_HAM.y);
+}
+/** Đẩy điểm chân (x, y) ra khỏi các ô chắn của mê cung (nới `le`): ra mép gần nhất. Trả cờ bị đẩy theo từng trục */
+export function raKhoiMeCung(o: { x: number; y: number }, le = 90): { cx: boolean; cy: boolean } {
+  const r = { cx: false, cy: false };
+  if (!trongMeCung(o.x, o.y, le)) return r;
+  const { i: oi, j: oj } = oCua(o.x, o.y);
+  for (let j = oj - 1; j <= oj + 1; j++) for (let i = oi - 1; i <= oi + 1; i++) {
+    if (i < 0 || j < 0 || i >= MC_COT || j >= MC_HANG || !oCung(mcO[j]![i]!)) continue;
+    const x0 = MC.x0 + i * MC_O - le, x1 = x0 + MC_O + 2 * le, y0 = MC.y0 + j * MC_O - le, y1 = y0 + MC_O + 2 * le;
+    if (o.x <= x0 || o.x >= x1 || o.y <= y0 || o.y >= y1) continue;
+    const t = o.x - x0, p = x1 - o.x, tr = o.y - y0, d = y1 - o.y;
+    const m = Math.min(t, p, tr, d);
+    if (m === t) { o.x = x0; r.cx = true; }
+    else if (m === p) { o.x = x1; r.cx = true; }
+    else if (m === tr) { o.y = y0; r.cy = true; }
+    else { o.y = y1; r.cy = true; }
+  }
+  return r;
+}
+
+/** Giới hạn thế giới (thêm thần điện + dải vực phía trên, mê cung bom + dải vực phía tây) */
+export const TG = { ...TG_SA, x0: Math.min(TG_SA.x0, Math.floor((MC.x0 - LE_BIEN) / 400) * 400), y0: Math.floor((THAN.y0 - LE_BIEN) / 400) * 400 };
 
 // Nhiễu giá trị (value noise) có hạt giống cố định: bờ đảo lượn sóng tự nhiên, mỗi ván như nhau
 const bam = (x: number, y: number) => {
@@ -274,7 +354,7 @@ function doSauGoc(x: number, y: number): number {
   // Dải cát chữ S từ đảo 0 lên núi đá
   noi = Math.max(noi, NUA_RONG_NOI - kcDuongNui(x, y));
   if (noi > -2000) noi += (nhieu(x / 500 + 7, y / 500) - 0.5) * 90;
-  return Math.max(maxMem(s, noi, 380), doSauNui(x, y), doSauThan(x, y));
+  return Math.max(maxMem(s, noi, 380), doSauNui(x, y), doSauThan(x, y), doSauMeCung(x, y), doSauHam(x, y));
 }
 
 /** Điểm nằm trong vườn gà (kể cả tường) */
@@ -307,7 +387,7 @@ function layLuoiSau(): Float32Array {
           if (xa) { L[j * NX_SAU + i] = -VUC_XA; continue; }
           const x = TG.x0 + i * O_SAU, y = TG.y0 + j * O_SAU;
           // Cộng thêm nhiễu nhỏ (khấc bờ); núi đá giữ đúng elip (vẽ bằng ellipse) nên không cộng
-          L[j * NX_SAU + i] = Math.max(-VUC_XA, doSauGoc(x, y) + (trongNui(x, y, 400) || trongThan(x, y, 400) ? 0 : (nhieu(x / 130 + 50, y / 130) - 0.5) * 40));
+          L[j * NX_SAU + i] = Math.max(-VUC_XA, doSauGoc(x, y) + (trongNui(x, y, 400) || trongThan(x, y, 400) || trongMeCung(x, y, 400) ? 0 : (nhieu(x / 130 + 50, y / 130) - 0.5) * 40));
         }
       }
     }
