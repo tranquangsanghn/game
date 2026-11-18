@@ -5,8 +5,8 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
-import { MC, MC_HAM, datLaiMeCung, oCua, oCung, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
-import { taoMeCung, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, TRANG_LUOI, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, GIAY_TOC, GIAY_TOI_DA, QUAI_CACH, QUAI_TOI_DA, QUAI_TOC, QUAI_NGUI, QUAI_DUOI, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DIEM, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_BOM_TAM, BA_DAY, BA_DIEM, BA_CHET_T, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
+import { MC, MC_COT, MC_HANG, MC_HAM, datLaiMeCung, oCua, oCung, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
+import { taoMeCung, O_VAO_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, TRANG_LUOI, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, GIAY_TOC, GIAY_TOI_DA, QUAI_CACH, QUAI_TOI_DA, QUAI_TOC, QUAI_NGUI, QUAI_DUOI, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DIEM, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_BOM_TAM, BA_DAY, BA_DIEM, BA_CHET_T, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
@@ -2066,6 +2066,8 @@ export class Game {
         this.capNhatNhanVat(n, dt);
         return;
       }
+      // Mê cung bom: đi theo ô, chỉ lên / xuống / trái / phải, luôn dừng ở giữa ô
+      if (this.mcDi(p, dt)) return;
 
       let dx = 0;
       let dy = 0;
@@ -3055,7 +3057,8 @@ export class Game {
     const va = moi(a, truoc[0]!), vb = moi(b, truoc[1]!);
     const vg = moi(g, gTruoc);
     const cap: [typeof va, typeof va][] = [];
-    if (!a.vang && !b.vang) cap.push([va, vb]);
+    // Cả hai ở trong mê cung bom (camera thấy cả mê cung, đi theo ô): không buộc dây
+    if (!a.vang && !b.vang && !(this.oMeCung(0) && this.oMeCung(1))) cap.push([va, vb]);
     if (coSao) this.nguoi.forEach((n, q) => { if (!n.vang && !this.trongMb(q)) cap.push([vg, q === 0 ? va : vb]); });
     // Lặp vài lần để cả tam giác cùng thoả
     for (let lan = 0; lan < (cap.length > 1 ? 3 : 1); lan++) {
@@ -7045,6 +7048,22 @@ export class Game {
     // Chữ thập: chạy. Cần trái: bay (gạt hướng nào bay hướng đó)
     const dx = (duoc(15) ? 1 : 0) - (duoc(14) ? 1 : 0);
     const dy = (duoc(13) ? 1 : 0) - (duoc(12) ? 1 : 0);
+    // Mê cung bom: chữ thập / cần trái chỉ chọn 1 trong 4 hướng (không chéo, không bay), giữ thì đi tiếp từng ô
+    if (this.oMeCung(p)) {
+      const s = this.mc.nv[p]!;
+      let hx = dx, hy = dy;
+      if (!hx && !hy) {
+        const can = this.canGat(g, 0, 1);
+        if (can.m > 0) { if (Math.abs(can.x) >= Math.abs(can.y)) hx = Math.sign(can.x); else hy = Math.sign(can.y); }
+      }
+      // Bấm chéo: giữ trục đang đi (nếu còn bấm), không thì ưu tiên ngang
+      if (hx && hy) { if (s.di?.y && s.di.y === hy) hx = 0; else hy = 0; }
+      s.di = hx || hy ? { x: hx, y: hy } : null;
+      if (s.di) { n.nhin = { x: hx, y: hy }; s.duong = []; }
+      n.dich = null;
+      n.cuaCan = false;
+      return;
+    }
     const bay = this.canGat(g, 0, 1, VUNG_BAY_CAN);
     // Cần trái gạt nhẹ (chưa tới ngưỡng bay) thì chạy theo hướng gạt; chữ thập vẫn ưu tiên
     const canNhe = this.canGat(g, 0, 1);
@@ -7161,6 +7180,16 @@ export class Game {
       return;
     }
     if (n.nv.khoa || n.bay || n.het || this.trongCau(p)) return;
+    // Mê cung bom: bấm chuột vào ô nào thì tìm đường theo ô (lên / xuống / trái / phải) tới đó
+    if (this.oMeCung(p)) {
+      const s = this.mc.nv[p]!;
+      s.di = null;
+      s.duong = this.mcDuong(s.toi ?? oCua(n.x, n.y), oCua(x, y));
+      // Bấm ra phía đường hầm: tới ô cửa vào rồi bước ra hầm
+      if (x > MC.x1 && trongHam(x, y)) s.duong.push({ i: MC_COT, j: O_VAO_MC.j });
+      n.dich = null;
+      return;
+    }
     const o = this.nguoi[1 - p];
     const le = leNhanVat(n.nv.heSoTo);
     // Dây buộc chỉ áp khi người kia có mặt (chơi 1 người thì không bị giữ quanh nhân vật vắng mặt)
@@ -7475,6 +7504,92 @@ export class Game {
     if (banDoHt !== 'sa' || this.ngocNhat.includes(MC_NGOC_SAO) || this.vatPham.some((v) => v.loai === 'ngoc' && v.sao === MC_NGOC_SAO)) return;
     const t = tamO(O_NGOC_MC.i, O_NGOC_MC.j);
     this.vatPham.push({ id: this.id++, x: t.x, y: t.y + 60, t: 0, loai: 'ngoc', sao: MC_NGOC_SAO, to: 0.75 });
+  }
+
+  /** Ô (i, j) bước vào được: trong lưới thì không phải ô chắn / ô bà phù thuỷ / bom đã chạm đất; ngoài lưới chỉ đường hầm (ra khỏi mê cung) */
+  private mcVao(i: number, j: number): boolean {
+    if (i < 0 || j < 0 || i >= MC_COT || j >= MC_HANG) { const t = tamO(i, j); return trongHam(t.x, t.y); }
+    return !oCung(oMc(i, j)) && !this.oBa(i, j) && !this.mc.bom.some((b) => b.i === i && b.j === j && b.t >= bayBom(b));
+  }
+
+  /** Đường đi theo ô (BFS 4 hướng trong lưới) từ ô a tới ô b (không tới được thì tới ô tới được gần b nhất); không gồm ô a */
+  private mcDuong(a: { i: number; j: number }, b: { i: number; j: number }): { i: number; j: number }[] {
+    const bi = kep(b.i, 0, MC_COT - 1), bj = kep(b.j, 0, MC_HANG - 1);
+    const truoc = new Map<number, number>();
+    const k0 = a.j * MC_COT + a.i;
+    truoc.set(k0, -1);
+    const hang = [k0];
+    let tot = k0, dTot = Math.abs(a.i - bi) + Math.abs(a.j - bj);
+    for (let h = 0; h < hang.length; h++) {
+      const k = hang[h]!, i = k % MC_COT, j = (k - i) / MC_COT;
+      const d = Math.abs(i - bi) + Math.abs(j - bj);
+      if (d < dTot) { dTot = d; tot = k; }
+      if (!d) break;
+      for (const [hx, hy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+        const ni = i + hx, nj = j + hy, nk = nj * MC_COT + ni;
+        if (ni < 0 || nj < 0 || ni >= MC_COT || nj >= MC_HANG || truoc.has(nk) || !this.mcVao(ni, nj)) continue;
+        truoc.set(nk, k);
+        hang.push(nk);
+      }
+    }
+    const kq: { i: number; j: number }[] = [];
+    for (let k = tot; k !== k0; k = truoc.get(k)!) kq.unshift({ i: k % MC_COT, j: Math.floor(k / MC_COT) });
+    return kq;
+  }
+
+  /** Quay mặt theo hướng ô (lên / xuống / trái / phải) */
+  private mcQuay(n: NguoiChoi, hx: number, hy: number): void {
+    if (hy) n.nv.huong = hy < 0 ? 'len' : 'xuong';
+    else if (hx) { n.nv.huong = 'ngang'; n.nv.lat = hx < 0; }
+  }
+
+  /** Đi theo ô trong lưới mê cung: mỗi bước đúng một ô theo 1 trong 4 hướng, luôn dừng ở tâm ô (không đứng trên vạch / giữa 2 ô).
+   *  Trả false khi p không ở trong lưới (đi bộ thường) */
+  private mcDi(p: number, dt: number): boolean {
+    const n = this.nguoi[p]!;
+    const s = this.mc.nv[p];
+    if (!s || !this.oMeCung(p)) {
+      if (s) { s.toi = null; s.duong = []; }
+      return false;
+    }
+    n.dich = null;
+    let con = TOC_DO_DI * (1 + GIAY_TOC * s.giay) * dt;
+    for (let lan = 0; lan < 3 && con > 0; lan++) {
+      const o = oCua(n.x, n.y);
+      if (!s.toi) {
+        const t = tamO(o.i, o.j);
+        if (Math.abs(n.x - t.x) + Math.abs(n.y - t.y) > 0.5) s.toi = o;
+        else {
+          n.x = t.x;
+          n.y = t.y;
+          const ke = s.di ? { i: o.i + s.di.x, j: o.j + s.di.y } : s.duong.shift();
+          if (ke && Math.abs(ke.i - o.i) + Math.abs(ke.j - o.j) === 1 && this.mcVao(ke.i, ke.j)) s.toi = ke;
+          else {
+            s.duong = [];
+            if (s.di) this.mcQuay(n, s.di.x, s.di.y);
+            break;
+          }
+        }
+      } else if (s.di) {
+        // Đang đi giữa 2 ô mà bấm hướng ngược lại: quay về ô vừa rời
+        const t = tamO(s.toi.i, s.toi.j);
+        const mx = Math.sign(t.x - n.x), my = Math.sign(t.y - n.y);
+        if (Math.abs(mx) + Math.abs(my) === 1 && s.di.x === -mx && s.di.y === -my) s.toi = { i: s.toi.i - mx, j: s.toi.j - my };
+      }
+      // Đi thẳng theo trục tới tâm ô (lệch tâm lúc mới vào lưới thì đi ngang trước rồi dọc)
+      const t = tamO(s.toi.i, s.toi.j);
+      const dx = t.x - n.x;
+      if (dx) { const b = Math.min(Math.abs(dx), con); n.x += Math.sign(dx) * b; con -= b; this.mcQuay(n, Math.sign(dx), 0); }
+      const dy = t.y - n.y;
+      if (dy && con > 0) { const b = Math.min(Math.abs(dy), con); n.y += Math.sign(dy) * b; con -= b; this.mcQuay(n, 0, Math.sign(dy)); }
+      if (n.x !== t.x || n.y !== t.y) break;
+      s.toi = null;
+      if (!this.oMeCung(p)) break;
+    }
+    n.dangDi = !!s.toi || (!!s.di && con <= 0);
+    // Không trượt theo động tác đòn (ném bom) để luôn đứng đúng tâm ô
+    n.nv.capNhat(dt, n.dangDi);
+    return true;
   }
 
   /** p còn bom lửa / nước chưa nổ (mỗi người một quả lửa / nước và một quả bom nổ cùng lúc) */

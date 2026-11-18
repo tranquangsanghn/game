@@ -144,6 +144,10 @@ export interface NvMc {
   trang: { loai: 'chay' | 'bong' | 'luoi'; con: number; max: number } | null;
   /** máu / mana lúc bước vào mê cung (trong mê cung chỉ có 1 mạng); ra khỏi mê cung thì trả lại đúng như cũ */
   luu: { hp: number; mana: number } | null;
+  /** Đi theo ô: ô đang đi tới (luôn dừng ở tâm ô), hướng đang giữ (tay cầm, chỉ 4 hướng), đường đi theo ô (chuột bấm) */
+  toi: { i: number; j: number } | null;
+  di: { x: number; y: number } | null;
+  duong: { i: number; j: number }[];
 }
 export interface TrangThaiMc {
   bom: BomMc[]; lua: LuaMc[]; quai: QuaiMc[]; vp: VpMc[]; doCuu: DoMc[];
@@ -163,7 +167,7 @@ export const HANG_MC = oTheo('H');
 export const O_NGOC_MC = oTheo('D')[0]!;
 export const O_VAO_MC = oTheo('S')[0]!;
 
-export const taoNvMc = (): NvMc => ({ nap: null, chon: 'lua', giay: 0, khien: false, do: null, trang: null, luu: null });
+export const taoNvMc = (): NvMc => ({ nap: null, chon: 'lua', giay: 0, khien: false, do: null, trang: null, luu: null, toi: null, di: null, duong: [] });
 export function taoMeCung(): TrangThaiMc {
   return {
     bom: [], lua: [], quai: [], vp: [],
