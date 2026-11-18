@@ -10,7 +10,7 @@ import { MABU } from './nhan-vat-du-lieu';
 import { SP_FRIEZA, SP_FRIEZA_VANG, FZ_TEN, FZ_TEN_VANG, FZ_TO, FZ_VANG_TO, FZ_VANG_AURA, FZ_VANG_T, FZ_KHUNG, FZ_CHET_T, FZ_DANH_T, FZ_CHUONG_NAP, fzKhung, fzVang, fzKhungVang, fzHpMax, fzGap } from './frieza';
 import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_LO_LUNG } from './ginyu';
 import { MC, MC_HAM, MC_O, MC_COT, MC_HANG, mcO, tamO } from './ban-do';
-import { BOM_BAY_T, BOM_NO_T, BOM_TAM_MAX, LOAI_BOM, LUA_T, MC_TEN, QUAI_TEN, QUAI_RA, type BomMc, type LoaiBom, type QuaiMc } from './me-cung';
+import { bayBom, BOM_NO_T, BOM_TAM_MAX, LOAI_BOM, LUA_T, MC_TEN, QUAI_TEN, QUAI_RA, SP_BOM, NO_KHUNG, SP_BA, BA_TO, BA_NGOC_R, BA_TAY, BA_TEN, BA_HP, BA_CHET_T, type BomMc, type LoaiBom, type QuaiMc } from './me-cung';
 import { DAO, doSau, duongBo, NUI, TG, THAN, THAN_CONG, THAN_DA_GIAC, THAN_VAT_TG, thanVo } from './ban-do';
 
 /** Con ma của chiêu Bóng ma (Super Bư), tách nền bằng tools/tao-atlas-super-buu.py */
@@ -1002,6 +1002,7 @@ export class VeCanvas {
         this.veQuai(ctx, o.q);
         ctx.globalAlpha = 1;
       }
+      else if (o.loai === 'ba') this.veBa(ctx, c);
       else if (o.loai === 'mb') this.veMayBay(ctx, c.mbView, c.SP_MB, true);
       else if (o.loai === 'pt') this.veMayBay(ctx, c.ptView, c.SP_PT, false);
       else this.veNhanVat(ctx, c, o.p);
@@ -1975,8 +1976,48 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  /** Biểu tượng bom (dùng cho nút trên thanh đen, bom trên map): gốc ở tâm quả bom, bán kính 10 */
+  /** Bà phù thuỷ ngồi trên viên ngọc rồng 4 sao (ô cuối mê cung): ngọc phát sáng, bà nhấp nhô, khung giơ / nâng bom có quả bom trên tay;
+   *  trúng bom thì nháy, bị hạ thì mờ dần */
+  private veBa(ctx: CanvasRenderingContext2D, c: Game): void {
+    const ba = c.mc.ba;
+    const v = c.viTriBa();
+    const khung = c.khungBa();
+    ctx.save();
+    ctx.globalAlpha = ba.chet ? Math.max(0, 1 - ba.tChet / BA_CHET_T) : 1;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    duongElip(ctx, BA_NGOC_R * BA_TO * 1.1, 34, v.x, v.y + BA_NGOC_R * BA_TO - 10);
+    ctx.fill();
+    ctx.translate(v.x, v.y);
+    // Viên ngọc 4 sao (sprite ngọc: bán kính quả ~120 điểm ảnh)
+    ctx.save();
+    const k = (BA_NGOC_R * BA_TO) / 120;
+    ctx.scale(k, k);
+    this.sang(ctx, '#ffb347');
+    this.sprite(ctx, c.SP_NGOC, 3, false, true);
+    ctx.restore();
+    ctx.translate(0, 6 * Math.sin(c.t * 2.2));
+    ctx.scale(BA_TO * (ba.lat ? -1 : 1), BA_TO);
+    if (ba.trung > 0 && Math.floor(ba.trung * 20) % 2) ctx.globalAlpha *= 0.4;
+    this.sprite(ctx, SP_BA, khung, false, true);
+    const tay = BA_TAY[khung];
+    if (tay && khung < 3) {
+      // Quả bom bà đang cầm (to bằng quả cầu trong ảnh gốc)
+      ctx.translate(tay[0], tay[1]);
+      ctx.scale(0.75 * (ba.lat ? -1 : 1), 0.75);
+      this.sprite(ctx, SP_BOM, LOAI_BOM.indexOf(ba.loai), false, true);
+    }
+    ctx.restore();
+  }
+
+  /** Biểu tượng bom (dùng cho nút trên thanh đen, bom trên map): gốc ở tâm quả bom, bán kính 10; có ảnh bom thì vẽ sprite */
   private bieuTuongBom(ctx: CanvasRenderingContext2D, loai: LoaiBom): void {
+    if (this.nguon(SP_BOM.atlas, null)) {
+      ctx.save();
+      ctx.scale(0.2, 0.2);
+      this.sprite(ctx, SP_BOM, LOAI_BOM.indexOf(loai), false, true);
+      ctx.restore();
+      return;
+    }
     ctx.save();
     ctx.lineJoin = 'round';
     duongTron(ctx, 10, 0, 2);
@@ -2129,7 +2170,7 @@ export class VeCanvas {
 
   private veBomMc(ctx: CanvasRenderingContext2D, c: Game, b: BomMc): void {
     const t = tamO(b.i, b.j);
-    const bay = Math.min(1, b.t / BOM_BAY_T);
+    const bay = Math.min(1, b.t / bayBom(b));
     const x = b.x0 + (t.x - b.x0) * bay, y = b.y0 + (t.y + 40 - b.y0) * bay - Math.sin(bay * Math.PI) * 260;
     ctx.save();
     if (bay >= 1) {
@@ -2138,7 +2179,7 @@ export class VeCanvas {
       ctx.fill();
     }
     ctx.translate(x, y);
-    const dat = b.t - BOM_BAY_T;
+    const dat = b.t - bayBom(b);
     const nhip = bay >= 1 ? 1 + 0.06 * Math.sin(dat * (b.loai === 'no' ? 18 : 10)) : 1;
     ctx.scale(7 * nhip, 7 * nhip);
     this.bieuTuongBom(ctx, b.loai);
@@ -2183,7 +2224,15 @@ export class VeCanvas {
       else if (f.loai === 'nuoc') { g.addColorStop(0, '#f0fbff'); g.addColorStop(0.5, '#6cc0ff'); g.addColorStop(1, 'rgba(45,127,211,0.85)'); }
       else { g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, '#ffd27a'); g.addColorStop(1, 'rgba(110,110,110,0.85)'); }
       ctx.fillStyle = g;
+      ctx.globalAlpha *= 0.35;
       ctx.fillRect(t.x - MC_O / 2 + 6, t.y - MC_O / 2 + 6, MC_O - 12, MC_O - 12);
+      // Vụ nổ (sprite): bùng to dần rồi tan thành khói trong LUA_T giây
+      const ds = NO_KHUNG[f.loai];
+      const k = ds[Math.min(ds.length - 1, Math.floor((1 - f.con / LUA_T) * ds.length))]!;
+      ctx.globalAlpha = dongHe(f.con / (LUA_T * 0.3));
+      ctx.translate(t.x, t.y - 20);
+      ctx.scale(2, 2);
+      this.sprite(ctx, SP_BOM, k, false, true);
       ctx.restore();
     }
   }
@@ -2766,7 +2815,7 @@ export class VeCanvas {
       // Đang là bản sao: máu THẬT hiện dưới tên (thanh máu trên đầu bản sao chỉ để lừa)
       if (c.gySao && !c.ginyu.chet) so = `❤ ${Math.max(0, Math.ceil(c.ginyu.hp))} / ${c.ginyu.hpMax}`;
     }
-    else if (c.trenMeCung) { ten = MC_TEN; so = `👾 ${QUAI_TEN}: ${c.soQuaiMc}`; mo = false; }
+    else if (c.trenMeCung) { ten = c.baSong ? BA_TEN : MC_TEN; so = `${c.baSong ? `❤ ${c.mc.ba.hp}/${BA_HP} · ` : ''}👾 ${QUAI_TEN}: ${c.soQuaiMc}`; mo = false; }
     else if (c.trenDao) { ten = CELL_TEN[capCuaDao(c.daoHienTai)] ?? 'Cell'; so = c.soCellDao; mo = c.soCellDao <= 0; }
     else { ten = 'Vua gà'; mo = !tg; }
     ctx.save();
@@ -2813,11 +2862,17 @@ export class VeCanvas {
           this.sprite(ctx, SP_FRIEZA, FZ_KHUNG.dung[Math.floor(c.t * 1.5) % FZ_KHUNG.dung.length]!, false, false);
         }
       } else if (c.trenMeCung) {
-        // Mê cung bom: avatar quái ăn thịt há miệng
+        // Mê cung bom: avatar bà phù thuỷ (đã bị hạ thì quái ăn thịt há miệng)
         ctx.globalAlpha = 1;
-        ctx.translate(0, 52);
-        ctx.scale(0.36, 0.36);
-        this.veQuaiHinh(ctx, c.t * 6, 1);
+        if (c.baSong) {
+          ctx.translate(0, 92);
+          ctx.scale(0.32, 0.32);
+          this.sprite(ctx, SP_BA, c.khungBa(), false, true);
+        } else {
+          ctx.translate(0, 52);
+          ctx.scale(0.36, 0.36);
+          this.veQuaiHinh(ctx, c.t * 6, 1);
+        }
       } else if (c.trenNui) {
         ctx.globalAlpha = c.ginyu.chet && !c.ginyu.choHoi ? 0.25 : 0.9;
         ctx.translate(0, 98);

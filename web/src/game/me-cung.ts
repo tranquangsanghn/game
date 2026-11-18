@@ -3,6 +3,7 @@
 // Trong mê cung Mabu / Zinbu / Vegeta không dùng chiêu thường: chỉ có 3 loại bom.
 
 import { MC_BO, MC_COT, MC_HANG } from './ban-do';
+import type { KhungSprite } from './sprite';
 
 /** lua = bom lửa · nuoc = bom nước (nổ chữ thập, bấm lại nút để kích nổ) · no = bom nổ (nổ vùng vuông sau BOM_NO_T giây) */
 export type LoaiBom = 'lua' | 'nuoc' | 'no';
@@ -10,6 +11,50 @@ export const LOAI_BOM: LoaiBom[] = ['lua', 'nuoc', 'no'];
 export const TEN_BOM: Record<LoaiBom, string> = { lua: 'Bom lửa', nuoc: 'Bom nước', no: 'Bom nổ' };
 export const MC_TEN = 'Mê cung bom';
 export const QUAI_TEN = 'Quái ăn thịt';
+
+/** Sprite bom (tools/tao-atlas-bom.py): hàng 0 = quả bom lửa · nước · nổ (tâm quả ở giữa khung, cao ~120);
+ *  hàng 1..3 = vụ nổ lửa (5 khung) · nước (4) · nổ (4), vật ở giữa khung 200 */
+export const SP_BOM: KhungSprite = { atlas: 'assets/game/bom.png', atlasW: 1000, atlasH: 800, w: 200, h: 200, cot: 5, neoX: 100, neoY: 100 };
+/** Thứ tự khung vụ nổ của từng loại bom (chỉ số trong atlas): bùng to dần rồi tan thành khói */
+export const NO_KHUNG: Record<LoaiBom, number[]> = { lua: [6, 7, 8, 9, 5], nuoc: [10, 11, 12, 13], no: [16, 17, 18, 15] };
+
+/** Bà phù thuỷ: quái chính của mê cung bom, ngồi trên viên ngọc rồng 4 sao ở ô cuối (ô D), ném bom vào người chơi.
+ *  Sprite (tools/tao-atlas-ba-phu-thuy.py): 4 khung 360×520 ngang: 0 ngồi chắp tay · 1 giơ bom qua đầu · 2 nâng bom một tay · 3 ném;
+ *  neo = tâm viên ngọc bà ngồi lên (bán kính BA_NGOC_R điểm ảnh sprite), quay mặt phải */
+export const BA_TEN = 'Bà phù thuỷ';
+export const SP_BA: KhungSprite = { atlas: 'assets/game/ba_phu_thuy.png', atlasW: 1440, atlasH: 520, w: 360, h: 520, cot: 4, neoX: 170, neoY: 420 };
+export const BA_NGOC_R = 80;
+/** Vẽ to gấp BA_TO (viên ngọc bán kính BA_NGOC_R × BA_TO đơn vị thế giới) */
+export const BA_TO = 1.5;
+/** Quả bom trên tay ở khung 1 / 2 và chỗ bom rời tay ở khung 3 (điểm ảnh sprite, tính từ neo) */
+export const BA_TAY: ([number, number] | null)[] = [null, [26, -287], [-51, -271], [130, -60]];
+/** Máu: bom lửa / nước trúng trừ 1, bom nổ trừ 2 (ngọn lửa trên ô của bà) */
+export const BA_HP = 8;
+/** Chu trình ném: giơ bom BA_PHA[0] giây → nâng bom tới BA_PHA[1] → ném tới BA_PHA[2]; nghỉ BA_NEM_CACH giây giữa 2 lần */
+export const BA_PHA = [0.5, 0.85, 1.15];
+export const BA_NEM_CACH = 2.2;
+/** Chỉ ném người trong BA_TAM ô (tính theo đường đi ngang + dọc) */
+export const BA_TAM = 8;
+/** Bom bà ném bay BA_BOM_BAY giây; bom lửa / nước của bà tự nổ BA_BOM_CHO giây sau khi chạm đất, tia dài BA_BOM_TAM ô */
+export const BA_BOM_BAY = 0.8;
+export const BA_BOM_CHO = 1.3;
+export const BA_BOM_TAM = 2;
+/** Viên ngọc bà ngồi phát sáng: nhân vật thấy bà xa hơn tầm nhìn thường thêm BA_SANG (ngoại lệ sương mù, như Golden Frieza) */
+export const BA_SANG = 1100;
+/** Người chơi không đứng sát bà quá BA_DAY (bị đẩy ra) */
+export const BA_DAY = 230;
+export const BA_DIEM = 400;
+/** Bị hạ: mờ dần trong BA_CHET_T giây */
+export const BA_CHET_T = 1.2;
+export interface BaMc {
+  hp: number;
+  /** đếm ngược tới lần ném kế tiếp */ nem: number;
+  /** giây trong chu trình ném (< 0: đang ngồi) */ pha: number;
+  /** loại bom đang cầm */ loai: LoaiBom;
+  /** quay trái (người chơi ở phía tây) */ lat: boolean;
+  /** nháy khi trúng bom */ trung: number;
+  chet: boolean; tChet: number;
+}
 /** Số sao của viên ngọc ở cuối mê cung */
 export const MC_NGOC_SAO = 4;
 
@@ -74,8 +119,10 @@ export interface BomMc {
   t: number;
   /** đã bấm kích nổ khi bom còn đang bay: chạm đất là nổ (tia 1 ô) */
   kich?: boolean;
+  /** bom của bà phù thuỷ (p = -1): thời gian bay, tầm tia cố định */
+  bay?: number; tam?: number;
 }
-export interface LuaMc { i: number; j: number; loai: LoaiBom; con: number; /** người ném (tính điểm hạ quái) */ p: number; /** nhân vật đã dính (mỗi ngọn lửa trúng một người một lần) */ da: number[]; }
+export interface LuaMc { i: number; j: number; loai: LoaiBom; con: number; /** người ném (tính điểm hạ quái; -1 = bà phù thuỷ) */ p: number; /** nhân vật đã dính (mỗi ngọn lửa trúng một người một lần) */ da: number[]; /** đã trúng bà phù thuỷ */ baDa?: boolean; }
 export interface QuaiMc {
   id: number; x: number; y: number;
   /** ô đang đi tới */ ti: number; tj: number; dang: boolean; huong: number;
@@ -101,6 +148,7 @@ export interface TrangThaiMc {
   /** đếm ngược sinh quái của từng hang (theo thứ tự HANG_MC) */
   hang: number[];
   nv: NvMc[];
+  ba: BaMc;
 }
 
 /** Các ô theo ký hiệu trong bản đồ gốc */
@@ -120,5 +168,9 @@ export function taoMeCung(): TrangThaiMc {
     doCuu: [...oTheo('K').map((o) => ({ ...o, loai: 'kiem' as const, cho: 0 })), ...oTheo('X').map((o) => ({ ...o, loai: 'xo' as const, cho: 0 }))],
     hang: HANG_MC.map((_, k) => QUAI_DAU + k * 2),
     nv: [taoNvMc(), taoNvMc()],
+    ba: { hp: BA_HP, nem: 3, pha: -1, loai: 'lua', lat: false, trung: 0, chet: false, tChet: 0 },
   };
 }
+
+/** Thời gian bom bay trên không trước khi chạm đất */
+export const bayBom = (b: BomMc): number => b.bay ?? BOM_BAY_T;
