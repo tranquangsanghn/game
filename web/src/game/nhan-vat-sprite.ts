@@ -162,6 +162,15 @@ export class NhanVat {
     this.choi(don);
   }
 
+  /** Động tác ném bom (mê cung bom): vung tay ném thẳng (đấm duỗi tay), thay cho đòn của nhóm đang chọn */
+  nemBom(): void {
+    if (this.khoa || this.laMay) return;
+    const don = this.sp.anim['punch_long'] ? 'punch_long' : this.sp.nhomDon[0].don[0];
+    this.donCho = null;
+    this.trangThai = 'tanCong';
+    this.choi(don);
+  }
+
   tuKhi(bat: boolean): void {
     if (bat && (this.trangThai === 'thuong' || this.trangThai === 'khieuKhich')) this.trangThai = 'tuKhi';
     else if (!bat && this.trangThai === 'tuKhi') this.veThuong();

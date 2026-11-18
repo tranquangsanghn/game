@@ -13,6 +13,10 @@ export const QUAI_TEN = 'Quái ăn thịt';
 /** Số sao của viên ngọc ở cuối mê cung */
 export const MC_NGOC_SAO = 4;
 
+/** Trong / quanh mê cung và đường hầm: nhân vật vẽ to gấp MC_TO_NV, camera lùi xa (zoom × MC_ZOOM_HE) để thấy rộng hơn */
+export const MC_TO_NV = 1.5;
+export const MC_ZOOM_HE = 0.75;
+
 /** Giữ nút ném: mỗi BOM_NAP_BUOC giây thêm một mức (1..BOM_MUC), mức = số ô bom bay xa */
 export const BOM_MUC = 4;
 export const BOM_NAP_BUOC = 0.35;
@@ -89,6 +93,8 @@ export interface NvMc {
   giay: number; khien: boolean;
   do: 'kiem' | 'xo' | null;
   trang: { loai: 'chay' | 'bong' | 'luoi'; con: number; max: number } | null;
+  /** máu / mana lúc bước vào mê cung (trong mê cung chỉ có 1 mạng); ra khỏi mê cung thì trả lại đúng như cũ */
+  luu: { hp: number; mana: number } | null;
 }
 export interface TrangThaiMc {
   bom: BomMc[]; lua: LuaMc[]; quai: QuaiMc[]; vp: VpMc[]; doCuu: DoMc[];
@@ -107,7 +113,7 @@ export const HANG_MC = oTheo('H');
 export const O_NGOC_MC = oTheo('D')[0]!;
 export const O_VAO_MC = oTheo('S')[0]!;
 
-export const taoNvMc = (): NvMc => ({ nap: null, chon: 'lua', giay: 0, khien: false, do: null, trang: null });
+export const taoNvMc = (): NvMc => ({ nap: null, chon: 'lua', giay: 0, khien: false, do: null, trang: null, luu: null });
 export function taoMeCung(): TrangThaiMc {
   return {
     bom: [], lua: [], quai: [], vp: [],

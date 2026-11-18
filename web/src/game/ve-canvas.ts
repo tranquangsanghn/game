@@ -2256,8 +2256,19 @@ export class VeCanvas {
       this.veDoCuu(ctx, s.do);
       ctx.restore();
     }
-    // Đang giữ nút ném: 4 chấm, sáng theo mức (số ô bom sẽ bay xa)
+    // Đang giữ nút ném: quả bom giơ cao trên đầu (rung nhẹ theo mức nạp), ném đi khi thả nút
     const muc = c.mucNapNv(p);
+    if (muc > 0 && s.nap) {
+      const v = c.nvViTri(p);
+      const lech = n.nv.lat ? -1 : 1;
+      const rung = Math.sin(c.t * (10 + muc * 6)) * (4 + muc * 3);
+      ctx.save();
+      ctx.translate(cx + lech * 20 * v.k + rung, v.y - 72 * v.k);
+      ctx.scale(6.5, 6.5);
+      this.bieuTuongBom(ctx, s.nap.loai);
+      ctx.restore();
+    }
+    // 4 chấm, sáng theo mức (số ô bom sẽ bay xa)
     if (muc > 0 && s.nap) {
       const mau = s.nap.loai === 'lua' ? '#ff6a2a' : s.nap.loai === 'nuoc' ? '#5ab4ff' : '#cfcfcf';
       for (let k = 0; k < 4; k++) {
@@ -2453,7 +2464,8 @@ export class VeCanvas {
     const n = c.nguoi[p];
     if (n.vang || n.nv.laMay || c.dangCuu(p) || c.trongCau(p) || c.trongMb(p) || c.biNhap(p)) return;
     const t = c.thanhTrenDau(p);
-    this.veThanhNv(ctx, t.x, t.y, c.mauNv(p));
+    // Mê cung bom: 1 mạng, không có thanh máu trên đầu
+    if (!c.motMang(p)) this.veThanhNv(ctx, t.x, t.y, c.mauNv(p));
     // Super Bư: số giây hợp thể còn lại (to, đếm ngược) trên thanh máu
     const h = c.hopThe;
     if (h?.chu === p) this.veDemHopThe(ctx, t.x, t.y - 40, h.con);
@@ -2560,7 +2572,8 @@ export class VeCanvas {
     ctx.lineWidth = 4;
     ctx.strokeStyle = 'rgba(0,0,0,0.75)';
     ctx.fillStyle = '#fff';
-    for (const [v, y] of [[c.hpNv(q), ym - 28], [c.manaNv(q), ym + 14]] as [number, number][]) {
+    // Mê cung bom: 1 mạng, không tính máu
+    for (const [v, y] of [[c.motMang(q) ? '1♥' : c.hpNv(q), ym - 28], [c.manaNv(q), ym + 14]] as [number | string, number][]) {
       ctx.strokeText(`${v}`, xt, y);
       ctx.fillText(`${v}`, xt, y);
     }

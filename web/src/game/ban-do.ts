@@ -218,20 +218,21 @@ export function raKhoiChanThan(o: { x: number; y: number }, le = 30): { cx: bool
  *  Ký hiệu ô (MC_BO): '#' gạch (không phá được, che bom nổ) · 'w' thùng gỗ (bom phá được) · '?' ô bí ẩn (bom phá được, rơi vật phẩm / bẫy)
  *  · 'H' hang quái · 'S' chỗ vào (cửa đường hầm) · 'D' ngọc rồng 4 sao (cuối mê cung) · 'K' kiếm · 'X' xô nước · '.' nền trống. */
 export const MC_O = 360;
+/** Khung cố định: chỉ các ô đặc biệt (cửa vào, ngọc, kiếm, xô nước, 5 hang); '.' là ô sinh ngẫu nhiên mỗi ván (datLaiMeCung) */
 export const MC_BO = [
-  'w.w.?.w.#.w.?.w',
-  '.#w#.#w#.#.#w#.',
-  'w.H.w.?.w.w...w',
-  '.#.#w#.#w#.#w#.',
-  'w.w.K.w.w.?.w.w',
-  '.#w#.#.#w#.#.#w',
-  'D.w.w.w.H.w.w.S',
-  '.#.#w#.#.#X#w#.',
-  'w.?.w.w.w.?.w..',
-  '.#w#.#w#.#w#.#w',
-  'w...w.?.w.H.w..',
-  '.#w#.#w#.#.#w#.',
-  'w.w.?.w.#.w.?.w',
+  '...............',
+  '...............',
+  '..H.........H..',
+  '...............',
+  '....K..........',
+  '...............',
+  'D.......H.....S',
+  '..........X....',
+  '...............',
+  '...............',
+  '....H.....H....',
+  '...............',
+  '...............',
 ];
 export const MC_COT = MC_BO[0]!.length;
 export const MC_HANG = MC_BO.length;
@@ -251,8 +252,75 @@ export const MC = (() => {
 export const MC_HAM = { x0: MC.x1 - 20, x1: Math.round(DAO[1]!.x - DAO[1]!.r * 0.7), y: MC.y0 + (MC_VAO_HANG + 0.5) * MC_O, r: MC_HAM_RONG };
 /** Ô hiện tại của mê cung (thùng / ô ? bị bom phá thành '.'); Game đặt lại khi tạo ván / nạp ván (không lưu ván) */
 export const mcO: string[][] = MC_BO.map((r) => [...r]);
-export function datLaiMeCung(): void {
-  MC_BO.forEach((r, j) => { mcO[j] = [...r]; });
+/** Tỉ lệ ô ngẫu nhiên: gạch · thùng gỗ · ô bí ẩn (còn lại là nền trống) */
+const MC_TI_LE_GACH = 0.3;
+const MC_TI_LE_THUNG = 0.32;
+const MC_TI_LE_BI_AN = 0.09;
+/** Ô luôn để trống quanh cửa vào (chỗ đứng ném bom đầu tiên) */
+const MC_TRONG_VAO: [number, number][] = [[-1, 0], [-2, 0], [-1, -1], [-1, 1]];
+/** Sinh mê cung mới (mỗi ván): ô '.' của MC_BO rải ngẫu nhiên gạch / thùng gỗ / ô bí ẩn / nền trống, không có khối gạch 2 × 2;
+ *  rồi đập bớt gạch (thành thùng gỗ) cho tới khi mọi ô không phải gạch đều tới được từ cửa vào (thùng / ô bí ẩn phá được bằng bom),
+ *  mỗi hang có ít nhất một ô trống cạnh bên cho quái chui ra. */
+export function datLaiMeCung(rnd: () => number = Math.random): void {
+  const vao = (() => { for (let j = 0; j < MC_HANG; j++) { const i = MC_BO[j]!.indexOf('S'); if (i >= 0) return { i, j }; } return { i: MC_COT - 1, j: 0 }; })();
+  const trongVao = new Set(MC_TRONG_VAO.map(([a, b]) => `${vao.i + a},${vao.j + b}`));
+  const gach = (i: number, j: number) => i >= 0 && j >= 0 && i < MC_COT && j < MC_HANG && mcO[j]![i] === '#';
+  for (let j = 0; j < MC_HANG; j++) {
+    mcO[j] = [...MC_BO[j]!];
+    for (let i = 0; i < MC_COT; i++) {
+      if (MC_BO[j]![i] !== '.' || trongVao.has(`${i},${j}`)) continue;
+      const r = rnd();
+      let c = r < MC_TI_LE_GACH ? '#' : r < MC_TI_LE_GACH + MC_TI_LE_THUNG ? 'w' : r < MC_TI_LE_GACH + MC_TI_LE_THUNG + MC_TI_LE_BI_AN ? '?' : '.';
+      // Không để khối gạch 2 × 2 (ô (i, j) là góc dưới phải của khối)
+      if (c === '#' && gach(i - 1, j) && gach(i, j - 1) && gach(i - 1, j - 1)) c = 'w';
+      mcO[j]![i] = c;
+    }
+  }
+  const KE = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
+  const ke = (i: number, j: number) => KE.map(([a, b]) => ({ i: i + a, j: j + b })).filter((o) => o.i >= 0 && o.j >= 0 && o.i < MC_COT && o.j < MC_HANG);
+  // Hang: ít nhất một ô trống cạnh bên
+  for (let j = 0; j < MC_HANG; j++) for (let i = 0; i < MC_COT; i++) {
+    if (mcO[j]![i] !== 'H') continue;
+    const ds = ke(i, j);
+    if (ds.some((o) => mcO[o.j]![o.i] === '.')) continue;
+    const cho = ds.filter((q) => MC_BO[q.j]![q.i] === '.');
+    const o = cho[Math.floor(rnd() * cho.length)];
+    if (o) mcO[o.j]![o.i] = '.';
+  }
+  // Nối liền: loang từ cửa vào qua mọi ô không phải gạch / hang; còn ô chưa tới thì đập một viên gạch giáp vùng đã tới
+  const diQua = (c: string) => c !== '#' && c !== 'H';
+  for (let lan = 0; lan < MC_COT * MC_HANG; lan++) {
+    const toi = new Set<string>([`${vao.i},${vao.j}`]);
+    const hang = [vao];
+    while (hang.length) {
+      const o = hang.pop()!;
+      for (const q of ke(o.i, o.j)) {
+        const k = `${q.i},${q.j}`;
+        if (toi.has(k) || !diQua(mcO[q.j]![q.i]!)) continue;
+        toi.add(k);
+        hang.push(q);
+      }
+    }
+    const chua: { i: number; j: number }[] = [];
+    for (let j = 0; j < MC_HANG; j++) for (let i = 0; i < MC_COT; i++) if (diQua(mcO[j]![i]!) && !toi.has(`${i},${j}`)) chua.push({ i, j });
+    // Hang cũng phải giáp vùng đã tới
+    for (let j = 0; j < MC_HANG; j++) for (let i = 0; i < MC_COT; i++) if (mcO[j]![i] === 'H' && !ke(i, j).some((q) => toi.has(`${q.i},${q.j}`))) chua.push({ i, j });
+    if (!chua.length) return;
+    const chuaSet = new Set(chua.map((o) => `${o.i},${o.j}`));
+    const giap: { i: number; j: number }[] = [];
+    const giapCa: { i: number; j: number }[] = [];
+    for (let j = 0; j < MC_HANG; j++) for (let i = 0; i < MC_COT; i++) {
+      if (mcO[j]![i] !== '#') continue;
+      const ds = ke(i, j);
+      if (!ds.some((q) => toi.has(`${q.i},${q.j}`))) continue;
+      giap.push({ i, j });
+      if (ds.some((q) => chuaSet.has(`${q.i},${q.j}`))) giapCa.push({ i, j });
+    }
+    const ds = giapCa.length ? giapCa : giap;
+    if (!ds.length) return;
+    const o = ds[Math.floor(rnd() * ds.length)]!;
+    mcO[o.j]![o.i] = 'w';
+  }
 }
 /** Điểm nằm trong khung mê cung (nới `le`) */
 export const trongMeCung = (x: number, y: number, le = 0) => x >= MC.x0 - le && x <= MC.x1 + le && y >= MC.y0 - le && y <= MC.y1 + le;
