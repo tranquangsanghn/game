@@ -216,7 +216,7 @@ export function raKhoiChanThan(o: { x: number; y: number }, le = 30): { cx: bool
 /** Mê cung bom: khối đất nổi trên vực phía tây đảo 1 (đảo Cell 3 con), lưới MC_COT × MC_HANG ô vuông cạnh MC_O.
  *  Nối với đảo 1 bằng một đường hầm đi bộ thẳng (MC_HAM, nửa bề rộng MC_HAM_RONG) cắm vào ô vào mê cung (hàng MC_VAO_HANG, mép đông).
  *  Ký hiệu ô (MC_BO): '#' gạch (không phá được, che bom nổ) · 'w' thùng gỗ (bom phá được) · '?' ô bí ẩn (bom phá được, rơi vật phẩm / bẫy)
- *  · 'H' hang quái · 'S' chỗ vào (cửa đường hầm, góc trên phải) · 'E' lối ra (góc dưới phải, dịch chuyển tới núi đá) · 'D' ngọc rồng 4 sao (cuối mê cung) · 'K' kiếm · 'X' xô nước · '.' nền trống. */
+ *  · 'H' hang quái · 'S' chỗ vào (cửa đường hầm, góc trên phải) · 'E' lối ra (góc dưới trái, dịch chuyển tới núi đá) · 'D' ngọc rồng 4 sao (cuối mê cung) · 'K' kiếm · 'X' xô nước · '.' nền trống. */
 export const MC_O = 360;
 /** Khung cố định: chỉ các ô đặc biệt (cửa vào, ngọc, kiếm, xô nước, 5 hang); '.' là ô sinh ngẫu nhiên mỗi ván (datLaiMeCung) */
 export const MC_BO = [
@@ -232,7 +232,7 @@ export const MC_BO = [
   '...................',
   '......H.....H......',
   '...................',
-  '..................E',
+  'E..................',
 ];
 export const MC_COT = MC_BO[0]!.length;
 export const MC_HANG = MC_BO.length;

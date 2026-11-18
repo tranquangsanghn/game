@@ -996,13 +996,7 @@ export class VeCanvas {
         ctx.globalAlpha = 1;
       } else if (o.loai === 'cong') {
         if (o.mc) {
-          // Lối ra mê cung bom: cổng dịch chuyển thu nhỏ vừa một ô
-          const t = tamO(O_RA_MC.i, O_RA_MC.j);
-          ctx.save();
-          ctx.translate(t.x, t.y + MC_O * 0.3);
-          ctx.scale(0.42, 0.42);
-          this.veCong(ctx, c, { x: 0, y: 0 });
-          ctx.restore();
+          this.veCongMc(ctx, c);
         } else this.veCong(ctx, c, o.than ? THAN_CONG : c.cong);
       }
       else if (o.loai === 'quai') {
@@ -1874,11 +1868,10 @@ export class VeCanvas {
     const T = 110;
     ctx.fillRect(MC.x0 - T, MC.y0 - T * 1.6, MC.w + 2 * T, T * 1.6);
     ctx.fillRect(MC.x0 - T, MC.y1, MC.w + 2 * T, T);
-    ctx.fillRect(MC.x0 - T, MC.y0, T, MC.h);
-    // Tường đông chừa cửa vào (góc trên phải, đường hầm) và lối ra (góc dưới phải, cổng tới núi đá)
-    const raY = MC.y0 + O_RA_MC.j * MC_O;
+    // Tường tây chừa lối ra (góc dưới trái, cổng xanh tới núi đá); tường đông chừa cửa vào (góc trên phải, đường hầm)
+    ctx.fillRect(MC.x0 - T, MC.y0, T, O_RA_MC.j * MC_O);
     if (H.y - H.r - 30 > MC.y0) ctx.fillRect(MC.x1, MC.y0, T, H.y - H.r - 30 - MC.y0);
-    ctx.fillRect(MC.x1, H.y + H.r + 30, T, raY - H.y - H.r - 30);
+    ctx.fillRect(MC.x1, H.y + H.r + 30, T, MC.y1 - H.y - H.r - 30);
     const i0 = Math.max(0, Math.floor((x0 - MC.x0) / MC_O) - 1), i1 = Math.min(MC_COT - 1, Math.floor((x1 - MC.x0) / MC_O) + 1);
     const j0 = Math.max(0, Math.floor((y0 - MC.y0) / MC_O) - 1), j1 = Math.min(MC_HANG - 1, Math.floor((y1 - MC.y0) / MC_O) + 1);
     const O = MC_O;
@@ -1940,6 +1933,44 @@ export class VeCanvas {
           ctx.stroke();
         }
       }
+    }
+    ctx.restore();
+  }
+
+  /** Lối ra mê cung bom (ô O_RA_MC): cổng xoáy màu xanh lá vừa một ô (gradient, không dùng shadowBlur) */
+  private veCongMc(ctx: CanvasRenderingContext2D, c: Game): void {
+    const t = tamO(O_RA_MC.i, O_RA_MC.j);
+    ctx.save();
+    ctx.translate(t.x, t.y);
+    // Quầng sáng xanh trên nền ô
+    const q = ctx.createRadialGradient(0, 40, 10, 0, 40, MC_O * 0.5);
+    q.addColorStop(0, `rgba(120,255,140,${0.55 + 0.15 * Math.sin(c.t * 3)})`);
+    q.addColorStop(1, 'rgba(40,200,80,0)');
+    ctx.fillStyle = q;
+    duongElip(ctx, MC_O * 0.5, MC_O * 0.32, 0, 40);
+    ctx.fill();
+    // Mặt cổng: elip đứng, xanh sáng ở giữa, viền xanh đậm
+    const rx = 110, ry = 150, cy = -40;
+    const g = ctx.createRadialGradient(0, cy, 6, 0, cy, ry);
+    g.addColorStop(0, '#eaffd8');
+    g.addColorStop(0.35, '#7dff8a');
+    g.addColorStop(0.75, '#22c55e');
+    g.addColorStop(1, '#0f7a37');
+    ctx.fillStyle = g;
+    duongElip(ctx, rx, ry, 0, cy);
+    ctx.fill();
+    ctx.lineWidth = 16;
+    ctx.strokeStyle = '#14532d';
+    ctx.stroke();
+    // Vệt xoáy quay
+    ctx.lineWidth = 9;
+    ctx.lineCap = 'round';
+    for (let k = 0; k < 3; k++) {
+      const a = c.t * 3 + (k * TAU) / 3;
+      ctx.strokeStyle = k % 2 ? 'rgba(255,255,255,0.75)' : 'rgba(190,255,170,0.85)';
+      ctx.beginPath();
+      ctx.ellipse(0, cy, rx * (0.75 - k * 0.18), ry * (0.75 - k * 0.18), 0, a, a + Math.PI * 1.1);
+      ctx.stroke();
     }
     ctx.restore();
   }

@@ -7846,7 +7846,7 @@ export class Game {
       const dich = !n.vang && !this.trongMb(p) && this.vungMc(n) ? MC_TO_NV : 1;
       this.toMc[p] = this.toMc[p]! + (dich - this.toMc[p]!) * Math.min(1, dt * 4);
     });
-    // Lối ra góc dưới phải: ai (còn sống, không bị cháy / bong bóng / lưới) tới tâm ô lối ra thì cả đội dịch chuyển tới núi đá
+    // Lối ra góc dưới trái: ai (còn sống, không bị cháy / bong bóng / lưới) tới tâm ô lối ra thì cả đội dịch chuyển tới núi đá
     const raT = tamO(O_RA_MC.i, O_RA_MC.j);
     if (this.nguoi.some((n, p) => this.oMeCung(p) && !n.het && !mc.nv[p]!.trang && hyp(n.x - raT.x, n.y - raT.y) < MC_O * 0.3)) this.mcRaNui(raT);
     // 1 mạng trong mê cung: nhớ máu / mana lúc bước vào, ra khỏi mê cung (còn sống) thì trả lại đúng như cũ

@@ -216,7 +216,7 @@ const oTheo = (k: string) => {
 export const HANG_MC = oTheo('H');
 export const O_NGOC_MC = oTheo('D')[0]!;
 export const O_VAO_MC = oTheo('S')[0]!;
-/** Lối ra (góc dưới phải): bước tới tâm ô này thì cả đội dịch chuyển tới núi đá (chỗ bóng ma Goku) */
+/** Lối ra (góc dưới trái): bước tới tâm ô này thì cả đội dịch chuyển tới núi đá (chỗ bóng ma Goku) */
 export const O_RA_MC = oTheo('E')[0]!;
 
 export const taoNvMc = (): NvMc => ({ nap: null, chon: 'lua', giay: 0, khien: false, do: null, trang: null, luu: null, toi: null, di: null, duong: [] });
