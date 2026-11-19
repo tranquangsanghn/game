@@ -970,7 +970,7 @@ export class Game {
   onNutX: () => void = () => {};
   /** Tay cầm 1 bấm trái / phải ở màn bắt đầu (sang = -1 / 1); giao diện trả true nếu đã dùng (chọn bản đồ ở màn mục tiêu) */
   /** Thẻ đang chọn ở màn chọn chế độ (chỉ số trong THE_CHON), chữ thập / cần trái chọn (trái-phải từng thẻ, lên-xuống đổi hàng) */
-  menuChon = 3;
+  menuChon = THE_CHON.indexOf('ca2');
   /** Nút đang chọn ở màn tạm dừng (0 Tiếp tục · 1 Lưu game), chữ thập / cần trái lên-xuống để chọn, A để bấm */
   menuTamDung = 0;
   /** Tay cầm bấm A ở màn tạm dừng: giao diện bấm nút đang chọn (menuTamDung) */
