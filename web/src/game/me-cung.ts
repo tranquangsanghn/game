@@ -10,7 +10,6 @@ export type LoaiBom = 'lua' | 'nuoc' | 'no';
 export const LOAI_BOM: LoaiBom[] = ['lua', 'nuoc', 'no'];
 export const TEN_BOM: Record<LoaiBom, string> = { lua: 'Bom lửa', nuoc: 'Bom nước', no: 'Bom nổ' };
 export const MC_TEN = 'Mê cung bom';
-export const QUAI_TEN = 'Quái vật';
 
 /** Sprite bom (tools/tao-atlas-bom.py): hàng 0 = quả bom lửa · nước · nổ (tâm quả ở giữa khung, cao ~120);
  *  hàng 1..3 = vụ nổ lửa (5 khung) · nước (4) · nổ (4), vật ở giữa khung 200 */
