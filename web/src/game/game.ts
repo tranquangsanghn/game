@@ -358,7 +358,7 @@ const HOP_THE_CUA = 1;
 const MB_THAN_LE = 300;
 const HOP_THE_GAP = 3;
 /** Sát thương mỗi đòn của Super Bư = HOP_THE_SAT_GAP × (đòn Mabu + đòn Zinbu) (máu vẫn HOP_THE_GAP × tổng máu) */
-const HOP_THE_SAT_GAP = 3;
+const HOP_THE_SAT_GAP = 4.5;
 const HOP_THE_T = 50;
 const HOP_THE_HOI = 15;
 /** Super Bư bị hạ: tách ra sớm, mỗi người còn HOP_THE_CON_MAU máu lúc hợp thể (tối thiểu 1) */
