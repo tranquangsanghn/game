@@ -333,6 +333,8 @@ export const tamO = (i: number, j: number) => ({ x: MC.x0 + (i + 0.5) * MC_O, y:
 export const oMc = (i: number, j: number) => (i < 0 || j < 0 || i >= MC_COT || j >= MC_HANG ? '#' : mcO[j]![i]!);
 /** Ô chắn đường đi (gạch, thùng, ô bí ẩn, hang) */
 export const oCung = (c: string) => c === '#' || c === 'w' || c === '?' || c === 'H';
+/** Tường thật của mê cung (gạch, hang): bom không nằm lên được; thùng gỗ / ô bí ẩn thì bom đáp lên được */
+export const oTuongMc = (c: string) => c === '#' || c === 'H';
 function doSauMeCung(x: number, y: number): number {
   const dx = Math.max(MC.x0 - x, 0, x - MC.x1), dy = Math.max(MC.y0 - y, 0, y - MC.y1);
   if (dx > 0 || dy > 0) return -hyp(dx, dy);

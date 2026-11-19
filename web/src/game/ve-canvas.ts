@@ -2385,30 +2385,6 @@ export class VeCanvas {
       this.veVpMc(ctx, 'mang');
       ctx.restore();
     }
-    // Kho đồ cứu người (góc trên đầu): số xô nước và kim châm còn lại, hết thì mờ
-    ctx.font = `900 130px ${FONT}`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = 26;
-    for (const [k, loai, so] of [[0, 'xo', s.xo], [1, 'kim', s.kim]] as const) {
-      const bx = cx + 150, by = n.y - 400 + k * 160;
-      ctx.save();
-      ctx.globalAlpha = so > 0 ? 1 : 0.4;
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      duongTron(ctx, 72, bx, by);
-      ctx.fill();
-      ctx.save();
-      ctx.translate(bx, by);
-      ctx.scale(4.8, 4.8);
-      this.veDoCuu(ctx, loai);
-      ctx.restore();
-      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-      ctx.fillStyle = so > 0 ? '#fff' : '#ff6b6b';
-      ctx.strokeText(`×${so}`, bx + 90, by);
-      ctx.fillText(`×${so}`, bx + 90, by);
-      ctx.restore();
-    }
     // Đang giữ nút ném: quả bom giơ cao trên đầu (rung nhẹ theo mức nạp), ném đi khi thả nút
     const muc = c.mucNapNv(p);
     if (muc > 0 && s.nap) {
@@ -2744,8 +2720,12 @@ export class VeCanvas {
     // Các chiêu xếp dọc từ dưới lên: đang dùng sáng + phát sáng, hết mana thì mờ hẳn
     const bom = c.oMeCung(p);
     for (const b of c.nutBang(p)) {
-      const dung = bom ? c.bomDangNap(p) === LOAI_BOM[b.k] : ng0.nv.nhom === b.k && !nhap;
-      const het = bom ? ng0.het || c.bomCon(p, LOAI_BOM[b.k]!) <= 0 : c.hetMana(p, b.k) || nhap;
+      // Mê cung bom: nút 0..2 = bom lửa / nước / nổ, nút 3..4 (trên 3 quả bom, từ dưới lên) = kim châm / xô nước (chỉ để xem kho)
+      const loaiBom = bom ? LOAI_BOM[b.k] : undefined;
+      const doCuu = bom && b.k >= 3 ? (b.k === 3 ? 'kim' : 'xo') : null;
+      const soCon = !bom ? 0 : loaiBom ? c.bomCon(p, loaiBom) : (c.mc.nv[p]![doCuu!] ?? 0);
+      const dung = bom ? !!loaiBom && c.bomDangNap(p) === loaiBom : ng0.nv.nhom === b.k && !nhap;
+      const het = bom ? ng0.het || soCon <= 0 : c.hetMana(p, b.k) || nhap;
       ctx.save();
       ctx.translate(b.x, b.y);
       ctx.scale(0.8, 0.8);
@@ -2760,12 +2740,13 @@ export class VeCanvas {
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
       ctx.scale(1.35, 1.35);
-      if (bom) this.bieuTuongBom(ctx, LOAI_BOM[b.k]!);
+      if (loaiBom) this.bieuTuongBom(ctx, loaiBom);
+      else if (doCuu) { ctx.scale(1.1, 1.1); this.veDoCuu(ctx, doCuu); }
       else this.bieuTuongNv(ctx, b.k, ng0.nv.sp);
       ctx.restore();
       if (bom) {
-        // Số bom còn lại của loại này (ném loại nào là ngẫu nhiên nên nút chỉ để xem kho)
-        const so = c.bomCon(p, LOAI_BOM[b.k]!);
+        // Số còn lại trong kho (bom ném loại nào là ngẫu nhiên, xô / kim tốn 1 mỗi lần cứu nên nút chỉ để xem kho)
+        const so = soCon;
         ctx.save();
         ctx.globalAlpha = ng0.het ? 0.2 : 1;
         ctx.font = `900 22px ${FONT}`;

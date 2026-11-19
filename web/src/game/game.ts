@@ -5,7 +5,7 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
-import { MC, MC_COT, MC_HANG, MC_HAM, MC_O, datLaiMeCung, oCua, oCung, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
+import { MC, MC_COT, MC_HANG, MC_HAM, MC_O, datLaiMeCung, oCua, oCung, oTuongMc, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
 import { taoMeCung, O_VAO_MC, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, MC_DO_THEM, MC_BOM_THEM, MANG_TOI_DA, BAY_BAY, BAY_NO, BAY_TAM, QUAI_CACH, QUAI_TOI_DA, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DL, LOAI_QUAI, QUAI_TIA_SAT, QUAI_TIA_T, QUAI_CHET_T, QUAI_DAU_T, SP_QUAI, type LoaiQuai, type TiaMc, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_DIEM, BA_CHET_T, BA_HP, BA_HOI_SINH, BA_HOI_T, BA_HOI_TANG, BA_TOC, BA_GAN, BA_BAY_CAO, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
@@ -7452,8 +7452,8 @@ export class Game {
 
   // Nhóm đòn hiện biểu tượng dưới chân, theo thứ tự: Đấm → Chiêu đặc biệt → Đá → (Mabu) Mây
   dsBieuTuong(p: number): number[] {
-    // Mê cung bom: 3 nút bom (0 lửa · 1 nước · 2 nổ, từ dưới lên) thay cho chiêu
-    if (this.oMeCung(p)) return [0, 1, 2];
+    // Mê cung bom: 3 nút bom (0 lửa · 1 nước · 2 nổ, từ dưới lên) thay cho chiêu, trên cùng thêm 2 ô kho: 3 kim châm · 4 xô nước (chỉ để xem số còn lại)
+    if (this.oMeCung(p)) return [0, 1, 2, 3, 4];
     return this.nguoi[p].nv.sp.nhomDon.length > NHOM_MAY ? [0, 2, 1, NHOM_MAY] : [0, 2, 1];
   }
 
@@ -7770,7 +7770,8 @@ export class Game {
     this.mcNem(p, w.x - n.x, w.y - n.y);
   }
 
-  /** Ném bom đang nạp theo hướng (dx, dy) (làm tròn về 4 hướng): bay xa đúng số mức nạp, dừng trước gạch / thùng / ô bí ẩn / hang / bom khác */
+  /** Ném bom đang nạp theo hướng (dx, dy) (làm tròn về 4 hướng): bay xa đúng số mức nạp, dừng trước gạch / hang / bom khác;
+   *  bom bay qua và đáp được lên thùng gỗ / ô bí ẩn (nổ là phá luôn thùng đó), nhưng không bao giờ nằm trên gạch / hang */
   private mcNem(p: number, dx: number, dy: number): void {
     const n = this.nguoi[p]!;
     const s = this.mc.nv[p]!;
@@ -7787,10 +7788,10 @@ export class Game {
     const coBom = (a: number, b: number) => this.mc.bom.some((q) => q.i === a && q.j === b);
     for (let k = 0; k < muc; k++) {
       const ni = i + hx, nj = j + hy;
-      if (oCung(oMc(ni, nj)) || coBom(ni, nj) || this.oBa(ni, nj)) break;
+      if (oTuongMc(oMc(ni, nj)) || coBom(ni, nj) || this.oBa(ni, nj)) break;
       i = ni; j = nj;
     }
-    if (coBom(i, j) || oCung(oMc(i, j)) || this.oBa(i, j)) return;
+    if (coBom(i, j) || oTuongMc(oMc(i, j)) || this.oBa(i, j)) return;
     const tay = this.viTriTay(p);
     this.mc.bom.push({ id: this.id++, p, loai: nap.loai, i, j, x0: tay.x, y0: tay.y, t: 0 });
     s.bom[nap.loai]--;
@@ -7830,6 +7831,8 @@ export class Game {
       }
     } else {
       const tam = b.kich && b.t - bayBom(b) < 1 ? 1 : this.tamBom(b);
+      const goc = oMc(b.i, b.j);
+      if (goc === 'w' || goc === '?') this.mcPha(b.i, b.j);
       dat(b.i, b.j);
       for (const [hx, hy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
         for (let s = 1; s <= tam; s++) {
