@@ -378,8 +378,8 @@ export type CheNguoi = 'mabu' | 'zinbu' | 'vegeta' | 'ca2' | 'mabuVegeta' | 'veg
 export const DOI_HINH: Record<CheNguoi, [number | null, number | null]> = {
   mabu: [0, null], zinbu: [null, 1], vegeta: [2, null], ca2: [0, 1], mabuVegeta: [0, 2], vegetaZinbu: [2, 1],
 };
-/** Thứ tự thẻ ở màn chọn (hàng trên 1 người, hàng dưới 2 người) */
-export const THE_CHON: CheNguoi[] = ['mabu', 'zinbu', 'vegeta', 'ca2', 'mabuVegeta', 'vegetaZinbu'];
+/** Thứ tự thẻ ở màn chọn (một hàng). Vegeta tạm ẩn vì nhân vật chưa hoàn thiện (vẫn giữ trong DOI_HINH) */
+export const THE_CHON: CheNguoi[] = ['mabu', 'zinbu', 'ca2'];
 const SAT_MAY = 250;
 // Chiêu Biến socola (riêng Zinbu, nhóm đòn 3): chưởng bay tới điểm chuột (tối đa TAM_SOCOLA), nổ bán kính BAN_KINH_SOCOLA. Gà con dính thì chết luôn và thành socola; gà mẹ dính sát thương SAT_SOCOLA rồi hoá socola SOCOLA_THOI_GIAN giây (đứng yên, không né).
 // Hồi SOCOLA_HOI giây (đồng hồ riêng hoiSoc, không khoá các đòn khác); tốn MANA_DAC_BIET.
@@ -7052,9 +7052,6 @@ export class Game {
             const sang = (moi(g, 15) ? 1 : 0) - (moi(g, 14) ? 1 : 0) || (canMoi && canMoi !== this.menuCanCu ? canMoi : 0);
             this.menuCanCu = canMoi;
             if (sang) this.menuChon = Math.max(0, Math.min(THE_CHON.length - 1, this.menuChon + sang));
-            // Lên / xuống: đổi hàng (1 người ↔ 2 người)
-            const doc = (moi(g, 13) ? 1 : 0) - (moi(g, 12) ? 1 : 0);
-            if (doc) this.menuChon = Math.max(0, Math.min(THE_CHON.length - 1, this.menuChon + doc * 3));
           }
           // X: đánh dấu thẻ ở màn chọn chế độ · A / Menu: Tiếp / Vào chơi ở màn hướng dẫn · B: xác nhận / quay lại
           if (moi(g, 2)) this.onNutX();

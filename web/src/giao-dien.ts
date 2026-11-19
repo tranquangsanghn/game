@@ -232,7 +232,7 @@ export class GiaoDien {
     };
     return `<div class="man-phu man-chon"><div class="hang-the luoi-the${this.game.cheDo === 'tayCam' ? ' co-chon' : ''}">
       ${THE_CHON.map(theChon).join('')}
-    </div>${this.game.cheDo === 'tayCam' ? `<p class="phu">Người chơi 1: ◀ ▶ ▲ ▼ chọn · ${this.daBamX === this.game.menuChon ? 'bấm B để vào' : 'bấm X rồi B để xác nhận'}</p><p class="phu" style="opacity:.6">${this.game.tayCamTen.length ? `Tay cầm: ${this.game.tayCamTen.join(' · ')}` : 'Chưa thấy tay cầm (bấm một nút bất kỳ)'}${this.game.tayCamNut ? ` · vừa bấm ${this.game.tayCamNut}` : ''}</p>` : ''}${this.luu ? '<button type="button" tabindex="-1" class="nut-phu" data-act="tiep" style="margin-top:20px">▶ Chơi tiếp ván đã lưu</button>' : ''}${this.htmlThongBao()}</div>`;
+    </div>${this.game.cheDo === 'tayCam' ? `<p class="phu">Người chơi 1: ◀ ▶ chọn · ${this.daBamX === this.game.menuChon ? 'bấm B để vào' : 'bấm X rồi B để xác nhận'}</p><p class="phu" style="opacity:.6">${this.game.tayCamTen.length ? `Tay cầm: ${this.game.tayCamTen.join(' · ')}` : 'Chưa thấy tay cầm (bấm một nút bất kỳ)'}${this.game.tayCamNut ? ` · vừa bấm ${this.game.tayCamNut}` : ''}</p>` : ''}${this.luu ? '<button type="button" tabindex="-1" class="nut-phu" data-act="tiep" style="margin-top:20px">▶ Chơi tiếp ván đã lưu</button>' : ''}${this.htmlThongBao()}</div>`;
   }
 
   /** Màn hướng dẫn sau khi chọn nhân vật: chọn chuột / tay cầm, xem ảnh hướng dẫn rồi vào chơi */

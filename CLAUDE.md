@@ -157,7 +157,7 @@
 
 # Nguyên tắc mana & bay
 
-- Bay tốn mana (`mana`, bình xanh lơ có số giữa bình ở thanh đen hai bên, dưới bình máu, không vẽ trên đầu nhân vật; `manaNv()`, `nlBay()`). Bắt đầu `MANA_BAN_DAU` = 200; bay tốn `MANA_BAY` = 15 mỗi giây bay; tự hồi `MANA_HOI` = 2 mỗi giây khi không bay nhưng chỉ tới `MANA_HOI_TOI_DA` = 100 rồi thôi (táo xanh / socola / đòn trúng cộng cao hơn không giới hạn, không bị trừ xuống). Mỗi lần bay xong khoá `BAY_KHOA` = 2s (`bayKhoa`, bình xám) mới bay tiếp được; còn dưới `MANA_TOI_THIEU` = 15 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); mana không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn. Đổi cấu trúc trạng thái thì tăng `PHIEN_BAN_LUU` (bản 4 thêm `cuu`, trạng thái gà mới; bản 5 thêm `ngoc`, xem mục ngọc rồng). Thêm trường mới có giá trị mặc định trong `taoNguoiChoi()` (như `hoiSoc`) thì ván lưu cũ vẫn tải được, không cần tăng phiên bản.
+- Bay tốn mana (`mana`, bình xanh lơ có số giữa bình ở thanh đen hai bên, dưới bình máu, không vẽ trên đầu nhân vật; `manaNv()`, `nlBay()`). Bắt đầu `MANA_BAN_DAU` = 200; bay tốn `MANA_BAY` = 15 mỗi giây bay; tự hồi `MANA_HOI` = 2 mỗi giây khi không bay nhưng chỉ tới `MANA_HOI_TOI_DA` = 100 rồi thôi (táo xanh / socola / đòn trúng cộng cao hơn không giới hạn, không bị trừ xuống). Mỗi lần bay xong khoá `BAY_KHOA` = 2s (`bayKhoa`, bình xám) mới bay tiếp được; còn dưới `MANA_TOI_THIEU` = 15 hoặc đang khoá thì chỉ chạy bộ (`coTheBay()`); mana không đủ cho cả quãng thì bay ngắn lại. Dạng mây không bay nên không tốn. Đổi cấu trúc trạng thái thì tăng `PHIEN_BAN_LUU`. Thêm trường mới có giá trị mặc định trong `taoNguoiChoi()` (như `hoiSoc`) thì ván lưu cũ vẫn tải được, không cần tăng phiên bản.
 
 # Nguyên tắc chiêu Biến socola (riêng Zinbu)
 
@@ -197,7 +197,7 @@
 - Nhặt: Mabu / Zinbu (chưa gục, không phải mây, không trong cầu, không đang bay) đi vào `NGOC_BAN_KINH` thì nhặt ngay. Ngọc là của chung cả đội (`soNgoc()`). Nhặt thì hiện chữ bay "⭐ NGỌC RỒNG n SAO! (k/7)", vụ nổ sáng (`Vet` loại `chay` màu vàng), chưởng lên trời (`chuongLenTroi()`), âm `phat('ngoc')`. Gà không nhặt / không ăn / không đẩy ngọc; ngọc không biến mất theo thời gian; nhân vật gục không làm rơi ngọc.
 - Ngọc bị sương mù như gà (chỉ vẽ trong tầm nhìn, `ngocView`) để phải khám phá; rađa rồng dẫn đường. Kẹp bằng `giuTrongMap(ngọc, LE_NGOC)`, lọc render trong `capNhatView()`.
 - Thanh đen trên luôn có hàng 7 ô ngọc (1 → 7 sao, `bangNgoc()`), viên đã nhặt sáng + phát sáng, chưa nhặt mờ hẳn; chỉ để xem, không bấm được.
-- Lưu ván: `ngoc` (vị trí, số sao, đã nhặt, viên vua gà giữ) nằm trong ván lưu; (thiết kế, chưa code) khi code thì tăng `PHIEN_BAN_LUU`, hiện = 4.
+- Lưu ván: `ngoc` (vị trí, số sao, đã nhặt, viên vua gà giữ) nằm trong ván lưu.
 
 # Nguyên tắc thắng / thua
 
@@ -256,7 +256,7 @@
 # Nguyên tắc nhân vật Vegeta
 
 - Nhân vật chọn chơi thứ 3 (`VEGETA` trong `nhan-vat-du-lieu.ts`, `NHAN_VAT` = [Mabu, Zinbu, Vegeta], chỉ số `NguoiChoi.ki`, lưu trong ván lưu; ván cũ thiếu `ki` thì ô trái Mabu, ô phải Zinbu). Atlas `vegeta_atlas.png` (10 cột, PNG 3440×2960 = 3,2 × logic 1075×925; khung logic 107,5×92,5, neo 57,5 / 90; khung đứng cao 62,5 bằng Mabu; thanh máu `DAU_NV[2]` = 210; `NhanVatSprite.to` (tuỳ chọn) để phóng nhân vật to gấp n lần, chân dung / avatar thu lại 1 / `to`) dựng bằng `tools/tao-atlas-vegeta.py` từ sheet Vegeta người dùng gửi (920×1478, nền tím (128,128,255), lưới 10 cột, quay mặt phải; Scale2x ×2 = mỗi điểm ảnh nguồn đúng 4 điểm ảnh PNG, không nội suy nên nét). Chưởng / vụ nổ giữ từ sheet cũ (`tools/tao-chuong-vegeta.py`; `vegeta_chuong.png` = `SP_VG_CHUONG`: khung 0–1 cầu lửa vàng luân phiên (đầu quay phải), 2 chớp nòng ở tay 0,12s đầu, 3–7 vụ nổ cầu sáng → vòng (vòng nổ hồng nhuộm vàng)); `Dan.vg` / `Vet.vg` vẽ trong `ve-canvas.ts`.
-- Màn chọn có 6 thẻ (`THE_CHON`, `DOI_HINH`, `cheNguoi`): hàng trên 1 người (Mabu · Zinbu · Vegeta), hàng dưới 2 người (Mabu + Zinbu · Mabu + Vegeta · Vegeta + Zinbu); tay cầm ◀ ▶ từng thẻ, ▲ ▼ đổi hàng. Vegeta 1 người đứng ô trái.
+- Màn chọn có 3 thẻ trên một hàng (`THE_CHON`, `DOI_HINH`, `cheNguoi`): Mabu (1 người) · Zinbu (1 người) · Mabu + Zinbu (2 người); tay cầm ◀ ▶ chọn thẻ. **Vegeta tạm ẩn khỏi màn chọn** (nhân vật chưa hoàn thiện, chưa cho chơi): dữ liệu và code Vegeta vẫn giữ trong `DOI_HINH` / `NHAN_VAT` để làm tiếp, chỉ không có trong `THE_CHON`.
 - Sức mạnh giữa Mabu và Zinbu (`SAT_THUONG` cột 3): Đấm 50 · Đá 85 · Chiêu đặc biệt 160; máu / mana / né / giảm sát thương như Mabu, Zinbu. Chỉ có 3 nhóm đòn (Đấm, Đá, Chiêu đặc biệt), không có chiêu riêng thứ 4: nút B / cần phải tự dùng chưởng (hết mana thì đá). Không có đòn ăn, đòn thường không biến gà thành socola. Cứu đồng đội: Vegeta (như Zinbu) phủ socola. Quả cầu trốn của Vegeta dùng vỏ hàng 0, lúc vỡ dừng ở khung khói, avatar là hình Vegeta.
 - Logic phân biệt nhân vật theo `ki` (không theo ô `p`): Zinbu = `ki === 1`, Mabu = `ki === 0` / cờ `may` của nhóm đòn.
 
@@ -284,7 +284,6 @@
 
 - Tay cầm bố cục **Xbox** (cần analog chéo: cần trái trên-trái, chữ thập dưới-trái, cần phải dưới-phải). Mapping "standard" theo vị trí nên chỉ số nút giữ nguyên: nút 0 = **A** (dưới, đấm) · 1 = **B** (phải, chiêu riêng) · 2 = **X** (trái, đá) · 3 = **Y** (trên, chưởng) · 8 = **View** (đổi nhân vật) · 9 = **Menu** (bắt đầu / tạm dừng). Mọi chữ hiển thị / hướng dẫn dùng tên nút Xbox (A / B / X / Y, Menu, View), không dùng ✕ ○ □ △ / Options / Share.
 
-- Ăn gà mẹ socola: chỉ **gà mẹ phụ** (tướng gà) đang hoá socola ăn được, **gà mẹ gốc (vua gà) không ăn được**; không ai ăn thì hết `SOCOLA_THOI_GIAN` tự hoá giải như cũ. Gà mẹ phụ đang hoá socola mà Mabu / Zinbu (không phải mây, chưa gục) chạm vào (trong `AN_TUONG_BAN_KINH` × độ to) thì ăn luôn (`anTuongSocola()`, gọi từ `anGaSocola()`): nhận `AN_TUONG_TI_LE` = 30% máu hiện có của gà mẹ và +30% sức mạnh của nó (`heSoLan × suc`) vào `NguoiChoi.suc` (hệ số nhân sát thương mọi đòn trong `trungGa()`, mặc định 1, lưu trong ván lưu); gà mẹ chết như bị hạ (`trungTuong()`: điểm, hồi sinh gà mẹ gốc, thưởng máu như cũ).
 
 - Đòn ăn (`DON_AN`, `Dan.an`, `danAn()`): đòn **quất râu** của Zinbu (`antenna_whip`, trong nhóm Đá) và đòn **bắn chưởng** của Mabu (`energy_ball`, trong Chiêu đặc biệt) trúng gà con nào (trắng, đỏ, đen, kể cả gà nở từ trứng đỏ) thì con đó hoá socola ngay bất kể máu (Mabu: socola hồng `LOC_SOCOLA_HONG`), bị kéo về nhân vật (`keoGa`, tốc độ `KEO_TOC`, `capNhatKeo()`, vẽ qua `xep` như gà) rồi bị ăn: nhân vật nhận `AN_TI_LE` = **3% (Mabu) / 5% (Zinbu)** máu hiện có của con gà vào **cả máu lẫn mana** (gà không có mana), mở khoá bay, tính điểm / combo như hạ gà. Gà mẹ (gốc / phụ) trúng thì tính như đòn thường. Gà đang bị kéo không lưu trong ván lưu.
 
