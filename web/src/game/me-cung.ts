@@ -2,7 +2,7 @@
 // logic trong game.ts (capNhatMeCung() và các hàm mc*), vẽ trong ve-canvas.ts (veMeCung(), veVatMc()…).
 // Trong mê cung Mabu / Zinbu / Vegeta không dùng chiêu thường: chỉ có 3 loại bom.
 
-import { MC_BO, MC_COT, MC_HANG } from './ban-do';
+import { MC_BO, MC_COT, MC_HANG, tamO } from './ban-do';
 import type { KhungSprite } from './sprite';
 
 /** lua = bom lửa · nuoc = bom nước (nổ chữ thập, bấm lại nút để kích nổ) · no = bom nổ (nổ vùng vuông sau BOM_NO_T giây) */
@@ -18,7 +18,8 @@ export const SP_BOM: KhungSprite = { atlas: 'assets/game/bom.png', atlasW: 1000,
 /** Thứ tự khung vụ nổ của từng loại bom (chỉ số trong atlas): bùng to dần rồi tan thành khói */
 export const NO_KHUNG: Record<LoaiBom, number[]> = { lua: [6, 7, 8, 9, 5], nuoc: [10, 11, 12, 13], no: [16, 17, 18, 15] };
 
-/** Bà phù thuỷ: quái chính của mê cung bom, ngồi trên viên ngọc rồng 4 sao ở ô cuối (ô D), ném bom vào người chơi.
+/** Bà phù thuỷ: quái chính của mê cung bom, cưỡi viên ngọc rồng 4 sao bay lơ lửng khắp mê cung (xuất phát ở ô cuối, ô D), ném bom vào người chơi.
+ *  Bay xuyên qua thùng gỗ / ô bí ẩn nhưng không xuyên gạch / hang; hồi sinh BA_HOI_SINH lần, mỗi lần bay và ném nhanh thêm BA_HOI_TANG.
  *  Sprite (tools/tao-atlas-ba-phu-thuy.py): 4 khung 360×520 ngang: 0 ngồi chắp tay · 1 giơ bom qua đầu · 2 nâng bom một tay · 3 ném;
  *  neo = tâm viên ngọc bà ngồi lên (bán kính BA_NGOC_R điểm ảnh sprite), quay mặt phải */
 export const BA_TEN = 'Bà phù thuỷ';
@@ -28,31 +29,43 @@ export const BA_NGOC_R = 80;
 export const BA_TO = 1.5;
 /** Quả bom trên tay ở khung 1 / 2 và chỗ bom rời tay ở khung 3 (điểm ảnh sprite, tính từ neo) */
 export const BA_TAY: ([number, number] | null)[] = [null, [26, -287], [-51, -271], [130, -60]];
-/** Máu: bom lửa / nước trúng trừ 1, bom nổ trừ 2 (ngọn lửa trên ô của bà) */
+/** Máu mỗi mạng: bom lửa / nước trúng trừ 1, bom nổ trừ 2 (ngọn lửa trên ô của bà) */
 export const BA_HP = 8;
+/** Hồi sinh BA_HOI_SINH lần (không tính mạng đầu), chờ BA_HOI_T giây tại chỗ; mỗi lần hồi sinh tốc độ bay và tốc độ ném nhân BA_HOI_TANG */
+export const BA_HOI_SINH = 2;
+export const BA_HOI_T = 2.5;
+export const BA_HOI_TANG = 1.5;
+/** Tốc độ bay (đơn vị / giây, mạng đầu); bay theo ô như quái, đuổi tới khi cách người gần nhất ≤ BA_GAN ô */
+export const BA_TOC = 180;
+export const BA_GAN = 3;
+/** Bay cao hơn mặt đất (vẽ), nhấp nhô thêm */
+export const BA_BAY_CAO = 110;
 /** Chu trình ném: giơ bom BA_PHA[0] giây → nâng bom tới BA_PHA[1] → ném tới BA_PHA[2]; nghỉ BA_NEM_CACH giây giữa 2 lần */
 export const BA_PHA = [0.5, 0.85, 1.15];
 export const BA_NEM_CACH = 2.2;
 /** Chỉ ném người trong BA_TAM ô (tính theo đường đi ngang + dọc) */
 export const BA_TAM = 8;
-/** Bom bà ném bay BA_BOM_BAY giây; bom lửa / nước của bà tự nổ BA_BOM_CHO giây sau khi chạm đất, tia dài BA_BOM_TAM ô */
+/** Bom bà ném (cùng 3 loại, cùng luật nổ như bom của Mabu / Zinbu) bay BA_BOM_BAY giây; bom lửa / nước của bà
+ *  chạm đất rồi tia dài dần như bom người chơi, bà kích nổ khi có người nằm trong tầm tia (sớm nhất BA_BOM_CHO giây), đủ BOM_TAM_MAX giây tự nổ */
 export const BA_BOM_BAY = 0.8;
-export const BA_BOM_CHO = 1.3;
-export const BA_BOM_TAM = 2;
+export const BA_BOM_CHO = 1;
 /** Viên ngọc bà ngồi phát sáng: nhân vật thấy bà xa hơn tầm nhìn thường thêm BA_SANG (ngoại lệ sương mù, như Golden Frieza) */
 export const BA_SANG = 1100;
-/** Người chơi không đứng sát bà quá BA_DAY (bị đẩy ra) */
-export const BA_DAY = 230;
 export const BA_DIEM = 400;
 /** Bị hạ: mờ dần trong BA_CHET_T giây */
 export const BA_CHET_T = 1.2;
 export interface BaMc {
   hp: number;
+  /** vị trí mặt đất dưới bà (bà vẽ cao hơn BA_BAY_CAO), ô đang bay tới, đang bay giữa 2 ô, hướng vừa bay */
+  x: number; y: number; ti: number; tj: number; dang: boolean; huong: number;
+  /** số lần đã hồi sinh; giây còn chờ hồi sinh (hp = 0) */
+  hoiSinh: number; hoi: number;
   /** đếm ngược tới lần ném kế tiếp */ nem: number;
   /** giây trong chu trình ném (< 0: đang ngồi) */ pha: number;
   /** loại bom đang cầm */ loai: LoaiBom;
   /** quay trái (người chơi ở phía tây) */ lat: boolean;
   /** nháy khi trúng bom */ trung: number;
+  /** chet = bị hạ hẳn (hết lượt hồi sinh); tChet = giây từ lúc ngã (mạng nào cũng tính) */
   chet: boolean; tChet: number;
 }
 /** Số sao của viên ngọc ở cuối mê cung */
@@ -79,19 +92,21 @@ export const BOM_NO_SAT = 160;
 /** Lửa / nước của vụ nổ còn trên ô bao lâu (ai đi vào vẫn dính) */
 export const LUA_T = 0.5;
 
-/** Dính bom lửa: bốc cháy, cần đồng đội cầm xô nước dập trong TRANG_CHAY giây; dính bom nước: sặc trong bong bóng, cần kiếm chém trong TRANG_BONG giây */
+/** Dính bom lửa: bốc cháy, cần đồng đội cầm xô nước dập trong TRANG_CHAY giây; dính bom nước: sặc trong bong bóng, cần kiếm / kim châm chọc trong TRANG_BONG giây.
+ *  Hết giờ thì gục nhưng KHÔNG hoá mây / socola: nằm tại chỗ (vẫn cháy / trong bong bóng) chờ đồng đội cứu bằng đúng đồ (NvMc.guc) */
 export const TRANG_CHAY = 4;
 export const TRANG_BONG = 5;
-/** Lưới (bẫy trong ô bí ẩn) trói TRANG_LUOI giây */
-export const TRANG_LUOI = 3;
-/** Đồng đội cầm đúng đồ đứng trong CUU_MC_BK thì cứu được */
-export const CUU_MC_BK = 190;
+/** Đồng đội cầm đúng đồ đứng ở ô bên cạnh (trong CUU_MC_BK, hơn 1 ô MC_O = 360 một chút) thì cứu được */
+export const CUU_MC_BK = 400;
 /** Nhặt vật phẩm / đồ cứu người trong VP_MC_BK; kiếm / xô nước dùng xong mọc lại sau DO_MC_HOI giây */
 export const VP_MC_BK = 130;
 export const DO_MC_HOI = 15;
-/** Giày: mỗi đôi +GIAY_TOC tốc độ chạy trong mê cung, tối đa GIAY_TOI_DA đôi */
-export const GIAY_TOC = 0.25;
-export const GIAY_TOI_DA = 3;
+/** Mạng dự phòng (ô bí ẩn): gục thì dùng một mạng, đứng dậy ngay tại chỗ; giữ tối đa MANG_TOI_DA */
+export const MANG_TOI_DA = 3;
+/** Bom bẫy nhảy ra từ ô bí ẩn (p = -3): bay BAY_BAY giây, tự nổ BAY_NO giây sau khi chạm đất, tia lửa / nước dài BAY_TAM ô */
+export const BAY_BAY = 0.6;
+export const BAY_NO = 1.5;
+export const BAY_TAM = 2;
 
 /** 3 loài quái của mê cung (thay quái ăn thịt cũ): chui ra từ hang (lần đầu sau QUAI_DAU giây có người trong mê cung,
  *  sau đó mỗi QUAI_CACH giây, mỗi hang tối đa QUAI_TOI_DA con, loài ngẫu nhiên) hoặc nhảy ra từ ô bí ẩn.
@@ -121,7 +136,7 @@ export const QUAI_TOI_DA = 2;
 export const QUAI_CHAM = 400;
 export const QUAI_SAT = 60;
 export const QUAI_HOI = 1;
-/** Tia của Số 19 / Khỉ đột trúng ai thì sát thương QUAI_TIA_SAT (trong mê cung 1 mạng: khiên đỡ, không thì gục); tia hiện QUAI_TIA_T giây */
+/** Tia của Số 19 / Khỉ đột trúng ai thì sát thương QUAI_TIA_SAT (trong mê cung 1 mạng: có mạng dự phòng thì dùng, không thì gục); tia hiện QUAI_TIA_T giây */
 export const QUAI_TIA_SAT = 300;
 export const QUAI_TIA_T = 0.4;
 /** Giây chui ra khỏi hang (chưa đi, chưa đánh, bom chưa giết được); giây xác nằm mờ dần; giây nháy khi trúng bom mà chưa chết */
@@ -152,9 +167,11 @@ export function khungQuai(q: QuaiMc): number {
   return q.dang ? k.di[Math.floor(q.ph * 1.2) % k.di.length]! : k.di[0]!;
 }
 
-/** Ô bí ẩn vỡ ra: giày, khiên, lưới (bẫy) hoặc một con quái (loài ngẫu nhiên); tỉ lệ cộng dồn theo thứ tự */
-export type LoaiVpMc = 'giay' | 'khien' | 'luoi';
-export const TI_LE_O_BI_AN: [LoaiVpMc | 'quai', number][] = [['giay', 0.3], ['khien', 0.25], ['luoi', 0.25], ['quai', 0.2]];
+/** Ô bí ẩn vỡ ra ngẫu nhiên: quái (loài ngẫu nhiên nhảy ra), bom (bẫy, tự nổ), xô nước (cứu người cháy), kim châm (chọc bong bóng), mạng; tỉ lệ cộng dồn theo thứ tự */
+export type LoaiVpMc = 'xo' | 'kim' | 'mang';
+export const TI_LE_O_BI_AN: [LoaiVpMc | 'quai' | 'bom', number][] = [['quai', 0.2], ['bom', 0.2], ['xo', 0.2], ['kim', 0.2], ['mang', 0.2]];
+/** Đồ cứu người: kiếm / kim châm chọc bong bóng, xô nước dập lửa */
+export type DoCuuMc = 'kiem' | 'xo' | 'kim';
 
 export interface BomMc {
   id: number; p: number; loai: LoaiBom;
@@ -164,7 +181,7 @@ export interface BomMc {
   t: number;
   /** đã bấm kích nổ khi bom còn đang bay: chạm đất là nổ (tia 1 ô) */
   kich?: boolean;
-  /** bom của bà phù thuỷ (p = -1): thời gian bay, tầm tia cố định */
+  /** bom của bà phù thuỷ (p = -1) / bom bẫy ô bí ẩn (p = -3): thời gian bay, tầm tia cố định (không ghi thì dài dần như bom người chơi) */
   bay?: number; tam?: number;
 }
 export interface LuaMc { i: number; j: number; loai: LoaiBom; con: number; /** người ném (tính điểm hạ quái; -1 = bà phù thuỷ, -2 = lửa quỷ canh cổng phun: không hại quái) */ p: number; /** nhân vật đã dính (mỗi ngọn lửa trúng một người một lần) */ da: number[]; /** đã trúng bà phù thuỷ */ baDa?: boolean; /** quái đã dính (id) */ quaiDa?: number[]; }
@@ -189,9 +206,11 @@ export interface NvMc {
   nap: { loai: LoaiBom; t0: number } | null;
   /** bom đang chọn (chế độ chuột) */
   chon: LoaiBom;
-  giay: number; khien: boolean;
-  do: 'kiem' | 'xo' | null;
-  trang: { loai: 'chay' | 'bong' | 'luoi'; con: number; max: number } | null;
+  /** mạng dự phòng (ô bí ẩn) */ mang: number;
+  do: DoCuuMc | null;
+  trang: { loai: 'chay' | 'bong'; con: number; max: number } | null;
+  /** đã gục trong mê cung: nằm cháy / trong bong bóng chờ đồng đội cứu (xô nước / kiếm, kim châm), không hoá mây / socola */
+  guc: 'chay' | 'bong' | null;
   /** máu / mana lúc bước vào mê cung (trong mê cung chỉ có 1 mạng); ra khỏi mê cung thì trả lại đúng như cũ */
   luu: { hp: number; mana: number } | null;
   /** Đi theo ô: ô đang đi tới (luôn dừng ở tâm ô), hướng đang giữ (tay cầm, chỉ 4 hướng), đường đi theo ô (chuột bấm) */
@@ -219,14 +238,19 @@ export const O_VAO_MC = oTheo('S')[0]!;
 /** Lối ra (góc dưới trái): bước tới tâm ô này thì cả đội dịch chuyển tới núi đá (chỗ bóng ma Goku) */
 export const O_RA_MC = oTheo('E')[0]!;
 
-export const taoNvMc = (): NvMc => ({ nap: null, chon: 'lua', giay: 0, khien: false, do: null, trang: null, luu: null, toi: null, di: null, duong: [] });
+export const taoNvMc = (): NvMc => ({ nap: null, chon: 'lua', mang: 0, do: null, trang: null, guc: null, luu: null, toi: null, di: null, duong: [] });
+/** Bà phù thuỷ mới (mạng đầu) ở ô ngọc */
+export function taoBa(): BaMc {
+  const t = tamO(O_NGOC_MC.i, O_NGOC_MC.j);
+  return { hp: BA_HP, x: t.x, y: t.y, ti: O_NGOC_MC.i, tj: O_NGOC_MC.j, dang: false, huong: 1, hoiSinh: 0, hoi: 0, nem: 3, pha: -1, loai: 'lua', lat: false, trung: 0, chet: false, tChet: 0 };
+}
 export function taoMeCung(): TrangThaiMc {
   return {
     bom: [], lua: [], quai: [], tia: [], vp: [],
     doCuu: [...oTheo('K').map((o) => ({ ...o, loai: 'kiem' as const, cho: 0 })), ...oTheo('X').map((o) => ({ ...o, loai: 'xo' as const, cho: 0 }))],
     hang: HANG_MC.map((_, k) => QUAI_DAU + k * 2),
     nv: [taoNvMc(), taoNvMc()],
-    ba: { hp: BA_HP, nem: 3, pha: -1, loai: 'lua', lat: false, trung: 0, chet: false, tChet: 0 },
+    ba: taoBa(),
   };
 }
 

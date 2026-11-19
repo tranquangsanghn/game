@@ -10,7 +10,7 @@ import { MABU } from './nhan-vat-du-lieu';
 import { SP_FRIEZA, SP_FRIEZA_VANG, FZ_TEN, FZ_TEN_VANG, FZ_TO, FZ_VANG_TO, FZ_VANG_AURA, FZ_VANG_T, FZ_KHUNG, FZ_CHET_T, FZ_DANH_T, FZ_CHUONG_NAP, fzKhung, fzVang, fzKhungVang, fzHpMax, fzGap } from './frieza';
 import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_LO_LUNG } from './ginyu';
 import { MC, MC_HAM, MC_O, MC_COT, MC_HANG, mcO, tamO } from './ban-do';
-import { O_RA_MC, bayBom, BOM_NO_T, BOM_TAM_MAX, LOAI_BOM, LUA_T, MC_TEN, QUAI_TEN, QUAI_RA, QUAI_DL, QUAI_TIA_T, QUAI_CHET_T, QUAI_HU_LUA, QUAI_HU_TIA, SP_QUAI, SP_QUAI_HU, khungQuai, SP_BOM, NO_KHUNG, SP_BA, BA_TO, BA_NGOC_R, BA_TAY, BA_TEN, BA_HP, BA_CHET_T, type BomMc, type LoaiBom, type QuaiMc, type TiaMc } from './me-cung';
+import { O_RA_MC, bayBom, BOM_NO_T, BOM_TAM_MAX, LOAI_BOM, LUA_T, MC_TEN, QUAI_TEN, QUAI_RA, QUAI_DL, QUAI_TIA_T, QUAI_CHET_T, QUAI_HU_LUA, QUAI_HU_TIA, SP_QUAI, SP_QUAI_HU, khungQuai, SP_BOM, NO_KHUNG, SP_BA, BA_TO, BA_NGOC_R, BA_TAY, BA_TEN, BA_HP, BA_CHET_T, BA_HOI_SINH, BA_BAY_CAO, type DoCuuMc, type LoaiVpMc, type BomMc, type LoaiBom, type QuaiMc, type TiaMc } from './me-cung';
 import { DAO, doSau, duongBo, NUI, TG, THAN, THAN_CONG, THAN_DA_GIAC, THAN_VAT_TG, thanVo } from './ban-do';
 
 /** Con ma của chiêu Bóng ma (Super Bư), tách nền bằng tools/tao-atlas-super-buu.py */
@@ -2047,18 +2047,36 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  /** Bà phù thuỷ ngồi trên viên ngọc rồng 4 sao (ô cuối mê cung): ngọc phát sáng, bà nhấp nhô, khung giơ / nâng bom có quả bom trên tay;
-   *  trúng bom thì nháy, bị hạ thì mờ dần */
+  /** Bà phù thuỷ cưỡi viên ngọc rồng 4 sao bay lơ lửng (bóng dưới đất): ngọc phát sáng, bà nhấp nhô, nghiêng theo hướng bay,
+   *  khung giơ / nâng bom có quả bom trên tay; trúng bom thì nháy, ngã chờ hồi sinh thì mờ và rơi xuống đất (còn ngọc), bị hạ hẳn thì mờ dần */
   private veBa(ctx: CanvasRenderingContext2D, c: Game): void {
     const ba = c.mc.ba;
     const v = c.viTriBa();
     const khung = c.khungBa();
+    // Đang ngã chờ hồi sinh: hạ xuống đất; bay lại lên khi hồi sinh
+    const nga = ba.hp <= 0 ? Math.min(1, ba.tChet / 0.5) : 0;
+    const cao = BA_BAY_CAO * (1 - nga) + (1 - nga) * 18 * Math.sin(c.t * 2.2);
     ctx.save();
     ctx.globalAlpha = ba.chet ? Math.max(0, 1 - ba.tChet / BA_CHET_T) : 1;
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    duongElip(ctx, BA_NGOC_R * BA_TO * 1.1, 34, v.x, v.y + BA_NGOC_R * BA_TO - 10);
+    const bong = 1 - 0.25 * (cao / BA_BAY_CAO);
+    duongElip(ctx, BA_NGOC_R * BA_TO * 1.1 * bong, 34 * bong, v.x, v.y + BA_NGOC_R * BA_TO - 10);
     ctx.fill();
-    ctx.translate(v.x, v.y);
+    ctx.translate(v.x, v.y - cao);
+    if (ba.dang && !nga) ctx.rotate((ba.huong === 0 ? 1 : ba.huong === 1 ? -1 : 0) * 0.12);
+    // Chờ hồi sinh: số giây và vòng sáng tím
+    if (ba.hp <= 0 && !ba.chet) {
+      ctx.save();
+      ctx.font = `900 120px ${FONT}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = '#1b0f26';
+      ctx.fillStyle = '#c9a2ff';
+      ctx.strokeText(`${Math.ceil(ba.hoi)}`, 0, -BA_NGOC_R * BA_TO - 520);
+      ctx.fillText(`${Math.ceil(ba.hoi)}`, 0, -BA_NGOC_R * BA_TO - 520);
+      ctx.restore();
+    }
     // Viên ngọc 4 sao (sprite ngọc: bán kính quả ~120 điểm ảnh)
     ctx.save();
     const k = (BA_NGOC_R * BA_TO) / 120;
@@ -2066,9 +2084,9 @@ export class VeCanvas {
     this.sang(ctx, '#ffb347');
     this.sprite(ctx, c.SP_NGOC, 3, false, true);
     ctx.restore();
-    ctx.translate(0, 6 * Math.sin(c.t * 2.2));
     ctx.scale(BA_TO * (ba.lat ? -1 : 1), BA_TO);
     if (ba.trung > 0 && Math.floor(ba.trung * 20) % 2) ctx.globalAlpha *= 0.4;
+    if (nga) ctx.globalAlpha *= 0.35 + 0.25 * Math.sin(c.t * 10);
     this.sprite(ctx, SP_BA, khung, false, true);
     const tay = BA_TAY[khung];
     if (tay && khung < 3) {
@@ -2113,11 +2131,29 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  /** Kiếm (cứu người sặc nước) / xô nước (cứu người bốc cháy); gốc ở tâm, cỡ khoảng 24 đơn vị */
-  private veDoCuu(ctx: CanvasRenderingContext2D, loai: 'kiem' | 'xo'): void {
+  /** Kiếm / kim châm (cứu người sặc nước) / xô nước (cứu người bốc cháy); gốc ở tâm, cỡ khoảng 24 đơn vị */
+  private veDoCuu(ctx: CanvasRenderingContext2D, loai: DoCuuMc): void {
     ctx.save();
     ctx.lineJoin = 'round';
-    if (loai === 'kiem') {
+    if (loai === 'kim') {
+      // Kim châm: thân kim bạc dài, đầu ghim tròn đỏ
+      ctx.rotate(Math.PI / 4);
+      ctx.strokeStyle = '#4a5866';
+      ctx.lineWidth = 1.2;
+      ctx.fillStyle = '#e8eef3';
+      ctx.beginPath();
+      ctx.moveTo(-1.6, -6); ctx.lineTo(1.6, -6); ctx.lineTo(0, 13);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#e0412f';
+      duongTron(ctx, 5, 0, -9);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      duongTron(ctx, 1.6, -1.6, -10.5);
+      ctx.fill();
+    } else if (loai === 'kiem') {
       ctx.rotate(-Math.PI / 4);
       ctx.fillStyle = '#e8eef3';
       ctx.strokeStyle = '#4a5866';
@@ -2153,45 +2189,25 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  /** Vật phẩm rơi từ ô bí ẩn: giày (đỏ), khiên (xanh), lưới (bẫy); gốc ở tâm, cỡ khoảng 24 đơn vị */
-  private veVpMc(ctx: CanvasRenderingContext2D, loai: 'giay' | 'khien' | 'luoi'): void {
+  /** Vật phẩm rơi từ ô bí ẩn: xô nước, kim châm, mạng (trái tim); gốc ở tâm, cỡ khoảng 24 đơn vị */
+  private veVpMc(ctx: CanvasRenderingContext2D, loai: LoaiVpMc): void {
+    if (loai !== 'mang') { this.veDoCuu(ctx, loai); return; }
     ctx.save();
     ctx.lineJoin = 'round';
     ctx.lineWidth = 1.4;
-    if (loai === 'giay') {
-      ctx.fillStyle = '#e0412f';
-      ctx.strokeStyle = '#7a1a10';
-      ctx.beginPath();
-      ctx.moveTo(-7, -9); ctx.lineTo(0, -9); ctx.lineTo(1, 1); ctx.lineTo(9, 4); ctx.lineTo(9, 8); ctx.lineTo(-7, 8);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(-7, 6, 16, 2);
-    } else if (loai === 'khien') {
-      ctx.fillStyle = '#4aa3ff';
-      ctx.strokeStyle = '#123f73';
-      ctx.beginPath();
-      ctx.moveTo(0, -10); ctx.lineTo(9, -6); ctx.quadraticCurveTo(8, 6, 0, 11); ctx.quadraticCurveTo(-8, 6, -9, -6);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(-1.5, -6, 3, 12);
-      ctx.fillRect(-5, -1.5, 10, 3);
-    } else this.veLuoi(ctx, 22, '#3a2a18');
-    ctx.restore();
-  }
-
-  private veLuoi(ctx: CanvasRenderingContext2D, s: number, mau: string): void {
-    ctx.strokeStyle = mau;
-    ctx.lineWidth = s / 14;
+    ctx.fillStyle = '#ff3b6b';
+    ctx.strokeStyle = '#7a1030';
     ctx.beginPath();
-    for (let k = -s / 2; k <= s / 2 + 0.01; k += s / 4) {
-      ctx.moveTo(k, -s / 2); ctx.lineTo(k, s / 2);
-      ctx.moveTo(-s / 2, k); ctx.lineTo(s / 2, k);
-    }
+    ctx.moveTo(0, 10);
+    ctx.bezierCurveTo(-14, 0, -10, -12, 0, -5);
+    ctx.bezierCurveTo(10, -12, 14, 0, 0, 10);
+    ctx.closePath();
+    ctx.fill();
     ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    duongElip(ctx, 2.6, 1.8, -5, -4);
+    ctx.fill();
+    ctx.restore();
   }
 
   /** Đồ cứu người, vật phẩm và bom trên nền mê cung (trước nhân vật / quái) */
@@ -2309,54 +2325,65 @@ export class VeCanvas {
     }
   }
 
-  /** Trên đầu nhân vật trong mê cung: mức nạp bom (4 chấm), đồ đang cầm, khiên, và trạng thái bốc cháy / bong bóng / lưới kèm thanh đếm ngược */
+  /** Trên đầu nhân vật trong mê cung: mức nạp bom (4 chấm), đồ đang cầm, mạng dự phòng, và trạng thái bốc cháy / bong bóng kèm thanh đếm ngược;
+   *  đã gục chờ cứu thì vẫn cháy / trong bong bóng (không hoá mây / socola) kèm biểu tượng đồ cần mang tới */
   private veTrangMc(ctx: CanvasRenderingContext2D, c: Game, p: number): void {
     const n = c.nguoi[p]!;
     const s = c.mc.nv[p];
-    if (!s || n.vang || n.het || !c.xep.some((o) => o.loai === 'nv' && o.p === p)) return;
-    const cx = n.x, cy = n.y - 110;
+    if (!s || n.vang || (n.het && !s.guc) || !c.xep.some((o) => o.loai === 'nv' && o.p === p)) return;
+    const cx = n.x, cy = n.het ? n.y - 60 : n.y - 110;
     ctx.save();
-    if (s.khien) {
-      ctx.setLineDash([26, 18]);
-      ctx.strokeStyle = '#7fd0ff';
-      ctx.lineWidth = 10;
-      duongElip(ctx, 140, 170, cx, cy);
+    const kieu = s.guc ?? s.trang?.loai;
+    if (kieu === 'bong') {
+      const g = ctx.createRadialGradient(cx - 40, cy - 60, 10, cx, cy, 190);
+      g.addColorStop(0, 'rgba(255,255,255,0.8)');
+      g.addColorStop(0.45, 'rgba(159,216,255,0.35)');
+      g.addColorStop(1, 'rgba(61,143,224,0.7)');
+      ctx.fillStyle = g;
+      duongTron(ctx, 190, cx, cy);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 8;
       ctx.stroke();
-      ctx.setLineDash([]);
-    }
-    if (s.trang) {
-      const tr = s.trang;
-      if (tr.loai === 'bong') {
-        const g = ctx.createRadialGradient(cx - 40, cy - 60, 10, cx, cy, 190);
-        g.addColorStop(0, 'rgba(255,255,255,0.8)');
-        g.addColorStop(0.45, 'rgba(159,216,255,0.35)');
-        g.addColorStop(1, 'rgba(61,143,224,0.7)');
-        ctx.fillStyle = g;
-        duongTron(ctx, 190, cx, cy);
+    } else if (kieu === 'chay') {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * TAU + c.t * 5, r = 130 + Math.sin(c.t * 20 + i) * 14;
+        ctx.fillStyle = i % 2 ? '#ffb02e' : '#ff5a1f';
+        duongTron(ctx, 46, cx + Math.cos(a) * r * 0.8, cy + Math.sin(a) * r * 0.9 - 20);
         ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 8;
-        ctx.stroke();
-      } else if (tr.loai === 'chay') {
-        for (let i = 0; i < 8; i++) {
-          const a = (i / 8) * TAU + c.t * 5, r = 130 + Math.sin(c.t * 20 + i) * 14;
-          ctx.fillStyle = i % 2 ? '#ffb02e' : '#ff5a1f';
-          duongTron(ctx, 46, cx + Math.cos(a) * r * 0.8, cy + Math.sin(a) * r * 0.9 - 20);
-          ctx.fill();
-        }
-      } else {
-        ctx.save();
-        ctx.translate(cx, cy);
-        this.veLuoi(ctx, 260, '#2a1c0e');
-        ctx.restore();
       }
+    }
+    if (s.trang && !n.het) {
+      const tr = s.trang;
       const yb = n.y - 420;
       ctx.fillStyle = 'rgba(0,0,0,0.7)';
       tronCD(ctx, cx - 120, yb, 240, 34, 17);
       ctx.fill();
-      ctx.fillStyle = tr.loai === 'bong' ? '#5ab4ff' : tr.loai === 'chay' ? '#ff6a2a' : '#d9c27a';
+      ctx.fillStyle = tr.loai === 'bong' ? '#5ab4ff' : '#ff6a2a';
       tronCD(ctx, cx - 114, yb + 6, 228 * dongHe(tr.con / tr.max), 22, 11);
       ctx.fill();
+    }
+    if (s.guc) {
+      // Gục chờ cứu: bong bóng nhấp nháy đồ cần mang tới (xô nước / kim châm)
+      const yb = n.y - 330 + 10 * Math.sin(c.t * 4);
+      ctx.fillStyle = Math.floor(c.t * 3) % 2 ? 'rgba(255,77,77,0.9)' : 'rgba(255,255,255,0.9)';
+      duongTron(ctx, 70, cx, yb);
+      ctx.fill();
+      ctx.save();
+      ctx.translate(cx, yb);
+      ctx.scale(4.4, 4.4);
+      this.veDoCuu(ctx, s.guc === 'chay' ? 'xo' : 'kim');
+      ctx.restore();
+      ctx.restore();
+      return;
+    }
+    // Mạng dự phòng: trái tim nhỏ bên trái đầu
+    for (let k = 0; k < s.mang; k++) {
+      ctx.save();
+      ctx.translate(cx - 120, n.y - 290 + k * 70);
+      ctx.scale(3, 3);
+      this.veVpMc(ctx, 'mang');
+      ctx.restore();
     }
     // Đồ cứu người đang cầm (góc trên đầu)
     if (s.do) {
@@ -2687,7 +2714,7 @@ export class VeCanvas {
     ctx.strokeStyle = 'rgba(0,0,0,0.75)';
     ctx.fillStyle = '#fff';
     // Mê cung bom: 1 mạng, không tính máu
-    for (const [v, y] of [[c.motMang(q) ? '1♥' : c.hpNv(q), ym - 28], [c.manaNv(q), ym + 14]] as [number | string, number][]) {
+    for (const [v, y] of [[c.motMang(q) ? `${1 + (c.mc.nv[q]?.mang ?? 0)}♥` : c.hpNv(q), ym - 28], [c.manaNv(q), ym + 14]] as [number | string, number][]) {
       ctx.strokeText(`${v}`, xt, y);
       ctx.fillText(`${v}`, xt, y);
     }
@@ -2899,7 +2926,7 @@ export class VeCanvas {
       // Đang là bản sao: máu THẬT hiện dưới tên (thanh máu trên đầu bản sao chỉ để lừa)
       if (c.gySao && !c.ginyu.chet) so = `❤ ${Math.max(0, Math.ceil(c.ginyu.hp))} / ${c.ginyu.hpMax}`;
     }
-    else if (c.trenMeCung) { ten = c.baSong ? BA_TEN : MC_TEN; so = `${c.baSong ? `❤ ${c.mc.ba.hp}/${BA_HP} · ` : ''}👾 ${QUAI_TEN}: ${c.soQuaiMc}`; mo = false; }
+    else if (c.trenMeCung) { ten = c.baSong ? BA_TEN : MC_TEN; so = `${c.baSong ? `❤ ${c.mc.ba.hp}/${BA_HP} · 🔁 ${BA_HOI_SINH - c.mc.ba.hoiSinh} · ` : ''}👾 ${QUAI_TEN}: ${c.soQuaiMc}`; mo = false; }
     else if (c.trenDao) { ten = CELL_TEN[capCuaDao(c.daoHienTai)] ?? 'Cell'; so = c.soCellDao; mo = c.soCellDao <= 0; }
     else { ten = 'Vua gà'; mo = !tg; }
     ctx.save();
