@@ -7101,7 +7101,7 @@ export class Game {
       const danhDuoc = !h || p === h.chu;
       if (diDuoc) this.dieuKhienDi(h ? h.chu : p, g);
       if (!danhDuoc) continue;
-      // Mê cung bom: A bom lửa · X bom nước · Y bom nổ (giữ càng lâu ném càng xa), B kích nổ
+      // Mê cung bom: X ném bom (giữ càng lâu ném càng xa), A kích nổ, B đổ nước cứu, Y chọc kim cứu
       if (this.oMeCung(p)) { this.mcTayCam(p, (i) => moi(g, i), (i) => duoc(g, i)); continue; }
       const phai = this.canGat(g, 2, g.mapping === 'standard' || g.axes.length < 6 ? 3 : 5);
       // Ra đòn: giữ nút thì đánh liên tục theo thời gian hồi chiêu. A đấm · X đá · Y chưởng · B hoặc cần phải: chiêu riêng
@@ -7703,22 +7703,27 @@ export class Game {
     return this.mc.bom.find((b) => b.p === p && b.loai !== 'no');
   }
 
-  /** Bấm nút bom `loai`: có bom lửa / nước đang chờ thì kích nổ nó, không thì bắt đầu giữ nạp */
-  private mcBam(p: number, loai: LoaiBom): void {
+  /** Bấm nút bom `loai`: có bom lửa / nước đang chờ thì kích nổ nó (nếu `kich`), không thì bắt đầu giữ nạp */
+  private mcBam(p: number, loai: LoaiBom, kich = true): void {
     const n = this.nguoi[p]!;
     const s = this.mc.nv[p]!;
     if (n.het || s.trang) return;
-    if (loai !== 'no' && this.mcBomCho(p)) { this.mcKichNo(p); return; }
+    if (kich && loai !== 'no' && this.mcBomCho(p)) { this.mcKichNo(p); return; }
     if (!s.nap) s.nap = { loai, t0: this.t };
   }
 
-  /** Tay cầm trong mê cung: A bom lửa · X bom nước · Y bom nổ (giữ để nạp, thả ra thì ném theo hướng đang nhìn), B kích nổ bom lửa / nước */
+  /** Tay cầm trong mê cung: X ném bom (giữ để nạp, thả ra thì ném theo hướng đang nhìn; loại bom đổi bằng LB / RB) · A kích nổ bom lửa / nước ·
+   *  B đổ nước cứu đồng đội đang cháy (cần cầm xô) · Y chọc kim / chém cứu đồng đội đang sặc nước (cần cầm kim châm / kiếm) */
   private mcTayCam(p: number, moi: (i: number) => boolean, giu: (i: number) => boolean): void {
-    const nut: [number, LoaiBom][] = [[0, 'lua'], [2, 'nuoc'], [3, 'no']];
-    if (moi(1)) this.mcKichNo(p);
-    for (const [i, loai] of nut) if (moi(i)) this.mcBam(p, loai);
     const s = this.mc.nv[p]!;
-    if (s.nap && !giu(nut.find(([, l]) => l === s.nap!.loai)![0])) {
+    if (!s.nap && (moi(4) || moi(5))) {
+      s.chon = LOAI_BOM[(LOAI_BOM.indexOf(s.chon) + (moi(5) ? 1 : LOAI_BOM.length - 1)) % LOAI_BOM.length]!;
+    }
+    if (moi(0)) this.mcKichNo(p);
+    if (moi(1)) s.cuuNut = { loai: 'xo', t: this.t };
+    if (moi(3)) s.cuuNut = { loai: 'kim', t: this.t };
+    if (moi(2)) this.mcBam(p, s.chon, false);
+    if (s.nap && !giu(2)) {
       const n = this.nguoi[p]!;
       this.mcNem(p, n.nhin.x, n.nhin.y);
     }
@@ -8048,7 +8053,12 @@ export class Game {
       if (!kieu) return;
       const q = this.nguoi.findIndex((m, k) => {
         const d = mc.nv[k]!.do;
-        return k !== p && !m.vang && !m.het && !mc.nv[k]!.trang && (kieu === 'chay' ? d === 'xo' : d === 'kiem' || d === 'kim') && hyp(m.x - n.x, m.y - n.y) < CUU_MC_BK;
+        if (k === p || m.vang || m.het || mc.nv[k]!.trang || hyp(m.x - n.x, m.y - n.y) >= CUU_MC_BK) return false;
+        if (!(kieu === 'chay' ? d === 'xo' : d === 'kiem' || d === 'kim')) return false;
+        // Tay cầm: phải bấm B (đổ nước) / Y (chọc kim) mới cứu; chuột thì tự cứu như cũ
+        if (this.cheDo !== 'tayCam') return true;
+        const c = mc.nv[k]!.cuuNut;
+        return !!c && this.t - c.t <= 0.3 && c.loai === (kieu === 'chay' ? 'xo' : 'kim');
       });
       if (q < 0) return;
       mc.nv[q]!.do = null;

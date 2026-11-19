@@ -206,6 +206,8 @@ export interface NvMc {
   nap: { loai: LoaiBom; t0: number } | null;
   /** bom đang chọn (chế độ chuột) */
   chon: LoaiBom;
+  /** tay cầm: nút cứu người vừa bấm (B đổ nước = 'xo', Y chọc kim = 'kim') và lúc bấm */
+  cuuNut?: { loai: 'xo' | 'kim'; t: number };
   /** mạng dự phòng (ô bí ẩn) */ mang: number;
   do: DoCuuMc | null;
   trang: { loai: 'chay' | 'bong'; con: number; max: number } | null;
