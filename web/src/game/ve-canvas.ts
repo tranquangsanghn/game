@@ -2692,7 +2692,8 @@ export class VeCanvas {
     // Hai bình cầu xếp dọc ngay trên nút trên cùng: trên = máu (xanh lá, số máu nằm giữa bình), dưới = mana (xanh lơ, số mana nằm giữa bình, xám khi đang khoá bay sau lần bay)
     const ym = c.yMauNv(p);
     this.veBinh(ctx, xt, ym - 28, dongHe(c.mauNv(q)), '#ff3b3b', ng.het);
-    this.veBinh(ctx, xt, ym + 14, dongHe(c.nlBay(q)), ng.bayKhoa > 0 ? '#8a9a94' : '#2fa8ff', ng.het);
+    const moMang = c.motMang(q); // mê cung bom: không có mana
+    if (!moMang) this.veBinh(ctx, xt, ym + 14, dongHe(c.nlBay(q)), ng.bayKhoa > 0 ? '#8a9a94' : '#2fa8ff', ng.het);
     ctx.save();
     ctx.globalAlpha = ng.het ? 0.4 : 1;
     ctx.font = `700 15px ${FONT}`;
@@ -2703,7 +2704,7 @@ export class VeCanvas {
     ctx.strokeStyle = 'rgba(0,0,0,0.75)';
     ctx.fillStyle = '#fff';
     // Mê cung bom: 1 mạng, không tính máu
-    for (const [v, y] of [[c.motMang(q) ? `${1 + (c.mc.nv[q]?.mang ?? 0)}♥` : c.hpNv(q), ym - 28], [c.manaNv(q), ym + 14]] as [number | string, number][]) {
+    for (const [v, y] of [[moMang ? `${1 + (c.mc.nv[q]?.mang ?? 0)}♥` : c.hpNv(q), ym - 28], ...(moMang ? [] : [[c.manaNv(q), ym + 14]])] as [number | string, number][]) {
       ctx.strokeText(`${v}`, xt, y);
       ctx.fillText(`${v}`, xt, y);
     }
@@ -2886,18 +2887,12 @@ export class VeCanvas {
 
   private veDongHo(ctx: CanvasRenderingContext2D, c: Game): void {
     if (c.man !== 'play' && c.man !== 'pause' && c.man !== 'over') return;
-    const dung = c.man === 'play' && c.dungTheGioi;
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = `800 18px ${FONT}`;
-    ctx.fillStyle = dung ? '#8fd3ff' : '#fff';
-    if (dung) ctx.globalAlpha = 0.6 + 0.4 * Math.sin(c.t * 5);
-    ctx.fillText(c.dongHo(), -c.SIDE / 2, -c.BAR / 2 - (dung ? 10 : 0));
-    if (dung) {
-      ctx.font = `700 13px ${FONT}`;
-      ctx.fillText('DỪNG', -c.SIDE / 2, -c.BAR / 2 + 16);
-    }
+    ctx.fillStyle = '#fff';
+    ctx.fillText(c.dongHo(), -c.SIDE / 2, -c.BAR / 2);
     ctx.restore();
   }
 
@@ -2937,7 +2932,7 @@ export class VeCanvas {
       // Đang là bản sao: máu THẬT hiện dưới tên (thanh máu trên đầu bản sao chỉ để lừa)
       if (c.gySao && !c.ginyu.chet) so = `❤ ${Math.max(0, Math.ceil(c.ginyu.hp))} / ${c.ginyu.hpMax}`;
     }
-    else if (c.trenMeCung) { ten = c.baSong ? BA_TEN : MC_TEN; so = `${c.baSong ? `❤ ${c.mc.ba.hp}/${BA_HP} · 🔁 ${BA_HOI_SINH - c.mc.ba.hoiSinh} · ` : ''}👾 ${QUAI_TEN}: ${c.soQuaiMc}`; mo = false; }
+    else if (c.trenMeCung) { ten = c.baSong ? BA_TEN : MC_TEN; so = c.baSong ? `❤ ${c.mc.ba.hp}/${BA_HP} · 🔁 ${BA_HOI_SINH - c.mc.ba.hoiSinh}` : null; mo = false; }
     else if (c.trenDao) { ten = CELL_TEN[capCuaDao(c.daoHienTai)] ?? 'Cell'; so = c.soCellDao; mo = c.soCellDao <= 0; }
     else { ten = 'Vua gà'; mo = !tg; }
     ctx.save();

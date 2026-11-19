@@ -101,6 +101,9 @@ export const CUU_MC_BK = 400;
 /** Nhặt vật phẩm / đồ cứu người trong VP_MC_BK; kiếm / xô nước dùng xong mọc lại sau DO_MC_HOI giây */
 export const VP_MC_BK = 130;
 export const DO_MC_HOI = 15;
+
+/** Ô bí ẩn '?' đã vỡ mọc lại sau chừng này giây (thùng gỗ vỡ thì mất hẳn) */
+export const O_BI_AN_HOI = 40;
 /** Kho đồ lúc mới vào ván (mỗi nhân vật): xô nước, kim châm, và mỗi loại bom. Dùng hết thì phải đi nhặt thêm */
 export const MC_XO_DAU = 3;
 export const MC_KIM_DAU = 3;
@@ -229,7 +232,7 @@ export interface NvMc {
   duong: { i: number; j: number }[];
 }
 export interface TrangThaiMc {
-  bom: BomMc[]; lua: LuaMc[]; quai: QuaiMc[]; tia: TiaMc[]; vp: VpMc[]; doCuu: DoMc[];
+  bom: BomMc[]; lua: LuaMc[]; quai: QuaiMc[]; tia: TiaMc[]; vp: VpMc[]; doCuu: DoMc[]; oHoi: { i: number; j: number; t: number }[];
   /** đếm ngược sinh quái của từng hang (theo thứ tự HANG_MC) */
   hang: number[];
   nv: NvMc[];
@@ -256,7 +259,7 @@ export function taoBa(): BaMc {
 }
 export function taoMeCung(): TrangThaiMc {
   return {
-    bom: [], lua: [], quai: [], tia: [], vp: [],
+    bom: [], lua: [], quai: [], tia: [], vp: [], oHoi: [],
     doCuu: [...oTheo('K').map((o) => ({ ...o, loai: 'kim' as const, cho: 0 })), ...oTheo('X').map((o) => ({ ...o, loai: 'xo' as const, cho: 0 }))],
     hang: HANG_MC.map((_, k) => QUAI_DAU + k * 2),
     nv: [taoNvMc(), taoNvMc()],
