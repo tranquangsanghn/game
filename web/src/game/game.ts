@@ -6836,7 +6836,7 @@ export class Game {
         return;
       }
     }
-    if (this.man === 'over' && (e.key === 'o' || e.key === 'O') && !e.repeat && !e.ctrlKey && !e.altKey && !e.metaKey) {
+    if (this.man === 'over' && (e.key === 'y' || e.key === 'Y') && !e.repeat && !e.ctrlKey && !e.altKey && !e.metaKey) {
       const t = e.target as HTMLElement | null;
       if (!t || (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA')) { this.onDong(); return; }
     }
@@ -7065,6 +7065,7 @@ export class Game {
           // Màn kết thúc: bấm X trước rồi bấm B mới chơi lại, tránh lỡ tay chơi lại ngay
           if (moi(g, 2)) this.choiLaiChoB = true;
           else if (moi(g, 1) && this.choiLaiChoB) { this.choiLaiChoB = false; this.batDau(); }
+          else if (moi(g, 3)) this.onDong();
         }
       } else if (moi(g, 9) || this.man === 'pause' && moi(g, 1)) this.tamDung();
       else if (this.man === 'pause') {

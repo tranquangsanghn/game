@@ -292,7 +292,7 @@ export class GiaoDien {
       <div class="hai-cot">${diemHai}</div>
       <div class="nhom-nut">
         <button type="button" tabindex="-1" class="nut-chinh" data-act="moi">${g.cheDo === 'tayCam' ? (g.choiLaiChoB ? 'Chơi lại: bấm B' : 'Chơi lại: bấm X rồi B') : 'Chơi lại'}</button>
-        <button type="button" tabindex="-1" class="nut-phu" data-act="dong">Thoát game (nhấn O)</button>
+        <button type="button" tabindex="-1" class="nut-phu" data-act="dong">Thoát game (nhấn Y)</button>
       </div>
     </div></div>`;
   }
