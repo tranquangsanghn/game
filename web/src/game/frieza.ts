@@ -29,11 +29,11 @@ export const FZ_VANG_BIEN_T = FZ_VANG_NHIP.reduce((a, b) => a + b, 0);
 /** Khung bùng hào quang / phóng chưởng (Game nổ, rung màn ở các khung này) */
 export const FZ_VANG_AURA = 2;
 export const FZ_VANG_PHONG = 6;
-/** Ở dạng vàng bao lâu (giây), hồi chiêu sau khi trở lại dạng thường (~10s một lần, tồn tại 15s) */
-export const FZ_VANG_T = 15;
+/** Ở dạng vàng bao lâu (giây), hồi chiêu sau khi trở lại dạng thường (~10s một lần, tồn tại 30s) */
+export const FZ_VANG_T = 30;
 export const FZ_VANG_HOI = 10;
-/** Dạng vàng: MỌI chỉ số gấp FZ_VANG_GAP: máu (tối đa và hiện có theo tỉ lệ), sát thương, tốc độ đi / chạy, tốc độ đánh / hồi chưởng, phòng thủ (nhận ÷2), tự hồi máu */
-export const FZ_VANG_GAP = 2;
+/** Dạng vàng: MỌI chỉ số gấp FZ_VANG_GAP: máu (tối đa và hiện có theo tỉ lệ), sát thương, tốc độ đi / chạy, tốc độ đánh / hồi chưởng, phòng thủ (nhận ÷FZ_VANG_GAP), tự hồi máu */
+export const FZ_VANG_GAP = 2.5;
 /** Độ to (nhân khung 80 điểm ảnh; thân cao ~70 → ~245, nhỉnh hơn Mabu / Zinbu) */
 export const FZ_TO = 3.5;
 /** Tốc độ đi bộ thật (px/s; nhân vật đi bộ 460) */
@@ -47,13 +47,14 @@ export const FZ_FPS_DUNG = 1.5;
 /**
  * Chỉ số chiến đấu của Frieza (dạng thường; dạng vàng nhân FZ_VANG_GAP qua `fzGap()`).
  * Mabu / Zinbu chưa hợp thể đánh Frieza không mất máu (Game `trungFz()`), chỉ Super Bư (hợp thể, chỉ làm được trên thần điện) mới gây sát thương,
- * còn giáp FZ_GIAP. Bước lên thần điện thì máu / mana mỗi người đặt lại 300 / 200 (Game `datLaiVaoThan()`), nên Super Bư luôn là 3 × (300 + 300) = 1800 máu,
- * Đấm 300 mỗi 0,4s ≈ 750 sát thương / giây, chưởng 960: dạng thường mất ~190–240 / s (trừ hồi 30 / s) ⇒ ~15s đánh liên tục; dạng vàng chỉ ~95–120 / s trên 6000 máu, hồi 60 / s ⇒ gần như không hạ được, nên né chờ hết vàng.
- * Frieza đánh Mabu / Zinbu thường: Đấm 150 (nhận 75) ⇒ 2 đòn gục người mới vào ván, chưởng 400 (nhận 200) một phát gục ⇒ bắt buộc hợp thể.
+ * còn giáp FZ_GIAP. Máu / mana mang vào thần điện giữ nguyên (không đặt lại), trung bình mỗi người ~3000 máu ⇒ Super Bư ~18000 máu (3 × tổng).
+ * Đấm 300 mỗi 0,4s qua giáp 75% ≈ 187 sát thương / giây: dạng thường 7000 máu mất ~40s đánh liên tục (trừ hồi 30 / s), Super Bư mất ~60% máu;
+ * dạng vàng (×2,5, 30s) đấm chỉ ~75 / s đúng bằng hồi máu nên đấm không thủng, cần chưởng / Bóng ma hoặc né chờ hết vàng.
+ * Frieza đánh Mabu / Zinbu thường: Đấm 600 (nhận 300), chưởng 1800 (nhận 900) ⇒ chưa hợp thể thì chịu được vài đòn, nhưng đánh Frieza không mất máu nên bắt buộc hợp thể.
  */
-export const FZ_HP = 3000;
-export const FZ_SAT = 150;
-export const FZ_CHUONG_SAT = 400;
+export const FZ_HP = 7000;
+export const FZ_SAT = 600;
+export const FZ_CHUONG_SAT = 1800;
 /** Tốc độ chạy khi đánh (px/s; nhân vật chạy 460, dạng vàng ×2 = 520 nhanh hơn chạy bộ, phải bay để né) */
 export const FZ_TOC_DANH = 260;
 /** Giây giữa 2 đòn đấm / đá, hồi chưởng */

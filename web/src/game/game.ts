@@ -1058,24 +1058,6 @@ export class Game {
   /** p đã ở trong mê cung ở khung trước (để nhắc cách dùng bom lúc vừa vào; không lưu ván) */
   /** Hệ số to của từng nhân vật (MC_TO_NV khi ở mê cung / đường hầm, đổi dần) */
   toMc = [1, 1];
-  /** Nhân vật p đang đứng trên thần điện (khung trước); null = chưa đo (vào / tải ván: không đặt lại) */
-  private trenThanTruoc: boolean[] | null = null;
-
-  /** Bước lên thần điện (qua cổng, rơi máy bay xuống…) thì máu / mana đặt lại về HP_NV / MANA_TOI_DA: không mang máu / mana cày được vào đánh Frieza */
-  private datLaiVaoThan(): void {
-    if (banDoHt !== 'sa') return;
-    const nay = this.nguoi.map((n, p) => !n.vang && !this.trongMb(p) && trongThan(n.x, n.y));
-    const truoc = this.trenThanTruoc;
-    this.trenThanTruoc = nay;
-    if (!truoc) return;
-    this.nguoi.forEach((n, p) => {
-      if (!nay[p] || truoc[p] || n.het || this.hopThe) return;
-      n.hp = HP_NV;
-      n.mana = MANA_TOI_DA;
-      n.bayKhoa = 0;
-      this.chu.push({ id: this.id++, x: n.x, y: n.y - 320 - 50 * p, text: `🏯 ${n.ten}: MÁU ${HP_NV} · MANA ${MANA_TOI_DA}`, mau: n.mau, t: 0 });
-    });
-  }
   /** Hợp thể Super Bư (không lưu ván): chu = người điều khiển ra đòn, mang thân Super Bư (`nv` đổi sang SUPER_BU) · nhap = người bị nhập
    *  (ẩn, đi theo, chỉ điều khiển đi lại / bay của Super Bư) · con = giây còn lại · truoc = máu / mana hai người lúc hợp thể · hpMax / manaMax = của Super Bư */
   hopThe: { chu: number; nhap: number; con: number; nvCu: NhanVat; truoc: { hp: number; mana: number }[]; hpMax: number; manaMax: number } | null = null;
@@ -1797,7 +1779,6 @@ export class Game {
       this.capNhatPt(dt);
       HN.moc('cn.mayBay');
       this.capNhatCong(dt);
-      this.datLaiVaoThan();
       this.nguoi.forEach((n, p) => this.mayQuet(n, p));
       HN.moc('cn.may');
       this.chonVay(dtE);
