@@ -300,6 +300,8 @@ const GY_TRUY_GAN = 700;
 /** Tốc độ Frieza bay đi truy sát (px/s): 1/2 máy bay; gần mục tiêu trong FZ_BAY_GAN thì chạy đánh như thường */
 const FZ_BAY_TOC = MB_TOC / 2;
 const FZ_BAY_GAN = 600;
+/** Lúc truy sát (fzTruy) Frieza đi tìm Mabu / Zinbu (bay và chạy ngoài thần điện) nhanh gấp chừng này lần */
+const FZ_TRUY_GAP = 3;
 const W_TOI_THIEU = 1100;
 const W_TOI_DA = 2800;
 const BAR = 80;
@@ -4387,9 +4389,9 @@ export class Game {
       return;
     }
     f.nghi = 0;
-    // Truy sát ngoài thần điện: bay thẳng (qua vực, qua tường vườn) tốc độ FZ_BAY_TOC, gần thì chạy tới như thường
+    // Truy sát ngoài thần điện: bay thẳng (qua vực, qua tường vườn) tốc độ FZ_BAY_TOC × FZ_TRUY_GAP, gần thì chạy tới như thường
     if (this.fzTruy && (!trongThan(muc.x, muc.y) || !trongThan(f.x, f.y))) {
-      const toc = d > FZ_BAY_GAN ? Math.max(FZ_BAY_TOC, FZ_TOC_DANH * gt) : FZ_TOC_DANH * gt;
+      const toc = (d > FZ_BAY_GAN ? Math.max(FZ_BAY_TOC, FZ_TOC_DANH * gt) : FZ_TOC_DANH * gt) * FZ_TRUY_GAP;
       const b = Math.min(d, toc * dt);
       f.x += (dx / d) * b;
       f.y += (dy / d) * b;
