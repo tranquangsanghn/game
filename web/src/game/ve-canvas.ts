@@ -2227,7 +2227,7 @@ export class VeCanvas {
         ctx.lineWidth = 8;
         duongTron(ctx, 90, t.x, t.y);
         ctx.stroke();
-        ctx.font = `800 70px ${FONT}`;
+        ctx.font = `900 140px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#000';
@@ -2282,14 +2282,15 @@ export class VeCanvas {
     ctx.arc(0, 14, 105, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, tien));
     ctx.stroke();
     const chu = b.loai === 'no' ? Math.max(0, BOM_NO_T - dat).toFixed(1) : `${c.tamBom(b)}`;
+    const rongO = b.loai === 'no' ? 250 : 160;
     ctx.fillStyle = '#1b1209';
-    tronCD(ctx, 40, -150, b.loai === 'no' ? 120 : 80, 76, 18);
+    tronCD(ctx, 40, -290, rongO, 150, 34);
     ctx.fill();
     ctx.fillStyle = b.loai === 'no' ? '#ff8a7a' : '#ffe14d';
-    ctx.font = `900 58px ${FONT}`;
+    ctx.font = `900 120px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(chu, 40 + (b.loai === 'no' ? 60 : 40), -110);
+    ctx.fillText(chu, 40 + rongO / 2, -212);
     if (b.loai === 'no') {
       // Vùng nổ 5 × 5 ô (nét đứt đỏ)
       ctx.setLineDash([30, 24]);
@@ -2354,23 +2355,23 @@ export class VeCanvas {
     }
     if (s.trang && !n.het) {
       const tr = s.trang;
-      const yb = n.y - 420;
+      const yb = n.y - 560;
       ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      tronCD(ctx, cx - 120, yb, 240, 34, 17);
+      tronCD(ctx, cx - 190, yb, 380, 56, 28);
       ctx.fill();
       ctx.fillStyle = tr.loai === 'bong' ? '#5ab4ff' : '#ff6a2a';
-      tronCD(ctx, cx - 114, yb + 6, 228 * dongHe(tr.con / tr.max), 22, 11);
+      tronCD(ctx, cx - 180, yb + 10, 360 * dongHe(tr.con / tr.max), 36, 18);
       ctx.fill();
     }
     if (s.guc) {
       // Gục chờ cứu: bong bóng nhấp nháy đồ cần mang tới (xô nước / kim châm)
-      const yb = n.y - 330 + 10 * Math.sin(c.t * 4);
+      const yb = n.y - 430 + 10 * Math.sin(c.t * 4);
       ctx.fillStyle = Math.floor(c.t * 3) % 2 ? 'rgba(255,77,77,0.9)' : 'rgba(255,255,255,0.9)';
-      duongTron(ctx, 70, cx, yb);
+      duongTron(ctx, 110, cx, yb);
       ctx.fill();
       ctx.save();
       ctx.translate(cx, yb);
-      ctx.scale(4.4, 4.4);
+      ctx.scale(7, 7);
       this.veDoCuu(ctx, s.guc === 'chay' ? 'xo' : 'kim');
       ctx.restore();
       ctx.restore();
@@ -2379,33 +2380,33 @@ export class VeCanvas {
     // Mạng dự phòng: trái tim nhỏ bên trái đầu
     for (let k = 0; k < s.mang; k++) {
       ctx.save();
-      ctx.translate(cx - 120, n.y - 290 + k * 70);
-      ctx.scale(3, 3);
+      ctx.translate(cx - 170, n.y - 400 + k * 120);
+      ctx.scale(5, 5);
       this.veVpMc(ctx, 'mang');
       ctx.restore();
     }
     // Kho đồ cứu người (góc trên đầu): số xô nước và kim châm còn lại, hết thì mờ
-    ctx.font = `800 54px ${FONT}`;
+    ctx.font = `900 130px ${FONT}`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = 12;
+    ctx.lineWidth = 26;
     for (const [k, loai, so] of [[0, 'xo', s.xo], [1, 'kim', s.kim]] as const) {
-      const bx = cx + 100, by = n.y - 330 + k * 74;
+      const bx = cx + 150, by = n.y - 400 + k * 160;
       ctx.save();
       ctx.globalAlpha = so > 0 ? 1 : 0.4;
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      duongTron(ctx, 34, bx, by);
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      duongTron(ctx, 72, bx, by);
       ctx.fill();
       ctx.save();
       ctx.translate(bx, by);
-      ctx.scale(2.3, 2.3);
+      ctx.scale(4.8, 4.8);
       this.veDoCuu(ctx, loai);
       ctx.restore();
-      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
       ctx.fillStyle = so > 0 ? '#fff' : '#ff6b6b';
-      ctx.strokeText(`×${so}`, bx + 42, by);
-      ctx.fillText(`×${so}`, bx + 42, by);
+      ctx.strokeText(`×${so}`, bx + 90, by);
+      ctx.fillText(`×${so}`, bx + 90, by);
       ctx.restore();
     }
     // Đang giữ nút ném: quả bom giơ cao trên đầu (rung nhẹ theo mức nạp), ném đi khi thả nút
@@ -2424,7 +2425,7 @@ export class VeCanvas {
     if (muc > 0 && s.nap) {
       const mau = s.nap.loai === 'lua' ? '#ff6a2a' : s.nap.loai === 'nuoc' ? '#5ab4ff' : '#cfcfcf';
       for (let k = 0; k < 4; k++) {
-        duongTron(ctx, 26, cx - 105 + k * 70, n.y - 470);
+        duongTron(ctx, 40, cx - 165 + k * 110, n.y - 650);
         ctx.fillStyle = k < muc ? mau : 'rgba(0,0,0,0.45)';
         ctx.fill();
         ctx.strokeStyle = '#fff';
@@ -2767,15 +2768,16 @@ export class VeCanvas {
         const so = c.bomCon(p, LOAI_BOM[b.k]!);
         ctx.save();
         ctx.globalAlpha = ng0.het ? 0.2 : 1;
-        ctx.font = `800 14px ${FONT}`;
+        ctx.font = `900 22px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.lineJoin = 'round';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 5;
         ctx.strokeStyle = 'rgba(0,0,0,0.85)';
         ctx.fillStyle = so > 0 ? '#fff' : '#ff6b6b';
-        ctx.strokeText(`×${so}`, b.x + 20, b.y + 18);
-        ctx.fillText(`×${so}`, b.x + 20, b.y + 18);
+        const dx = b.x > c.GIUA ? -26 : 26;
+        ctx.strokeText(`×${so}`, b.x + dx, b.y + 22);
+        ctx.fillText(`×${so}`, b.x + dx, b.y + 22);
         ctx.restore();
       }
     }

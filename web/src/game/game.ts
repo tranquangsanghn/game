@@ -1052,6 +1052,8 @@ export class Game {
   /** Mê cung bom (không lưu ván: tải lại là mê cung mới nguyên): bom, lửa / nước, quái ăn thịt, vật phẩm, đồ cứu người, trạng thái từng nhân vật.
    *  Các mảng *View là phần nằm trong khung nhìn (quái và vật phẩm còn bị sương mù) */
   mc: TrangThaiMc = taoMeCung();
+  /** Khung trước có người ở map mê cung bom (lúc từ không có thành có thì mê cung làm mới, `lamMoiMeCung()`; không lưu ván) */
+  private mcCoNguoi = false;
   mcBomView: BomMc[] = [];
   mcLuaView: LuaMc[] = [];
   mcTiaView: TiaMc[] = [];
@@ -7983,10 +7985,23 @@ export class Game {
     this.camNgay = true;
   }
 
+  /** Làm mới mê cung bom như lúc mới tạo ván: bố cục gạch / thùng / ô bí ẩn, quái, bà phù thuỷ (kèm viên ngọc 4 sao quay về chỗ bà), bom, đồ, kho của từng người */
+  private lamMoiMeCung(): void {
+    datLaiMeCung();
+    this.mc = taoMeCung();
+    this.vatPham = this.vatPham.filter((v) => !(v.loai === 'ngoc' && v.sao === MC_NGOC_SAO));
+    this.datNgocMeCung();
+  }
+
   /** Mỗi khung: bom, lửa / nước, trạng thái cháy / bong bóng / lưới, cứu người, nhặt đồ, quái ăn thịt.
    *  Không ai ở mê cung / đường hầm thì quái đứng im ("một chấm"), chỉ bom / lửa còn dở chạy nốt */
   private capNhatMeCung(dt: number): void {
     if (banDoHt !== 'sa') return;
+    // Mỗi lần cả đội bước vào mê cung / đường hầm (từ lúc không còn ai ở đó) thì mọi thứ làm mới lại (bố cục, quái, bà phù thuỷ, đồ, kho xô / kim / bom),
+    // trừ khi đã nhặt ngọc rồng 4 sao: giữ nguyên hiện trạng
+    const coNguoi = this.nguoi.some((n, p) => !n.vang && !this.trongMb(p) && this.vungMc(n));
+    if (coNguoi && !this.mcCoNguoi && !this.ngocNhat.includes(MC_NGOC_SAO)) this.lamMoiMeCung();
+    this.mcCoNguoi = coNguoi;
     const mc = this.mc;
     for (const d of mc.doCuu) d.cho = Math.max(0, d.cho - dt);
     // Nhân vật to dần khi vào mê cung / đường hầm, nhỏ lại khi ra
