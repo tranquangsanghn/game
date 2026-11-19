@@ -1814,6 +1814,7 @@ export class Game {
     // Nhân vật đi bộ / bay không đổi vùng: đang trong vườn gà thì ở lại trong vườn, đang ở đảo thì ở lại đảo (chỉ máy bay mới ra / vào vườn)
     this.nguoi.forEach((n, p) => { if (!this.trongMb(p)) giuTrongMap(n, leNhanVat(n.nv.heSoTo * this.toNv(p)), !!n.bay, vungCua(truoc[p])); });
     this.chanNuiMotNguoi(truoc);
+    this.chanMeCung(truoc);
     if (this.trieuHoi) this.nguoi.forEach((n, p) => { if (!n.vang && !this.trongMb(p)) giamThan(n, !!n.bay); });
     HN.moc('cn.nhanVat');
     if (!dung) {
@@ -3076,6 +3077,35 @@ export class Game {
     });
   }
 
+  /**
+   * Cửa mê cung bom (`vungMc()`): chơi 2 người thì chỉ bước vào được khi người kia cũng đang ở đường hầm / mê cung (cùng vào; người kia đã gục
+   * trong mê cung thì vẫn vào cứu được), không thì bị chặn lại. Chơi 1 người mà bước vào thì chết ngay: thua cuộc.
+   */
+  private chanMeCung(truoc: { x: number; y: number }[]): void {
+    const mot = this.nguoi.some((n) => n.vang);
+    this.nguoi.forEach((n, p) => {
+      if (n.vang || n.het || this.trongMb(p) || !this.vungMc(n) || this.vungMc(truoc[p]!)) return;
+      if (mot) {
+        this.chetNv(n);
+        this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: '💀 MÊ CUNG BOM CHỈ VÀO ĐƯỢC KHI CHƠI 2 NGƯỜI!', mau: '#ff4d4d', t: 0 });
+        this.ketThuc(false);
+        return;
+      }
+      const q = this.nguoi[1 - p]!;
+      if (!this.trongMb(1 - p) && (this.vungMc(q) || (!q.het && trongHam(q.x, q.y, 200)))) return;
+      n.x = truoc[p]!.x;
+      n.y = truoc[p]!.y;
+      n.dich = null;
+      if (n.bay) { n.bay = null; n.nv.tiepDat(); }
+      if (this.t - this.mcBaoLuc > 3) {
+        this.mcBaoLuc = this.t;
+        this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: '🧨 CẢ 2 NGƯỜI CÙNG VÀO MÊ CUNG BOM!', mau: '#ffd27a', t: 0 });
+      }
+    });
+  }
+
+  /** Lần cuối báo "mê cung bom phải cả 2 người cùng vào" (giây `t`) */
+  private mcBaoLuc = -99;
   /** Lần cuối báo "núi đá chỉ cho 2 người" (giây `t`) */
   private nuiBaoLuc = -99;
   /** Lần cuối báo "thần điện chỉ cho 2 người" khi máy bay chở 1 người bay tới (giây `t`) */
