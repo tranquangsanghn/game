@@ -863,6 +863,7 @@ export class VeCanvas {
 
     HN.moc('ve.nenVuon');
     for (const v of c.vetView) {
+      if (v.t < 0) continue; // vụ nổ so le (t âm) chưa tới giờ: không vẽ (bán kính âm làm createRadialGradient ném lỗi, hỏng cả khung)
       const k = v.t / (v.loai === 'chay' ? 0.7 : 0.45);
       ctx.save();
       ctx.translate(v.x, v.y);
