@@ -2134,7 +2134,8 @@ export class Game {
 
   private capNhatNhanVat(n: NguoiChoi, dt: number): void {
     const truot = n.nv.capNhat(dt, n.dangDi);
-    if (truot) n.x = kepX(n.x + truot * S_NV);
+    // Mê cung bom: nhân vật chỉ đứng ở tâm ô, động tác ném bom không được trượt người ra khỏi ô (lọt vào thùng / gạch)
+    if (truot && !this.oMeCung(this.nguoi.indexOf(n))) n.x = kepX(n.x + truot * S_NV);
   }
 
   private capNhatBay(n: NguoiChoi, dt: number): void {
