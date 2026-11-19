@@ -1746,9 +1746,34 @@ export class Game {
     return kq;
   }
 
+  /**
+   * Mê cung bom dừng cả thế giới: có nhân vật (có mặt, chưa gục, không ngồi xe) đang ở map mê cung bom (`vungMc()`) thì đồng hồ ván (`tGame`)
+   * không đếm, mọi map khác (gà, trứng, vườn, Cell, tiệc, bóng ma, Frieza, máy bay, phi thuyền, quả cầu, mốc truy sát / triệu hồi…) đứng yên,
+   * nhân vật ở ngoài mê cung cũng đứng yên; chỉ mê cung, người trong mê cung, chưởng / hiệu ứng / cứu người còn chạy. Ra khỏi mê cung thì chạy tiếp.
+   */
+  get dungTheGioi(): boolean {
+    for (let p = 0; p < this.nguoi.length; p++) {
+      const n = this.nguoi[p]!;
+      if (!n.vang && !n.het && !this.trongMb(p) && this.vungMc(n)) return true;
+    }
+    return false;
+  }
+
+  /** Nhân vật p đứng yên vì mê cung bom đang dừng thế giới (p ở ngoài map mê cung) */
+  private biDung(p: number): boolean {
+    return this.man === 'play' && (this.trongMb(p) || !this.vungMc(this.nguoi[p]!)) && this.dungTheGioi;
+  }
+
+  /** Đồng hồ ván mm:ss (góc trên trái, phần đen ngoài map) */
+  dongHo(): string {
+    const g = Math.max(0, Math.floor(this.tGame));
+    return `${String(Math.floor(g / 60)).padStart(2, '0')}:${String(g % 60).padStart(2, '0')}`;
+  }
+
   private capNhat(dt: number): void {
     HN.moc('cn.khac');
-    this.tGame += dt;
+    const dung = this.dungTheGioi;
+    if (!dung) this.tGame += dt;
     const k = kep(this.tGame / THOI_GIAN_HOANG_HON, 0, 1);
     this.mauHoangHon = tronMau([255, 220, 140], [255, 110, 60], k);
     this.doHoangHon = k * 0.3;
@@ -1759,72 +1784,76 @@ export class Game {
 
     this.dayCon = this.soGaCon >= GA_CON_TOI_DA;
     this.dayPhu = this.soMePhu >= ME_PHU_TOI_DA;
-    this.capNhatVuon(dtE);
-    this.kiemTraOLiVuon();
-    this.kiemTraCellTruy();
-    this.kiemTraFzTruy();
-    this.kiemTraGyTruy();
-    this.kiemTraTrieuHoi();
-    this.kiemTraThang(dt);
-    HN.moc('cn.vuon');
-    this.capNhatTrungGa(dt);
-    HN.moc('cn.trung');
-    this.henTuong -= dtE;
-    if (this.vuonNgu || this.choVua) this.henTuong = Math.max(this.henTuong, 0.1);
-    else if (this.henTuong <= 0) {
-      if (this.ga.some((g) => g.goc && !g.chet)) this.henTuong = 10;
-      else if (this.soLanTuong <= TUONG_HOI_SINH) {
-        this.sinhTuong();
-        this.henTuong = CHO_TUONG;
-      } else this.henTuong = 10;
+    if (!dung) {
+      this.capNhatVuon(dtE);
+      this.kiemTraOLiVuon();
+      this.kiemTraCellTruy();
+      this.kiemTraFzTruy();
+      this.kiemTraGyTruy();
+      this.kiemTraTrieuHoi();
+      this.kiemTraThang(dt);
+      HN.moc('cn.vuon');
+      this.capNhatTrungGa(dt);
+      HN.moc('cn.trung');
+      this.henTuong -= dtE;
+      if (this.vuonNgu || this.choVua) this.henTuong = Math.max(this.henTuong, 0.1);
+      else if (this.henTuong <= 0) {
+        if (this.ga.some((g) => g.goc && !g.chet)) this.henTuong = 10;
+        else if (this.soLanTuong <= TUONG_HOI_SINH) {
+          this.sinhTuong();
+          this.henTuong = CHO_TUONG;
+        } else this.henTuong = 10;
+      }
     }
     const truoc = this.nguoi.map((n) => ({ x: n.x, y: n.y }));
-    this.dieuKhien(dt);
+    this.dieuKhien(dt, dung);
     HN.moc('cn.dieuKhien');
     this.rangBuoc(truoc);
-    this.capNhatHopThe(dt);
+    if (!dung) this.capNhatHopThe(dt);
     HN.moc('cn.hopThe');
     // Nhân vật đi bộ / bay không đổi vùng: đang trong vườn gà thì ở lại trong vườn, đang ở đảo thì ở lại đảo (chỉ máy bay mới ra / vào vườn)
     this.nguoi.forEach((n, p) => { if (!this.trongMb(p)) giuTrongMap(n, leNhanVat(n.nv.heSoTo * this.toNv(p)), !!n.bay, vungCua(truoc[p])); });
     this.chanNuiMotNguoi(truoc);
     if (this.trieuHoi) this.nguoi.forEach((n, p) => { if (!n.vang && !this.trongMb(p)) giamThan(n, !!n.bay); });
     HN.moc('cn.nhanVat');
-    this.capNhatMb(dt);
-    this.capNhatPt(dt);
-    HN.moc('cn.mayBay');
-    this.capNhatCong(dt);
-    this.datLaiVaoThan();
-    this.nguoi.forEach((n, p) => this.mayQuet(n, p));
-    HN.moc('cn.may');
-    this.chonVay(dtE);
-    HN.moc('cn.chonVay');
-    this.capNhatGa(dtE);
-    HN.moc('cn.ga');
-    this.gaDanhNguoi();
-    HN.moc('cn.gaDanh');
-    this.capNhatCell(dtE);
-    HN.moc('cn.cell');
-    this.capNhatGinyu(dtE);
-    this.capNhatFz(dtE);
-    this.giamTrumThan();
+    if (!dung) {
+      this.capNhatMb(dt);
+      this.capNhatPt(dt);
+      HN.moc('cn.mayBay');
+      this.capNhatCong(dt);
+      this.datLaiVaoThan();
+      this.nguoi.forEach((n, p) => this.mayQuet(n, p));
+      HN.moc('cn.may');
+      this.chonVay(dtE);
+      HN.moc('cn.chonVay');
+      this.capNhatGa(dtE);
+      HN.moc('cn.ga');
+      this.gaDanhNguoi();
+      HN.moc('cn.gaDanh');
+      this.capNhatCell(dtE);
+      HN.moc('cn.cell');
+      this.capNhatGinyu(dtE);
+      this.capNhatFz(dtE);
+      this.giamTrumThan();
+    }
     this.capNhatMeCung(dtE);
     HN.moc('cn.meCung');
     HN.moc('cn.ginyu');
-    this.capNhatTiec(dtE);
+    if (!dung) this.capNhatTiec(dtE);
     HN.moc('cn.tiec');
     this.capNhatDan(dt);
     HN.moc('cn.dan');
-    this.capNhatKeo(dt);
+    if (!dung) this.capNhatKeo(dt);
     HN.moc('cn.keo');
     this.capNhatCuu(dt);
     HN.moc('cn.cuu');
-    this.capNhatCau(dt);
+    if (!dung) this.capNhatCau(dt);
     HN.moc('cn.cau');
-    this.capNhatCay();
+    if (!dung) this.capNhatCay();
     HN.moc('cn.cay');
-    this.capNhatVatPham(dt);
+    this.capNhatVatPham(dt, dung);
     HN.moc('cn.vatPham');
-    this.capNhatNgocTiec();
+    if (!dung) this.capNhatNgocTiec();
     HN.moc('cn.ngocTiec');
     this.capNhatHieuUng(dt);
     HN.moc('cn.hieuUng');
@@ -1895,12 +1924,13 @@ export class Game {
     return Math.max(0.55, tc.to * 1.2);
   }
 
-  private capNhatVatPham(dt: number): void {
+  /** dung: mê cung bom đang dừng thế giới (vật phẩm ngoài mê cung không đếm giờ hết hạn, vẫn nhặt được ngọc trong mê cung) */
+  private capNhatVatPham(dt: number, dung = false): void {
     const conLai: VatPham[] = [];
     for (const b of this.ngocBay) b.t += dt;
     this.ngocBay = this.ngocBay.filter((b) => b.t < this.NGOC_BAY_T);
     for (const v of this.vatPham) {
-      v.t += dt;
+      if (!dung) v.t += dt;
       const ngoc = v.loai === 'ngoc';
       if (!ngoc && v.t >= VP_TON_TAI) continue;
       if (ngoc) {
@@ -2031,9 +2061,11 @@ export class Game {
     n.hp += luong;
   }
 
-  private dieuKhien(dt: number): void {
+  /** dung: mê cung bom đang dừng thế giới, nhân vật ở ngoài map mê cung đứng yên hẳn (không điều khiển, không hồi, không animation) */
+  private dieuKhien(dt: number, dung = false): void {
     this.nguoi.forEach((n, p) => {
       if (n.vang) return;
+      if (dung && (this.trongMb(p) || !this.vungMc(n))) { n.dangDi = false; return; }
       n.hoiChieu = Math.max(0, n.hoiChieu - dt);
       this.capNhatMay(n, dt);
       n.bayKhoa = Math.max(0, n.bayKhoa - dt);
@@ -3903,7 +3935,7 @@ export class Game {
   private ban(p: number, x: number, y: number): void {
     const n = this.nguoi[p];
     // Trong mê cung bom chỉ có bom (mcNem / mcKichNo), không có đòn thường
-    if (this.oMeCung(p)) return;
+    if (this.oMeCung(p) || this.biDung(p)) return;
     if (n.hoiChieu > 0 || n.nv.khoa || n.het || this.trongCau(p) || this.trongPt(p) || this.biNhap(p)) return;
     // Trên máy bay: đấm / đá bình thường; bắn chưởng (Chiêu đặc biệt / socola) thì máy bay nổ; không biến mây
     const tren = this.trongMb(p);
@@ -7118,7 +7150,7 @@ export class Game {
   // Dùng thẳng nhóm đòn k (chọn chiêu và ra đòn cùng lúc, tự ngắm); chiêu đang hồi / khoá thì bỏ qua
   private dungChieu(p: number, k: number): void {
     const n = this.nguoi[p];
-    if (n.het || n.may.dang || this.trongCau(p) || this.trongPt(p) || this.oMeCung(p)) return;
+    if (n.het || n.may.dang || this.trongCau(p) || this.trongPt(p) || this.oMeCung(p) || this.biDung(p)) return;
     // Trên máy bay không biến mây: dùng đấm thay
     if (this.trongMb(p) && k === NHOM_MAY && !!n.nv.sp.nhomDon[k]?.may) k = 0;
     // Chiêu riêng (mây / socola) hết mana hoặc đang hồi thì dùng chiêu kế tiếp còn dùng được: chưởng → đá
@@ -7177,6 +7209,7 @@ export class Game {
 
   private datDichThe(p: number, x: number, y: number): void {
     const n = this.nguoi[p];
+    if (this.biDung(p)) return;
     // Trên máy bay: chỉ phi công (người lên trước) lái, điều khiển di chuyển bình thường đặt điểm đến của máy bay; hành khách không lái được
     if (this.trongMb(p)) {
       const m = this.mayBay;

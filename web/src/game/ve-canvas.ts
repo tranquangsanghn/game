@@ -301,6 +301,7 @@ export class VeCanvas {
     HN.moc('ve.thanhTren');
     this.veNgocTrenBang(ctx, c);
     this.veDemNguoc(ctx, c);
+    this.veDongHo(ctx, c);
     HN.moc('ve.ngoc');
     if (c.man === 'play' || c.man === 'pause') this.veHud(ctx, c);
     HN.moc('ve.hud');
@@ -2840,6 +2841,25 @@ export class VeCanvas {
     ctx.fillStyle = d.mau;
     ctx.globalAlpha = 0.75 + 0.25 * Math.sin(c.t * 6);
     ctx.fillText(d.chu, c.W - 110, -c.BAR / 2);
+    ctx.restore();
+  }
+
+  // ─── Góc trên trái (phần đen ngoài map): đồng hồ ván mm:ss; mê cung bom dừng thế giới thì đồng hồ đứng, hiện ⏸ ───
+
+  private veDongHo(ctx: CanvasRenderingContext2D, c: Game): void {
+    if (c.man !== 'play' && c.man !== 'pause' && c.man !== 'over') return;
+    const dung = c.man === 'play' && c.dungTheGioi;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `800 18px ${FONT}`;
+    ctx.fillStyle = dung ? '#8fd3ff' : '#fff';
+    if (dung) ctx.globalAlpha = 0.6 + 0.4 * Math.sin(c.t * 5);
+    ctx.fillText(c.dongHo(), -c.SIDE / 2, -c.BAR / 2 - (dung ? 10 : 0));
+    if (dung) {
+      ctx.font = `700 13px ${FONT}`;
+      ctx.fillText('DỪNG', -c.SIDE / 2, -c.BAR / 2 + 16);
+    }
     ctx.restore();
   }
 
