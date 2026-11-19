@@ -227,7 +227,7 @@ export class GiaoDien {
   private htmlMucTieu(): string {
     return `<div class="man-phu man-chon man-hd">
       ${this.anhNgocRong()}
-      <p class="muc-tieu">Bạn phải tìm đủ 7 viên ngọc rồng để chiến thắng game</p>
+      <p class="muc-tieu">Bạn phải tìm đủ 5 viên ngọc rồng để chiến thắng game</p>
       <div class="nhom-nut">
         <button type="button" tabindex="-1" class="nut-phu" data-act="quay">◀ Quay lại</button>
         <button type="button" tabindex="-1" class="nut-chinh" data-act="vao">Vào chơi (A)</button>

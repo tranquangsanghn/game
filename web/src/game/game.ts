@@ -10,7 +10,7 @@ import { taoMeCung, O_VAO_MC, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
-import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_VANG_CHUONG_HOI, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
+import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_VANG_CHUONG_HOI, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -1856,7 +1856,7 @@ export class Game {
   /** Nhân vật m nhặt viên ngọc rồng `sao` sao ở (x, y): chữ bay, nổ sáng, chưởng lên trời, viên ngọc bay lên hàng ngọc trên thanh đen */
   private nhatNgoc(m: NguoiChoi, x: number, y: number, sao: number): void {
     this.am.phat('anTao');
-    this.chu.push({ id: this.id++, x: m.x, y: m.y - 220, text: `⭐ NGỌC RỒNG ${sao} SAO! (${this.ngocNhat.length + 1}/7)`, mau: '#ffb347', t: 0 });
+    this.chu.push({ id: this.id++, x: m.x, y: m.y - 220, text: `⭐ NGỌC RỒNG ${sao} SAO! (${this.ngocNhat.length + 1}/5)`, mau: '#ffb347', t: 0 });
     this.vet.push({ id: this.id++, x, y, t: 0, loai: 'chay', co: 1.2 });
     this.chuongLenTroi(this.nguoi.indexOf(m));
     this.ngocBay.push({ x, y: y - 40, t: 0, slot: this.ngocNhat.length, sao });
@@ -4322,6 +4322,11 @@ export class Game {
     this.chu.push({ id: this.id++, x: t.x, y: t.y - 220, text: '💥 FRIEZA ĐÃ BỊ HẠ!', mau: '#ffd23f', t: 0 });
     this.congDiem(p, FZ_DIEM, t.x, t.y - 160, `+${FZ_DIEM}`);
     this.nguoi.forEach((_, q) => this.chuongLenTroi(q));
+    // Rơi viên ngọc rồng FZ_NGOC_SAO sao tại chỗ Frieza ngã
+    if (!this.ngocNhat.includes(FZ_NGOC_SAO) && !this.vatPham.some((v) => v.loai === 'ngoc' && v.sao === FZ_NGOC_SAO)) {
+      this.vatPham.push({ id: this.id++, x: f.x, y: f.y, t: 0, loai: 'ngoc', sao: FZ_NGOC_SAO });
+      this.chu.push({ id: this.id++, x: t.x, y: t.y - 300, text: `⭐ FRIEZA RƠI NGỌC RỒNG ${FZ_NGOC_SAO} SAO!`, mau: '#ffb347', t: 0 });
+    }
   }
 
   /** Frieza đánh nhau với mục tiêu `muc` (null = hết mục tiêu, chỉ làm nốt chưởng đang vận) */

@@ -77,6 +77,8 @@ export const FZ_TAM_CAO_VANG = 190;
 /** Điểm khi hạ Frieza, thời gian xác mờ dần */
 export const FZ_DIEM = 1000;
 export const FZ_CHET_T = 2;
+/** Frieza bị hạ thì rơi viên ngọc rồng này (số sao) */
+export const FZ_NGOC_SAO = 5;
 /** Thời gian ra một đòn (lao người tới) */
 export const FZ_DANH_T = 0.3;
 
