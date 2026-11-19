@@ -101,6 +101,13 @@ export const CUU_MC_BK = 400;
 /** Nhặt vật phẩm / đồ cứu người trong VP_MC_BK; kiếm / xô nước dùng xong mọc lại sau DO_MC_HOI giây */
 export const VP_MC_BK = 130;
 export const DO_MC_HOI = 15;
+/** Kho đồ lúc mới vào ván (mỗi nhân vật): xô nước, kim châm, và mỗi loại bom. Dùng hết thì phải đi nhặt thêm */
+export const MC_XO_DAU = 3;
+export const MC_KIM_DAU = 3;
+export const MC_BOM_DAU = 5;
+/** Nhặt thêm: mỗi lần nhặt xô / kim (ô K / X và ô bí ẩn) được MC_DO_THEM, túi bom (ô bí ẩn) được MC_BOM_THEM mỗi loại */
+export const MC_DO_THEM = 2;
+export const MC_BOM_THEM = 2;
 /** Mạng dự phòng (ô bí ẩn): gục thì dùng một mạng, đứng dậy ngay tại chỗ; giữ tối đa MANG_TOI_DA */
 export const MANG_TOI_DA = 3;
 /** Bom bẫy nhảy ra từ ô bí ẩn (p = -3): bay BAY_BAY giây, tự nổ BAY_NO giây sau khi chạm đất, tia lửa / nước dài BAY_TAM ô */
@@ -167,11 +174,11 @@ export function khungQuai(q: QuaiMc): number {
   return q.dang ? k.di[Math.floor(q.ph * 1.2) % k.di.length]! : k.di[0]!;
 }
 
-/** Ô bí ẩn vỡ ra ngẫu nhiên: quái (loài ngẫu nhiên nhảy ra), bom (bẫy, tự nổ), xô nước (cứu người cháy), kim châm (chọc bong bóng), mạng; tỉ lệ cộng dồn theo thứ tự */
-export type LoaiVpMc = 'xo' | 'kim' | 'mang';
-export const TI_LE_O_BI_AN: [LoaiVpMc | 'quai' | 'bom', number][] = [['quai', 0.2], ['bom', 0.2], ['xo', 0.2], ['kim', 0.2], ['mang', 0.2]];
-/** Đồ cứu người: kiếm / kim châm chọc bong bóng, xô nước dập lửa */
-export type DoCuuMc = 'kiem' | 'xo' | 'kim';
+/** Ô bí ẩn vỡ ra ngẫu nhiên: quái (loài ngẫu nhiên nhảy ra), bom (bẫy, tự nổ), xô nước (cứu người cháy), kim châm (chọc bong bóng), mạng, túi bom (+MC_BOM_THEM mỗi loại); tỉ lệ cộng dồn theo thứ tự */
+export type LoaiVpMc = 'xo' | 'kim' | 'mang' | 'tui';
+export const TI_LE_O_BI_AN: [LoaiVpMc | 'quai' | 'bom', number][] = [['quai', 0.15], ['bom', 0.15], ['xo', 0.15], ['kim', 0.15], ['mang', 0.1], ['tui', 0.3]];
+/** Đồ cứu người: kim châm chọc bong bóng, xô nước dập lửa (mỗi lần cứu tốn 1) */
+export type DoCuuMc = 'xo' | 'kim';
 
 export interface BomMc {
   id: number; p: number; loai: LoaiBom;
@@ -199,17 +206,18 @@ export interface QuaiMc {
 /** Tia / cầu lửa quái bắn ra (chỉ để vẽ; sát thương tính lúc bắn) */
 export interface TiaMc { loai: LoaiQuai; x0: number; y0: number; x1: number; y1: number; t: number; }
 export interface VpMc { id: number; i: number; j: number; loai: LoaiVpMc; }
-export interface DoMc { i: number; j: number; loai: 'kiem' | 'xo'; cho: number; }
+export interface DoMc { i: number; j: number; loai: DoCuuMc; cho: number; }
 /** Trạng thái riêng từng nhân vật trong mê cung (không lưu ván) */
 export interface NvMc {
   /** đang giữ nút ném: loại bom và lúc bắt đầu giữ (this.t) */
   nap: { loai: LoaiBom; t0: number } | null;
-  /** bom đang chọn (chế độ chuột) */
-  chon: LoaiBom;
+  /** số bom còn của từng loại (ném loại nào là ngẫu nhiên trong số loại còn bom) */
+  bom: Record<LoaiBom, number>;
   /** tay cầm: nút cứu người vừa bấm (B đổ nước = 'xo', Y chọc kim = 'kim') và lúc bấm */
   cuuNut?: { loai: 'xo' | 'kim'; t: number };
   /** mạng dự phòng (ô bí ẩn) */ mang: number;
-  do: DoCuuMc | null;
+  /** số xô nước (dập lửa) và kim châm (chọc bong bóng) còn lại; mỗi lần cứu đồng đội tốn 1 */
+  xo: number; kim: number;
   trang: { loai: 'chay' | 'bong'; con: number; max: number } | null;
   /** đã gục trong mê cung: nằm cháy / trong bong bóng chờ đồng đội cứu (xô nước / kiếm, kim châm), không hoá mây / socola */
   guc: 'chay' | 'bong' | null;
@@ -240,7 +248,7 @@ export const O_VAO_MC = oTheo('S')[0]!;
 /** Lối ra (góc dưới trái): bước tới tâm ô này thì cả đội dịch chuyển tới núi đá (chỗ bóng ma Goku) */
 export const O_RA_MC = oTheo('E')[0]!;
 
-export const taoNvMc = (): NvMc => ({ nap: null, chon: 'lua', mang: 0, do: null, trang: null, guc: null, luu: null, toi: null, di: null, duong: [] });
+export const taoNvMc = (): NvMc => ({ nap: null, bom: { lua: MC_BOM_DAU, nuoc: MC_BOM_DAU, no: MC_BOM_DAU }, mang: 0, xo: MC_XO_DAU, kim: MC_KIM_DAU, trang: null, guc: null, luu: null, toi: null, di: null, duong: [] });
 /** Bà phù thuỷ mới (mạng đầu) ở ô ngọc */
 export function taoBa(): BaMc {
   const t = tamO(O_NGOC_MC.i, O_NGOC_MC.j);
@@ -249,7 +257,7 @@ export function taoBa(): BaMc {
 export function taoMeCung(): TrangThaiMc {
   return {
     bom: [], lua: [], quai: [], tia: [], vp: [],
-    doCuu: [...oTheo('K').map((o) => ({ ...o, loai: 'kiem' as const, cho: 0 })), ...oTheo('X').map((o) => ({ ...o, loai: 'xo' as const, cho: 0 }))],
+    doCuu: [...oTheo('K').map((o) => ({ ...o, loai: 'kim' as const, cho: 0 })), ...oTheo('X').map((o) => ({ ...o, loai: 'xo' as const, cho: 0 }))],
     hang: HANG_MC.map((_, k) => QUAI_DAU + k * 2),
     nv: [taoNvMc(), taoNvMc()],
     ba: taoBa(),

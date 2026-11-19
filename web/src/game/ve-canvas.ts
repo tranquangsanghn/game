@@ -2131,7 +2131,7 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  /** Kiếm / kim châm (cứu người sặc nước) / xô nước (cứu người bốc cháy); gốc ở tâm, cỡ khoảng 24 đơn vị */
+  /** Kim châm (cứu người sặc nước) / xô nước (cứu người bốc cháy); gốc ở tâm, cỡ khoảng 24 đơn vị */
   private veDoCuu(ctx: CanvasRenderingContext2D, loai: DoCuuMc): void {
     ctx.save();
     ctx.lineJoin = 'round';
@@ -2153,18 +2153,6 @@ export class VeCanvas {
       ctx.fillStyle = 'rgba(255,255,255,0.7)';
       duongTron(ctx, 1.6, -1.6, -10.5);
       ctx.fill();
-    } else if (loai === 'kiem') {
-      ctx.rotate(-Math.PI / 4);
-      ctx.fillStyle = '#e8eef3';
-      ctx.strokeStyle = '#4a5866';
-      ctx.lineWidth = 1.4;
-      tronCD(ctx, -2, -12, 4, 15, 1);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = '#c9962b';
-      ctx.fillRect(-6, 3, 12, 3);
-      ctx.fillStyle = '#7a4a1f';
-      ctx.fillRect(-1.5, 6, 3, 6);
     } else {
       ctx.strokeStyle = '#4a5866';
       ctx.lineWidth = 1.6;
@@ -2189,8 +2177,19 @@ export class VeCanvas {
     ctx.restore();
   }
 
-  /** Vật phẩm rơi từ ô bí ẩn: xô nước, kim châm, mạng (trái tim); gốc ở tâm, cỡ khoảng 24 đơn vị */
+  /** Vật phẩm rơi từ ô bí ẩn: xô nước, kim châm, mạng (trái tim), túi bom; gốc ở tâm, cỡ khoảng 24 đơn vị */
   private veVpMc(ctx: CanvasRenderingContext2D, loai: LoaiVpMc): void {
+    if (loai === 'tui') {
+      // Túi bom: 3 quả bom (lửa, nước, nổ) chụm lại
+      for (const [k, x, y] of [[0, -9, 5], [1, 9, 5], [2, 0, -6]] as const) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(0.8, 0.8);
+        this.bieuTuongBom(ctx, LOAI_BOM[k]!);
+        ctx.restore();
+      }
+      return;
+    }
     if (loai !== 'mang') { this.veDoCuu(ctx, loai); return; }
     ctx.save();
     ctx.lineJoin = 'round';
@@ -2385,15 +2384,28 @@ export class VeCanvas {
       this.veVpMc(ctx, 'mang');
       ctx.restore();
     }
-    // Đồ cứu người đang cầm (góc trên đầu)
-    if (s.do) {
+    // Kho đồ cứu người (góc trên đầu): số xô nước và kim châm còn lại, hết thì mờ
+    ctx.font = `800 54px ${FONT}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 12;
+    for (const [k, loai, so] of [[0, 'xo', s.xo], [1, 'kim', s.kim]] as const) {
+      const bx = cx + 100, by = n.y - 330 + k * 74;
+      ctx.save();
+      ctx.globalAlpha = so > 0 ? 1 : 0.4;
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      duongTron(ctx, 54, cx + 110, n.y - 290);
+      duongTron(ctx, 34, bx, by);
       ctx.fill();
       ctx.save();
-      ctx.translate(cx + 110, n.y - 290);
-      ctx.scale(3.6, 3.6);
-      this.veDoCuu(ctx, s.do);
+      ctx.translate(bx, by);
+      ctx.scale(2.3, 2.3);
+      this.veDoCuu(ctx, loai);
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+      ctx.fillStyle = so > 0 ? '#fff' : '#ff6b6b';
+      ctx.strokeText(`×${so}`, bx + 42, by);
+      ctx.fillText(`×${so}`, bx + 42, by);
       ctx.restore();
     }
     // Đang giữ nút ném: quả bom giơ cao trên đầu (rung nhẹ theo mức nạp), ném đi khi thả nút
@@ -2731,8 +2743,8 @@ export class VeCanvas {
     // Các chiêu xếp dọc từ dưới lên: đang dùng sáng + phát sáng, hết mana thì mờ hẳn
     const bom = c.oMeCung(p);
     for (const b of c.nutBang(p)) {
-      const dung = bom ? c.bomDangChon(p) === LOAI_BOM[b.k] : ng0.nv.nhom === b.k && !nhap;
-      const het = bom ? ng0.het : c.hetMana(p, b.k) || nhap;
+      const dung = bom ? c.bomDangNap(p) === LOAI_BOM[b.k] : ng0.nv.nhom === b.k && !nhap;
+      const het = bom ? ng0.het || c.bomCon(p, LOAI_BOM[b.k]!) <= 0 : c.hetMana(p, b.k) || nhap;
       ctx.save();
       ctx.translate(b.x, b.y);
       ctx.scale(0.8, 0.8);
@@ -2750,6 +2762,22 @@ export class VeCanvas {
       if (bom) this.bieuTuongBom(ctx, LOAI_BOM[b.k]!);
       else this.bieuTuongNv(ctx, b.k, ng0.nv.sp);
       ctx.restore();
+      if (bom) {
+        // Số bom còn lại của loại này (ném loại nào là ngẫu nhiên nên nút chỉ để xem kho)
+        const so = c.bomCon(p, LOAI_BOM[b.k]!);
+        ctx.save();
+        ctx.globalAlpha = ng0.het ? 0.2 : 1;
+        ctx.font = `800 14px ${FONT}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillStyle = so > 0 ? '#fff' : '#ff6b6b';
+        ctx.strokeText(`×${so}`, b.x + 20, b.y + 18);
+        ctx.fillText(`×${so}`, b.x + 20, b.y + 18);
+        ctx.restore();
+      }
     }
   }
 
