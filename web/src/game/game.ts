@@ -16,7 +16,6 @@ import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, K
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
 // Chế độ điều khiển chọn ở màn bắt đầu: chuột (+ Tab đổi nhân vật) hoặc tay cầm
-export type CheDo = 'chuot' | 'tayCam';
 // hen = gà trắng (đi bộ) · rooster = gà đỏ (đi nhanh, nhảy) · flyer = gà đen (bay, thả trứng)
 // boss = gà tướng (to gấp 5 lần, đủ 3 màu, nhiều máu)
 type LoaiGa = 'hen' | 'rooster' | 'flyer' | 'boss';
@@ -92,7 +91,7 @@ interface Long { id: number; x: number; y: number; vx: number; vy: number; xoay:
 interface Vet { id: number; x: number; y: number; t: number; loai: 'bui' | 'no' | 'chay'; co?: number; vg?: boolean; }
 interface ChuyenBay { x0: number; y0: number; x1: number; y1: number; t: number; T: number; }
 export interface NguoiChoi {
-  ten: string; mau: string; diem: number; combo: number; tamX: number; tamY: number;
+  ten: string; mau: string; diem: number; combo: number;
   hoiChieu: number; chumDen: number; banTrung: number; banTruot: number;
   x: number; y: number; dich: { x: number; y: number } | null; dangDi: boolean;
   hp: number; het: boolean;
@@ -105,7 +104,7 @@ export interface NguoiChoi {
   thuongLuc: number;
   /** Giây còn hồi của chiêu Biến socola (riêng Zinbu), tách khỏi hoiChieu để không khoá Đấm / Đá / chưởng */
   hoiSoc: number;
-  nhin: { x: number; y: number }; nham: { x: number; y: number } | null; ngam: { x: number; y: number } | null; cuaCan: boolean;
+  nhin: { x: number; y: number }; cuaCan: boolean;
   may: { dang: boolean; con: number; hoi: number };
   /** Sức mạnh: hệ số nhân sát thương mọi đòn đánh gà (mặc định 1; ăn gà mẹ socola được cộng thêm) */
   suc: number;
@@ -274,7 +273,7 @@ export interface TrangThaiLuu {
   frieza?: { hp: number; chet: boolean };
   /** Đã có người ra khỏi vườn gà / ở lì vườn gà 5 phút (on: máy bay thôi hồi máu) / Cell đỏ, Frieza, bóng ma Goku đang truy sát (thiếu = ván lưu cũ: coi như đã ra vườn) */
   truyVuon?: { ra: boolean; on: boolean; cell?: boolean; fz?: boolean; gy?: boolean; th?: boolean };
-  nguoi: (Omit<NguoiChoi, 'nv' | 'nham' | 'ngam' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
+  nguoi: (Omit<NguoiChoi, 'nv' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
 }
 
 // Chiều rộng khung nhìn (đơn vị khung) thay đổi theo tỉ lệ cửa sổ để map tràn hai bên; H cố định. Phía trên map có thanh đen cao BAR chứa các chiêu của gà mẹ (toạ độ y âm).
@@ -649,9 +648,6 @@ const SP_CAU: KhungSprite = { atlas: 'assets/game/cau_buu.png', atlasW: 1440, at
 const DUNG_HE_SO = 0.08;
 const RUNG_BIEN = 6;
 const KHOA_KY_LUC = 'chicken-shooting-game.ky-luc';
-// Nhấn Space SPACE_SO_LAN lần liên tiếp (cách nhau tối đa SPACE_CACH giây) thì đổi chế độ chuột <-> tay cầm
-const SPACE_SO_LAN = 5;
-const SPACE_CACH = 1;
 
 const DIEM: Record<LoaiGa, number> = { hen: 10, rooster: 20, flyer: 30, boss: 500 };
 // Cỡ gà so với gà thường (gà tướng gấp 5 lần)
@@ -1201,7 +1197,6 @@ export class Game {
   // Số gà mẹ phụ đã sinh trong ván (quyết định kiểu chuyên và màu của con kế tiếp)
   private demPhu = 0;
   /** Dấu X đỏ đếm ngược của trứng đỏ (cuối mũi tên chỉ hướng); chỉ lấy khi nằm trong khung nhìn */
-  nhamView: { x: number; y: number; mau: string }[] = [];
   private nhinNguon: { x: number; y: number }[] = [];
   // Chỉ những vật trong khung nhìn mới được vẽ (xem CLAUDE.md)
   vetView: Vet[] = [];
@@ -1214,15 +1209,8 @@ export class Game {
   camX = MAP / 2;
   camY = MAP / 2;
   camZ = ZOOM;
-  // Chế độ điều khiển: mặc định tay cầm mỗi lần mở game (không nhớ lại); Space ×5 để đổi
-  cheDo: CheDo = 'tayCam';
-  private demSpace = 0;
-  private spaceLuc = 0;
-  // Chế độ chuột: người chơi mà chuột đang điều khiển (Tab để đổi) và chuột đang nằm trên bảng chiêu thức (không phải trên map)
-  chuot = 0;
   /** Lựa chọn ở màn bắt đầu (nhớ để Chơi lại giữ nguyên) */
   cheNguoi: CheNguoi = 'ca2';
-  trenBang = false;
   // Chỉ có 1 tay cầm thì nó điều khiển nhân vật này (nút View để đổi); có 2 tay cầm thì mỗi tay một nhân vật
   tayCam = 0;
   // Thông tin tay cầm đang kết nối (hiện ở màn bắt đầu) và nút vừa bấm gần nhất (để dò tay cầm lạ)
@@ -1335,18 +1323,12 @@ export class Game {
         el.addEventListener(ten, fn, capture);
         this.goLangNghe.push(() => el.removeEventListener(ten, fn, capture));
       };
-      // Chế độ chuột: chuột phải chạy / bay, chuột trái ra đòn, bấm vào chiêu ở thanh đen để đổi chiêu, Tab đổi chuột sang nhân vật kia
-      nghe(cv, 'pointermove', (e: PointerEvent) => this.diChuot(e));
-      nghe(cv, 'pointerdown', (e: PointerEvent) => {
-        this.khungEl.focus({ preventScroll: true });
-        this.bamChuot(e);
-      });
+      nghe(cv, 'pointerdown', () => this.khungEl.focus({ preventScroll: true }));
       // Luôn chặn menu chuột phải của trình duyệt (kể cả chế độ tay cầm mặc định): hiện menu sẽ cướp focus, mất điều khiển
-      nghe(window, 'pointerup', (e: PointerEvent) => this.thaChuot(e));
       nghe(window, 'contextmenu', (e: Event) => e.preventDefault(), true);
       nghe(window, 'keydown', (e: KeyboardEvent) => this.phimXuong(e), true);
       // Trình duyệt ngừng đọc tay cầm khi tab mất focus: tạm dừng ván để không bị đánh trong lúc không điều khiển được
-      nghe(window, 'blur', () => { if (this.cheDo === 'tayCam' && this.man === 'play') this.tamDung(); });
+      nghe(window, 'blur', () => { if (this.man === 'play') this.tamDung(); });
 
       this.lanCuoi = performance.now();
       this.rafId = requestAnimationFrame(this.vongLap);
@@ -1368,8 +1350,7 @@ export class Game {
   /** Chuột / tay cầm bắt đầu ở nhân vật có mặt đầu tiên */
   private chonNguoiDau(): void {
     const p = this.nguoi.findIndex((n) => !n.vang);
-    this.chuot = p < 0 ? 0 : p;
-    this.tayCam = this.chuot;
+    this.tayCam = p < 0 ? 0 : p;
   }
 
   /** Bắt đầu ván: lựa chọn ở màn bắt đầu (DOI_HINH: 1 người Mabu / Zinbu / Vegeta, hoặc 2 người) */
@@ -1450,16 +1431,8 @@ export class Game {
     this.lanTuong = 0;
     this.demPhu = 0;
     this.kyLucMoi = false;
-    this.trenBang = false;
     this.capNhatView(0, true);
     this.man = 'play';
-  }
-
-  datCheDo(c: CheDo): void {
-    if (this.cheDo === c) return;
-    this.cheDo = c;
-    this.nguoi.forEach((n) => { n.dich = null; n.cuaCan = false; n.ngam = null; });
-    this.trenBang = false;
   }
 
   tamDung(): void {
@@ -1484,8 +1457,8 @@ export class Game {
       frieza: { hp: Math.min(FZ_HP, Math.max(1, this.frieza.hp / fzGap(this.frieza))), chet: this.frieza.chet },
       truyVuon: { ra: this.daRaVuon, on: this.cellTruyVuon, cell: this.cellTruyT, fz: this.fzTruy, gy: this.gyTruy, th: this.trieuHoi },
       nguoi: this.nguoi.map((n, p) => {
-        const { nv, nham, ngam, cuaCan, dich, bay, ...r } = n;
-        void nham; void ngam; void cuaCan; void dich;
+        const { nv, cuaCan, dich, bay, ...r } = n;
+        void cuaCan; void dich;
         // Đang hợp thể: lưu như đã tách ra (máu / mana chia lại theo tỉ lệ còn lại của Super Bư)
         const tach = this.hopThe ? this.chiaHopThe(false)[p]! : null;
         // Đang bay thì coi như đã bay tới nơi
@@ -2077,10 +2050,6 @@ export class Game {
       if (!n.het && n.hp < HP_HOI_TOI_DA && this.tGame - n.thuongLuc >= HP_HOI_CHO) n.hp = Math.min(HP_HOI_TOI_DA, n.hp + HP_HOI * dt);
       if (n.bay) n.mana = Math.max(0, n.mana - MANA_BAY * dt);
       else if (n.mana < MANA_HOI_TOI_DA) n.mana = Math.min(MANA_HOI_TOI_DA, n.mana + MANA_HOI * dt);
-
-      // Tâm ngắm chỉ có ở chế độ chuột (nhân vật không dùng chuột thì tự ngắm); chế độ tay cầm không có tâm, đánh theo hướng đang quay mặt
-      const m = this.diemNham(p);
-      n.nham = this.cheDo !== 'chuot' || this.khuat(n) || p === this.chuot ? null : n.ngam ?? (m.co ? { x: m.x, y: m.y } : null);
 
       // Mê cung bom: đang bốc cháy / sặc trong bong bóng thì đứng yên chờ cứu
       if (n.nv.khoa || this.trongCau(p) || this.mc.nv[p]?.trang) {
@@ -2915,7 +2884,6 @@ export class Game {
       return trong(vt.x, vt.y, 200);
     });
     this.longView = this.long.filter((l) => trong(l.x, l.y, 100));
-    this.nhamView = this.nguoi.flatMap((n) => (n.nham && trong(n.nham.x, n.nham.y, 100) ? [{ x: n.nham.x, y: n.nham.y, mau: n.mau }] : []));
     // Mê cung bom: không có chữ bay trên đầu nhân vật / quái (nhân vật, quái nhỏ so với cả mê cung nên chữ không đọc được)
     this.chuView = this.chu.filter((c) => trong(c.x, c.y, 300) && !this.vungMc(c));
     // Chỉ nhân vật và gà mẹ (gốc + phụ) có thanh máu trên đầu; chỉ lấy khi nằm trong khung nhìn
@@ -6741,129 +6709,17 @@ export class Game {
     }
   }
 
-  // ─── Điều khiển bằng chuột + Tab (chế độ chuột) ───
-
-  // Phép chiếu từ khung nhìn (toạ độ -SIDE.., -BAR..) ra điểm ảnh CSS của canvas; dùng chung cho vẽ và đọc chuột
+  // Phép chiếu từ khung nhìn (toạ độ -SIDE.., -BAR..) ra điểm ảnh CSS của canvas; dùng cho vẽ
   phepChieu(): { s: number; ox: number; oy: number } {
     const s = Math.min(this.cssW / (this.W + 2 * SIDE), this.cssH / (H + BAR));
     return { s, ox: (this.cssW - s * (this.W + 2 * SIDE)) / 2 + SIDE * s, oy: (this.cssH - s * (H + BAR)) / 2 + BAR * s };
   }
 
-  private toaDo(e: MouseEvent): { x: number; y: number } | null {
-    if (!this.cssW || !this.cssH) return null;
-    const kt = this.canvasEl.getBoundingClientRect();
-    const { s, ox, oy } = this.phepChieu();
-    return { x: (e.clientX - kt.left - ox) / s, y: (e.clientY - kt.top - oy) / s };
-  }
-
-  // Chuột có nằm trên vùng không phải map không: thanh đen trên / hai bên, nửa vòng tròn của gà mẹ và của Mabu / Zinbu
-  private tronBang(x: number, y: number): boolean {
-    return y < 0 || x < 0 || x > this.W || hyp(x - this.GIUA, y) <= R_BANG * HE_BANG_TUONG
-      || [0, 1].some((p) => hyp(x - this.tamNv(p).x, y - this.tamNv(p).y) <= R_NV);
-  }
-
-  // Bấm vào nút chiêu thức ở thanh đen thì chọn chiêu đó (chiêu hết mana / đang khoá thì không chọn được)
-  private chonNut(x: number, y: number): void {
-    for (const p of [0, 1]) {
-      const n = this.nutBang(p).find((b) => hyp(b.x - x, b.y - y) <= R_NUT * 0.8 + 6);
-      if (n) {
-        if (this.oMeCung(p)) return;
-        if (this.hetMana(p, n.k)) return;
-        this.nguoi[p].nv.datNhom(n.k, this.t);
-        return;
-      }
-    }
-  }
-
-  private diChuot(e: PointerEvent): void {
-    if (this.cheDo !== 'chuot') return;
-    const pt = this.toaDo(e);
-    if (!pt) return;
-    this.trenBang = this.tronBang(pt.x, pt.y);
-    if (this.trenBang) return;
-    const p = this.chuot;
-    this.nguoi[p].tamX = pt.x;
-    this.nguoi[p].tamY = pt.y;
-    if (this.man !== 'play') return;
-    // Bấm thêm nút khi nút khác đang giữ: trình duyệt chỉ phát pointermove
-    if (e.button === 0 || e.button === 2) this.bamChuot(e);
-    else if (e.buttons & 2) this.datDich(p, pt.x, pt.y);
-  }
-
-  private bamChuot(e: PointerEvent): void {
-    if (this.cheDo !== 'chuot' || this.man !== 'play') return;
-    const pt = this.toaDo(e);
-    if (!pt) return;
-    // Bấm vào bảng chiêu thức: chọn chiêu, không ra đòn / di chuyển
-    if (this.tronBang(pt.x, pt.y)) {
-      if (e.button === 0 && e.buttons & 1) this.chonNut(pt.x, pt.y);
-      return;
-    }
-    const p = this.chuot;
-    const h = this.hopThe;
-    if (e.button === 2 && e.buttons & 2) {
-      // Hợp thể: người bị nhập lái thân Super Bư, người mang thân không tự đi được
-      if (!h || p === h.nhap) this.datDich(h ? h.chu : p, pt.x, pt.y);
-      return;
-    }
-    if (e.button !== 0 || !(e.buttons & 1) || h?.nhap === p) return;
-    // Mê cung bom: giữ chuột trái để nạp (ném xa 1..4 ô), thả ra thì ném về phía chuột; có bom lửa / nước đang chờ thì bấm là kích nổ
-    if (this.oMeCung(p)) { this.mcBam(p); return; }
-    const w = this.manHinhRaThe(pt.x, pt.y);
-    this.ban(p, w.x, w.y);
-  }
-
-  // Chuột phải: chạy tới điểm đó (xa thì bay)
-  private datDich(p: number, x: number, y: number): void {
-    const w = this.manHinhRaThe(x, y);
-    this.datDichThe(p, w.x, w.y);
-  }
-
-  // Chỉ có 1 chuột nên Tab chuyển chuột sang nhân vật kia
-  // Phím 1 / 2 / 3 / 4 chọn chiêu thứ 1 / 2 / 3 / 4 (tính từ dưới lên trên, cùng thứ tự nút trên thanh đen) của nhân vật đang dùng chuột
   private phimXuong(e: KeyboardEvent): void {
-    // Nhấn Space 5 lần liên tiếp (mỗi lần cách nhau < SPACE_CACH giây): chuyển qua lại giữa chế độ chuột và tay cầm, không hỏi
-    if (e.key !== ' ') this.demSpace = 0;
-    else if (!e.repeat) {
-      const now = performance.now();
-      this.demSpace = now - this.spaceLuc <= SPACE_CACH * 1000 ? this.demSpace + 1 : 1;
-      this.spaceLuc = now;
-      if (this.demSpace >= SPACE_SO_LAN) {
-        this.demSpace = 0;
-        e.preventDefault();
-        this.datCheDo(this.cheDo === 'chuot' ? 'tayCam' : 'chuot');
-        this.onManPhu?.();
-        return;
-      }
-    }
     if (this.man === 'over' && (e.key === 'y' || e.key === 'Y') && !e.repeat && !e.ctrlKey && !e.altKey && !e.metaKey) {
       const t = e.target as HTMLElement | null;
       if (!t || (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA')) { this.onDong(); return; }
     }
-    if (this.cheDo !== 'chuot') return;
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!e.repeat) this.doiChuot();
-      return;
-    }
-    if (this.man !== 'play' || e.repeat || e.ctrlKey || e.altKey || e.metaKey || !/^[1-4]$/.test(e.key)) return;
-    const t = e.target as HTMLElement | null;
-    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
-    const n = this.nutBang(this.chuot)[Number(e.key) - 1];
-    if (n && this.oMeCung(this.chuot)) return;
-    if (!n || this.nguoi[this.chuot].het || this.hetMana(this.chuot, n.k)) return;
-    this.nguoi[this.chuot].nv.datNhom(n.k, this.t);
-  }
-
-  private doiChuot(): void {
-    if (this.soNguoi < 2) return;
-    const cu = this.nguoi[this.chuot];
-    this.chuot = 1 - this.chuot;
-    const moi = this.nguoi[this.chuot];
-    moi.tamX = cu.tamX;
-    moi.tamY = cu.tamY;
-    cu.dich = null;
   }
 
   // ─── Điều khiển bằng tay cầm (Gamepad API, bố cục kiểu Xbox; mapping "standard") ───
@@ -6902,7 +6758,7 @@ export class Game {
 
   /** Chữ gợi ý (chỉ trên đầu người còn đứng đầu tiên): đang chờ hồi hợp thể, hoặc đã sẵn sàng (đứng gần nhau) */
   hopTheGoiY(p: number): string | null {
-    if (this.hopThe || this.cheDo !== 'tayCam') return null;
+    if (this.hopThe) return null;
     const [a, b] = this.nguoi;
     if (!a || !b || a.ki + b.ki !== 1 || a.ki === b.ki || a.vang || b.vang) return null;
     if (p !== this.nguoi.findIndex((n) => !n.het)) return null;
@@ -7043,10 +6899,8 @@ export class Game {
       if (i >= 0) this.tayCamNut = `nút ${i}`;
     }
 
-    // Chế độ chuột: không đọc điều khiển từ tay cầm (chỉ giữ tên tay cầm để hiện ở màn bắt đầu)
-    const dungTayCam = this.cheDo === 'tayCam';
     // Nút chung cho cả hai tay cầm: bắt đầu / chơi lại / tạm dừng
-    for (const g of dungTayCam ? ds : []) {
+    for (const g of ds) {
       if (this.man === 'start' || this.man === 'over') {
         if (this.man === 'start') {
           // Chọn thẻ (trái / phải) chỉ tay cầm 1 (người chơi 1); X / A / B xác nhận thì tay cầm nào cũng được (kể cả màn hướng dẫn)
@@ -7082,34 +6936,30 @@ export class Game {
 
     // Tay cầm nào điều khiển nhân vật nào: giữ cố định theo chỉ số tay cầm, tay cầm 1 rút ra thì tay cầm 2 vẫn là Zinbu
     const gan: (Gamepad | undefined)[] = [undefined, undefined];
-    if (dungTayCam) {
-      const coMat = (i: number) => ds.find((g) => g.index === i);
-      if (ds.length >= 2 && this.soNguoi === 2) {
-        for (const p of [0, 1]) {
-          if (!coMat(this.tayCamGan[p]) || this.tayCamGan[p] === this.tayCamGan[1 - p] && p === 1) this.tayCamGan[p] = -1;
-        }
-        for (const p of [0, 1]) {
-          if (this.tayCamGan[p] < 0) this.tayCamGan[p] = ds.find((g) => g.index !== this.tayCamGan[1 - p])?.index ?? -1;
-          gan[p] = coMat(this.tayCamGan[p]);
-        }
-      } else if (ds.length) {
-        const dau = coMat(this.tayCamGan[this.tayCam]) ?? ds[0];
-        this.tayCamGan = [-1, -1];
-        this.tayCamGan[this.tayCam] = dau.index;
-        gan[this.tayCam] = dau;
+    const coMat = (i: number) => ds.find((g) => g.index === i);
+    if (ds.length >= 2 && this.soNguoi === 2) {
+      for (const p of [0, 1]) {
+        if (!coMat(this.tayCamGan[p]) || this.tayCamGan[p] === this.tayCamGan[1 - p] && p === 1) this.tayCamGan[p] = -1;
       }
-      // Đang chơi mà tay cầm đã gán bị rút / mất kết nối thì tạm dừng (không để nhân vật đứng giữa trận)
-      if (this.man === 'play' && this.dangGan.some((i, p) => i >= 0 && !gan[p] && !this.nguoi[p].vang && !ds.some((g) => g.index === i))) this.tamDung();
+      for (const p of [0, 1]) {
+        if (this.tayCamGan[p] < 0) this.tayCamGan[p] = ds.find((g) => g.index !== this.tayCamGan[1 - p])?.index ?? -1;
+        gan[p] = coMat(this.tayCamGan[p]);
+      }
+    } else if (ds.length) {
+      const dau = coMat(this.tayCamGan[this.tayCam]) ?? ds[0];
+      this.tayCamGan = [-1, -1];
+      this.tayCamGan[this.tayCam] = dau.index;
+      gan[this.tayCam] = dau;
     }
+    // Đang chơi mà tay cầm đã gán bị rút / mất kết nối thì tạm dừng (không để nhân vật đứng giữa trận)
+    if (this.man === 'play' && this.dangGan.some((i, p) => i >= 0 && !gan[p] && !this.nguoi[p].vang && !ds.some((g) => g.index === i))) this.tamDung();
     this.dangGan = gan.map((g) => g?.index ?? -1);
     for (const p of [0, 1]) {
       const n = this.nguoi[p];
       const g = gan[p];
       if (this.man !== 'play' || !g) {
-        // Chế độ chuột: dịch chuyển do chuột đặt (n.dich), không xoá ở đây
-        if (dungTayCam && n.cuaCan) n.dich = null;
+        if (n.cuaCan) n.dich = null;
         n.cuaCan = false;
-        n.ngam = null;
         continue;
       }
       // Nút đánh vừa bấm (A / B / X / Y): hai người cùng bấm một nút khi đứng gần nhau thì hợp thể Super Bư (thuHopThe)
@@ -7128,7 +6978,7 @@ export class Game {
       const nhom = duoc(g, 1) || phai.m > 0 || duoc(g, 11) ? NHOM_MAY : duoc(g, 3) ? 2 : duoc(g, 2) ? 1 : duoc(g, 0) ? 0 : -1;
       if (nhom >= 0) this.dungChieu(p, nhom);
     }
-    if (this.man === 'play' && dungTayCam) this.thuHopThe();
+    if (this.man === 'play') this.thuHopThe();
     // Lưu trạng thái nút ở khung này để lần sau biết nút nào mới bấm
     const luu = new Map<number, boolean[]>();
     for (const g of ds) luu.set(g.index, g.buttons.map((b, i) => b.pressed || (i === 6 || i === 7) && b.value > 0.5));
@@ -7165,7 +7015,6 @@ export class Game {
     // Hướng nhìn theo hướng đang bay / chạy; không có điều khiển nào thì giữ nguyên
     const huong = bay.m > 0 ? bay : chay;
     if (huong.m > 0) n.nhin = { x: huong.x / huong.m, y: huong.y / huong.m };
-    n.ngam = null;
 
     if (bay.m > 0) {
       // Gạt cần trái: bay một đoạn theo hướng gạt; đang khoá bay hoặc hết mana thì chỉ chạy
@@ -7190,7 +7039,7 @@ export class Game {
 
   /** Rung tay cầm của nhân vật p (bị đánh / gục); bỏ qua nếu tay cầm không hỗ trợ, không đè nhau */
   private rungTayCam(p: number, ms: number, manh: number): void {
-    if (this.cheDo !== 'tayCam' || p < 0 || this.t < this.rungLan[p]) return;
+    if (p < 0 || this.t < this.rungLan[p]) return;
     const g = this.dangGan[p] >= 0 ? navigator.getGamepads?.()[this.dangGan[p]] : null;
     const rungDc = (g as any)?.vibrationActuator;
     if (!rungDc?.playEffect) return;
@@ -7317,35 +7166,6 @@ export class Game {
 
   private gocView() {
     return { x: this.W / 2 - this.camX * this.camZ, y: TAM_VIEW_Y - this.camY * this.camZ };
-  }
-
-  private manHinhRaThe(x: number, y: number) {
-    const o = this.gocView();
-    return { x: (x - o.x) / this.camZ, y: (y - o.y) / this.camZ };
-  }
-
-  // Tự ngắm vào con gà gần nhất trong tầm; không có thì đánh theo hướng đang nhìn
-  private diemNham(p: number): { x: number; y: number; co: boolean } {
-    const n = this.nguoi[p];
-    const tam = n.nv.nhom === NHOM_MAY && !n.nv.sp.nhomDon[NHOM_MAY]?.may ? TAM_SOCOLA : n.nv.nhom === 2 ? 800 : n.nv.nhom === 1 ? 480 : 380;
-    let tot: Ga | null = null;
-    let dm = tam;
-    for (const g of this.ga) {
-      // Gà đang cập nhật thưa (ở xa) hoặc nằm ngoài hộp tầm ngắm (cộng lề thân gà to) thì bỏ qua, khỏi tính tâm gà
-      if (g.chet || g.dtThua || Math.abs(g.x - n.x) > dm + 700 || Math.abs(g.y - n.y) > dm + 700) continue;
-      const t = this.tamGa(g);
-      // Gà tướng rất to: tính khoảng cách tới mép thân chứ không phải tới tâm
-      const d = hyp(t.x - n.x, t.y - n.y) - (g.loai === 'boss' ? 125 : 0);
-      if (d < dm) {
-        dm = d;
-        tot = g;
-      }
-    }
-    if (tot) {
-      const t = this.tamGa(tot);
-      return { x: t.x, y: t.y, co: true };
-    }
-    return { x: n.x + n.nhin.x * 300, y: n.y + n.nhin.y * 300 - 60, co: false };
   }
 
   // ─── Hỗ trợ vẽ ───
@@ -7763,16 +7583,6 @@ export class Game {
     }
   }
 
-  /** Chế độ chuột: thả chuột trái thì ném bom đang nạp về phía chuột */
-  private thaChuot(e: PointerEvent): void {
-    if (this.cheDo !== 'chuot' || this.man !== 'play' || e.button !== 0) return;
-    const p = this.chuot;
-    const n = this.nguoi[p]!;
-    if (!this.mc.nv[p]?.nap) return;
-    const w = this.manHinhRaThe(n.tamX, n.tamY);
-    this.mcNem(p, w.x - n.x, w.y - n.y);
-  }
-
   /** Ném bom đang nạp theo hướng (dx, dy) (làm tròn về 4 hướng): bay xa đúng số mức nạp, dừng trước gạch / hang / bom khác;
    *  bom bay qua và đáp được lên thùng gỗ / ô bí ẩn (nổ là phá luôn thùng đó), nhưng không bao giờ nằm trên gạch / hang */
   private mcNem(p: number, dx: number, dy: number): void {
@@ -8116,8 +7926,7 @@ export class Game {
         const sk = mc.nv[k]!;
         if (k === p || m.vang || m.het || sk.trang || hyp(m.x - n.x, m.y - n.y) >= CUU_MC_BK) return false;
         if ((kieu === 'chay' ? sk.xo : sk.kim) <= 0) return false;
-        // Tay cầm: phải bấm B (đổ nước) / Y (chọc kim) mới cứu; chuột thì tự cứu như cũ
-        if (this.cheDo !== 'tayCam') return true;
+        // Phải bấm B (đổ nước) / Y (chọc kim) mới cứu
         const c = mc.nv[k]!.cuuNut;
         return !!c && this.t - c.t <= 0.3 && c.loai === (kieu === 'chay' ? 'xo' : 'kim');
       });
@@ -8504,10 +8313,10 @@ export class Game {
       return {
         vang, ki,
         ten: NHAN_VAT[ki]!.ten, mau: MAU_NV[ki]!,
-        hp: vang ? 0 : HP_KHOI_DAU, het: vang, diem: 0, combo: 0, tamX: W_MAC_DINH / 2, tamY: 300, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
+        hp: vang ? 0 : HP_KHOI_DAU, het: vang, diem: 0, combo: 0, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
         x: MAP / 2 + (mot ? 0 : p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
         nv: this.taoNhanVat(p, ki), bay: null, mana: MANA_BAN_DAU, bayKhoa: 0, thuongLuc: -999, hoiSoc: 0,
-        nhin: { x: p === 0 ? 1 : -1, y: 0 }, nham: null, ngam: null, cuaCan: false, may: { dang: false, con: 0, hoi: 0 }, suc: 1, satDau: 0,
+        nhin: { x: p === 0 ? 1 : -1, y: 0 }, cuaCan: false, may: { dang: false, con: 0, hoi: 0 }, suc: 1, satDau: 0,
       };
     });
   }

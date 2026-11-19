@@ -25,9 +25,9 @@ const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 
 // Path2D tạo lười để không lỗi khi chạy ở máy chủ (không có Path2D)
 interface DuongVe {
-  tim: Path2D; timSang: Path2D; huong: Path2D; long: Path2D; ngam: Path2D; muiTen: Path2D;
+  tim: Path2D; timSang: Path2D; huong: Path2D; long: Path2D; muiTen: Path2D;
   nutDa: Path2D; nutDaVach: Path2D; nutChuong: Path2D; nutChuongKhoi: Path2D;
-  chuot: Path2D; tuMo: Path2D; tuLao: Path2D; tuBay: Path2D; tuMoVach: Path2D; tuDo: Path2D;
+  tuMo: Path2D; tuLao: Path2D; tuBay: Path2D; tuMoVach: Path2D; tuDo: Path2D;
 }
 let duongCache: DuongVe | null = null;
 const duong = (): DuongVe =>
@@ -36,14 +36,12 @@ const duong = (): DuongVe =>
     timSang: new Path2D('M-12,-17 q4,-5 9,-3'),
     huong: new Path2D('M-12,-11 L4,0 L-12,11'),
     long: new Path2D('M0,-9 Q6,0 0,9 Q-6,0 0,-9 Z'),
-    ngam: new Path2D('M-62,0 h24 M38,0 h24 M0,-62 v24 M0,38 v24'),
     muiTen: new Path2D('M-22,-18 L26,0 L-22,18 L-12,0 Z'),
     // Biểu tượng nút chiêu của Mabu / Zinbu
     nutDa: new Path2D('M-7,-11 h8 v9 l9,4 a2,2 0 0 1 1,2.5 v3.5 h-18 z'),
     nutDaVach: new Path2D('M-7,6 h18'),
     nutChuong: new Path2D('M-1,-6 L-12,0 L-1,6 Z'),
     nutChuongKhoi: new Path2D('M-12,-8 h7 M-14,0 h5 M-12,8 h7'),
-    chuot: new Path2D('M-28,0 h14 M14,0 h14 M0,-28 v14 M0,14 v14'),
     // Biểu tượng nút chiêu của gà mẹ
     tuMo: new Path2D('M-9,-6 L9,0 L-9,6 Z'),
     tuMoVach: new Path2D('M-9,8 h18'),
@@ -1167,21 +1165,6 @@ export class VeCanvas {
     ctx.globalAlpha = 1;
     ctx.textAlign = 'start';
     ctx.lineJoin = 'miter';
-
-    // Tâm ngắm
-    if (c.man === 'play') {
-      for (const m of c.nhamView) {
-        ctx.save();
-        ctx.translate(m.x, m.y);
-        duongTron(ctx, 7);
-        ctx.fillStyle = m.mau;
-        ctx.fill();
-        ctx.strokeStyle = m.mau;
-        ctx.lineWidth = 7;
-        ctx.stroke(P.ngam);
-        ctx.restore();
-      }
-    }
   }
 
   // Cháy nổ: quầng lửa (trắng vàng → cam → đỏ sẫm) nở ra, tia lửa bắn toả ra và khói đen mờ dần. Gốc toạ độ đã ở tâm vụ nổ; k = 0..1 tiến độ
@@ -3093,20 +3076,6 @@ export class VeCanvas {
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 4;
       ctx.stroke(P.muiTen);
-      ctx.restore();
-    }
-    // Chế độ chuột: tâm ngắm theo chuột của nhân vật đang được điều khiển (ẩn khi chuột nằm trên bảng chiêu thức)
-    if (c.cheDo === 'chuot' && !c.trenBang) {
-      const n = c.nguoi[c.chuot];
-      ctx.save();
-      ctx.translate(n.tamX, n.tamY);
-      duongTron(ctx, 3);
-      ctx.fillStyle = n.mau;
-      ctx.fill();
-      ctx.strokeStyle = n.mau;
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      ctx.stroke(P.chuot);
       ctx.restore();
     }
     ctx.font = `600 22px ${FONT}`;

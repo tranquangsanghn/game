@@ -57,10 +57,9 @@
 
 # Nguyên tắc điều khiển
 
-- Màn bắt đầu cho chọn chế độ chơi (`cheDo`: `'chuot'` hoặc `'tayCam'`, `datCheDo()`; mặc định luôn là tay cầm mỗi lần mở game, không nhớ lại, màn hướng dẫn không có nút chọn chế độ; nhấn **Space 5 lần liên tiếp** (mỗi lần cách nhau ≤ `SPACE_CACH` = 1s, `SPACE_SO_LAN` = 5, trong `phimXuong()`) ở bất kỳ màn nào thì chuyển sang chế độ chuột không hỏi, nhấn lại 5 lần thì về tay cầm). Chỉ chế độ đang chọn nhận điều khiển; chế độ kia bị bỏ qua hoàn toàn (kể cả nút bắt đầu / tạm dừng của tay cầm). Màn bắt đầu và README hướng dẫn cả hai chế độ.
+- **Chỉ còn điều khiển bằng tay cầm** (đã xoá hẳn chế độ chuột / Tab / phím 1–4 / Space ×5 và màn hướng dẫn tay cầm; sau khi chọn thẻ nhân vật là sang thẳng màn mục tiêu).
 - Chế độ tay cầm (Gamepad API, mapping "standard" kiểu Xbox, `docTayCam()` đọc mỗi khung hình; game cho trẻ em nên chỉ dùng nút đơn giản): tay cầm 1 → Mabu, tay cầm 2 → Zinbu. Chữ thập chạy · cần trái bay (gạt mạnh `VUNG_BAY_CAN`, bay một đoạn `BAY_CAN`; hết mana / đang khoá thì chạy) · A đấm · X đá · Y chưởng (chiêu đặc biệt) · B hoặc đẩy cần phải (hay nhấn R3) dùng chiêu riêng (Mabu biến mây, Zinbu biến socola) · `dungChieu()` chọn nhóm đòn và ra đòn cùng lúc, đánh theo hướng đang quay mặt (`diemHuong()`, không có tâm), không còn L1 / R1 / L2 / R2 / ngắm bằng cần phải. Menu bắt đầu / tạm dừng; ở màn tạm dừng chữ thập / cần trái lên-xuống chọn nút (Tiếp tục / Lưu game, `menuTamDung`, viền vàng `nut-dang-chon`), A bấm nút đang chọn (`onNutTamDung`), Menu / B tiếp tục chơi; View đổi nhân vật khi chỉ có 1 tay cầm (`doiTayCam()`). Mặc định là chế độ tay cầm. Tay cầm không phải mapping "standard" dùng tạm chỉ số nút / cần như standard (cần phải lấy trục 2 và 5 nếu có ≥ 6 trục); màn bắt đầu hiện nút vừa bấm để dò. Ảnh hướng dẫn: `web/public/assets/game/huong-dan-tay-cam.svg`, hiện ở màn hướng dẫn sau khi chọn nhân vật (`htmlHuongDan()`); đổi nút thì sửa cả ảnh này. Sau màn hướng dẫn (bấm Tiếp / A) còn một màn mục tiêu (`htmlMucTieu()`, `buocMucTieu`) có ảnh 7 viên ngọc rồng (`anhNgocRong()`, từ `ngoc_rong.png`) phía trên dòng "Hãy khám phá thế giới và thu thập đủ 7 viên ngọc rồng để thắng game" và nút Vào chơi (A); không còn chọn bản đồ; bấm Vào chơi mới bắt đầu ván.
-- Chế độ chuột (chỉ có 1 chuột nên điều khiển 1 nhân vật tại một thời điểm, `chuot`): chuột phải chạy tới điểm bấm (xa thì bay, `datDich()`), chuột trái ra đòn tại điểm chuột (`bamChuot()`), bấm vào nút chiêu ở thanh đen để đổi chiêu, **Tab** chuyển chuột sang nhân vật kia (`doiChuot()`), menu chuột phải của trình duyệt bị chặn. Tâm ngắm vẽ theo chuột (`tamX` / `tamY`), ẩn khi chuột nằm trên bảng chiêu thức (`trenBang`); nhân vật đang dùng chuột không có tâm tự ngắm. Toạ độ chuột đổi qua `phepChieu()` (dùng chung với vẽ canvas).
-- Thêm điều khiển mới thì gắn vào đúng chế độ của nó; không thêm phím tắt ngoài Tab, phím 1 / 2 / 3 / 4 và Space ×5 (đổi chế độ) (chọn chiêu thứ n từ dưới lên của nhân vật đang dùng chuột, `phimXuong()`; Mây đang chạy / hồi thì không chọn được). Chuột chỉ để bấm nút trên các màn bắt đầu / tạm dừng / kết thúc ở chế độ tay cầm.
+- Không thêm phím tắt bàn phím mới (ngoại lệ duy nhất: phím Y thoát game ở màn kết thúc).
 
 # Nguyên tắc giữ nguyên bố cục khi đổi map / màn
 
@@ -119,7 +118,7 @@
 
 # Nguyên tắc tâm tự ngắm
 
-- Tâm ngắm (`nham`, vẽ qua `nhamView` đã lọc theo khung nhìn) **chỉ có ở chế độ chuột** (chuột có tâm dấu chấm + dấu cộng theo `tamX` / `tamY`; nhân vật kia không dùng chuột thì tự ngắm gà trong tầm). **Chế độ tay cầm không có tâm nào**: đánh theo hướng đang quay mặt (`nhin`, `diemHuong()`): có gà trong tầm và trong góc ~45° phía trước thì đòn trúng con gần nhất đó, không thì đánh thẳng về phía trước. Chưa ngã, không là mây.
+- **Không có tâm ngắm** (đã xoá chế độ chuột): đánh theo hướng đang quay mặt (`nhin`, `diemHuong()`): có gà trong tầm và trong góc ~45° phía trước thì đòn trúng con gần nhất đó, không thì đánh thẳng về phía trước.
 
 # Nguyên tắc sương mù & gà lao vào
 
