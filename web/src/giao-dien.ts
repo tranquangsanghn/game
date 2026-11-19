@@ -1,6 +1,6 @@
 import { DOI_HINH, Game, THE_CHON, type CheNguoi } from './game/game';
 import { NHAN_VAT } from './game/nhan-vat-du-lieu';
-import { BanLuu, DiemCao, bangDiem, guiDiem, layLuu, luuGame, nhoTen, tenDaNho, xoaLuu } from './luu-tru';
+import { BanLuu, bangDiem, guiDiem, layLuu, luuGame, nhoTen, tenDaNho, xoaLuu } from './luu-tru';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const phut = (g: number) => `${Math.floor(g / 60)}:${String(Math.floor(g % 60)).padStart(2, '0')}`;
@@ -30,7 +30,6 @@ export class GiaoDien {
   private ten = tenDaNho();
   private luu: BanLuu | null = null;
   private thongBao = { text: '', loi: false };
-  private bang: DiemCao[] | null = null;
   private dangLuu = false;
 
   constructor(goc: HTMLElement) {
@@ -175,11 +174,9 @@ export class GiaoDien {
 
   private async ketThuc(kq: Parameters<Game['onKetThuc']>[0]): Promise<void> {
     // Ván xong thì bỏ ván lưu (không còn gì để chơi tiếp), ghi điểm và lấy bảng xếp hạng
-    this.bang = null;
     xoaLuu(this.ten);
     this.luu = null;
     guiDiem({ nguoiChoi: this.ten, ...kq });
-    this.bang = bangDiem(5);
     this.veManPhu(true);
   }
 
@@ -288,30 +285,14 @@ export class GiaoDien {
     const g = this.game;
     const diemHai = [0, 1].filter((i) => !g.nguoi[i].vang).map((i) => {
       const n = g.nguoi[i];
-      return `<div class="the ${i === 0 ? 'teo' : 'ty'} ${g.nguoiThang === i ? 'thang' : ''}">
-        <h3>${g.nguoiThang === i ? '👑 ' : ''}${esc(n.ten)}</h3><div class="so-lon">${n.diem}</div>
-        <p class="phu">Trúng ${n.banTrung} · Trượt ${n.banTruot} · Chính xác ${g.doChinhXac(i)}%</p></div>`;
+      return `<div class="the ${i === 0 ? 'teo' : 'ty'} ${g.nguoiThang === i ? 'thang' : ''}" style="display:flex;justify-content:center;align-items:center;padding:16px">${this.anhNv(n.ki, 3.2)}</div>`;
     }).join('');
-    const mvp = g.soNguoi < 2
-      ? ''
-      : g.nguoiThang === -1
-      ? 'Hai nhân vật bằng điểm nhau 🤝'
-      : `👑 ${esc(g.nguoi[g.nguoiThang].ten)} ghi nhiều điểm nhất`;
-    const kl = g.nguoiThangTran
-      ? `🏆 <b>${g.nguoi.filter((n) => !n.vang).map((n) => esc(n.ten)).join(' và ')} thắng!</b> ${g.thangSongSot ? 'Trụ vững trên thần điện tới phút 25 trước Cell đỏ, Frieza và bóng ma Goku.' : 'Đã hạ đủ 4 trùm: Cell đỏ, Frieza, bóng ma Goku và vua gà.'}${mvp ? '<br>' + mvp : ''}`
-      : `🐔 <b>Quái vật thắng!</b> ${g.soNguoi < 2 ? 'Nhân vật đã gục.' : 'Cả hai nhân vật đã gục.'}${mvp ? '<br>' + mvp : ''}`;
-    const top = this.bang && this.bang.length
-      ? `<table class="xep-hang"><caption class="phu">Bảng điểm cao nhất</caption>${this.bang.map((d, i) => `<tr><td>${i + 1}.</td><td>${esc(d.nguoiChoi)}</td><td><b>${d.diem}</b></td><td class="phu">${phut(d.thoiGian)}</td></tr>`).join('')}</table>`
-      : '';
     return `<div class="man-phu"><div class="hop">
       <h1>${g.nguoiThangTran ? 'Chiến thắng! 🏆' : 'Quái vật thắng! 💥'}</h1>
       <div class="hai-cot">${diemHai}</div>
-      <p class="ket-luan">${kl}</p>
-      <p>Điểm đội: <b>${g.tongDiem}</b> · Kỷ lục: <b>${g.kyLuc}</b>${g.kyLucMoi ? '<span class="ky-luc-moi">Kỷ lục mới!</span>' : ''}</p>
-      ${top}
       <div class="nhom-nut">
         <button type="button" tabindex="-1" class="nut-chinh" data-act="moi">${g.cheDo === 'tayCam' ? (g.choiLaiChoB ? 'Chơi lại: bấm B' : 'Chơi lại: bấm X rồi B') : 'Chơi lại'}</button>
-        <button type="button" tabindex="-1" class="nut-phu" data-act="dong">Đóng</button>
+        <button type="button" tabindex="-1" class="nut-phu" data-act="dong">Thoát game (nhấn O)</button>
       </div>
     </div></div>`;
   }

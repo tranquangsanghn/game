@@ -6836,6 +6836,10 @@ export class Game {
         return;
       }
     }
+    if (this.man === 'over' && (e.key === 'o' || e.key === 'O') && !e.repeat && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      const t = e.target as HTMLElement | null;
+      if (!t || (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA')) { this.onDong(); return; }
+    }
     if (this.cheDo !== 'chuot') return;
     if (e.key === 'Tab') {
       e.preventDefault();
