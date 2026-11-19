@@ -65,14 +65,13 @@ export const FZ_HOI = 0.9;
 export const FZ_CHUONG_HOI = 2;
 export const FZ_HOI_MAU = 15;
 /** Ra khỏi thần điện mà máu dưới FZ_HOI_DUOI (tỉ lệ máu tối đa) thì Frieza bỏ đánh đi kiếm táo / đậu thần ăn, tới khi máu đạt FZ_HOI_TREN (150% máu tối đa) thì quay lại đánh.
- *  Mỗi lần ăn hồi một phần máu tối đa: đậu thần FZ_AN_DAU, táo FZ_AN_TAO (không giới hạn). Không có táo / đậu thì bay tới bắn đổ cây (mỗi FZ_CAY_HOI giây một cây) */
+ *  Mỗi lần ăn hồi một phần máu tối đa: đậu thần FZ_AN_DAU, táo FZ_AN_TAO (không giới hạn). Như Cell đỏ: không có táo / đậu thì bay tới cây, vận chưởng bắn đổ cây cho rơi đậu, nhân vật lại gần thì dịch chuyển sang cây khác */
 export const FZ_HOI_DUOI = 0.2;
 export const FZ_HOI_TREN = 1.5;
 export const FZ_AN_DAU = 0.2;
 export const FZ_AN_TAO = 0.1;
 export const FZ_AN_BK = 130;
 export const FZ_CAY_TAM = 450;
-export const FZ_CAY_HOI = 1.5;
 /** Giáp: Super Bư đánh chỉ lọt (1 − FZ_GIAP) */
 export const FZ_GIAP = 0.75;
 /** Tầm đấm (chạm thân), chưởng: xa hơn FZ_CHUONG_XA mới bắn, tầm FZ_CHUONG_TAM, vận FZ_CHUONG_NAP giây (đứng yên, báo hiệu) */
@@ -130,6 +129,8 @@ export interface Frieza {
   bay?: boolean;
   /** Đang đi ăn táo / đậu thần hồi máu (không lưu ván) */
   hoi?: boolean;
+  /** Đang đi ăn: cây đang nhắm (chỉ số `trangTri`), giờ được dịch chuyển lần kế (`t` của Game) */
+  cayI?: number; choDich?: number;
   /** Mây của Mabu chạm lần kế tiếp sau thời điểm này */
   chamMay?: number;
 }

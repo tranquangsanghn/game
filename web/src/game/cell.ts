@@ -66,10 +66,10 @@ export const CELL_AN_DICH_HOI = 3;
 /**
  * Cell đỏ (cấp 4) hồi máu một lần mỗi ván (`Cell.hoi`): máu dưới `CELL_HOI_DUOI` (20%) máu tối đa thì bỏ đánh, dịch chuyển tức thời tới cây khô
  * xa nhân vật nhất (trên đảo của nó; đang truy sát thì cây trên mọi đảo) để bắn đổ ăn đậu thần; gặp nhân vật lại dịch chuyển tới cây khác.
- * Máu trên `CELL_HOI_TREN` (60%) thì tiếp tục đánh Mabu / Zinbu; không bao giờ dùng lại. Dịch chuyển hồi `CELL_HOI_DICH` giây.
+ * Máu trên `CELL_HOI_TREN` (150%) thì tiếp tục đánh Mabu / Zinbu; không bao giờ dùng lại. Dịch chuyển hồi `CELL_HOI_DICH` giây.
  */
 export const CELL_HOI_DUOI = 0.2;
-export const CELL_HOI_TREN = 0.6;
+export const CELL_HOI_TREN = 1.5;
 export const CELL_HOI_DICH = 3;
 /** Cell đỏ tung chưởng (hào quang → phóng, chùm bay) nhanh hơn 30% */
 export const CELL_DO_NHANH = 1.3;
