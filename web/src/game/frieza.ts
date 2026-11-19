@@ -49,11 +49,10 @@ export const FZ_FPS_DUNG = 1.5;
 
 /**
  * Chỉ số chiến đấu của Frieza (dạng thường; dạng vàng nhân FZ_VANG_GAP qua `fzGap()`).
- * Mabu / Zinbu chưa hợp thể đánh Frieza không mất máu (Game `trungFz()`), chỉ Super Bư (hợp thể, chỉ làm được trên thần điện) mới gây sát thương,
- * còn giáp FZ_GIAP. Máu / mana mang vào thần điện giữ nguyên (không đặt lại), trung bình mỗi người ~3000 máu ⇒ Super Bư ~18000 máu (3 × tổng).
+ * Mabu / Zinbu (kể cả chưa hợp thể) và Super Bư đánh Frieza đều mất máu (Game `trungFz()`), qua giáp FZ_GIAP. Máu / mana mang vào thần điện giữ nguyên (không đặt lại), trung bình mỗi người ~3000 máu ⇒ Super Bư ~18000 máu (3 × tổng).
  * Đấm 450 (Super Bư ×4,5) mỗi 0,4s qua giáp 75% ≈ 280 sát thương / giây: dạng thường 7000 máu mất ~27s đánh liên tục (trừ hồi 15 / s);
  * dạng vàng (30s): máu / phòng thủ / hồi máu ×2,5 (đấm ~112 / s trừ hồi 37,5 / s vẫn thủng chậm, chưởng / Bóng ma nhanh hơn), nhưng sát thương chỉ ×1,5 và tốc độ ×1,3 để Super Bư còn trụ / né được.
- * Frieza đánh Mabu / Zinbu thường: Đấm 600 (nhận 300), chưởng 1800 (nhận 900) ⇒ chưa hợp thể thì chịu được vài đòn, nhưng đánh Frieza không mất máu nên bắt buộc hợp thể.
+ * Frieza đánh Mabu / Zinbu thường: Đấm 600 (nhận 300), chưởng 1800 (nhận 900) ⇒ chưa hợp thể thì chịu được vài đòn, đánh vẫn mất máu nhưng chậm, hợp thể Super Bư thì mạnh hơn nhiều.
  */
 export const FZ_HP = 7000;
 export const FZ_SAT = 600;
@@ -122,8 +121,8 @@ export interface Frieza {
   nap?: { t: number; x: number; y: number };
   /** Đang đánh nhau (rời đường đi); hết trận thì đi về điểm gần nhất trên chuỗi rồi đi tuần tiếp */
   chien: boolean;
-  /** Trúng đòn nháy sáng (giây), lần cuối hiện chữ "không xước" */
-  nhay: number; chuMien: number;
+  /** Trúng đòn nháy sáng (giây) */
+  nhay: number;
   chet: boolean; tChet: number;
   /** Đang bay lơ lửng (truy sát ngoài thần điện, Game đặt mỗi khung) */
   bay?: boolean;
@@ -141,7 +140,7 @@ export type SuKienFz = 'batDau' | 'aura' | 'phong' | 'xong' | 'het' | null;
 export function taoFrieza(): Frieza {
   const i = 4;
   const p = FZ_DUONG[i]!;
-  return { x: p.x, y: p.y, lat: false, i, dich: i, nghi: 2, t: 0, hp: FZ_HP, bien: -1, vang: 0, hoiVang: 0, danh: 0, choDanh: 0, choChuong: 1, chien: false, nhay: 0, chuMien: -99, chet: false, tChet: 0 };
+  return { x: p.x, y: p.y, lat: false, i, dich: i, nghi: 2, t: 0, hp: FZ_HP, bien: -1, vang: 0, hoiVang: 0, danh: 0, choDanh: 0, choChuong: 1, chien: false, nhay: 0, chet: false, tChet: 0 };
 }
 
 /** Khung biến hình ứng với số giây đã chạy */

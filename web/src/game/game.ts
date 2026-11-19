@@ -4287,21 +4287,14 @@ export class Game {
   }
 
   /**
-   * Đòn của p trúng Frieza. Chưa hợp thể (không phải người mang thân Super Bư) thì không xước (chữ nhắc hợp thể); Super Bư thì mất máu,
-   * qua giáp FZ_GIAP, dạng vàng phòng thủ gấp đôi (nhận ÷2). Trả true nếu mất máu.
+   * Đòn của p trúng Frieza: Mabu / Zinbu (kể cả chưa hợp thể) và Super Bư đều làm mất máu,
+   * qua giáp FZ_GIAP, dạng vàng phòng thủ gấp FZ_VANG_GAP (`fzGap()`). Trả true nếu mất máu.
    */
   private trungFz(p: number, sat: number): boolean {
     const f = this.frieza;
     if (f.chet) return false;
     const n = this.nguoi[p];
     const t = this.tamFz();
-    if (this.hopThe?.chu !== p) {
-      if (this.t - f.chuMien > 0.7) {
-        f.chuMien = this.t;
-        this.chuGa({ id: this.id++, x: t.x, y: t.y - 140, text: '🛡 KHÔNG XƯỚC! HỢP THỂ SUPER BƯ MỚI ĐÁNH ĐƯỢC', mau: '#d9b3ff', t: 0 });
-      }
-      return false;
-    }
     const mat = Math.max(1, Math.round(((sat * (n?.suc ?? 1) + (n?.satDau ?? 0)) * (1 - FZ_GIAP)) / fzGap(f)));
     f.hp -= mat;
     f.nhay = 0.15;

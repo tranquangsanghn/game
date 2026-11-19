@@ -2926,7 +2926,7 @@ export class VeCanvas {
     let so: number | string | null = null;
     if (c.trenThan) {
       ten = fzVang(c.frieza) ? FZ_TEN_VANG : FZ_TEN; mo = c.frieza.chet;
-      if (!c.frieza.chet) so = c.frieza.vang > 0 ? `✨ ${Math.ceil(c.frieza.vang)}s / ${FZ_VANG_T}s` : c.hopThe ? '⚔ Super Bư đánh được!' : '🛡 Hợp thể Super Bư mới đánh được';
+      if (!c.frieza.chet) so = c.frieza.vang > 0 ? `✨ ${Math.ceil(c.frieza.vang)}s / ${FZ_VANG_T}s` : c.hopThe ? '⚔ Super Bư mạnh gấp bội!' : '⚔ Hợp thể Super Bư đánh mạnh hơn';
     }
     else if (c.trenNui) {
       ten = GY_TEN; mo = c.ginyu.chet && !c.ginyu.choHoi;
