@@ -243,7 +243,7 @@ kbd {
 
 
 /* Màn bắt đầu: 6 thẻ ảnh chọn nhân vật (hàng trên 1 người: Mabu, Zinbu, Vegeta; hàng dưới 2 người) */
-.man-chon { flex-direction: column; background: radial-gradient(ellipse at center, rgba(20, 30, 50, 0.82), rgba(8, 12, 24, 0.95)); }
+.man-chon { flex-direction: column; background: radial-gradient(ellipse at center, #141e32, #080c18); }
 .hang-the { display: flex; gap: clamp(16px, 4vw, 48px); justify-content: center; align-items: center; flex-wrap: wrap; }
 .the-chon {
   display: flex;

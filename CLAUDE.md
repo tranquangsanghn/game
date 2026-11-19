@@ -281,6 +281,7 @@
 - Màn kết thúc (tay cầm): chơi lại phải bấm X rồi B (`choiLaiChoB`); Menu / X đơn lẻ không còn chơi lại ngay.
 - Màn kết thúc (`htmlKetThuc()` trong `giao-dien.ts`): chỉ có tiêu đề, 2 ô avatar nhân vật (`anhNv(n.ki, 3.2)`, không tên / điểm / thống kê) và 2 nút: "Chơi lại" và "Thoát game (nhấn Y)". Đã bỏ dòng kết luận, điểm đội / kỷ lục và bảng điểm. Thoát game = phím **Y** trên bàn phím hoặc nút Y tay cầm (nút 3) ở màn kết thúc (`phimXuong()` / `docTayCam()`, gọi `onDong()`); ngoại lệ của mục "không thêm phím tắt" do người dùng yêu cầu.
 
+- Các màn bắt đầu / hướng dẫn / mục tiêu (`.man-chon`) có nền đặc (không trong suốt), không lộ map / HUD phía sau.
 - Màn chọn chế độ 1 / 2 người (tay cầm): chỉ tay cầm 1 được chọn thẻ, chữ thập / cần trái trái-phải chọn thẻ, bấm X rồi B (tay cầm nào cũng được, `onNutX`) mới xác nhận vào màn hướng dẫn (`daBamX` trong `giao-dien.ts`); ở màn hướng dẫn / mục tiêu bấm A (hoặc Menu) để Tiếp / Vào chơi, B để quay lại.
 
 - Tay cầm bố cục **Xbox** (cần analog chéo: cần trái trên-trái, chữ thập dưới-trái, cần phải dưới-phải). Mapping "standard" theo vị trí nên chỉ số nút giữ nguyên: nút 0 = **A** (dưới, đấm) · 1 = **B** (phải, chiêu riêng) · 2 = **X** (trái, đá) · 3 = **Y** (trên, chưởng) · 8 = **View** (đổi nhân vật) · 9 = **Menu** (bắt đầu / tạm dừng). Mọi chữ hiển thị / hướng dẫn dùng tên nút Xbox (A / B / X / Y, Menu, View), không dùng ✕ ○ □ △ / Options / Share.
