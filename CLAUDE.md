@@ -389,7 +389,7 @@
 
 - Cây trên đảo cát (`TrangTri.sa`, kể cả cây to) đổ thì chắc chắn rơi **`DAU_ROI` = 2 hạt đậu thần** (`VatPham` loại `dau`, `veDau()`, to bằng nửa viên ngọc rồng) thay táo: mỗi hạt ăn +`DAU_MAU` = 300 máu, +`DAU_MANA` = 240 mana (không giới hạn, mở khoá bay) và +`DAU_SAT` = 10 sát thương cộng thẳng vào mỗi đòn (`NguoiChoi.satDau`, sau khi nhân `suc`, không giới hạn, lưu trong ván lưu; với Cell bạo nộ phần cộng thêm vẫn bị giáp giảm). Mabu / Zinbu và **Cell** (đi qua, +`DAU_MAU` máu) đều ăn được; gà không ăn. Cây vườn gà vẫn rơi táo như cũ.
 
-- Cell tự hồi máu mỗi giây (`capNhatCell()`, tới máu tối đa của cấp `CELL_HP`): Cell thường `CELL_HOI_MAU` = 10 máu/s, Cell to nhất (cấp 4, đảo giữ ngọc) `CELL_HOI_MAU_NGOC` = 30 máu/s. Mini map máy bay (`veBanDoNho()`) hiện **số Cell ban đầu** (`CELL_SO_DAO`, cố định) ở giữa mỗi đảo.
+- Cell tự hồi máu mỗi giây (`capNhatCell()`, tới máu tối đa của cấp `CELL_HP`): mọi Cell (kể cả Cell đỏ) `CELL_HOI_MAU` = 10 máu/s. Mini map máy bay (`veBanDoNho()`) hiện **số Cell ban đầu** (`CELL_SO_DAO`, cố định) ở giữa mỗi đảo.
 
 # Nguyên tắc núi đá
 
@@ -404,7 +404,7 @@
 
 - **Frieza truy sát sau 10 phút** (`kiemTraFzTruy()`): chơi tới `FZ_TRUY_T` = 600s (10 phút) và Frieza còn sống thì `fzTruy` bật cả ván (như bóng ma Goku, bất kể người chơi ở đâu) (chữ "💜 10 PHÚT: FRIEZA BAY ĐI TRUY SÁT!"): Frieza nhận mục tiêu ở bất kỳ đâu (`fzMuc()`), ra khỏi thần điện thì **bay** thẳng tới (qua vực, qua tường vườn) tốc độ `FZ_BAY_TOC` = 1/2 `MB_TOC` (= 425) × `FZ_TRUY_GAP` = 3 (= 1275), gần trong `FZ_BAY_GAN` = 600 thì chạy tới (cũng ×3 khi ở ngoài thần điện) rồi đánh như thường (đấm, chưởng, Golden Frieza); ngoài thần điện vẽ lơ lửng (`Frieza.bay`). Không có mục tiêu thì lơ lửng chờ tại chỗ (trên thần điện thì về đi tuần). Cell đỏ (nếu còn) vẫn truy sát cùng lúc. Đồng thời **hợp thể Super Bư mở khoá ở mọi nơi** (`hopTheCho()`): hợp thể được ngoài thần điện và không tự tách khi rời thần điện.
 
-- **Cell đỏ hồi máu một lần** (`cellHoiPhuc()`, `Cell.hoi`: thiếu = chưa dùng · `'dang'` · `'xong'`, lưu trong ván lưu theo `cell`): Cell đỏ (cấp 4) máu dưới `CELL_HOI_DUOI` = 20% `CELL_HP` thì bỏ đánh / bỏ chỗ ngồi trên ngọc, chữ "🫘 CELL ĐỎ ĐI ĂN ĐẬU THẦN HỒI MÁU!", dịch chuyển tức thời tới cạnh cây khô đứng xa nhân vật nhất (trong vòng đảo của nó; đang truy sát thì cây trên mọi đảo), bắn đổ cây (`cellBanChien()` nhắm cây như con đi ăn đậu) rồi ăn đậu thần (lúc này được ăn đậu ngoài vòng đảo). Nhân vật lại gần trong `CELL_AN_GAP` thì dịch chuyển sang cây khác (hồi `CELL_HOI_DICH` = 3s); hết cây thì tới chỗ xa nhân vật nhất đứng tự hồi. Máu trên `CELL_HOI_TREN` = 60% thì "🔥 CELL ĐỎ HỒI SỨC, QUAY LẠI ĐÁNH!" và đánh tiếp như cũ; cả ván chỉ dùng một lần.
+- **Cell đỏ hồi máu một lần** (`cellHoiPhuc()`, `Cell.hoi`: thiếu = chưa dùng · `'dang'` · `'xong'`, lưu trong ván lưu theo `cell`): Cell đỏ (cấp 4) máu dưới `CELL_HOI_DUOI` = 20% `CELL_HP` thì bỏ đánh / bỏ chỗ ngồi trên ngọc, chữ "🫘 CELL ĐỎ ĐI ĂN ĐẬU THẦN HỒI MÁU!", dịch chuyển tức thời tới cạnh cây khô đứng xa nhân vật nhất (trong vòng đảo của nó; đang truy sát thì cây trên mọi đảo), bắn đổ cây (`cellBanChien()` nhắm cây như con đi ăn đậu) rồi ăn đậu thần (lúc này được ăn đậu ngoài vòng đảo). Nhân vật lại gần trong `CELL_AN_GAP` thì dịch chuyển sang cây khác (hồi `CELL_HOI_DICH` = 3s); hết cây thì tới chỗ xa nhân vật nhất đứng tự hồi. Máu trên `CELL_HOI_TREN` = 150% thì "🔥 CELL ĐỎ HỒI SỨC, QUAY LẠI ĐÁNH!" và đánh tiếp như cũ; cả ván chỉ dùng một lần.
 
 # Nguyên tắc bóng ma Goku (núi đá, trước là Ginyu)
 
