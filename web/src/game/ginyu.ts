@@ -106,7 +106,8 @@ export interface Ginyu {
   truoc?: { hpMax: number; sat: [number, number, number]; heSo: number };
   /** Máu tối đa "giả" của bản sao (theo người bị sao chép) khi đang giữ chỉ số cũ: thanh máu trên đầu chỉ để lừa, máu thật hiện trên thanh đen */
   hpGia?: number;
-  sao?: { p: number; con: number; danh: number; muc?: number; nhom: number; dich?: { x: number; y: number }; doi: number; di: boolean };
+  /** `sb`: bản sao Super Bư (gặp Mabu + Zinbu đang hợp thể): thân, chỉ số và thời gian như Super Bư (HOP_THE_T giây) */
+  sao?: { p: number; con: number; danh: number; muc?: number; nhom: number; dich?: { x: number; y: number }; doi: number; di: boolean; sb?: boolean };
 }
 
 export function taoGinyu(): Ginyu {

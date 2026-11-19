@@ -4632,16 +4632,19 @@ export class Game {
   private gyBienSao(p: number): void {
     const g = this.ginyu, n = this.nguoi[p];
     const suc = n.suc ?? 1;
+    // Không thấy Mabu / Zinbu mà gặp Super Bư (đang hợp thể, người mang thân): biến thành bản sao Super Bư, sống lâu như Super Bư (HOP_THE_T)
+    const sb = this.hopThe?.chu === p;
     g.ki = n.ki;
     const heSo = (g.suc ?? 1) * (1 + GY_HOI_MAU * (g.hoiSinh ?? 0));
     const hpMax = Math.max(1, Math.round(Math.max(1, n.hp) * GY_SAO_TI_LE * heSo));
-    const sat = [0, 1, 2].map((i) => Math.round((SAT_THUONG[i]![n.ki]! * suc + (n.satDau ?? 0)) * GY_SAO_SAT)) as [number, number, number];
+    const sat = [0, 1, 2].map((i) => Math.round(((sb ? this.satNv(p, i) : SAT_THUONG[i]![n.ki]!) * suc + (n.satDau ?? 0)) * GY_SAO_SAT)) as [number, number, number];
     // Từ lần biến hình thứ 2: người bị sao chép yếu hơn bản sao lần trước (máu × tổng sát thương, bản trước nhân theo suc / hồi sinh hiện tại)
-    // thì giữ nguyên máu và sức mạnh của bản trước; thanh máu trên đầu vẫn theo người bị sao chép (`hpGia`) để lừa, máu thật hiện trên thanh đen
+    // thì giữ nguyên máu và sức mạnh của bản trước; thanh máu trên đầu vẫn theo người bị sao chép (`hpGia`) để lừa, máu thật hiện trên thanh đen.
+    // Bản sao Super Bư luôn theo đúng Super Bư và không làm mốc cho lần sau (để bản sao Mabu / Zinbu sau đó không mang sức Super Bư)
     const tr = g.truoc;
     const trMax = tr ? Math.max(1, Math.round(tr.hpMax * heSo / Math.max(0.01, tr.heSo))) : 0;
     const tong = (a: number[]) => a[0]! + a[1]! + a[2]!;
-    if (tr && hpMax * tong(sat) < trMax * tong(tr.sat)) {
+    if (!sb && tr && hpMax * tong(sat) < trMax * tong(tr.sat)) {
       g.hpMax = trMax;
       g.sat = [...tr.sat];
       g.hpGia = hpMax;
@@ -4651,7 +4654,7 @@ export class Game {
       g.hpGia = undefined;
     }
     g.hp = g.hpMax;
-    g.truoc = { hpMax: g.hpMax, sat: [...g.sat], heSo };
+    if (!sb) g.truoc = { hpMax: g.hpMax, sat: [...g.sat], heSo };
     g.lao = undefined;
     g.quang = undefined;
     g.khieu = undefined;
@@ -4660,13 +4663,13 @@ export class Game {
     g.x = n.x + ngauNhien(-30, 30);
     g.y = n.y + ngauNhien(-10, 10);
     this.gyGiu(LE_NV);
-    g.sao = { p, con: GY_SAO_T, danh: ngauNhien(GY_SAO_DANH[0], GY_SAO_DANH[1]), nhom: 0, doi: 0, di: false };
-    const nv = new NhanVat(NHAN_VAT[n.ki]!);
+    g.sao = { p, con: sb ? HOP_THE_T : GY_SAO_T, danh: ngauNhien(GY_SAO_DANH[0], GY_SAO_DANH[1]), nhom: 0, doi: 0, di: false, sb };
+    const nv = new NhanVat(sb ? SUPER_BU : NHAN_VAT[n.ki]!);
     nv.lat = n.nv.lat;
     this.gyNv = nv;
     this.vetGa({ id: this.id++, x: n.x, y: n.y - 80, t: 0, loai: 'no' });
     this.vetGa({ id: this.id++, x: n.x, y: n.y, t: 0, loai: 'bui' });
-    this.chuGa({ id: this.id++, x: n.x, y: n.y - 330, text: n.ki === 2 ? 'Vegeta thật? Vegeta giả?' : 'Bư thật? bư giả?', mau: '#c39bff', t: 0 });
+    this.chuGa({ id: this.id++, x: n.x, y: n.y - 330, text: sb ? 'Super Bư thật? Super Bư giả?' : n.ki === 2 ? 'Vegeta thật? Vegeta giả?' : 'Bư thật? bư giả?', mau: '#c39bff', t: 0 });
     this.rungMan(0.25, 9);
   }
 
@@ -4890,11 +4893,12 @@ export class Game {
     nv.raDon(this.t);
     if (this.gyTrenCam()) this.am.phat(nhom === 2 ? 'chuong' : nhom === 1 ? 'da' : 'dam');
     const { dx, dy } = nv.diemBan;
-    const tay = { x: g.x + (nv.lat ? -dx : dx) * S_NV, y: g.y + (dy - nv.cao) * S_NV };
+    const k = this.gyNvViTri().k;
+    const tay = { x: g.x + (nv.lat ? -dx : dx) * k, y: g.y + dy * k - nv.cao * S_NV };
     const x1 = ke.x, y1 = ke.y - 80;
     const chieu = nhom === 2;
     const T = hyp(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
-    this.dan.push({ id: this.id++, p: s.p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: false, to: chieu, sat: Math.round(g.sat[nhom]! * (g.suc ?? 1)), nhom, vg: g.ki === 2 && chieu, gy: true });
+    this.dan.push({ id: this.id++, p: s.p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: false, to: chieu, sat: Math.round(g.sat[nhom]! * (g.suc ?? 1)), nhom, vg: g.ki === 2 && chieu && !s.sb, sb: chieu && s.sb, gy: true });
     s.muc = undefined;
     s.danh = ngauNhien(GY_SAO_DANH[0], GY_SAO_DANH[1]);
   }
@@ -5036,20 +5040,22 @@ export class Game {
   /** Vị trí chân + hệ số phóng của bản sao (vẽ như nhân vật, `nvViTri()`) */
   gyNvViTri(): { x: number; y: number; k: number } {
     const g = this.ginyu, nv = this.gyNv;
-    return { x: g.x, y: g.y - ((nv?.cao ?? 0) - (nv?.nhun ?? 0)) * S_NV, k: S_NV };
+    return { x: g.x, y: g.y - ((nv?.cao ?? 0) - (nv?.nhun ?? 0)) * S_NV, k: S_NV * (nv?.heSoTo ?? 1) * (nv?.sp.toBanDo ?? 1) };
   }
 
   /** Thanh máu bản sao: vị trí và tỉ lệ đầy như của nhân vật thật */
   gyThanh(): { x: number; y: number; mau: number } {
     const g = this.ginyu, nv = this.gyNv;
-    return { x: g.x, y: g.y - ((nv?.cao ?? 0) - (nv?.nhun ?? 0)) * S_NV - (DAU_NV[g.ki ?? 0] ?? 170), mau: this.gyMauGia() };
+    return { x: g.x, y: g.y - ((nv?.cao ?? 0) - (nv?.nhun ?? 0)) * S_NV - (g.sao?.sb ? DAU_SB : DAU_NV[g.ki ?? 0] ?? 170), mau: this.gyMauGia() };
   }
 
   /** Tỉ lệ đầy thanh máu trên đầu bản sao: theo máu "giả" của người bị sao chép khi đang giữ chỉ số cũ (`hpGia`), chỉ để lừa người chơi */
   private gyMauGia(): number {
     const g = this.ginyu;
     const hp = g.hpGia ? Math.max(0, g.hp) * g.hpGia / Math.max(1, g.hpMax) : Math.max(0, g.hp);
-    return Math.min(1, hp / Math.max(HP_NV, hp));
+    // Bản sao Super Bư: đầy thanh theo máu Super Bư thật lúc hợp thể (như thanh máu Super Bư)
+    const day = g.sao?.sb ? this.hopThe?.hpMax ?? g.hpMax / GY_SAO_TI_LE : HP_NV;
+    return Math.min(1, hp / Math.max(day, hp));
   }
 
   /** Dây buộc của bản sao với cả hai nhân vật (giống hệt dây buộc 2 nhân vật thật): mức căng và 2 đầu trên màn hình của từng dây */

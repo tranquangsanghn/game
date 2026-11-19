@@ -1662,7 +1662,7 @@ export class VeCanvas {
       if (g.chet) ctx.globalAlpha *= Math.max(0, 1 - g.tChet / GY_CHET_T);
       ctx.translate(t.x, t.y);
       ctx.scale(t.k, t.k);
-      this.sprite(ctx, c.gyNv.sp, c.gyNv.khung, c.gyNv.lat, false, c.gyLoc());
+      this.sprite(ctx, c.gyNv.sp, c.gyNv.khung, c.gyNv.lat, !!c.gyNv.sp.muot, c.gyLoc());
       ctx.restore();
       return;
     }
