@@ -201,9 +201,6 @@ const PT_BK = 190;
 const CONG_BK = 200;
 const CONG_RA = 450;
 const CONG_RA_Y = 320;
-// Chế độ test thần điện (chỉ khi mở game với ?testFrieza trên đường dẫn): 2 người, mỗi người HP_TEST máu, vào thẳng cổng thần điện
-const CHE_TEST_FRIEZA = (() => { try { return new URLSearchParams(location.search).has('testFrieza'); } catch { return false; } })();
-const HP_TEST = 3000;
 const PT_MO_BK = 520;
 const PT_TOC = MB_TOC * 5;
 const PT_CAT = 2;
@@ -1348,7 +1345,7 @@ export class Game {
   /** Bắt đầu ván: lựa chọn ở màn bắt đầu (DOI_HINH: 1 người Mabu / Zinbu / Vegeta, hoặc 2 người) */
   batDau(che: CheNguoi = this.cheNguoi): void {
     this.choiLaiChoB = false;
-    this.cheNguoi = CHE_TEST_FRIEZA ? 'ca2' : che;
+    this.cheNguoi = che;
     banDoHt = this.banDo;
     this.banDoVan = this.banDo;
     if (this.banDo === 'sa') chuanBiSaMac();
@@ -1426,16 +1423,6 @@ export class Game {
     this.lanTuong = 0;
     this.demPhu = 0;
     this.kyLucMoi = false;
-    if (CHE_TEST_FRIEZA) {
-      // Test thần điện: đặt sẵn ở cổng thần điện (chỗ người chơi xuất hiện khi qua cổng), mỗi người HP_TEST máu
-      this.daRaVuon = true;
-      this.nguoi.forEach((n, p) => {
-        if (n.vang) return;
-        n.hp = HP_TEST;
-        n.x = THAN_CONG.x + (p === 0 ? -170 : 170);
-        n.y = THAN_CONG.y + CONG_RA_Y;
-      });
-    }
     this.capNhatView(0, true);
     this.man = 'play';
   }
