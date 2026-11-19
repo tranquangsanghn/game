@@ -1,6 +1,7 @@
 import { hyp } from './toan';
 import type { ChuongTiec, Tiec } from './tiec';
 import { HN } from './do-hieu-nang';
+import type { ConBu } from './con-bu';
 import type { Game, Ga, TrangTri, Cuu, CauTron, MbHinh } from './game';
 import type { KhungSprite } from './sprite';
 import { CELL_HP, CELL_SO_DAO, CELL_TEN, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
@@ -1005,6 +1006,7 @@ export class VeCanvas {
         ctx.globalAlpha = 1;
       }
       else if (o.loai === 'ba') this.veBa(ctx, c);
+      else if (o.loai === 'conbu') this.veConBu(ctx, c, o.cb);
       else if (o.loai === 'mb') this.veMayBay(ctx, c.mbView, c.SP_MB, true);
       else if (o.loai === 'pt') this.veMayBay(ctx, c.ptView, c.SP_PT, false);
       else this.veNhanVat(ctx, c, o.p);
@@ -1029,6 +1031,11 @@ export class VeCanvas {
       ctx.globalAlpha = c.doRo(ce.x, ce.y);
       this.veMauCell(ctx, c, ce);
       ctx.globalAlpha = 1;
+    }
+    // Thanh máu con của Super Bư (lượt riêng sau mọi vật)
+    for (const cb of c.conBuView) {
+      const t = c.conBuThanh(cb);
+      this.veThanhNv(ctx, t.x, t.y, t.mau);
     }
     // Thanh máu bóng ma Goku (lượt riêng sau mọi vật để không bị che)
     if (c.gyView && !c.ginyu.chet) {
@@ -1634,6 +1641,16 @@ export class VeCanvas {
       ctx.scale(FZ_TO, FZ_TO);
       this.sprite(ctx, SP_FRIEZA, fzKhung(f), f.lat, false);
     }
+    ctx.restore();
+  }
+
+  /** Con của Super Bư: sprite Super Bư thu nhỏ, nháy sáng khi trúng đòn */
+  private veConBu(ctx: CanvasRenderingContext2D, c: Game, cb: ConBu): void {
+    const t = c.conBuViTri(cb);
+    ctx.save();
+    ctx.translate(t.x, t.y);
+    ctx.scale(t.k, t.k);
+    this.sprite(ctx, cb.nv.sp, cb.nv.khung, cb.nv.lat, !!cb.nv.sp.muot, c.conBuLoc(cb));
     ctx.restore();
   }
 
