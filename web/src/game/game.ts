@@ -10,7 +10,7 @@ import { taoMeCung, O_VAO_MC, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
-import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_VANG_CHUONG_HOI, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
+import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzSat, fzToc, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -4313,7 +4313,7 @@ export class Game {
   /** Frieza đánh nhau với mục tiêu `muc` (null = hết mục tiêu, chỉ làm nốt chưởng đang vận) */
   private fzChien(muc: NguoiChoi | null, thay: boolean, dt: number): void {
     const f = this.frieza;
-    const g = fzGap(f);
+    const gs = fzSat(f), gt = fzToc(f);
     f.nghi = 0.1;
     if (f.nap) {
       f.nap.t += dt;
@@ -4324,10 +4324,10 @@ export class Game {
       const x0 = f.x + (f.lat ? -1 : 1) * (vang ? 90 : 60), y0 = f.y - (vang ? 200 : 110);
       const dx = f.nap.x - x0, dy = f.nap.y - y0, d = hyp(dx, dy) || 1;
       const L = Math.min(FZ_CHUONG_TAM * (vang ? FZ_VANG_TAM_GAP : 1), d + 250);
-      this.chuongTiec.push({ id: this.id++, k: vang ? 5 : 4, loai: vang ? 1 : 2, x0, y0, x1: x0 + (dx / d) * L, y1: y0 + (dy / d) * L, t: 0, sat: FZ_CHUONG_SAT * g, fz: true });
+      this.chuongTiec.push({ id: this.id++, k: vang ? 5 : 4, loai: vang ? 1 : 2, x0, y0, x1: x0 + (dx / d) * L, y1: y0 + (dy / d) * L, t: 0, sat: FZ_CHUONG_SAT * gs, fz: true });
       this.vetGa({ id: this.id++, x: x0, y: y0, t: 0, loai: 'chay', co: 0.6 });
       f.nap = undefined;
-      f.choChuong = vang ? FZ_VANG_CHUONG_HOI : FZ_CHUONG_HOI / g;
+      f.choChuong = FZ_CHUONG_HOI / gt;
       return;
     }
     if (!muc) return;
@@ -4343,24 +4343,24 @@ export class Game {
     }
     if (d <= FZ_CHAM) {
       if (f.choDanh <= 0) {
-        f.choDanh = FZ_HOI / g;
+        f.choDanh = FZ_HOI / gt;
         f.danh = FZ_DANH_T;
         this.vetGa({ id: this.id++, x: muc.x, y: muc.y - 80, t: 0, loai: 'no' });
-        this.nhanSatThuong(muc, FZ_SAT * g);
+        this.nhanSatThuong(muc, FZ_SAT * gs);
       }
       return;
     }
     f.nghi = 0;
     // Truy sát ngoài thần điện: bay thẳng (qua vực, qua tường vườn) tốc độ FZ_BAY_TOC, gần thì chạy tới như thường
     if (this.fzTruy && (!trongThan(muc.x, muc.y) || !trongThan(f.x, f.y))) {
-      const toc = d > FZ_BAY_GAN ? Math.max(FZ_BAY_TOC, FZ_TOC_DANH * g) : FZ_TOC_DANH * g;
+      const toc = d > FZ_BAY_GAN ? Math.max(FZ_BAY_TOC, FZ_TOC_DANH * gt) : FZ_TOC_DANH * gt;
       const b = Math.min(d, toc * dt);
       f.x += (dx / d) * b;
       f.y += (dy / d) * b;
       return;
     }
     const w = this.fzDuongToi(muc.x, muc.y);
-    this.fzDuoi(f, w.x, w.y, FZ_TOC_DANH * g, dt);
+    this.fzDuoi(f, w.x, w.y, FZ_TOC_DANH * gt, dt);
     if (Math.abs(dx) > 5) f.lat = dx < 0;
   }
 

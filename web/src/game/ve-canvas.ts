@@ -1743,7 +1743,7 @@ export class VeCanvas {
     ctx.textBaseline = 'bottom';
     ctx.lineWidth = 3;
     ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-    const chu = `${Math.ceil(f.hp)}${fzGap(f) > 1 ? '  ⚔x2' : ''}`;
+    const chu = `${Math.ceil(f.hp)}${fzGap(f) > 1 ? '  ⚔x2,5' : ''}`;
     ctx.strokeText(chu, 0, -9);
     ctx.fillStyle = '#fff';
     ctx.fillText(chu, 0, -9);
