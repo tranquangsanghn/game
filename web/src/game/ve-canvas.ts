@@ -1453,13 +1453,18 @@ export class VeCanvas {
 
   // Máy bay đã nổ: bóng mờ ở chỗ nó sẽ xuất hiện lại kèm số giây đếm ngược
   private veMbDem(ctx: CanvasRenderingContext2D, c: Game): void {
-    const d = c.mbDemView;
+    this.veXeDem(ctx, c, c.mbDemView, c.SP_MB, 105, 1.25, true, '✈', 250);
+    this.veXeDem(ctx, c, c.ptDemView, c.SP_PT, 0, 2.6, false, '🛸', 560);
+  }
+
+  // Xe (máy bay / phi thuyền) đã nổ: bóng mờ ở chỗ xuất hiện lại kèm số giây đếm ngược
+  private veXeDem(ctx: CanvasRenderingContext2D, c: Game, d: { x: number; y: number; con: number } | null, sp: KhungSprite, nang: number, to: number, muot: boolean, kyHieu: string, chuCao: number): void {
     if (!d) return;
     ctx.save();
     ctx.globalAlpha = 0.3 + 0.1 * Math.sin(c.t * 4);
-    ctx.translate(d.x, d.y - 105);
-    ctx.scale(1.25, 1.25);
-    this.sprite(ctx, c.SP_MB, 0, false, true);
+    ctx.translate(d.x, d.y - nang);
+    ctx.scale(to, to);
+    this.sprite(ctx, sp, 0, false, muot);
     ctx.restore();
     ctx.save();
     ctx.font = `800 56px ${FONT}`;
@@ -1467,9 +1472,9 @@ export class VeCanvas {
     ctx.lineJoin = 'round';
     ctx.lineWidth = 9;
     ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-    ctx.strokeText(`✈ ${d.con}`, d.x, d.y - 250);
+    ctx.strokeText(`${kyHieu} ${d.con}`, d.x, d.y - chuCao);
     ctx.fillStyle = '#ffd23f';
-    ctx.fillText(`✈ ${d.con}`, d.x, d.y - 250);
+    ctx.fillText(`${kyHieu} ${d.con}`, d.x, d.y - chuCao);
     ctx.restore();
   }
 

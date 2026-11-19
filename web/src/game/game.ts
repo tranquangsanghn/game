@@ -186,16 +186,20 @@ const MB_LE = 260;
 const taoMayBay = (x: number, y: number): MayBay => ({ x, y, pha: 'dau', t: 0, z: 0, ngoi: [], lat: false, chay: false, goc: { x, y } });
 
 /**
- * Phi thuyền (một chiếc, không phá huỷ được, không điều khiển được): đậu cạnh máy bay trong vườn gà, chở đủ 2 nhân vật bay thẳng tới núi đá
- * (và ngược lại). dau = đậu (cửa mở khi có người lại gần) · cat = đóng cửa, cất cánh · bay = tự bay tới bến kia · ha = hạ cánh · ra = mở cửa, mọi người bước ra.
+ * Phi thuyền (một chiếc, không điều khiển được; lúc còn dưới đất (đậu / cất cánh) trúng chưởng thì nổ như máy bay, hồi phục sau MB_HOI giây ở bến đó): đậu cạnh máy bay trong vườn gà, chở đủ 2 nhân vật bay thẳng tới núi đá
+ * (và ngược lại). dau = đậu (cửa mở khi có người lại gần) · cat = đóng cửa, cất cánh · bay = tự bay tới bến kia · ha = hạ cánh · ra = mở cửa, mọi người bước ra · no = đã nổ, chờ MB_HOI giây.
  * noi = bến đang đậu; vuon / nui = chỗ đậu ở vườn gà / núi đá; mo = độ mở cửa 0..1; cho = người vừa bước ra, phải đi khỏi PT_BK mới lên lại được.
  */
-export interface PhiThuyen { x: number; y: number; pha: 'dau' | 'cat' | 'bay' | 'ha' | 'ra'; t: number; z: number; mo: number; ngoi: number[]; cho: number[]; lat: boolean; noi: 'vuon' | 'nui'; vuon: { x: number; y: number }; nui: { x: number; y: number }; }
+export interface PhiThuyen { x: number; y: number; pha: 'dau' | 'cat' | 'bay' | 'ha' | 'ra' | 'no'; t: number; z: number; mo: number; ngoi: number[]; cho: number[]; lat: boolean; noi: 'vuon' | 'nui'; vuon: { x: number; y: number }; nui: { x: number; y: number }; }
 const SP_PT: KhungSprite = { atlas: 'assets/game/phi_thuyen.png', atlasW: 1800, atlasH: 480, w: 300, h: 240, cot: 6, neoX: 150, neoY: 230 };
 const PT_TO = 2.6;
 const PT_NANG = 480;
 /** Bán kính lên phi thuyền và bán kính lại gần thì cửa mở */
 const PT_BK = 190;
+/** Hộp trúng chưởng quanh thân phi thuyền (nửa rộng, nửa cao) và tâm thân cao hơn chân bấy nhiêu */
+const PT_TRUNG_X = 300;
+const PT_TRUNG_Y = 200;
+const PT_TAM = 260;
 /** Cổng dịch chuyển (đảo 4 ↔ thần điện): bước vào trong CONG_BK quanh chân cổng thì dịch chuyển; ra đứng cách chân cổng CONG_RA_Y
  *  về phía trước, phải đi xa hơn CONG_RA mới vào lại được */
 const CONG_BK = 200;
@@ -1166,6 +1170,7 @@ export class Game {
   readonly SP_PT = SP_PT;
   ptView: MbHinh | null = null;
   mbDemView: { x: number; y: number; con: number } | null = null;
+  ptDemView: { x: number; y: number; con: number } | null = null;
   // Giây hit-stop còn lại và biên độ rung màn hình
   private dungHinh = 0;
   private rungBien = RUNG_BIEN;
@@ -1524,7 +1529,7 @@ export class Game {
     });
     // Phi thuyền đang đi dở: coi như đã tới nơi (cất cánh dở thì vẫn ở bến cũ), mọi người bước ra
     const pt = this.phiThuyen;
-    if (pt.pha !== 'dau') {
+    if (pt.pha !== 'dau' && pt.pha !== 'no') {
       if (pt.pha !== 'cat') { pt.noi = pt.noi === 'vuon' ? 'nui' : 'vuon'; Object.assign(pt, pt[pt.noi]); }
       else Object.assign(pt, pt[pt.noi]);
       this.ptXuong();
@@ -2292,7 +2297,7 @@ export class Game {
         continue;
       }
       if (!d.troi) this.danDoCay(d, t0);
-      if (d.to && !d.troi && !d.con) this.danTrungMb(d, t0);
+      if (d.to && !d.troi && !d.con) { this.danTrungMb(d, t0); this.danTrungPt(d, t0); }
       if (d.to && !d.soc && !d.troi && d.t < d.T) this.chuongXuyen(d);
       if (d.to && !d.troi && !d.con) this.danTrungBanh(d, t0);
       if (d.t < d.T) conLai.push(d);
@@ -2875,10 +2880,12 @@ export class Game {
     this.mbView = mb && trong(mb.x, mb.y - mb.nang, 700) ? mb : null;
     if (this.mbView) xep.push({ loai: 'mb', y: this.mayBay.y + this.mayBay.z * 20000 });
     const pth = this.ptHinh();
-    this.ptView = trong(pth.x, pth.y - pth.nang, 700) ? pth : null;
+    this.ptView = pth && trong(pth.x, pth.y - pth.nang, 700) ? pth : null;
     if (this.ptView) xep.push({ loai: 'pt', y: this.phiThuyen.y + this.phiThuyen.z * 20000 });
     const dem = this.mbDem();
     this.mbDemView = dem && trong(dem.x, dem.y, 300) ? dem : null;
+    const ptDem = this.phiThuyen.pha === 'no' ? { x: this.phiThuyen.x, y: this.phiThuyen.y, con: Math.max(1, Math.ceil(MB_HOI - this.phiThuyen.t)) } : null;
+    this.ptDemView = ptDem && trong(ptDem.x, ptDem.y, 400) ? ptDem : null;
     this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && !this.trongMb(i) && !this.biNhap(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
     const xe = this.xeDuoiDat();
     for (const t of this.trangTri) if (!t.mat && trong(t.x, t.y, t.to ? 700 : 400) && !this.cayCheXe(t, xe) && this.doRo(t.x, t.y) > 0) xep.push({ loai: 'td', y: t.y, td: t });
@@ -6540,10 +6547,20 @@ export class Game {
   // ─── Phi thuyền ───
 
   // Đậu: có người lại gần thì mở cửa, đi vào là lên; đủ 2 nhân vật thì tự cất cánh bay thẳng tới bến kia (vườn gà ↔ núi đá), hạ cánh, mở cửa cho mọi người bước ra.
-  // Không phá huỷ được (không trúng chưởng, Cell không bắn), người bên trong không ra đòn và không lái được.
+  // Còn dưới đất (đậu / cất cánh) mà trúng chưởng của Mabu / Zinbu thì nổ (danTrungPt), hồi phục sau MB_HOI giây ở bến đó; Cell không bắn.
+  // Người bên trong không ra đòn và không lái được.
   private capNhatPt(dt: number): void {
     const m = this.phiThuyen;
     m.t += dt;
+    if (m.pha === 'no') {
+      m.mo = 0;
+      if (m.t >= MB_HOI) {
+        m.pha = 'dau';
+        m.t = 0;
+        this.chu.push({ id: this.id++, x: m.x, y: m.y - 560, text: '🛸 PHI THUYỀN ĐÃ HỒI PHỤC!', mau: '#9be7ff', t: 0 });
+      }
+      return;
+    }
     const dung = this.nguoi.filter((n) => !n.vang);
     const hai = dung.length >= 2;
     const lenDuoc = (n: NguoiChoi, p: number) => !this.trieuHoi && !n.vang && !this.hopThe && !n.het && !n.nv.laMay && !n.bay && !n.nv.khoa && !this.trongMb(p) && !this.trongCau(p) && !this.dangCuu(p);
@@ -6701,9 +6718,50 @@ export class Game {
     this.ptRaVuon = false;
   }
 
-  /** Hình phi thuyền để vẽ (cùng kiểu với máy bay; khung theo atlas SP_PT) */
-  private ptHinh(): MbHinh {
+  /** Chưởng (Chiêu đặc biệt / socola) của Mabu / Zinbu quét qua thân phi thuyền lúc còn dưới đất (đậu / cất cánh) thì phi thuyền nổ */
+  private danTrungPt(d: Dan, t0: number): void {
     const m = this.phiThuyen;
+    if (m.pha !== 'dau' && m.pha !== 'cat') return;
+    const cx = m.x, cy = m.y - PT_TAM - PT_NANG * m.z;
+    const k0 = Math.min(1, t0 / d.T), k1 = Math.min(1, d.t / d.T);
+    const dx = d.x1 - d.x0, dy = d.y1 - d.y0;
+    const buoc = Math.max(1, Math.ceil((hyp(dx, dy) * (k1 - k0)) / 40));
+    for (let i = 0; i <= buoc; i++) {
+      const k = k0 + ((k1 - k0) * i) / buoc;
+      if (Math.abs(d.x0 + dx * k - cx) < PT_TRUNG_X && Math.abs(d.y0 + dy * k - cy) < PT_TRUNG_Y) {
+        this.noPt();
+        return;
+      }
+    }
+  }
+
+  // Phi thuyền nổ (dưới đất): ba vụ nổ, mọi người bên trong văng ra đứng dậy tại chỗ; hồi phục ở đúng bến đó sau MB_HOI giây
+  private noPt(): void {
+    const m = this.phiThuyen;
+    const cy = m.y - PT_TAM - PT_NANG * m.z;
+    for (let i = 0; i < 3; i++) this.vet.push({ id: this.id++, x: m.x + ngauNhien(-120, 120), y: cy + ngauNhien(-60, 60), t: 0, loai: 'chay', co: 1.8 + i * 0.3 });
+    this.am.noMayBay();
+    this.rungMan(0.5, 14);
+    this.dungKhung(0.12);
+    this.chu.push({ id: this.id++, x: m.x, y: cy - 260, text: '💥 PHI THUYỀN NỔ TUNG!', mau: '#ff9f43', t: 0 });
+    const ra = m.ngoi;
+    if (ra.length) this.ptXuong();
+    for (const p of ra) this.nguoi[p].nv.tiepDat();
+    m.pha = 'no';
+    m.t = 0;
+    m.z = 0;
+    m.mo = 0;
+    m.lat = false;
+  }
+
+  /** Hình phi thuyền để vẽ (cùng kiểu với máy bay; khung theo atlas SP_PT); null = đã nổ, chờ hồi phục */
+  private ptHinh(): MbHinh | null {
+    const m = this.phiThuyen;
+    if (m.pha === 'no') {
+      if (m.t >= MB_NO_HINH) return null;
+      const k = m.t / MB_NO_HINH;
+      return { x: m.x, y: m.y, nang: 0, khung: 0, a: dongHe01((1 - k) * 2.5), to: PT_TO, lat: m.lat, rung: Math.sin(this.t * 60) * 10, bong: 0, nhan: null };
+    }
     const h: MbHinh = { x: m.x, y: m.y, nang: PT_NANG * m.z, khung: 0, a: 1, to: PT_TO, lat: m.lat, rung: 0, bong: 0, nhan: null, nhanCao: 470 };
     const cua = m.mo <= 0 ? 0 : m.mo < 0.4 ? 1 : m.mo < 0.75 ? 2 : 3;
     if (m.pha === 'dau') {
