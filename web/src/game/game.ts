@@ -1726,9 +1726,11 @@ export class Game {
     return false;
   }
 
-  /** Nhân vật p đứng yên vì mê cung bom đang dừng thế giới (p ở ngoài map mê cung) */
+  /** Nhân vật p đứng yên vì mê cung bom đang dừng thế giới (p ở ngoài map mê cung). Người đang ở bất kỳ đoạn nào của đường hầm
+   *  (kể cả đoạn còn trong đảo 1, cửa hầm) vẫn đi được, để người vào sau theo kịp người vào trước, không bị kẹt ở cửa hầm */
   private biDung(p: number): boolean {
-    return this.man === 'play' && (this.trongMb(p) || !this.vungMc(this.nguoi[p]!)) && this.dungTheGioi;
+    const n = this.nguoi[p]!;
+    return this.man === 'play' && (this.trongMb(p) || (!this.vungMc(n) && !trongHam(n.x, n.y, 200))) && this.dungTheGioi;
   }
 
   /** Đồng hồ ván mm:ss (góc trên trái, phần đen ngoài map) */
@@ -2042,7 +2044,7 @@ export class Game {
   private dieuKhien(dt: number, dung = false): void {
     this.nguoi.forEach((n, p) => {
       if (n.vang) return;
-      if (dung && (this.trongMb(p) || !this.vungMc(n))) { n.dangDi = false; return; }
+      if (dung && this.biDung(p)) { n.dangDi = false; return; }
       n.hoiChieu = Math.max(0, n.hoiChieu - dt);
       this.capNhatMay(n, dt);
       n.bayKhoa = Math.max(0, n.bayKhoa - dt);
