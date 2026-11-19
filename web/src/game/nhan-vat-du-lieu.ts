@@ -2,20 +2,21 @@
 import { NhanVatSprite } from './nhan-vat-sprite';
 
 export const MABU: NhanVatSprite = {
-  ten: 'Mabu', atlas: 'assets/game/mabu_atlas.png', atlasW: 2240, atlasH: 1344, w: 140, h: 84, cot: 16,
+  ten: 'Mabu', atlas: 'assets/game/mabu_atlas.png', atlasW: 2240, atlasH: 1428, w: 140, h: 84, cot: 16,
   neoX: 70, neoY: 81,
   // Khung 224-249 (2 hàng cuối atlas): Mabu kiểu nhìn chéo từ trên xuống — 224-228 nhìn xuống, 229-233 quay lưng,
   // 234-249 nhìn nghiêng (đã lật quay phải) cho đấm / đá. Bắn chưởng, mây, chết... vẫn dùng khung cũ.
-  huong: { len: { dung: [229], di: [230, 231, 232, 233] }, xuong: { dung: [224], di: [225, 226, 227, 228] } },
+  // Khung 256-270 (2 hàng thêm): sheet Mabu mới (tools/tao-atlas-mabu-moi.py): đứng, chạy, nhìn thẳng, chỉ tay bắn chưởng, bay. Chưa có góc lưng mới nên 'len' vẫn dùng khung cũ.
+  huong: { len: { dung: [229], di: [230, 231, 232, 233] }, xuong: { dung: [264], di: [264, 265] } },
   anim: {
-    idle: { f: [8, 9, 10, 9], ms: 150, lap: true },
+    idle: { f: [256, 257, 258, 257], ms: 150, lap: true },
     taunt_flex: { f: [130, 131, 132, 136, 137, 138, 137, 138], ms: 117, lap: false },
     taunt_wave: { f: [162, 163, 164, 165, 166, 165, 164, 163, 162], ms: 117, lap: false },
     taunt_stretch: { f: [126, 125, 124, 123, 123, 124, 125, 126], ms: 133, lap: false },
     taunt_antenna: { f: [156, 155, 156, 155, 156], ms: 133, lap: false },
     taunt_puff: { f: [180, 177, 178, 179, 178, 179, 180], ms: 117, lap: false },
-    run: { f: [95, 96, 97, 98], ms: 117, lap: true },
-    fly: { f: [31, 32, 33, 34], ms: 67, lap: true },
+    run: { f: [259, 260, 261, 262, 263], ms: 100, lap: true },
+    fly: { f: [268, 269, 270, 269], ms: 67, lap: true },
     jump_up: { f: [66, 67], ms: 83, lap: false },
     fall: { f: [71, 72], ms: 100, lap: false },
     crouch_land: { f: [66], ms: 167, lap: false },
@@ -39,7 +40,7 @@ export const MABU: NhanVatSprite = {
     kick_arc: { f: [234, 235, 236, 237], ms: 100, lap: false },
     antenna_whip: { f: [238, 243, 243, 238], ms: 83, lap: false },
     roll: { f: [77, 78, 79, 80, 77, 78, 79, 80], ms: 67, lap: false, tien: { tu: 0, den: 7, v: 3.0 } },
-    energy_ball: { f: [170, 171, 172, 172, 171, 170], ms: 100, lap: false, ban: { o: 2, dx: 60, dy: -38 } },
+    energy_ball: { f: [267, 266, 266, 266, 266, 267], ms: 100, lap: false, ban: { o: 1, dx: 34, dy: -49 } },
     // Biến thành đám mây (khung 2 → 1 → 0 là 3 hình mây trong atlas), rồi biến lại
     may_vao: { f: [2, 1, 0], ms: 110, lap: false },
     may: { f: [0], ms: 100, lap: true },
