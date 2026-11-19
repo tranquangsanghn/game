@@ -3083,6 +3083,21 @@ export class Game {
   private chanMeCung(truoc: { x: number; y: number }[]): void {
     const mot = this.nguoi.some((n) => n.vang);
     this.nguoi.forEach((n, p) => {
+      // Chơi 2 người: không được đi ra khỏi map mê cung (ra đoạn hầm gần đảo 1) khi đồng đội còn nằm trong lưới mê cung (kể cả đã gục):
+      // phải cùng ra bằng cổng thoát (mcRaNui đưa cả đội đi) hoặc quay lại cứu
+      if (!mot && !n.vang && !this.trongMb(p) && this.vungMc(truoc[p]!) && !this.vungMc(n)) {
+        const q = this.nguoi[1 - p]!;
+        if (!q.vang && !this.trongMb(1 - p) && trongMeCung(q.x, q.y, 300)) {
+          n.x = truoc[p]!.x;
+          n.y = truoc[p]!.y;
+          n.dich = null;
+          if (this.t - this.mcBaoLuc > 3) {
+            this.mcBaoLuc = this.t;
+            this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: '🧨 KHÔNG BỎ ĐỒNG ĐỘI LẠI MÊ CUNG! CÙNG RA BẰNG LỐI THOÁT', mau: '#ffd27a', t: 0 });
+          }
+          return;
+        }
+      }
       if (n.vang || n.het || this.trongMb(p) || !this.vungMc(n) || this.vungMc(truoc[p]!)) return;
       if (mot) {
         this.chetNv(n);

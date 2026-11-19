@@ -30,10 +30,10 @@ export const BA_TO = 1.5;
 /** Quả bom trên tay ở khung 1 / 2 và chỗ bom rời tay ở khung 3 (điểm ảnh sprite, tính từ neo) */
 export const BA_TAY: ([number, number] | null)[] = [null, [26, -287], [-51, -271], [130, -60]];
 /** Máu mỗi mạng: bom lửa / nước trúng trừ 1, bom nổ trừ 2 (ngọn lửa trên ô của bà) */
-export const BA_HP = 8;
+export const BA_HP = 2;
 /** Hồi sinh BA_HOI_SINH lần (không tính mạng đầu), chờ BA_HOI_T giây tại chỗ; mỗi lần hồi sinh tốc độ bay và tốc độ ném nhân BA_HOI_TANG */
 export const BA_HOI_SINH = 2;
-export const BA_HOI_T = 2.5;
+export const BA_HOI_T = 5;
 export const BA_HOI_TANG = 1.5;
 /** Tốc độ bay (đơn vị / giây, mạng đầu); bay theo ô như quái, đuổi tới khi cách người gần nhất ≤ BA_GAN ô */
 export const BA_TOC = 180;
