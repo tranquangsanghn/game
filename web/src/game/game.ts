@@ -426,7 +426,7 @@ const HOI_DANH_GA: Record<string, number> = { hen: 1.2, rooster: 0.8, flyer: 1.5
 // Vua gà không hồi sinh (TUONG_HOI_SINH = 0, chỉ 1 mạng)
 const TUONG_HOI_SINH = 0;
 // Vua gà (gà mẹ gốc) có HP_VUA máu, không hồi sinh; vương miện đính ngọc rồng 1 sao, rơi xuống đất khi nó chết
-const HP_VUA = 600;
+const HP_VUA = 2600;
 const NGOC_BAN_KINH = 110;
 // Chưởng / vụ nổ của Vegeta (tools/tao-atlas-vegeta.py, lấy từ sheet Frieza): 0 chưởng sao chổi (đầu bên phải) · 1 quả trắng · 3–7 vụ nổ lớn dần
 const SP_VG_CHUONG: KhungSprite = { atlas: 'assets/game/vegeta_chuong.png', atlasW: 1536, atlasH: 160, w: 192, h: 160, cot: 8, neoX: 96, neoY: 80 };
@@ -1964,10 +1964,10 @@ export class Game {
         if (ce) {
           // Như Mabu / Zinbu: +DAU_MAU máu; Cell không có mana nên sát thương cộng thêm nhiều hơn (CELL_DAU_SAT mỗi đòn, không giới hạn)
           ce.hp += DAU_MAU;
-          ce.satDau = (ce.satDau ?? 0) + CELL_DAU_SAT;
+          ce.satDau = (ce.satDau ?? 0) + CELL_DAU_SAT[ce.cap]!;
           ce.suc = (ce.suc ?? 1) + CELL_DAU_SUC[ce.cap]!;
           const t = this.tamCell(ce);
-          this.chu.push({ id: this.id++, x: t.x, y: t.y - 90, text: `🫘 CELL ĂN ĐẬU THẦN +${DAU_MAU} ❤ +${CELL_DAU_SAT} ⚔ SỨC MẠNH x${ce.suc.toFixed(2)}`, mau: '#7be04a', t: 0 });
+          this.chu.push({ id: this.id++, x: t.x, y: t.y - 90, text: `🫘 CELL ĂN ĐẬU THẦN +${DAU_MAU} ❤ +${CELL_DAU_SAT[ce.cap]} ⚔` + (CELL_DAU_SUC[ce.cap]! > 0 ? ` SỨC MẠNH x${ce.suc.toFixed(2)}` : ''), mau: '#7be04a', t: 0 });
           this.vet.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
           continue;
         }
@@ -4747,21 +4747,18 @@ export class Game {
     const heSo = (g.suc ?? 1) * (1 + GY_HOI_MAU * (g.hoiSinh ?? 0));
     const hpMax = Math.max(1, Math.round(Math.max(1, n.hp) * GY_SAO_TI_LE * heSo));
     const sat = [0, 1, 2].map((i) => Math.round(((sb ? this.satNv(p, i) : SAT_THUONG[i]![n.ki]!) * suc + (n.satDau ?? 0)) * GY_SAO_SAT)) as [number, number, number];
-    // Từ lần biến hình thứ 2: người bị sao chép yếu hơn bản sao lần trước (máu × tổng sát thương, bản trước nhân theo suc / hồi sinh hiện tại)
-    // thì giữ nguyên máu và sức mạnh của bản trước; thanh máu trên đầu vẫn theo người bị sao chép (`hpGia`) để lừa, máu thật hiện trên thanh đen.
+    // Từ lần biến hình thứ 2: máu bản sao = GY_SAO_TI_LE máu người bị sao chép CHỈ khi mức đó cao hơn máu tối đa của bản trước
+    // (bản trước nhân theo suc / hồi sinh hiện tại); người bị sao chép ít máu hơn thì giữ nguyên máu bản trước, không cộng dồn.
+    // Sát thương cũng vậy: người bị sao chép đánh yếu hơn (tổng 3 đòn) thì giữ sát thương bản trước.
+    // Thanh máu trên đầu vẫn theo người bị sao chép (`hpGia`) để lừa, máu thật hiện trên thanh đen.
     // Bản sao Super Bư luôn theo đúng Super Bư và không làm mốc cho lần sau (để bản sao Mabu / Zinbu sau đó không mang sức Super Bư)
     const tr = g.truoc;
     const trMax = tr ? Math.max(1, Math.round(tr.hpMax * heSo / Math.max(0.01, tr.heSo))) : 0;
     const tong = (a: number[]) => a[0]! + a[1]! + a[2]!;
-    if (!sb && tr && hpMax * tong(sat) < trMax * tong(tr.sat)) {
-      g.hpMax = trMax;
-      g.sat = [...tr.sat];
-      g.hpGia = hpMax;
-    } else {
-      g.hpMax = hpMax;
-      g.sat = sat;
-      g.hpGia = undefined;
-    }
+    const giuMau = !sb && !!tr && hpMax <= trMax;
+    g.hpMax = giuMau ? trMax : hpMax;
+    g.hpGia = giuMau ? hpMax : undefined;
+    g.sat = !sb && tr && tong(sat) < tong(tr.sat) ? [...tr.sat] : sat;
     g.hp = g.hpMax;
     if (!sb) g.truoc = { hpMax: g.hpMax, sat: [...g.sat], heSo };
     g.lao = undefined;
@@ -5711,7 +5708,7 @@ export class Game {
     this.trieuHoi = true;
     this.cellTruyT = true;
     if (!this.frieza.chet) this.fzTruy = true;
-    if (!(this.ginyu.chet && !this.ginyu.choHoi)) this.gyTruy = true;
+    if (!this.ginyu.chet) this.gyTruy = true;
     // Ra khỏi máy bay / phi thuyền / quả cầu trốn
     const m = this.mayBay;
     if (m.ngoi.length) { m.ngoi = []; m.pha = 'dau'; m.t = 0; m.z = 0; m.x = m.goc.x; m.y = m.goc.y; }
@@ -5734,7 +5731,7 @@ export class Game {
       giamThan(n, false);
       this.vet.push({ id: this.id++, x: n.x, y: n.y - 120, t: 0, loai: 'chay', co: 1.4 });
     });
-    // Trùm còn sống: Cell đỏ giữa sân trên, Frieza trước điện thờ, bóng ma Goku bên cạnh
+    // Chỉ triệu hồi trùm còn sống (đã chết, kể cả đang chờ hồi sinh, thì thôi): Cell đỏ giữa sân trên, Frieza trước điện thờ, bóng ma Goku bên cạnh
     const dat = (o: { x: number; y: number }, kx: number, ky: number) => {
       o.x = THAN.x0 + THAN.w * kx;
       o.y = THAN.y0 + THAN.h * ky;
@@ -5743,7 +5740,7 @@ export class Game {
     };
     for (const c of this.cell) if (c.cap === SO_CAP - 1 && !c.chet) { dat(c, 0.25, 0.55); c.hoi = 'xong'; c.cay = undefined; }
     if (!this.frieza.chet) dat(this.frieza, 0.5, 0.5);
-    if (!(this.ginyu.chet && !this.ginyu.choHoi)) dat(this.ginyu, 0.75, 0.55);
+    if (!this.ginyu.chet) dat(this.ginyu, 0.75, 0.55);
     this.congCho = ds.map(({ p }) => p);
     this.camNgay = true;
     this.am.phat('chuong');
@@ -5760,7 +5757,7 @@ export class Game {
     if (!this.trieuHoi) return;
     for (const c of this.cell) if (c.cap === SO_CAP - 1 && !c.chet) giamThan(c, false);
     if (!this.frieza.chet) giamThan(this.frieza, false);
-    if (!this.ginyu.chet || this.ginyu.choHoi) giamThan(this.ginyu, true);
+    if (!this.ginyu.chet) giamThan(this.ginyu, true);
   }
 
   /** Đếm ngược trên thanh đen: phút cuối trước khi triệu hồi, và thời gian còn phải trụ trên thần điện */

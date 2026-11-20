@@ -36,7 +36,8 @@ export const CELL_LUC = [0.75, 0.75, 0.75, 0.125, 2.5];
 // Cấp 2 (đảo 3, 8 con): máu và sát thương bằng 2/3 Zinbu (150 máu → 100; Đấm 50 → 33; chưởng 190 → 127)
 // Cấp 1 (đảo 2, 5 con): máu và sát thương bằng Zinbu (150 máu; Đấm 50; chưởng 190)
 // Cấp 0 (đảo 1, 3 con): máu và sát thương bằng 1,5 lần Zinbu (225 máu; Đấm 75; chưởng 285)
-export const CELL_HP = [225, 150, 100, 75, 3000];
+// Mỗi Cell nhỏ (đảo 1–4, cấp 0–3) được cộng thêm 1000 máu so với mốc trên (người chơi giữa ván thường đã ăn tới hàng nghìn máu)
+export const CELL_HP = [1225, 1150, 1100, 1075, 3000];
 /** Sát thương gốc một đòn đấm / đá (nhân vật nhận sau giảm 50%, vẫn né 25%) */
 // Cấp 4 (đảo 0, Cell bạo nộ): sát thương gấp 5 lần Zinbu (Đấm 50 → 250; chưởng 190 → 1400), máu 3000
 export const CELL_SAT = [75, 50, 33, 25, 250];
@@ -52,10 +53,10 @@ export const CELL_TOC = [105, 127.5, 150, 180, 300];
  * (mỗi hạt +DAU_MAU máu như Mabu / Zinbu và sát thương +`CELL_DAU_SAT` mỗi đòn và sức mạnh +`CELL_DAU_SUC`); chỉ khi trên đảo không còn Cell nào khác nó mới đi đánh.
  * `CELL_AN_TAM`: đứng cách cây trong tầm này thì bắn; `CELL_AN_TRON`: nhân vật gần hơn tầm này thì nó chạy ra xa.
  */
-/** Mọi Cell ăn một hạt đậu thần: +CELL_DAU_SAT sát thương cộng thẳng vào mỗi đòn đấm / đá / chưởng (Cell không có mana nên hơn Mabu / Zinbu 2) */
-export const CELL_DAU_SAT = 12;
-/** Mỗi hạt đậu thần còn cộng sức mạnh `suc` +CELL_DAU_SUC theo cấp (nhân sát thương gốc đấm / đá / chưởng, cộng dồn, không giới hạn): Cell đỏ (cấp 4) 0,15, còn lại 0,1 */
-export const CELL_DAU_SUC = [0.1, 0.1, 0.1, 0.1, 0.15];
+/** Mọi Cell ăn một hạt đậu thần: +CELL_DAU_SAT sát thương cộng thẳng vào mỗi đòn đấm / đá / chưởng theo cấp (Cell cấp 0–3: 12, Cell đỏ (cấp 4): 15) */
+export const CELL_DAU_SAT = [12, 12, 12, 12, 15];
+/** Mỗi hạt đậu thần còn cộng sức mạnh `suc` +CELL_DAU_SUC theo cấp (nhân sát thương gốc, cộng dồn, không giới hạn): Cell cấp 0–3 0,1; Cell đỏ 0 (chỉ +15 sát thương mỗi hạt, không nhân sức mạnh) */
+export const CELL_DAU_SUC = [0.1, 0.1, 0.1, 0.1, 0];
 export const CELL_AN_TAM = 700;
 /** Con đi ăn đậu (`vai: 'an'`) chạy nhanh gấp CELL_AN_TOC lần Cell thường cùng cấp (tới cây, tới đậu, trốn) */
 export const CELL_AN_TOC = 1.5;
