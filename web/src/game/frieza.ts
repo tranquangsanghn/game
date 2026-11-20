@@ -50,19 +50,20 @@ export const FZ_FPS_DUNG = 1.5;
 /**
  * Chỉ số chiến đấu của Frieza (dạng thường; dạng vàng nhân FZ_VANG_GAP qua `fzGap()`).
  * Mabu / Zinbu (kể cả chưa hợp thể) và Super Bư đánh Frieza đều mất máu (Game `trungFz()`), qua giáp FZ_GIAP. Máu / mana mang vào thần điện giữ nguyên (không đặt lại), trung bình mỗi người ~3000 máu ⇒ Super Bư ~18000 máu (3 × tổng).
- * Đấm 450 (Super Bư ×4,5) mỗi 0,4s qua giáp 75% ≈ 280 sát thương / giây: dạng thường 7000 máu mất ~27s đánh liên tục (trừ hồi 15 / s);
- * dạng vàng (30s): máu / phòng thủ / hồi máu ×2,5 (đấm ~112 / s trừ hồi 37,5 / s vẫn thủng chậm, chưởng / Bóng ma nhanh hơn), nhưng sát thương chỉ ×1,5 và tốc độ ×1,3 để Super Bư còn trụ / né được.
- * Frieza đánh Mabu / Zinbu thường: Đấm 600 (nhận 300), chưởng 1800 (nhận 900) ⇒ chưa hợp thể thì chịu được vài đòn, đánh vẫn mất máu nhưng chậm, hợp thể Super Bư thì mạnh hơn nhiều.
+ * Đấm 450 (Super Bư ×4,5) mỗi 0,4s qua giáp 50% ≈ 560 sát thương / giây: dạng thường 4000 máu mất ~7s đánh liên tục (trừ hồi 10 / s);
+ * Mabu / Zinbu chưa hợp thể đấm 50 qua giáp ≈ 62 / giây ⇒ ~75s. Dạng vàng (30s): máu / phòng thủ / hồi máu ×2,5 (đấm thường chỉ ngang hồi 25 / s,
+ * Super Bư vẫn ~225 / s), sát thương chỉ ×1,5 và tốc độ ×1,3 để Super Bư còn trụ / né được.
+ * Frieza đánh Mabu / Zinbu: Đấm 300 (nhận 150), chưởng 1100 (nhận 550).
  */
-export const FZ_HP = 7000;
-export const FZ_SAT = 600;
-export const FZ_CHUONG_SAT = 1800;
+export const FZ_HP = 4000;
+export const FZ_SAT = 300;
+export const FZ_CHUONG_SAT = 1100;
 /** Tốc độ chạy khi đánh (px/s; nhân vật chạy 460, dạng vàng ×2 = 520 nhanh hơn chạy bộ, phải bay để né) */
 export const FZ_TOC_DANH = 260;
 /** Giây giữa 2 đòn đấm / đá, hồi chưởng */
 export const FZ_HOI = 0.9;
 export const FZ_CHUONG_HOI = 2;
-export const FZ_HOI_MAU = 15;
+export const FZ_HOI_MAU = 10;
 /** Ra khỏi thần điện mà máu dưới FZ_HOI_DUOI (tỉ lệ máu tối đa) thì Frieza bỏ đánh đi kiếm táo / đậu thần ăn, tới khi máu đạt FZ_HOI_TREN (150% máu tối đa) thì quay lại đánh.
  *  Mỗi lần ăn hồi một phần máu tối đa: đậu thần FZ_AN_DAU, táo FZ_AN_TAO (không giới hạn). Như Cell đỏ: không có táo / đậu thì bay tới cây, vận chưởng bắn đổ cây cho rơi đậu, nhân vật lại gần thì dịch chuyển sang cây khác */
 export const FZ_HOI_DUOI = 0.2;
@@ -72,7 +73,7 @@ export const FZ_AN_TAO = 0.1;
 export const FZ_AN_BK = 130;
 export const FZ_CAY_TAM = 450;
 /** Giáp: Super Bư đánh chỉ lọt (1 − FZ_GIAP) */
-export const FZ_GIAP = 0.75;
+export const FZ_GIAP = 0.5;
 /** Tầm đấm (chạm thân), chưởng: xa hơn FZ_CHUONG_XA mới bắn, tầm FZ_CHUONG_TAM, vận FZ_CHUONG_NAP giây (đứng yên, báo hiệu) */
 export const FZ_CHAM = 150;
 export const FZ_CHUONG_XA = 350;
