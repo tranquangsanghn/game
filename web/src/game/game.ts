@@ -7414,6 +7414,7 @@ export class Game {
     // Mê cung bom: chữ thập / cần trái chỉ chọn 1 trong 4 hướng (không chéo, không bay), giữ thì đi tiếp từng ô
     if (this.oMeCung(p)) {
       const s = this.mc.nv[p]!;
+      if (n.het) { s.di = null; return; }
       let hx = dx, hy = dy;
       if (!hx && !hy) {
         const can = this.canGat(g, 0, 1);
@@ -7913,6 +7914,12 @@ export class Game {
       return false;
     }
     n.dich = null;
+    // Đã gục (nằm cháy / trong bong bóng chờ cứu): không đi được
+    if (n.het) {
+      if (s.toi) { const o = oCua(n.x, n.y); const t = tamO(o.i, o.j); n.x = t.x; n.y = t.y; }
+      s.toi = null; s.di = null; s.duong = []; n.dangDi = false;
+      return true;
+    }
     let con = TOC_DO_DI * dt;
     for (let lan = 0; lan < 3 && con > 0; lan++) {
       const o = oCua(n.x, n.y);
