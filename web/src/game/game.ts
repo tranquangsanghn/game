@@ -3164,6 +3164,8 @@ export class Game {
 
   // Mũi tên ở mép màn hình chỉ hướng nhân vật khi họ ra ngoài khung nhìn
   muiTen(p: number) {
+    // Map mê cung bom: camera nhìn toàn mê cung, không cần mũi tên mép màn hình
+    if (this.nguoi.some((n) => !n.vang && this.vungMc(n))) return null;
     const v = this.viTriManHinh(p);
     const x = kep(v.x, 70, this.W - 70);
     const y = kep(v.y, 130, H - 70);

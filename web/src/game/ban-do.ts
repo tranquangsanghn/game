@@ -256,8 +256,8 @@ export const mcO: string[][] = MC_BO.map((r) => [...r]);
 const MC_TI_LE_GACH = 0.3;
 const MC_TI_LE_THUNG = 0.32;
 const MC_TI_LE_BI_AN = 0.09;
-/** Ô luôn để trống quanh cửa vào (chỗ đứng ném bom đầu tiên) */
-const MC_TRONG_VAO: [number, number][] = [[-1, 0], [-2, 0], [0, 1], [-1, 1]];
+/** Ô luôn để trống ở góc cửa vào: khối 4 × 4 ô (cửa vào ở góc trên phải), chỗ đứng ném bom đầu tiên */
+const MC_TRONG_VAO: [number, number][] = [0, 1, 2, 3].flatMap((b) => [0, -1, -2, -3].map((a): [number, number] => [a, b]));
 /** Sinh mê cung mới (mỗi ván): ô '.' của MC_BO rải ngẫu nhiên gạch / thùng gỗ / ô bí ẩn / nền trống, không có khối gạch 2 × 2;
  *  rồi đập bớt gạch (thành thùng gỗ) cho tới khi mọi ô không phải gạch đều tới được từ cửa vào (thùng / ô bí ẩn phá được bằng bom),
  *  mỗi hang có ít nhất một ô trống cạnh bên cho quái chui ra. */
