@@ -289,8 +289,10 @@ const W_MAC_DINH = 1600;
 const CELL_TRUY_T = 300;
 /** Hạ đủ 4 trùm xong chờ chừng này giây rồi mới hiện màn chiến thắng (kiemTraThang()) */
 const THANG_CHO = 3;
-/** Chơi tới chừng này giây thì Frieza (còn sống) rời thần điện bay đi truy sát mọi nơi, hợp thể mở khoá khắp nơi (kiemTraFzTruy()) */
+/** Chơi tới chừng này giây thì Frieza (còn sống) rời thần điện bay đi truy sát mọi nơi (kiemTraFzTruy()) */
 const FZ_TRUY_T = 600;
+/** Chơi tới chừng này giây (sớm 2 phút so với Frieza truy sát) thì hợp thể Super Bư mở khoá ở mọi nơi (hopTheMo(), kiemTraHopMo()) */
+const HOP_THE_MO_T = 480;
 /** Chơi tới chừng này giây mà bóng ma Goku chưa bị hạ hẳn thì nó rời núi đá bay đi truy sát (tốc độ lao GY_LAO_TOC, kiemTraGyTruy()) */
 const GY_TRUY_T = 900;
 /** Chơi tới chừng này giây mà còn người chơi sống: người chơi + Cell đỏ + Frieza + bóng ma Goku (còn sống) bị triệu hồi về thần điện,
@@ -1128,6 +1130,8 @@ export class Game {
   private tThang = -1;
   /** Frieza bay đi truy sát Mabu / Zinbu khắp thế giới (cả ván); hợp thể Super Bư làm được và giữ được ở mọi nơi */
   fzTruy = false;
+  /** Đã qua mốc mở khoá hợp thể ở mọi nơi (chỉ để báo chữ một lần, không lưu ván) */
+  private hopMoBao = false;
   /** Bóng ma Goku đã rời núi đá đi truy sát (sau GY_TRUY_T giây mà chưa bị hạ hẳn), cả ván */
   gyTruy = false;
   /** Phút 20: người chơi và các trùm còn sống bị triệu hồi về thần điện, không ai thoát ra được nữa (cả ván) */
@@ -1376,7 +1380,7 @@ export class Game {
     this.chonNguoiDau();
     // Máy bay đậu trong vườn gà, gần chỗ xuất phát (phía trong vườn)
     this.mayBay = taoMayBay(kep(gx + vao * 700, TUONG + MB_LE, MAP - TUONG - MB_LE), kep(gy + xuong * 380, TUONG + MB_LE, MAP - TUONG - MB_LE));
-    this.daRaVuon = this.cellTruyVuon = this.cellTruyT = this.fzTruy = this.gyTruy = this.trieuHoi = this.thangSongSot = false;
+    this.daRaVuon = this.cellTruyVuon = this.cellTruyT = this.fzTruy = this.gyTruy = this.trieuHoi = this.thangSongSot = this.hopMoBao = false;
     this.cellTruyBao = false;
     this.phiThuyen = taoPhiThuyen(this.mayBay);
     this.ga = [];
@@ -1760,6 +1764,7 @@ export class Game {
       this.kiemTraOLiVuon();
       this.kiemTraCellTruy();
       this.kiemTraFzTruy();
+      this.kiemTraHopMo();
       this.kiemTraGyTruy();
       this.kiemTraTrieuHoi();
       this.kiemTraThang(dt);
@@ -5800,15 +5805,28 @@ export class Game {
     if (this.tThang >= THANG_CHO) this.ketThuc(true);
   }
 
-  /** Chơi tới FZ_TRUY_T: Frieza (còn sống) rời thần điện bay đi truy sát mọi nơi cả ván (như bóng ma Goku), hợp thể Super Bư mở khoá ở mọi nơi */
+  /** Chơi tới HOP_THE_MO_T: hợp thể Super Bư mở khoá ở mọi nơi; báo một lần ngay lúc qua mốc (tải ván đã quá mốc thì không báo) */
+  private kiemTraHopMo(): void {
+    if (this.hopMoBao || this.tGame < HOP_THE_MO_T) return;
+    this.hopMoBao = true;
+    if (this.tGame > HOP_THE_MO_T + 2 || banDoHt !== 'sa') return;
+    const doi = this.nguoi.length === 2 && this.nguoi[0]!.ki + this.nguoi[1]!.ki === 1;
+    const n = this.nguoi.find((m) => !m.vang && !m.het) ?? this.nguoi.find((m) => !m.vang);
+    if (doi && n) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: '✨ 8 PHÚT: MỞ KHOÁ HỢP THỂ SUPER BƯ Ở MỌI NƠI!', mau: '#ffd23f', t: 0 });
+  }
+
+  /** Hợp thể Super Bư được ở mọi nơi: từ phút 8 (HOP_THE_MO_T) hoặc khi Frieza đã bay đi truy sát */
+  private hopTheMo(): boolean {
+    return this.fzTruy || this.tGame >= HOP_THE_MO_T;
+  }
+
+  /** Chơi tới FZ_TRUY_T: Frieza (còn sống) rời thần điện bay đi truy sát mọi nơi cả ván (như bóng ma Goku) */
   private kiemTraFzTruy(): void {
     if (this.fzTruy || this.tGame < FZ_TRUY_T || this.frieza.chet || banDoHt !== 'sa') return;
     this.fzTruy = true;
     const n = this.nguoi.find((m) => !m.vang && !m.het) ?? this.nguoi.find((m) => !m.vang);
     if (n) {
       this.chu.push({ id: this.id++, x: n.x, y: n.y - 360, text: '💜 10 PHÚT: FRIEZA BAY ĐI TRUY SÁT!', mau: '#d9b3ff', t: 0 });
-      const doi = this.nguoi.length === 2 && this.nguoi[0]!.ki + this.nguoi[1]!.ki === 1 && this.nguoi[0]!.ki !== this.nguoi[1]!.ki;
-      if (doi) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: '✨ MỞ KHOÁ HỢP THỂ SUPER BƯ Ở MỌI NƠI!', mau: '#ffd23f', t: 0 });
     }
     this.rungMan(0.5, 8);
   }
@@ -6920,9 +6938,9 @@ export class Game {
     return tot(a, 0) && tot(b, 1) && this.hopTheCho(a, b) && hyp(a.x - b.x, a.y - b.y) <= HOP_THE_GAN;
   }
 
-  /** Chỗ được hợp thể: cả hai trên thần điện, hoặc ở bất kỳ đâu khi Frieza đã bay đi truy sát (fzTruy) */
+  /** Chỗ được hợp thể: cả hai trên thần điện, hoặc ở bất kỳ đâu từ phút 8 / khi Frieza đã bay đi truy sát (hopTheMo()) */
   private hopTheCho(a: NguoiChoi, b: NguoiChoi): boolean {
-    return this.fzTruy || (trongThan(a.x, a.y) && trongThan(b.x, b.y));
+    return this.hopTheMo() || (trongThan(a.x, a.y) && trongThan(b.x, b.y));
   }
 
   /** Chữ gợi ý (chỉ trên đầu người còn đứng đầu tiên): đang chờ hồi hợp thể, hoặc đã sẵn sàng (đứng gần nhau) */
@@ -7049,7 +7067,7 @@ export class Game {
     N.dangDi = false;
     if (h.con <= 0 || C.het) { this.tachHopThe(C.het); return; }
     // Hợp thể chỉ có trên thần điện: ra khỏi thần điện (đi qua cổng, đáp xuống ngoài) thì tự tách luôn; đang bay thì chờ hạ xuống
-    if (!this.fzTruy && !C.bay && !trongThan(C.x, C.y)) {
+    if (!this.hopTheMo() && !C.bay && !trongThan(C.x, C.y)) {
       this.tachHopThe(false);
       this.chu.push({ id: this.id++, x: C.x, y: C.y - 440, text: '🏯 RA KHỎI THẦN ĐIỆN: TÁCH HỢP THỂ!', mau: '#9be7ff', t: 0 });
     }
