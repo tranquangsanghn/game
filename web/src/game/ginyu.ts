@@ -1,7 +1,7 @@
 // Bóng ma Goku (tên biến / ván lưu vẫn là `ginyu`): quái canh núi đá (đảo hình elip phía nam đảo 0). Một con duy nhất, lơ lửng giữa núi.
 // Vòng lặp: dạng BÓNG MA (không đánh ai, không ai đánh được) gặp Mabu / Zinbu thì đứng khiêu khích `GY_KHIEU_T` giây → lao (bám theo, tốc độ `GY_LAO_TOC`,
 // quãng tối đa `GY_LAO_QUANG` = 3 × quãng bay của nhân vật) vào người nhiều máu × sức mạnh nhất → trúng thì thành BẢN SAO y hệt người đó `GY_SAO_T` giây
-// (sprite / animation / thanh máu như nhân vật thật, máu = `GY_SAO_TI_LE` = 80%, sát thương = `GY_SAO_SAT` = 150% người đó, nhận sát thương như nhân vật), cứ 1–2s ngẫu nhiên đánh Mabu hoặc Zinbu
+// (sprite / animation / thanh máu như nhân vật thật, máu = `GY_SAO_TI_LE_DAU` = 120% lần nhập đầu, `GY_SAO_TI_LE` = 80% từ lần sau, sát thương = `GY_SAO_SAT` = 150% người đó, nhận sát thương như nhân vật), cứ 1–2s ngẫu nhiên đánh Mabu hoặc Zinbu
 // → hết giờ trở lại bóng ma, lại khiêu khích rồi lao. Chỉ chết khi đang là bản sao và bị đánh hết máu.
 // File này chỉ có dữ liệu + hàm thuần; logic chạy trong Game (`capNhatGinyu()`), vẽ trong ve-canvas.ts (`veGinyu()`).
 // Sprite: web/public/assets/game/goku_ma_atlas.png (dựng bằng tools/tao-atlas-goku-ma.py), 10 cột × 3 hàng khung 200×200, neo đáy giữa, quay mặt TRÁI.
@@ -40,6 +40,8 @@ export const GY_NGHI_T = 1.2;
 /** Bản sao: tồn tại GY_SAO_T giây, máu = GY_SAO_TI_LE, sát thương = GY_SAO_SAT người bị sao chép; đánh mỗi GY_SAO_DANH[0]..[1] giây (ngẫu nhiên) */
 export const GY_SAO_T = 15;
 export const GY_SAO_TI_LE = 0.8;
+/** Lần nhập đầu tiên (chưa từng biến bản sao): máu bản sao = GY_SAO_TI_LE_DAU máu người bị nhập */
+export const GY_SAO_TI_LE_DAU = 1.2;
 export const GY_SAO_SAT = 1.5;
 export const GY_SAO_DANH: [number, number] = [1, 2];
 /** Tỉ lệ chọn đòn của bản sao: Đấm · Đá (phần còn lại là chưởng) */
@@ -103,6 +105,8 @@ export interface Ginyu {
    *  dich = chỗ đang đi tới (lảng vảng cạnh đồng đội như người thật); doi = giây tới lúc đổi chỗ đi */
   /** Phiên bản bản sao lần trước (máu tối đa, sát thương, hệ số suc × hồi sinh lúc đó): từ lần biến hình thứ 2, người bị sao chép yếu hơn bản này
    *  thì bóng ma giữ nguyên máu / sức mạnh của bản này (`gyBienSao()`) */
+  /** Đã nhập vào người ít nhất một lần (lần sau máu bản sao = GY_SAO_TI_LE thay GY_SAO_TI_LE_DAU) */
+  daNhap?: boolean;
   truoc?: { hpMax: number; sat: [number, number, number]; heSo: number };
   /** Máu tối đa "giả" của bản sao (theo người bị sao chép) khi đang giữ chỉ số cũ: thanh máu trên đầu chỉ để lừa, máu thật hiện trên thanh đen */
   hpGia?: number;

@@ -29,9 +29,9 @@ export const FZ_VANG_BIEN_T = FZ_VANG_NHIP.reduce((a, b) => a + b, 0);
 /** Khung bùng hào quang / phóng chưởng (Game nổ, rung màn ở các khung này) */
 export const FZ_VANG_AURA = 2;
 export const FZ_VANG_PHONG = 6;
-/** Ở dạng vàng bao lâu (giây), hồi chiêu sau khi trở lại dạng thường (~10s một lần, tồn tại 30s) */
+/** Ở dạng vàng bao lâu (giây), hồi chiêu sau khi trở lại dạng thường (nghỉ 20s giữa 2 lần, tồn tại 30s) */
 export const FZ_VANG_T = 30;
-export const FZ_VANG_HOI = 10;
+export const FZ_VANG_HOI = 20;
 /** Dạng vàng: chỉ số gấp FZ_VANG_GAP: máu (tối đa và hiện có theo tỉ lệ), phòng thủ (nhận ÷FZ_VANG_GAP), tự hồi máu; riêng sát thương gấp FZ_VANG_SAT, tốc độ đi / chạy / đánh / hồi chưởng gấp FZ_VANG_TOC */
 export const FZ_VANG_GAP = 2.5;
 /** Dạng vàng: sát thương (đấm / chưởng) chỉ gấp FZ_VANG_SAT, tốc độ (đi / chạy, đánh, hồi chưởng) chỉ gấp FZ_VANG_TOC (thấp hơn FZ_VANG_GAP để Super Bư còn trụ được) */

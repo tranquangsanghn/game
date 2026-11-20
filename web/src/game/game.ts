@@ -12,7 +12,7 @@ import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung,
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
 import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzSat, fzToc, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_HOI_DUOI, FZ_HOI_TREN, FZ_AN_DAU, FZ_AN_TAO, FZ_AN_BK, FZ_CAY_TAM, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
-import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
+import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_TI_LE_DAU, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
@@ -4744,7 +4744,7 @@ export class Game {
     });
   }
 
-  /** Trúng người p: thành bản sao y hệt người đó (animation, thanh máu), chỉ số = GY_SAO_TI_LE của người đó */
+  /** Trúng người p: thành bản sao y hệt người đó (animation, thanh máu), máu = GY_SAO_TI_LE_DAU (lần đầu) / GY_SAO_TI_LE người đó */
   private gyBienSao(p: number): void {
     const g = this.ginyu, n = this.nguoi[p];
     const suc = n.suc ?? 1;
@@ -4752,7 +4752,10 @@ export class Game {
     const sb = this.hopThe?.chu === p;
     g.ki = n.ki;
     const heSo = (g.suc ?? 1) * (1 + GY_HOI_MAU * (g.hoiSinh ?? 0));
-    const hpMax = Math.max(1, Math.round(Math.max(1, n.hp) * GY_SAO_TI_LE * heSo));
+    // Lần nhập đầu tiên máu bản sao = GY_SAO_TI_LE_DAU (120%), từ lần sau GY_SAO_TI_LE (80%) máu người bị nhập
+    const tiLe = g.daNhap || g.truoc ? GY_SAO_TI_LE : GY_SAO_TI_LE_DAU;
+    g.daNhap = true;
+    const hpMax = Math.max(1, Math.round(Math.max(1, n.hp) * tiLe * heSo));
     const sat = [0, 1, 2].map((i) => Math.round(((sb ? this.satNv(p, i) : SAT_THUONG[i]![n.ki]!) * suc + (n.satDau ?? 0)) * GY_SAO_SAT)) as [number, number, number];
     // Từ lần biến hình thứ 2: máu bản sao = GY_SAO_TI_LE máu người bị sao chép CHỈ khi mức đó cao hơn máu tối đa của bản trước
     // (bản trước nhân theo suc / hồi sinh hiện tại); người bị sao chép ít máu hơn thì giữ nguyên máu bản trước, không cộng dồn.
@@ -4764,10 +4767,13 @@ export class Game {
     const tong = (a: number[]) => a[0]! + a[1]! + a[2]!;
     const giuMau = !sb && !!tr && hpMax <= trMax;
     g.hpMax = giuMau ? trMax : hpMax;
-    g.hpGia = giuMau ? hpMax : undefined;
+    // Lần nhập đầu (120%): thanh máu trên đầu vẫn theo máu thật của người bị nhập để không lộ
+    const hpNguoi = Math.max(1, Math.round(Math.max(1, n.hp) * heSo));
+    g.hpGia = giuMau ? hpMax : !sb && tiLe !== GY_SAO_TI_LE ? hpNguoi : undefined;
     g.sat = !sb && tr && tong(sat) < tong(tr.sat) ? [...tr.sat] : sat;
     g.hp = g.hpMax;
-    if (!sb) g.truoc = { hpMax: g.hpMax, sat: [...g.sat], heSo };
+    // Mốc "giữ chỉ số cũ" cho lần sau tính theo GY_SAO_TI_LE (80%), không theo 120% của lần nhập đầu
+    if (!sb) g.truoc = { hpMax: tiLe === GY_SAO_TI_LE ? g.hpMax : Math.max(1, Math.round(Math.max(1, n.hp) * GY_SAO_TI_LE * heSo)), sat: [...g.sat], heSo };
     g.lao = undefined;
     g.quang = undefined;
     g.khieu = undefined;
