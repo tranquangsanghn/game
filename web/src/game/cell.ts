@@ -39,9 +39,9 @@ export const CELL_LUC = [0.75, 0.75, 0.75, 0.125, 2.5];
 export const CELL_HP = [225, 150, 100, 75, 1500];
 /** Sát thương gốc một đòn đấm / đá (nhân vật nhận sau giảm 50%, vẫn né 25%) */
 // Cấp 4 (đảo 0, Cell bạo nộ): sát thương gấp 10 lần Zinbu (Đấm 50 → 500; chưởng 190 → 1900), máu giữ 1500
-export const CELL_SAT = [75, 50, 33, 25, 500];
-/** Tỉ lệ né đòn của nhân vật (cấp 4, đảo 0: 70%; cấp 0, đảo 1: 60%; cấp 2, đảo 3: 35%; cấp 3, đảo 4: 25% như Mabu / Zinbu) */
-export const CELL_NE = [0.6, 0, 0.35, 0.25, 0.7];
+export const CELL_SAT = [75, 50, 33, 25, 250];
+/** Tỉ lệ né đòn của nhân vật (cấp 4, đảo 0: 50%; cấp 0, đảo 1: 60%; cấp 2, đảo 3: 35%; cấp 3, đảo 4: 25% như Mabu / Zinbu) */
+export const CELL_NE = [0.6, 0, 0.35, 0.25, 0.5];
 /** Số con tách đàn khi xuất trận (cấp 2 và 3, đảo 3 và 4: 2 con tách đàn cùng đuổi một người, cả đàn còn lại đuổi người kia) */
 export const CELL_TACH_SO = [1, 1, 2, 2, 1];
 /** Tốc độ thật (px/s) */
@@ -76,7 +76,7 @@ export const CELL_DO_NHANH = 1.3;
 /** Số giây giữa 2 đòn đấm / đá */
 export const CELL_HOI = [0.9, 0.9, 0.9, 0.9, 0.9];
 /** Chưởng chiến đấu (3 loại như tiệc): sát thương gốc, hồi chiêu (giây), tầm xa nhất, bề rộng chùm (× độ to sprite) */
-export const CELL_CHUONG_SAT = [285, 190, 127, 95, 1900];
+export const CELL_CHUONG_SAT = [285, 190, 127, 95, 1400];
 // Cấp 0–3 (đảo 1 / 2 / 3 / 4: 3 / 5 / 8 / 10 con): hồi chưởng 2s
 export const CELL_CHUONG_HOI = [2, 2, 2, 2, 1];
 /** Combo chưởng (cấp 0–3): chưởng thứ 2 trở đi trúng cùng một người trong `CELL_COMBO_CUA` giây kể từ phát trúng trước thì sát thương × hệ số */
@@ -104,8 +104,8 @@ export const CELL_DICH_XA = 450;
 export const CELL_DICH_HOI = [9, 8, 7, 6, 4];
 /** Đàn (các con không tách đàn) chỉ một con được dịch chuyển mỗi `CELL_DICH_DAN` giây: đàn tới chậm là cơ hội đánh con tách đàn */
 export const CELL_DICH_DAN = 3;
-/** Cell bạo nộ (cấp 4): giáp giảm 70% sát thương; người đánh đang combo từ `CELL_PHA_GIAP` đòn trở lên thì phá giáp (nhận đủ) */
-export const CELL_GIAP = 0.7;
+/** Cell bạo nộ (cấp 4): giáp giảm 50% sát thương; người đánh đang combo từ `CELL_PHA_GIAP` đòn trở lên thì phá giáp (nhận đủ) */
+export const CELL_GIAP = 0.5;
 export const CELL_PHA_GIAP = 10;
 /** Cell bạo nộ dính Biến socola thì hoá socola `CELL_SOCOLA_T` giây (đứng yên, không giáp); dính mây lúc đó thì mất `CELL_SOCOLA_MAY` máu tối đa (một lần mỗi lần hoá) */
 export const CELL_SOCOLA_T = 4;
