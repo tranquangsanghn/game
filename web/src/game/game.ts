@@ -11,8 +11,8 @@ import { taoMeCung, O_VAO_MC, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
-import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzSat, fzToc, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_HOI_DUOI, FZ_HOI_TREN, FZ_AN_DAU, FZ_AN_TAO, FZ_AN_BK, FZ_CAY_TAM, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
-import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_TI_LE_DAU, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_TANG_SUC, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
+import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzMauGap, fzSat, fzToc, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_HOI_DUOI, FZ_HOI_TREN, FZ_AN_DAU, FZ_AN_TAO, FZ_AN_BK, FZ_CAY_TAM, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
+import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_TI_LE_DAU, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
@@ -1041,8 +1041,6 @@ export class Game {
   gyView = false;
   /** Animation của bản sao (nhân vật bị sao chép); không lưu ván */
   gyNv: NhanVat | null = null;
-  /** Nhân vật đã gục ở khung trước (để biết lúc vừa gục mà tăng sức bóng ma), không lưu ván */
-  private gyHetTruoc: boolean[] = [];
   /** Frieza đi loanh quanh điện thờ trên thần điện (không lưu ván); fzView = có vẽ không (trong khung nhìn + tầm nhìn) */
   frieza: Frieza = taoFrieza();
   fzView = false;
@@ -1391,7 +1389,6 @@ export class Game {
     this.ginyu = taoGinyu();
     this.frieza = taoFrieza();
     this.gyNv = null;
-    this.gyHetTruoc = [];
     this.cellDoi = [];
     this.cellChuongLuc = [];
     this.chuongTiec = [];
@@ -1449,7 +1446,7 @@ export class Game {
       vuon: { ngu: this.vuonNgu, to: this.toTrung, toDe: this.toDe, daNoPhu: this.daNoPhu, choVua: this.choVua },
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       thanVo: thanVo.flatMap((v, i) => (v ? [i] : [])),
-      frieza: { hp: Math.min(FZ_HP, Math.max(1, this.frieza.hp / fzGap(this.frieza))), chet: this.frieza.chet },
+      frieza: { hp: Math.min(FZ_HP, Math.max(1, this.frieza.hp / fzMauGap(this.frieza))), chet: this.frieza.chet },
       truyVuon: { ra: this.daRaVuon, on: this.cellTruyVuon, cell: this.cellTruyT, fz: this.fzTruy, gy: this.gyTruy, th: this.trieuHoi },
       nguoi: this.nguoi.map((n, p) => {
         const { nv, cuaCan, dich, bay, ...r } = n;
@@ -1494,7 +1491,6 @@ export class Game {
     // Bóng ma Goku: thôi chạm trán / gồng / lao dở (lần gặp sau sao chép lại, giữ tỉ lệ máu)
     if (d.ginyu) this.ginyu = { ...taoGinyu(), ...d.ginyu, gap: false, quen: 0, muc: undefined, nap: undefined, lao: undefined, lui: undefined, dang: 0, khieu: undefined, nghi: undefined, quang: undefined, sao: undefined, socola: undefined };
     this.gyNv = null;
-    this.gyHetTruoc = [];
     // Bản sao dở / xác bản sao không khôi phục: về dạng bóng ma
     if (this.ginyu.chet) this.ginyu.tChet = GY_CHET_T;
     // Ván lưu cũ đang chờ hồi sinh mà nay hết lượt (GY_HOI_SINH giảm): chết hẳn, rơi ngọc 3 sao
@@ -4720,29 +4716,7 @@ export class Game {
     return b && !b.vang && !b.het ? b : undefined;
   }
 
-  /** Mabu / Zinbu vừa gục trên núi đá: bóng ma mạnh thêm GY_TANG_SUC lần sức gốc (sát thương, máu bản sao) rồi đánh tiếp người còn lại */
-  private gyTangSuc(): void {
-    const g = this.ginyu;
-    this.nguoi.forEach((n, p) => {
-      const truoc = this.gyHetTruoc[p] ?? n.het;
-      this.gyHetTruoc[p] = n.het;
-      if (g.chet || n.vang || !n.het || truoc || (!this.gyTruy && !trongNui(n.x, n.y, GY_NUI_LE))) return;
-      const cu = g.suc ?? 1;
-      g.suc = cu + GY_TANG_SUC;
-      if (g.sao) {
-        const k = g.suc / cu;
-        g.hpMax = Math.round(g.hpMax * k);
-        g.hp = Math.round(g.hp * k);
-        if (g.hpGia) g.hpGia = Math.round(g.hpGia * k);
-        if (g.truoc) g.truoc = { ...g.truoc, hpMax: g.hpMax, heSo: g.truoc.heSo * k };
-        if (g.sao.muc === p) g.sao.muc = undefined;
-      }
-      if (g.muc === p) g.muc = undefined;
-      const tam = this.tamGy();
-      this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 260, text: `👻 BÓNG MA GOKU MẠNH LÊN! x${g.suc.toFixed(1).replace('.', ',')}`, mau: '#c39bff', t: 0 });
-      this.vetGa({ id: this.id++, x: g.x, y: tam.y, t: 0, loai: 'no' });
-    });
-  }
+
 
   /** Trúng người p: thành bản sao y hệt người đó (animation, thanh máu), máu = GY_SAO_TI_LE_DAU (lần đầu) / GY_SAO_TI_LE người đó */
   private gyBienSao(p: number): void {
@@ -4842,7 +4816,6 @@ export class Game {
 
   private capNhatGinyu(dt: number): void {
     const g = this.ginyu;
-    this.gyTangSuc();
     if (g.chet) {
       g.tChet += dt;
       if (this.gyNv) this.gyNv.capNhat(dt, false);

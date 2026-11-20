@@ -32,8 +32,10 @@ export const FZ_VANG_PHONG = 6;
 /** Ở dạng vàng bao lâu (giây), hồi chiêu sau khi trở lại dạng thường (nghỉ 20s giữa 2 lần, tồn tại 30s) */
 export const FZ_VANG_T = 30;
 export const FZ_VANG_HOI = 20;
-/** Dạng vàng: chỉ số gấp FZ_VANG_GAP: máu (tối đa và hiện có theo tỉ lệ), phòng thủ (nhận ÷FZ_VANG_GAP), tự hồi máu; riêng sát thương gấp FZ_VANG_SAT, tốc độ đi / chạy / đánh / hồi chưởng gấp FZ_VANG_TOC */
+/** Dạng vàng: phòng thủ (nhận ÷FZ_VANG_GAP) và tự hồi máu gấp FZ_VANG_GAP; riêng máu gấp FZ_VANG_MAU, sát thương gấp FZ_VANG_SAT, tốc độ đi / chạy / đánh / hồi chưởng gấp FZ_VANG_TOC */
 export const FZ_VANG_GAP = 2.5;
+/** Dạng vàng: máu (tối đa và hiện có theo tỉ lệ) gấp FZ_VANG_MAU (= 2,5 giảm 30%) */
+export const FZ_VANG_MAU = 1.75;
 /** Dạng vàng: sát thương (đấm / chưởng) chỉ gấp FZ_VANG_SAT, tốc độ (đi / chạy, đánh, hồi chưởng) chỉ gấp FZ_VANG_TOC (thấp hơn FZ_VANG_GAP để Super Bư còn trụ được) */
 export const FZ_VANG_SAT = 1.5;
 export const FZ_VANG_TOC = 1.3;
@@ -169,12 +171,12 @@ export function capNhatFrieza(f: Frieza, dt: number, thay = false, huongX?: numb
     const k1 = khungBien(f.bien);
     if (k0 < FZ_VANG_AURA && k1 >= FZ_VANG_AURA) su = 'aura';
     if (k0 < FZ_VANG_PHONG && k1 >= FZ_VANG_PHONG) su = 'phong';
-    if (f.bien >= FZ_VANG_BIEN_T) { f.bien = -1; f.vang = FZ_VANG_T; f.nghi = 1; f.hp *= FZ_VANG_GAP; su = 'xong'; }
+    if (f.bien >= FZ_VANG_BIEN_T) { f.bien = -1; f.vang = FZ_VANG_T; f.nghi = 1; f.hp *= FZ_VANG_MAU; su = 'xong'; }
     return su;
   }
   if (f.vang > 0) {
     f.vang -= dt;
-    if (f.vang <= 0) { f.vang = 0; f.hoiVang = FZ_VANG_HOI; f.hp = Math.max(1, f.hp / FZ_VANG_GAP); su = 'het'; }
+    if (f.vang <= 0) { f.vang = 0; f.hoiVang = FZ_VANG_HOI; f.hp = Math.max(1, f.hp / FZ_VANG_MAU); su = 'het'; }
   } else if (thay && f.hoiVang <= 0) {
     // Chiêu đặc biệt: thấy nhân vật thì biến thành Golden Frieza
     f.bien = 0;
@@ -231,9 +233,14 @@ export function fzGap(f: Frieza): number {
   return f.vang > 0 ? FZ_VANG_GAP : 1;
 }
 
-/** Máu tối đa hiện tại (dạng vàng gấp đôi) */
+/** Hệ số máu: dạng vàng gấp FZ_VANG_MAU */
+export function fzMauGap(f: Frieza): number {
+  return f.vang > 0 ? FZ_VANG_MAU : 1;
+}
+
+/** Máu tối đa hiện tại (dạng vàng gấp FZ_VANG_MAU) */
 export function fzHpMax(f: Frieza): number {
-  return FZ_HP * fzGap(f);
+  return FZ_HP * fzMauGap(f);
 }
 
 /** Đi thẳng tới (x, y) tốc độ `toc` (Game kẹp lại trong thần điện / ra khỏi vật cản sau đó) */
