@@ -1493,6 +1493,11 @@ export class Game {
     this.gyHetTruoc = [];
     // Bản sao dở / xác bản sao không khôi phục: về dạng bóng ma
     if (this.ginyu.chet) this.ginyu.tChet = GY_CHET_T;
+    // Ván lưu cũ đang chờ hồi sinh mà nay hết lượt (GY_HOI_SINH giảm): chết hẳn, rơi ngọc 3 sao
+    if (this.ginyu.chet && this.ginyu.choHoi && (this.ginyu.hoiSinh ?? 0) >= GY_HOI_SINH) {
+      this.ginyu.choHoi = undefined;
+      this.gyRoiNgoc();
+    }
     this.daRaVuon = d.truyVuon?.ra ?? true;
     this.cellTruyVuon = d.truyVuon?.on ?? false;
     this.cellTruyT = d.truyVuon?.cell ?? this.cellTruyVuon;
@@ -4790,6 +4795,16 @@ export class Game {
     this.chuGa({ id: this.id++, x: tam.x, y: tam.y - 200, text: '👻 BÓNG MA GOKU HIỆN HÌNH!', mau: '#9fe8ff', t: 0 });
   }
 
+  /** Bóng ma chết hẳn: hoá viên ngọc rồng GY_NGOC_SAO sao ở chỗ nó chết (chưa nhặt, chưa nằm trên đất); trả true nếu vừa rơi ngọc */
+  private gyRoiNgoc(): boolean {
+    const g = this.ginyu;
+    if (this.ngocNhat.includes(GY_NGOC_SAO) || this.vatPham.some((v) => v.loai === 'ngoc' && v.sao === GY_NGOC_SAO)) return false;
+    const v = { x: g.x, y: g.y };
+    giuTrongMap(v, LE_VP, false, 'dao');
+    this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'ngoc', sao: GY_NGOC_SAO });
+    return true;
+  }
+
   /** Xác bản sao mờ hết mà còn lượt hồi sinh: sống lại thành bóng ma tại chỗ, né +GY_HOI_NE, máu bản sao +GY_HOI_MAU */
   private gyHoiSinh(): void {
     const g = this.ginyu;
@@ -5091,12 +5106,7 @@ export class Game {
     // Còn lượt hồi sinh thì xác mờ hết rồi sống lại (gyHoiSinh); hết lượt mới chết hẳn và hoá viên ngọc rồng GY_NGOC_SAO sao (kể cả chết vì Biến socola)
     const conMang = GY_HOI_SINH - (g.hoiSinh ?? 0);
     if (conMang > 0) g.choHoi = true;
-    else if (!this.ngocNhat.includes(GY_NGOC_SAO) && !this.vatPham.some((v) => v.loai === 'ngoc' && v.sao === GY_NGOC_SAO)) {
-      const v = { x: g.x, y: g.y };
-      giuTrongMap(v, LE_VP, false, 'dao');
-      this.vatPham.push({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'ngoc', sao: GY_NGOC_SAO });
-      this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 300, text: `⭐ BÓNG MA HOÁ NGỌC RỒNG ${GY_NGOC_SAO} SAO!`, mau: '#ffb347', t: 0 });
-    }
+    else if (this.gyRoiNgoc()) this.chu.push({ id: this.id++, x: tam.x, y: tam.y - 300, text: `⭐ BÓNG MA HOÁ NGỌC RỒNG ${GY_NGOC_SAO} SAO!`, mau: '#ffb347', t: 0 });
     for (let i = 0; i < 3; i++) this.vet.push({ id: this.id++, x: g.x + ngauNhien(-80, 80), y: tam.y + ngauNhien(-80, 60), t: 0, loai: 'chay', co: 0.8 + i * 0.2 });
     this.rungMan(0.3, 12);
     this.dungKhung(0.15);
