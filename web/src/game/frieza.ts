@@ -82,6 +82,9 @@ export const FZ_AN_BK = 130;
 export const FZ_CAY_TAM = 450;
 /** Giáp: Super Bư đánh chỉ lọt (1 − FZ_GIAP) */
 export const FZ_GIAP = 0.5;
+/** Tỉ lệ MISS (đòn trượt, không mất máu): Frieza thường FZ_MISS, Golden Frieza FZ_MISS_VANG */
+export const FZ_MISS = 0.5;
+export const FZ_MISS_VANG = 0.25;
 /** Tầm đấm (chạm thân), chưởng: xa hơn FZ_CHUONG_XA mới bắn, tầm FZ_CHUONG_TAM, vận FZ_CHUONG_NAP giây (đứng yên, báo hiệu) */
 export const FZ_CHAM = 150;
 export const FZ_CHUONG_XA = 350;
