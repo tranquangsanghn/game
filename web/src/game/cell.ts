@@ -71,7 +71,7 @@ export const CELL_AN_DICH_HOI = 3;
  */
 export const CELL_HOI_DUOI = 0.2;
 /** Cell đỏ đầy máu và không bị đánh CELL_DO_TANG_CHO giây thì máu tối đa (và máu hiện có) tăng CELL_DO_TANG mỗi giây, không giới hạn */
-export const CELL_DO_TANG = 3;
+export const CELL_DO_TANG = 5;
 export const CELL_DO_TANG_CHO = 1;
 /** Máu tối đa của Cell: CELL_HP theo cấp + phần Cell đỏ đã tăng thêm (`hpThem`) */
 export const cellHpMax = (c: Cell) => CELL_HP[c.cap]! + (c.hpThem ?? 0);
