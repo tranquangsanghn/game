@@ -81,7 +81,7 @@ export interface TrungGa {
   ap?: number;
 }
 /** soc = chưởng biến socola của Zinbu · troi = chưởng tự bắn lên trời (chỉ để đẹp, không gây sát thương) */
-interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; /** chưởng của Vegeta (vẽ bằng quả chưởng sao chổi) */ vg?: boolean; /** đòn của bản sao bóng ma Goku (p = người bị sao chép, chỉ trúng nhân vật) */ gy?: boolean; /** chưởng của Super Bư (quả cầu vàng to) */ sb?: boolean; /** chiêu Bóng ma của Super Bư (con ma bay tới rồi nổ to) */ ma?: boolean; /** đòn của con Bư (p = người mang thân Super Bư): không hồi mana, không đổi combo của người đó, không đụng máy bay / bánh / đồng đội */ con?: boolean; }
+interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; /** chưởng của Vegeta (vẽ bằng quả chưởng sao chổi) */ vg?: boolean; /** đòn của bản sao bóng ma Goku (p = người bị sao chép, chỉ trúng nhân vật) */ gy?: boolean; /** chưởng của Super Bư (quả cầu vàng to) */ sb?: boolean; /** chiêu Bóng ma của Super Bư (con ma bay tới rồi nổ to) */ ma?: boolean; /** đòn của con Bư (p = người mang thân Super Bư): không hồi mana, không đổi combo của người đó, không đụng máy bay / bánh / đồng đội */ con?: boolean; /** đòn Super Bư tính combo (SB_COMBO): người chơi mang thân Super Bư đánh quái, hoặc bản sao Super Bư của bóng ma Goku đánh nhân vật */ sbCombo?: boolean; /** thứ tự đòn của đạn này trong chuỗi combo Super Bư (chốt ở lần trúng đầu) */ sbThu?: number; sbDa?: boolean; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn hồi SOCOLA_GA_TI_LE máu tối đa */
 export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc' | 'dau'; /** ngọc: số sao (thiếu = 1) */ sao?: number; /** ngọc: độ to khi vẽ (thiếu = 0,55) */ to?: number; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; /** socola: sức mạnh (nhân sát thương) người / Cell ăn được cộng thêm (thiếu thì `CELL_AN_SUC`) */ sucAn?: number; }
@@ -374,6 +374,9 @@ const MB_MC_LE = 300;
 const HOP_THE_GAP = 3;
 /** Sát thương mỗi đòn của Super Bư = HOP_THE_SAT_GAP × (đòn Mabu + đòn Zinbu) (máu vẫn HOP_THE_GAP × tổng máu) */
 const HOP_THE_SAT_GAP = 4.5;
+/** Combo Super Bư (đấm / đá / chưởng chung một chuỗi, như Cell bạo nộ / Frieza): đòn 1 ×1 · đòn 2 ×1,5 · đòn 3 ×1,5 · từ đòn 4 ×2; đòn trúng trong SB_COMBO_CUA giây kể từ đòn trúng trước thì nối chuỗi */
+const SB_COMBO = [1, 1.5, 1.5, 2];
+const SB_COMBO_CUA = 4;
 const HOP_THE_T = 75;
 const HOP_THE_HOI = 15;
 /** Super Bư bị hạ: tách ra sớm, mỗi người còn HOP_THE_CON_MAU máu lúc hợp thể (tối thiểu 1) */
@@ -1040,6 +1043,12 @@ export class Game {
   /** Combo đòn Frieza (đấm + chưởng chung chuỗi, như Cell bạo nộ): lúc trúng gần nhất và thứ tự đòn trong chuỗi trên mỗi nhân vật (không lưu ván) */
   fzChuongLuc: number[] = [];
   fzComboDem: number[] = [];
+  /** Combo Super Bư của người chơi (chuỗi chung mọi quái): lúc trúng gần nhất và thứ tự đòn (không lưu ván) */
+  sbComboLuc = -99;
+  sbComboDem = 0;
+  /** Combo bản sao Super Bư của bóng ma Goku trên mỗi nhân vật (không lưu ván) */
+  gySbLuc: number[] = [];
+  gySbDem: number[] = [];
   /** Tiệc sinh nhật Cell: bánh ở giữa vòng Cell; chưởng Cell bắn vào bánh (chỉ để đẹp, không lưu); banhView = bánh nằm trong khung nhìn */
   tiec: Tiec[] = [];
   chuongTiec: ChuongTiec[] = [];
@@ -1402,6 +1411,10 @@ export class Game {
     this.cellComboDem = [];
     this.fzChuongLuc = [];
     this.fzComboDem = [];
+    this.sbComboLuc = -99;
+    this.sbComboDem = 0;
+    this.gySbLuc = [];
+    this.gySbDem = [];
     this.chuongTiec = [];
     this.dan = [];
     this.vet = [];
@@ -1499,6 +1512,10 @@ export class Game {
     this.cellComboDem = [];
     this.fzChuongLuc = [];
     this.fzComboDem = [];
+    this.sbComboLuc = -99;
+    this.sbComboDem = 0;
+    this.gySbLuc = [];
+    this.gySbDem = [];
     for (const c of this.cell) { c.vai = undefined; c.muc = undefined; c.cay = undefined; c.nap = undefined; c.chien = false; if (!this.tiecCua(c)) c.tiec = false; }
     if (d.mayBay) this.mayBay = { ...taoMayBay(d.mayBay.x, d.mayBay.y), ...d.mayBay };
     this.phiThuyen = d.phiThuyen ? { ...taoPhiThuyen(this.mayBay), ...d.phiThuyen } : taoPhiThuyen(this.mayBay);
@@ -2329,24 +2346,24 @@ export class Game {
       if (hyp(tam.x - vt.x, tam.y - vt.y) >= CHUONG_XUYEN + BAN_KINH_GA * tlGa(g) * S_GA * 0.8) continue;
       (d.da ??= []).push(g.id);
       if (this.danAn(d, g)) continue;
-      if (this.trungGa(g, d.p, d.sat, 2)) this.dungKhung(0.03);
+      if (this.trungGa(g, d.p, this.satDan(d), 2)) { this.sbTrung(d); this.dungKhung(0.03); }
     }
     for (const c of this.cell) {
       if (c.chet || d.da?.includes(c.id)) continue;
       const tam = this.tamCell(c);
       if (hyp(tam.x - vt.x, tam.y - vt.y) >= CHUONG_XUYEN + CELL_BK * cellK(c.cap) * 3) continue;
       (d.da ??= []).push(c.id);
-      if (this.trungCell(c, d.p, d.sat)) this.dungKhung(0.03);
+      if (this.trungCell(c, d.p, this.satDan(d))) { this.sbTrung(d); this.dungKhung(0.03); }
     }
     // Ginyu (đánh dấu trong `da` bằng id -1)
     if (!this.ginyu.chet && !d.da?.includes(-1) && this.gyGan(vt.x, vt.y, CHUONG_XUYEN + GY_BK)) {
       (d.da ??= []).push(-1);
-      if (this.trungGy(d.p, d.sat)) this.dungKhung(0.03);
+      if (this.trungGy(d.p, this.satDan(d))) { this.sbTrung(d); this.dungKhung(0.03); }
     }
     // Frieza (đánh dấu bằng id -2)
     if (!this.frieza.chet && !d.da?.includes(-2) && this.fzGan(vt.x, vt.y, CHUONG_XUYEN + FZ_BK)) {
       (d.da ??= []).push(-2);
-      if (this.trungFz(d.p, d.sat)) this.dungKhung(0.03);
+      if (this.trungFz(d.p, this.satDan(d))) { this.sbTrung(d); this.dungKhung(0.03); }
     }
     // Trên núi đá Mabu / Zinbu đánh được nhau (đánh dấu trong `da` bằng -10 - ô)
     if (!d.con && this.danTrungDongDoi(d, vt.x, vt.y, CHUONG_XUYEN + 70)) this.dungKhung(0.03);
@@ -2458,21 +2475,21 @@ export class Game {
     if (!g) {
       const ce = this.cell.find((c) => !c.chet && hyp(this.tamCell(c).x - x, this.tamCell(c).y - y) < CELL_BK * cellK(c.cap) * 3.5);
       if (ce) {
-        if (this.trungCell(ce, p, d.sat) && (d.nhom === 0 || d.nhom === 1)) {
+        if (this.trungCell(ce, p, this.satDan(d)) && (this.sbTrung(d), d.nhom === 0 || d.nhom === 1)) {
           if (!d.con) this.hoiMana(this.nguoi[p], MANA_DAM);
           if (d.nhom === 1) this.dungKhung(0.04);
         }
         return;
       }
       if (!this.ginyu.chet && this.gyGan(x, y, GY_BK * 1.3)) {
-        if (this.trungGy(p, d.sat) && (d.nhom === 0 || d.nhom === 1)) {
+        if (this.trungGy(p, this.satDan(d)) && (this.sbTrung(d), d.nhom === 0 || d.nhom === 1)) {
           if (!d.con) this.hoiMana(this.nguoi[p], MANA_DAM);
           if (d.nhom === 1) this.dungKhung(0.04);
         }
         return;
       }
       if (!this.frieza.chet && this.fzGan(x, y, FZ_BK * 1.3)) {
-        if (this.trungFz(p, d.sat) && (d.nhom === 0 || d.nhom === 1)) {
+        if (this.trungFz(p, this.satDan(d)) && (this.sbTrung(d), d.nhom === 0 || d.nhom === 1)) {
           if (!d.con) this.hoiMana(this.nguoi[p], MANA_DAM);
           if (d.nhom === 1) this.dungKhung(0.04);
         }
@@ -2486,7 +2503,8 @@ export class Game {
     }
     if (g) {
       if (this.danAn(d, g)) return;
-      if (this.trungGa(g, p, d.sat, d.nhom)) {
+      if (this.trungGa(g, p, this.satDan(d), d.nhom)) {
+        this.sbTrung(d);
         // Đấm / Đá trúng thì hồi mana; Đá và đòn trúng gà mẹ làm game khựng một nhịp
         if (d.nhom === 0 || d.nhom === 1) if (!d.con) this.hoiMana(this.nguoi[p], MANA_DAM);
         if (d.nhom === 1 || g.loai === 'boss') this.dungKhung(0.04);
@@ -2558,13 +2576,14 @@ export class Game {
       const tam = this.tamGa(g);
       return hyp(tam.x - d.x1, tam.y - d.y1) < bk;
     });
-    trung.forEach((g) => { if (!this.danAn(d, g)) this.trungGa(g, d.p, d.sat, 2); });
+    const sat = this.satDan(d);
+    trung.forEach((g) => { if (!this.danAn(d, g) && this.trungGa(g, d.p, sat, 2)) this.sbTrung(d); });
     const ceTrung = this.cell.filter((c) => !c.chet && !d.da?.includes(c.id) && hyp(this.tamCell(c).x - d.x1, this.tamCell(c).y - d.y1) < bk + CELL_BK * cellK(c.cap) * 2);
-    ceTrung.forEach((c) => this.trungCell(c, d.p, d.sat));
+    ceTrung.forEach((c) => { if (this.trungCell(c, d.p, sat)) this.sbTrung(d); });
     const gyTrung = !this.ginyu.chet && !d.da?.includes(-1) && this.gyGan(d.x1, d.y1, bk + GY_BK);
-    if (gyTrung) this.trungGy(d.p, d.sat);
+    if (gyTrung && this.trungGy(d.p, sat)) this.sbTrung(d);
     const fzTrung = !this.frieza.chet && !d.da?.includes(-2) && this.fzGan(d.x1, d.y1, bk + FZ_BK);
-    if (fzTrung) this.trungFz(d.p, d.sat);
+    if (fzTrung && this.trungFz(d.p, sat)) this.sbTrung(d);
     const dongDoi = !d.con && this.danTrungDongDoi(d, d.x1, d.y1, bk + 60);
     if (d.vg) this.vet.push({ id: this.id++, x: d.x1, y: d.y1, t: 0, loai: 'chay', co: 1, vg: true });
     else if (d.ma || d.sb) {
@@ -4039,7 +4058,7 @@ export class Game {
       const x1 = x + tanX + dx;
       const y1 = y + tanY + Math.abs(dx) * 0.3;
       const T = hyp(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
-      this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0, sat: soc ? SAT_SOCOLA : this.satNv(p, nhom), soc: soc && i === 0, nhom, an, vg: n.ki === 2 && !soc && !sb, sb: sb && !ma, ma: ma && i === 0 });
+      this.dan.push({ id: this.id++, p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: i > 0, to: chieu && i === 0, sat: soc ? SAT_SOCOLA : this.satNv(p, nhom), soc: soc && i === 0, nhom, an, vg: n.ki === 2 && !soc && !sb, sb: sb && !ma, ma: ma && i === 0, sbCombo: sb && !soc });
     });
     if (tren && chieu) this.trungMb();
   }
@@ -4559,6 +4578,30 @@ export class Game {
     }
   }
 
+  /** Hệ số combo Super Bư của đạn d (1 nếu không phải đòn Super Bư); thứ tự đòn chốt ở lần trúng đầu của đạn */
+  private sbHe(d: Dan, luc: number, dem: number): number {
+    if (!d.sbCombo) return 1;
+    if (!d.sbDa) d.sbThu = this.t - luc <= SB_COMBO_CUA ? dem + 1 : 1;
+    return SB_COMBO[Math.min(d.sbThu ?? 1, SB_COMBO.length) - 1]!;
+  }
+
+  /** Sát thương đạn của người chơi lên quái, đã nhân combo Super Bư */
+  private satDan(d: Dan): number {
+    if (!d.sbCombo || d.con) return d.sat;
+    return Math.round(d.sat * this.sbHe(d, this.sbComboLuc, this.sbComboDem));
+  }
+
+  /** Đạn Super Bư của người chơi trúng thật một quái: nối chuỗi combo (mỗi đạn tính một lần) */
+  private sbTrung(d: Dan): void {
+    if (!d.sbCombo || d.con || d.sbDa) return;
+    const he = this.sbHe(d, this.sbComboLuc, this.sbComboDem);
+    d.sbDa = true;
+    this.sbComboLuc = this.t;
+    this.sbComboDem = d.sbThu ?? 1;
+    const n = this.nguoi[d.p];
+    if (he > 1 && n) this.chu.push({ id: this.id++, x: n.x, y: n.y - 360, text: `💥 COMBO SUPER BƯ x${String(he).replace('.', ',')}!`, mau: '#ffd23f', t: 0 });
+  }
+
   /** Chưởng của Frieza tới nơi: ai (không ẩn / gục / mây) nằm trên chùm thì trúng (vẫn né / giảm 50%, combo tăng dần như Cell bạo nộ); không bắn máy bay */
   private chuongFzTrung(q: ChuongTiec): void {
     const rong = CELL_CHUONG_RONG * q.k;
@@ -5031,7 +5074,7 @@ export class Game {
     const x1 = ke.x, y1 = ke.y - 80;
     const chieu = nhom === 2;
     const T = hyp(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
-    this.dan.push({ id: this.id++, p: s.p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: false, to: chieu, sat: Math.round(g.sat[nhom]! * (g.suc ?? 1)), nhom, vg: g.ki === 2 && chieu && !s.sb, sb: chieu && s.sb, gy: true });
+    this.dan.push({ id: this.id++, p: s.p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: false, to: chieu, sat: Math.round(g.sat[nhom]! * (g.suc ?? 1)), nhom, vg: g.ki === 2 && chieu && !s.sb, sb: chieu && s.sb, gy: true, sbCombo: s.sb });
     s.muc = undefined;
     s.danh = ngauNhien(GY_SAO_DANH[0], GY_SAO_DANH[1]);
   }
@@ -5044,7 +5087,16 @@ export class Game {
       if (!this.gyHopLe(q) || d.da?.includes(-10 - q)) return;
       if (hyp(n.x - vt.x, n.y - 80 - vt.y) >= r) return;
       (d.da ??= []).push(-10 - q);
-      if (this.nhanSatThuong(n, d.sat, false, '#ff4d4d') && d.to) n.combo = 0;
+      // Bản sao Super Bư: combo như Super Bư thật (chuỗi riêng trên mỗi nhân vật, mỗi đạn tính một lần cho mỗi người)
+      const he = d.sbCombo ? SB_COMBO[Math.min(this.t - (this.gySbLuc[q] ?? -99) <= SB_COMBO_CUA ? (this.gySbDem[q] ?? 0) + 1 : 1, SB_COMBO.length) - 1]! : 1;
+      if (this.nhanSatThuong(n, Math.round(d.sat * he), false, '#ff4d4d')) {
+        if (d.to) n.combo = 0;
+        if (d.sbCombo) {
+          this.gySbDem[q] = this.t - (this.gySbLuc[q] ?? -99) <= SB_COMBO_CUA ? (this.gySbDem[q] ?? 0) + 1 : 1;
+          this.gySbLuc[q] = this.t;
+          if (he > 1) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: `💥 COMBO SUPER BƯ x${String(he).replace('.', ',')}!`, mau: '#ffd23f', t: 0 });
+        }
+      }
     });
     if (!cuoi) return;
     if (d.to) {
