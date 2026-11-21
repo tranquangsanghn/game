@@ -8,7 +8,6 @@ import type { KhungSprite } from './sprite';
 /** lua = bom lửa · nuoc = bom nước (nổ chữ thập, bấm lại nút để kích nổ) · no = bom nổ (nổ vùng vuông sau BOM_NO_T giây) */
 export type LoaiBom = 'lua' | 'nuoc' | 'no';
 export const LOAI_BOM: LoaiBom[] = ['lua', 'nuoc', 'no'];
-export const TEN_BOM: Record<LoaiBom, string> = { lua: 'Bom lửa', nuoc: 'Bom nước', no: 'Bom nổ' };
 export const MC_TEN = 'Mê cung bom';
 
 /** Sprite bom (tools/tao-atlas-bom.py): hàng 0 = quả bom lửa · nước · nổ (tâm quả ở giữa khung, cao ~120);
@@ -80,7 +79,7 @@ export const MC_CAM_LE = 160;
 export const BOM_MUC = 4;
 export const BOM_NAP_BUOC = 0.35;
 /** Bom bay trên không (giây) trước khi chạm đất */
-export const BOM_BAY_T = 0.35;
+const BOM_BAY_T = 0.35;
 /** Bom lửa / nước: chạm đất rồi chờ bao lâu thì tia nổ dài bấy nhiêu ô (1..BOM_TAM_MAX); đủ BOM_TAM_MAX giây thì tự nổ */
 export const BOM_TAM_MAX = 4;
 /** Bom nổ: tự nổ sau BOM_NO_T giây kể từ lúc chạm đất, vùng vuông bán kính BOM_NO_BK ô; gạch che được */
@@ -104,9 +103,9 @@ export const DO_MC_HOI = 15;
 /** Ô bí ẩn '?' đã vỡ mọc lại sau chừng này giây (thùng gỗ vỡ thì mất hẳn) */
 export const O_BI_AN_HOI = 40;
 /** Kho đồ lúc mới vào ván (mỗi nhân vật): xô nước, kim châm, và mỗi loại bom. Dùng hết thì phải đi nhặt thêm */
-export const MC_XO_DAU = 3;
-export const MC_KIM_DAU = 3;
-export const MC_BOM_DAU = 5;
+const MC_XO_DAU = 3;
+const MC_KIM_DAU = 3;
+const MC_BOM_DAU = 5;
 /** Nhặt thêm: mỗi lần nhặt xô / kim (ô K / X và ô bí ẩn) được MC_DO_THEM, túi bom (ô bí ẩn) được MC_BOM_THEM mỗi loại */
 export const MC_DO_THEM = 2;
 export const MC_BOM_THEM = 2;
@@ -137,7 +136,7 @@ export const QUAI_DL: Record<LoaiQuai, DlQuai> = {
   khi: { ten: 'Khỉ đột', toc: 140, mau: 2, ngui: 6, duoi: 0.45, tam: 6, nap: 1.1, hoi: 6, to: 2.8, tiaY: 340, bay: false, diem: 60 },
   quy: { ten: 'Quỷ canh cổng', toc: 250, mau: 1, ngui: 5, duoi: 0.4, tam: 3, nap: 0.8, hoi: 5, to: 2.3, tiaY: 260, bay: true, diem: 50 },
 };
-export const QUAI_DAU = 15;
+const QUAI_DAU = 15;
 export const QUAI_CACH = 30;
 export const QUAI_TOI_DA = 2;
 /** Đấm / cắn / húc người ở ô bên cạnh (mỗi ô chỉ một người hoặc một quái nên không bao giờ đứng chung ô): cách trong QUAI_CHAM (hơn 1 ô MC_O = 360 một chút, ô chéo 509 không tính)
@@ -250,9 +249,9 @@ export const O_VAO_MC = oTheo('S')[0]!;
 /** Lối ra (góc dưới trái): bước tới tâm ô này thì cả đội dịch chuyển tới núi đá (chỗ bóng ma Goku) */
 export const O_RA_MC = oTheo('E')[0]!;
 
-export const taoNvMc = (): NvMc => ({ nap: null, bom: { lua: MC_BOM_DAU, nuoc: MC_BOM_DAU, no: MC_BOM_DAU }, mang: 0, xo: MC_XO_DAU, kim: MC_KIM_DAU, trang: null, guc: null, luu: null, toi: null, di: null, duong: [] });
+const taoNvMc = (): NvMc => ({ nap: null, bom: { lua: MC_BOM_DAU, nuoc: MC_BOM_DAU, no: MC_BOM_DAU }, mang: 0, xo: MC_XO_DAU, kim: MC_KIM_DAU, trang: null, guc: null, luu: null, toi: null, di: null, duong: [] });
 /** Bà phù thuỷ mới (mạng đầu) ở ô ngọc */
-export function taoBa(): BaMc {
+function taoBa(): BaMc {
   const t = tamO(O_NGOC_MC.i, O_NGOC_MC.j);
   return { hp: BA_HP, x: t.x, y: t.y, ti: O_NGOC_MC.i, tj: O_NGOC_MC.j, dang: false, huong: 1, hoiSinh: 0, hoi: 0, nem: 3, pha: -1, loai: 'lua', lat: false, trung: 0, chet: false, tChet: 0 };
 }

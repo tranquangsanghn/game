@@ -117,6 +117,9 @@ const SA_VACH_CAO = 120;
 const SA_VACH_SAU = 190;
 const SA_VIEN = 22;
 const SA_O_DOAN = 1600;
+/** Lề ảnh ô mê cung dựng sẵn: hai bên (nét viền) và phía trên (gạch nhô lên 40) */
+const O_MC_LE_X = 10;
+const O_MC_LE_TREN = 50;
 /** Ô ảnh nền đảo dựng sẵn (veDaoO): cạnh O_NEN_PX điểm ảnh, giữ tối đa O_NEN_MAX ô, mỗi khung dựng tối đa O_NEN_TAO ô mới */
 const O_NEN_PX = 512;
 const O_NEN_MAX = 48;
@@ -176,6 +179,13 @@ export class VeCanvas {
   private mip = new Map<string, HTMLCanvasElement>();
   /** Elip (nền + viền) vẽ sẵn đúng cỡ điểm ảnh trên màn hình: khoá `rx|ry|dày|nền|viền` (điểm ảnh thật, làm tròn 4px) */
   private elip = new Map<string, HTMLCanvasElement>();
+  /** Ảnh dựng sẵn của nút chiêu trên thanh đen hai bên (anhSan), theo trạng thái + cỡ điểm ảnh */
+  private san = new Map<string, HTMLCanvasElement>();
+  /** Bình máu / mana trên thanh đen hai bên (binhSan): mỗi ô một canvas dùng lại */
+  private binh: { khoa: string; cv: HTMLCanvasElement }[] = [];
+  /** Ảnh dựng sẵn từng loại ô mê cung bom (veOMc) ở tỉ lệ oMcTl */
+  private oMcAnh = new Map<string, HTMLCanvasElement>();
+  private oMcTl = 0;
   /** Đường viền thần điện (dựng một lần) */
   private thanVien: Path2D | null = null;
 
@@ -308,7 +318,7 @@ export class VeCanvas {
 
   /** Cỡ các bộ nhớ đệm ảnh (cho bộ đo hiệu năng) */
   thongKe(): Record<string, number> {
-    return { dmAnh: this.anh.size, dmNhuom: this.nhuom.size, dmMip: this.mip.size, dmElip: this.elip.size, dmONen: this.oNen.size, dmONenCu: this.oNenCu?.o.size ?? 0, dmONenKho: this.oNenKho.length };
+    return { dmAnh: this.anh.size, dmNhuom: this.nhuom.size, dmMip: this.mip.size, dmElip: this.elip.size, dmSan: this.san.size, dmONen: this.oNen.size, dmONenCu: this.oNenCu?.o.size ?? 0, dmONenKho: this.oNenKho.length };
   }
 
   // ─── Thế giới (trong nhóm camera) ───
@@ -1881,67 +1891,90 @@ export class VeCanvas {
     ctx.fillRect(MC.x1, H.y + H.r + 30, T, MC.y1 - H.y - H.r - 30);
     const i0 = Math.max(0, Math.floor((x0 - MC.x0) / MC_O) - 1), i1 = Math.min(MC_COT - 1, Math.floor((x1 - MC.x0) / MC_O) + 1);
     const j0 = Math.max(0, Math.floor((y0 - MC.y0) / MC_O) - 1), j1 = Math.min(MC_HANG - 1, Math.floor((y1 - MC.y0) / MC_O) + 1);
-    const O = MC_O;
+    // Mỗi loại ô dựng sẵn thành ảnh (bậc √2 của tỉ lệ phóng) rồi dán: cả mê cung ~250 ô vẽ vector mỗi khung rất tốn
+    const m = ctx.getTransform();
+    const sc = Math.min(1, 2 ** (Math.ceil(Math.log2(hyp(m.a, m.b)) * 2) / 2));
+    if (sc !== this.oMcTl) { this.oMcTl = sc; this.oMcAnh.clear(); }
     for (let j = j0; j <= j1; j++) {
       for (let i = i0; i <= i1; i++) {
-        const px = MC.x0 + i * O, py = MC.y0 + j * O, k = mcO[j]![i]!;
-        ctx.fillStyle = (i + j) % 2 ? '#5b524a' : '#544b44';
-        ctx.fillRect(px, py, O, O);
-        ctx.strokeStyle = 'rgba(0,0,0,0.18)';
-        ctx.lineWidth = 6;
-        ctx.strokeRect(px + 3, py + 3, O - 6, O - 6);
-        if (k === '#') {
-          // Gạch: khối nổi có mặt trước sẫm, mạch vữa so le
-          ctx.fillStyle = '#7a3a26';
-          ctx.fillRect(px, py + O - 60, O, 60);
-          ctx.fillStyle = '#a6533a';
-          ctx.fillRect(px, py - 40, O, O - 20);
-          ctx.fillStyle = '#5a2e1c';
-          for (let h = 0; h < 4; h++) {
-            const y = py - 40 + h * ((O - 20) / 4);
-            ctx.fillRect(px, y, O, 8);
-            const lech = h % 2 ? O / 4 : 0;
-            for (let x = lech; x < O; x += O / 2) ctx.fillRect(px + x, y, 8, (O - 20) / 4);
-          }
-        } else if (k === 'w' || k === '?') {
-          const m = 34;
-          ctx.fillStyle = 'rgba(0,0,0,0.25)';
-          ctx.fillRect(px + m, py + O - m - 10, O - 2 * m, 30);
-          tronCD(ctx, px + m, py + m - 20, O - 2 * m, O - 2 * m, k === '?' ? 40 : 14);
-          ctx.fillStyle = k === '?' ? '#f1c232' : '#c98a45';
-          ctx.fill();
-          ctx.lineWidth = 18;
-          ctx.strokeStyle = k === '?' ? '#a87a0c' : '#7a4a1f';
-          ctx.stroke();
-          if (k === 'w') {
-            ctx.beginPath();
-            ctx.moveTo(px + m + 10, py + m - 10);
-            ctx.lineTo(px + O - m - 10, py + O - m - 30);
-            ctx.moveTo(px + O - m - 10, py + m - 10);
-            ctx.lineTo(px + m + 10, py + O - m - 30);
-            ctx.stroke();
-          } else {
-            ctx.fillStyle = '#6b4a00';
-            ctx.font = `900 200px ${FONT}`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('?', px + O / 2, py + O / 2 - 10);
-          }
-        } else if (k === 'H') {
-          const g = ctx.createRadialGradient(px + O / 2, py + O / 2, 10, px + O / 2, py + O / 2, O * 0.46);
-          g.addColorStop(0, '#0d0a08');
-          g.addColorStop(0.6, '#2a1f17');
-          g.addColorStop(1, '#5b4636');
-          ctx.fillStyle = g;
-          duongElip(ctx, O * 0.44, O * 0.36, px + O / 2, py + O / 2);
-          ctx.fill();
-          ctx.strokeStyle = '#24180f';
-          ctx.lineWidth = 12;
-          ctx.stroke();
+        const k = mcO[j]![i]!;
+        const loai = k === '#' || k === 'w' || k === '?' || k === 'H' ? k : '.';
+        const le = (i + j) % 2 === 1;
+        const khoa = `${loai}${le ? 1 : 0}`;
+        let anh = this.oMcAnh.get(khoa);
+        if (!anh) {
+          anh = document.createElement('canvas');
+          anh.width = Math.ceil((MC_O + 2 * O_MC_LE_X) * sc);
+          anh.height = Math.ceil((MC_O + O_MC_LE_TREN) * sc);
+          const x = anh.getContext('2d')!;
+          x.scale(anh.width / (MC_O + 2 * O_MC_LE_X), anh.height / (MC_O + O_MC_LE_TREN));
+          x.translate(O_MC_LE_X, O_MC_LE_TREN);
+          this.veOMc(x, loai, le);
+          this.oMcAnh.set(khoa, anh);
         }
+        ctx.drawImage(anh, MC.x0 + i * MC_O - O_MC_LE_X, MC.y0 + j * MC_O - O_MC_LE_TREN, MC_O + 2 * O_MC_LE_X, MC_O + O_MC_LE_TREN);
       }
     }
     ctx.restore();
+  }
+
+  /** Một ô mê cung (nền ô bàn cờ + gạch / thùng gỗ / ô bí ẩn / hang) vẽ vector, góc trên trái ô ở gốc toạ độ; gạch nhô lên trên ô 40 */
+  private veOMc(ctx: CanvasRenderingContext2D, k: string, le: boolean): void {
+    const O = MC_O;
+    ctx.fillStyle = le ? '#5b524a' : '#544b44';
+    ctx.fillRect(0, 0, O, O);
+    ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(3, 3, O - 6, O - 6);
+    if (k === '#') {
+      // Gạch: khối nổi có mặt trước sẫm, mạch vữa so le
+      ctx.fillStyle = '#7a3a26';
+      ctx.fillRect(0, O - 60, O, 60);
+      ctx.fillStyle = '#a6533a';
+      ctx.fillRect(0, -40, O, O - 20);
+      ctx.fillStyle = '#5a2e1c';
+      for (let h = 0; h < 4; h++) {
+        const y = -40 + h * ((O - 20) / 4);
+        ctx.fillRect(0, y, O, 8);
+        const lech = h % 2 ? O / 4 : 0;
+        for (let x = lech; x < O; x += O / 2) ctx.fillRect(x, y, 8, (O - 20) / 4);
+      }
+    } else if (k === 'w' || k === '?') {
+      const m = 34;
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fillRect(m, O - m - 10, O - 2 * m, 30);
+      tronCD(ctx, m, m - 20, O - 2 * m, O - 2 * m, k === '?' ? 40 : 14);
+      ctx.fillStyle = k === '?' ? '#f1c232' : '#c98a45';
+      ctx.fill();
+      ctx.lineWidth = 18;
+      ctx.strokeStyle = k === '?' ? '#a87a0c' : '#7a4a1f';
+      ctx.stroke();
+      if (k === 'w') {
+        ctx.beginPath();
+        ctx.moveTo(m + 10, m - 10);
+        ctx.lineTo(O - m - 10, O - m - 30);
+        ctx.moveTo(O - m - 10, m - 10);
+        ctx.lineTo(m + 10, O - m - 30);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = '#6b4a00';
+        ctx.font = `900 200px ${FONT}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('?', O / 2, O / 2 - 10);
+      }
+    } else if (k === 'H') {
+      const g = ctx.createRadialGradient(O / 2, O / 2, 10, O / 2, O / 2, O * 0.46);
+      g.addColorStop(0, '#0d0a08');
+      g.addColorStop(0.6, '#2a1f17');
+      g.addColorStop(1, '#5b4636');
+      ctx.fillStyle = g;
+      duongElip(ctx, O * 0.44, O * 0.36, O / 2, O / 2);
+      ctx.fill();
+      ctx.strokeStyle = '#24180f';
+      ctx.lineWidth = 12;
+      ctx.stroke();
+    }
   }
 
   /** Lối ra mê cung bom (ô O_RA_MC): cổng xoáy màu xanh lá vừa một ô (gradient, không dùng shadowBlur) */
@@ -2697,32 +2730,24 @@ export class VeCanvas {
 
     // Hai bình cầu xếp dọc ngay trên nút trên cùng: trên = máu (xanh lá, số máu nằm giữa bình), dưới = mana (xanh lơ, số mana nằm giữa bình, xám khi đang khoá bay sau lần bay)
     const ym = c.yMauNv(p);
-    this.veBinh(ctx, xt, ym - 28, dongHe(c.mauNv(q)), '#ff3b3b', ng.het);
-    const moMang = c.motMang(q); // mê cung bom: không có mana
-    if (!moMang) this.veBinh(ctx, xt, ym + 14, dongHe(c.nlBay(q)), ng.bayKhoa > 0 ? '#8a9a94' : '#2fa8ff', ng.het);
-    ctx.save();
-    ctx.globalAlpha = ng.het ? 0.4 : 1;
-    ctx.font = `700 15px ${FONT}`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
-    ctx.fillStyle = '#fff';
-    // Mê cung bom: 1 mạng, không tính máu
-    for (const [v, y] of [[moMang ? `${1 + (c.mc.nv[q]?.mang ?? 0)}♥` : c.hpNv(q), ym - 28], ...(moMang ? [] : [[c.manaNv(q), ym + 14]])] as [number | string, number][]) {
-      ctx.strokeText(`${v}`, xt, y);
-      ctx.fillText(`${v}`, xt, y);
-    }
-    // Hợp thể: vai của người này (người bị nhập lái đi lại / bay, người mang thân ra đòn)
+    const moMang = c.motMang(q); // mê cung bom: không có mana, 1 mạng, không tính máu
+    this.binhSan(ctx, p * 2, xt, ym - 28, dongHe(c.mauNv(q)), '#ff3b3b', ng.het, moMang ? `${1 + (c.mc.nv[q]?.mang ?? 0)}♥` : `${c.hpNv(q)}`);
+    if (!moMang) this.binhSan(ctx, p * 2 + 1, xt, ym + 14, dongHe(c.nlBay(q)), ng.bayKhoa > 0 ? '#8a9a94' : '#2fa8ff', ng.het, `${c.manaNv(q)}`);
     if (c.hopThe) {
+      ctx.save();
       ctx.font = `800 14px ${FONT}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+      // Hợp thể: vai của người này (người bị nhập lái đi lại / bay, người mang thân ra đòn)
       const vai = nhap ? '🕹 ĐI LẠI' : '🎯 RA ĐÒN';
       ctx.strokeText(vai, xt, ym - 66);
       ctx.fillStyle = '#ff7ac8';
       ctx.fillText(vai, xt, ym - 66);
+      ctx.restore();
     }
-    ctx.restore();
 
     // Các chiêu xếp dọc từ dưới lên: đang dùng sáng + phát sáng, hết mana thì mờ hẳn
     const bom = c.oMeCung(p);
@@ -2733,23 +2758,29 @@ export class VeCanvas {
       const soCon = !bom ? 0 : loaiBom ? c.bomCon(p, loaiBom) : (c.mc.nv[p]![doCuu!] ?? 0);
       const dung = bom ? !!loaiBom && c.bomDangNap(p) === loaiBom : ng0.nv.nhom === b.k && !nhap;
       const het = bom ? ng0.het || soCon <= 0 : c.hetMana(p, b.k) || nhap;
+      // Nút dựng sẵn thành ảnh (vector + shadowBlur mỗi khung rất tốn), chỉ alpha đổi theo trạng thái
+      const sp = ng0.nv.sp;
+      const sangNut = dung && !het;
+      const anhSprite = loaiBom ? SP_BOM.atlas : !doCuu && b.k === 3 && !sp.nhomDon[3]?.ma && sp.nhomDon[3]?.may ? sp.atlas : null;
       ctx.save();
       ctx.translate(b.x, b.y);
-      ctx.scale(0.8, 0.8);
       ctx.globalAlpha = het ? 0.12 : dung ? 1 : 0.4;
-      if (dung && !het) this.sang(ctx, ng0.mau);
-      duongTron(ctx, c.R_NUT);
-      ctx.fillStyle = '#0d1b12';
-      ctx.fill();
-      ctx.strokeStyle = dung ? ng0.mau : '#555';
-      ctx.lineWidth = 4;
-      ctx.stroke();
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
-      ctx.scale(1.35, 1.35);
-      if (loaiBom) this.bieuTuongBom(ctx, loaiBom);
-      else if (doCuu) { ctx.scale(1.1, 1.1); this.veDoCuu(ctx, doCuu); }
-      else this.bieuTuongNv(ctx, b.k, ng0.nv.sp);
+      this.anhSan(ctx, `nut|${b.k}|${loaiBom ?? ''}|${doCuu ?? ''}|${sp.atlas}|${dung ? ng0.mau : ''}|${sangNut}`, c.R_NUT * 0.8 + 20, (x) => {
+        x.scale(0.8, 0.8);
+        if (sangNut) this.sang(x, ng0.mau);
+        duongTron(x, c.R_NUT);
+        x.fillStyle = '#0d1b12';
+        x.fill();
+        x.strokeStyle = dung ? ng0.mau : '#555';
+        x.lineWidth = 4;
+        x.stroke();
+        x.shadowColor = 'transparent';
+        x.shadowBlur = 0;
+        x.scale(1.35, 1.35);
+        if (loaiBom) this.bieuTuongBom(x, loaiBom);
+        else if (doCuu) { x.scale(1.1, 1.1); this.veDoCuu(x, doCuu); }
+        else this.bieuTuongNv(x, b.k, sp);
+      }, !anhSprite || !!this.lay(anhSprite));
       ctx.restore();
       if (bom) {
         // Số còn lại trong kho (bom ném loại nào là ngẫu nhiên, xô / kim tốn 1 mỗi lần cứu nên nút chỉ để xem kho)
@@ -2769,6 +2800,43 @@ export class VeCanvas {
         ctx.restore();
       }
     }
+  }
+
+  /** Bình máu / mana kèm số giữa bình: dựng thành ảnh trong một canvas cố định mỗi ô (o = p × 2 + 0 máu / 1 mana),
+   *  chỉ vẽ lại khi mức đầy / màu / số / cỡ điểm ảnh đổi (không tạo canvas mới mỗi lần) */
+  private binhSan(ctx: CanvasRenderingContext2D, o: number, x: number, y: number, nl: number, mau: string, mo: boolean, so: string): void {
+    // nửa rộng 60 cho số dài (máu / mana cộng không giới hạn), nửa cao 24 vừa bình
+    const RX = 60, RY = 24;
+    ctx.save();
+    ctx.translate(x, y);
+    const m = ctx.getTransform();
+    const k = hyp(m.a, m.b);
+    const SX = Math.ceil(RX * k), SY = Math.ceil(RY * k);
+    const khoa = `${Math.round(nl * 200)}|${mau}|${so}|${SX}`;
+    let b = this.binh[o];
+    if (!b) b = this.binh[o] = { khoa: '', cv: document.createElement('canvas') };
+    if (b.khoa !== khoa) {
+      b.khoa = khoa;
+      if (b.cv.width !== 2 * SX || b.cv.height !== 2 * SY) { b.cv.width = 2 * SX; b.cv.height = 2 * SY; }
+      const xc = b.cv.getContext('2d')!;
+      xc.setTransform(1, 0, 0, 1, 0, 0);
+      xc.clearRect(0, 0, 2 * SX, 2 * SY);
+      xc.setTransform(k, 0, 0, k, SX, SY);
+      this.veBinh(xc, 0, 0, Math.round(nl * 200) / 200, mau, false);
+      xc.font = `700 15px ${FONT}`;
+      xc.textAlign = 'center';
+      xc.textBaseline = 'middle';
+      xc.lineJoin = 'round';
+      xc.lineWidth = 4;
+      xc.strokeStyle = 'rgba(0,0,0,0.75)';
+      xc.fillStyle = '#fff';
+      xc.strokeText(so, 0, 0);
+      xc.fillText(so, 0, 0);
+    }
+    ctx.setTransform(1, 0, 0, 1, Math.round(m.e), Math.round(m.f));
+    ctx.globalAlpha = mo ? 0.4 : 1;
+    ctx.drawImage(b.cv, -SX, -SY);
+    ctx.restore();
   }
 
   // Bình mana hình cầu: nền tối, phần đầy dâng từ đáy lên, viền sáng
@@ -3114,6 +3182,31 @@ export class VeCanvas {
   // ─── Công cụ ───
 
   /** Phát sáng như bộ lọc cũ (làm mờ 5 đơn vị rồi chồng hình gốc lên): dùng bóng đổ cùng màu, độ mờ tính theo tỉ lệ hiện tại */
+  /** Hình tâm ở gốc toạ độ hiện tại, bán kính bao r (toạ độ hiện tại): vẽ một lần thành ảnh đúng cỡ điểm ảnh (khoá + cỡ) rồi dán 1:1.
+   *  luu = false khi ảnh nguồn chưa nạp xong (vẽ tạm, không giữ). Chỉ dùng cho phép biến đổi không xoay. */
+  private anhSan(ctx: CanvasRenderingContext2D, khoa: string, r: number, ve: (x: CanvasRenderingContext2D) => void, luu: boolean): void {
+    const m = ctx.getTransform();
+    const k = hyp(m.a, m.b);
+    const S = Math.ceil(r * k);
+    const ma = `${khoa}|${S}`;
+    let cv = this.san.get(ma);
+    if (!cv) {
+      cv = document.createElement('canvas');
+      cv.width = cv.height = 2 * S;
+      const x = cv.getContext('2d')!;
+      x.setTransform(k, 0, 0, k, S, S);
+      ve(x);
+      if (luu) {
+        if (this.san.size > 120) this.san.clear();
+        this.san.set(ma, cv);
+      }
+    }
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, Math.round(m.e), Math.round(m.f));
+    ctx.drawImage(cv, -S, -S);
+    ctx.restore();
+  }
+
   private sang(ctx: CanvasRenderingContext2D, mau: string): void {
     ctx.shadowColor = mau;
     ctx.shadowBlur = 10 * ctx.getTransform().a;

@@ -24,32 +24,32 @@ export const SP_FRIEZA_VANG: KhungSprite = { atlas: 'assets/game/golden_frieza.p
 /** Độ to dạng vàng (thân cao ~520 điểm ảnh nguồn → ~310, to hơn dạng thường ~245) */
 export const FZ_VANG_TO = 0.6;
 /** Thời gian từng khung biến hình (giây, theo animation.json của sheet) */
-export const FZ_VANG_NHIP = [0.4, 0.35, 0.3, 0.3, 0.3, 0.45, 0.6];
-export const FZ_VANG_BIEN_T = FZ_VANG_NHIP.reduce((a, b) => a + b, 0);
+const FZ_VANG_NHIP = [0.4, 0.35, 0.3, 0.3, 0.3, 0.45, 0.6];
+const FZ_VANG_BIEN_T = FZ_VANG_NHIP.reduce((a, b) => a + b, 0);
 /** Khung bùng hào quang / phóng chưởng (Game nổ, rung màn ở các khung này) */
 export const FZ_VANG_AURA = 2;
-export const FZ_VANG_PHONG = 6;
+const FZ_VANG_PHONG = 6;
 /** Ở dạng vàng bao lâu (giây), hồi chiêu sau khi trở lại dạng thường (nghỉ 20s giữa 2 lần, tồn tại 30s) */
 export const FZ_VANG_T = 30;
-export const FZ_VANG_HOI = 20;
+const FZ_VANG_HOI = 20;
 /** Dạng vàng: phòng thủ (nhận ÷FZ_VANG_GAP) và tự hồi máu gấp FZ_VANG_GAP; riêng máu gấp FZ_VANG_MAU, sát thương gấp FZ_VANG_SAT, tốc độ đi / chạy / đánh / hồi chưởng gấp FZ_VANG_TOC */
 export const FZ_VANG_GAP = 2.5;
 /** Dạng vàng: máu (tối đa và hiện có theo tỉ lệ) gấp FZ_VANG_MAU (= 2,5 giảm 30%) */
-export const FZ_VANG_MAU = 1.75;
+const FZ_VANG_MAU = 1.75;
 /** Dạng vàng: cộng thêm FZ_VANG_THEM máu (tối đa và hiện có) sau khi nhân FZ_VANG_MAU */
-export const FZ_VANG_THEM = 2000;
+const FZ_VANG_THEM = 2000;
 /** Dạng vàng: sát thương (đấm / chưởng) chỉ gấp FZ_VANG_SAT, tốc độ (đi / chạy, đánh, hồi chưởng) chỉ gấp FZ_VANG_TOC (thấp hơn FZ_VANG_GAP để Super Bư còn trụ được) */
-export const FZ_VANG_SAT = 1.5;
-export const FZ_VANG_TOC = 1.3;
+const FZ_VANG_SAT = 1.5;
+const FZ_VANG_TOC = 1.3;
 /** Độ to (nhân khung 80 điểm ảnh; thân cao ~70 → ~245, nhỉnh hơn Mabu / Zinbu) */
 export const FZ_TO = 3.5;
 /** Tốc độ đi bộ thật (px/s; nhân vật đi bộ 460) */
-export const FZ_TOC = 170;
+const FZ_TOC = 170;
 /** Đứng thở giữa hai lượt đi (giây, ngẫu nhiên trong khoảng) */
-export const FZ_NGHI: [number, number] = [1.5, 4];
+const FZ_NGHI: [number, number] = [1.5, 4];
 /** Nhịp animation (khung / giây) */
-export const FZ_FPS_DI = 7;
-export const FZ_FPS_DUNG = 1.5;
+const FZ_FPS_DI = 7;
+const FZ_FPS_DUNG = 1.5;
 
 /**
  * Chỉ số chiến đấu của Frieza (dạng thường; dạng vàng nhân FZ_VANG_GAP qua `fzGap()`).
@@ -108,7 +108,7 @@ export const FZ_DANH_T = 0.3;
 const DUONG_ANH: [number, number][] = [
   [135, 90], [135, 170], [150, 250], [262, 256], [360, 262], [458, 256], [570, 250], [585, 170], [585, 90],
 ];
-export const FZ_DUONG = DUONG_ANH.map(([x, y]) => ({ x: THAN.x0 + x * THAN_TL, y: THAN.y0 + y * THAN_TL }));
+const FZ_DUONG = DUONG_ANH.map(([x, y]) => ({ x: THAN.x0 + x * THAN_TL, y: THAN.y0 + y * THAN_TL }));
 
 export interface Frieza {
   x: number; y: number;

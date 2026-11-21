@@ -10,7 +10,7 @@ import { THAN_VAT } from './than-dien-vat';
 export type LoaiBanDo = 'co' | 'sa';
 
 /** Cỡ vườn gà (= map đồng cỏ), đặt ở 0..VUON */
-export const VUON = 6400;
+const VUON = 6400;
 const TAM = VUON / 2;
 /** Biển rộng tối thiểu giữa tường vườn gà và mép đảo (xa hơn tầm nhìn / tầm đánh / tầm ngửi của gà) */
 const CACH_VUON = 2200;
@@ -673,7 +673,7 @@ function luocDiem(p: [number, number][]): number[] {
 }
 
 /** Vòng tròn của đảo i (tâm, bán kính gốc × VONG_DAO): Cell không ra khỏi vòng này, chỉ đuổi nhân vật trong vòng (cộng `them`) */
-export const VONG_DAO = 1.0;
+const VONG_DAO = 1.0;
 export function trongVongDao(x: number, y: number, i: number, them = 0): boolean {
   const d = DAO[i];
   return !!d && hyp(x - d.x, y - d.y) <= d.r * VONG_DAO + them;

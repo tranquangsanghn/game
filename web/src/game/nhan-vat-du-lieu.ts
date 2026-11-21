@@ -64,7 +64,7 @@ export const MABU: NhanVatSprite = {
   ],
 };
 
-export const ZINBU: NhanVatSprite = {
+const ZINBU: NhanVatSprite = {
   ten: 'Zinbu', atlas: 'assets/game/buu_atlas.png', atlasW: 2352, atlasH: 1148, w: 147, h: 82, cot: 16,
   neoX: 47, neoY: 70,
   // 208-209: quay lưng (khung 71 xoá mặt, lật gương) · 210: khung 71 lật gương
@@ -129,7 +129,7 @@ export const ZINBU: NhanVatSprite = {
 // Vegeta: dựng bằng tools/tao-atlas-vegeta.py từ sheet người dùng gửi (nền tím, khung đứng 50px nguồn, Scale2x 2 lần = PNG ×4, không nội suy).
 // Khung đứng cao 62,5 logic, bằng Mabu; PNG 3440×2960 = 3,2 × logic (nét khi phóng).
 // Chỉ có 3 nhóm đòn (không có chiêu riêng thứ 4); chưởng vẽ bằng quả chưởng / vụ nổ trong vegeta_chuong.png.
-export const VEGETA: NhanVatSprite = {
+const VEGETA: NhanVatSprite = {
   ten: 'Vegeta', atlas: 'assets/game/vegeta_atlas.png', atlasW: 1075, atlasH: 925, w: 107.5, h: 92.5, cot: 10,
   neoX: 57.5, neoY: 90,
   anim: {

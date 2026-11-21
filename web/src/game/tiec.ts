@@ -38,7 +38,7 @@ export const CHUONG_LOAI = [
 /** Cổng dịch chuyển (chỉ để trang trí, chưa có tác dụng): đặt giữa đảo `CONG_DAO` (đảo Cell 10 con); atlas 4 khung xoáy (khung 480×320, neo giữa đáy),
  *  tách nền trắng từ ảnh người dùng gửi bằng tools/tao-atlas-cong.py. Vẽ `veCong()` trong ve-canvas.ts, xếp theo y loại 'cong'. */
 export const SP_CONG: KhungSprite = { atlas: 'assets/game/cong_dich_chuyen.png', atlasW: 1920, atlasH: 320, w: 480, h: 320, cot: 4, neoX: 240, neoY: 310 };
-export const CONG_DAO = 4;
+const CONG_DAO = 4;
 export const CONG_TO = 1.6;
 /** Cổng cắm chân xuống đất: số điểm ảnh sprite (trước khi phóng) bị chìm dưới mặt đất */
 export const CONG_CHIM = 40;

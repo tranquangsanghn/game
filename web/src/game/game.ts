@@ -247,7 +247,10 @@ const DA_VO_LAI = 15;
 const hopDaNui = (loai: number) => (loai <= 2 ? { r: 190, h: 390 } : { r: 90, h: 160 });
 
 
-export const PHIEN_BAN_LUU = 4;
+const PHIEN_BAN_LUU = 4;
+/** Cạnh ô lưới trang trí (ttTrong) */
+const TT_O = 1024;
+const ttKhoa = (i: number, j: number) => (i + 2048) * 4096 + (j + 2048);
 /** Dữ liệu một ván đã lưu: các trường tuỳ ý của game, máy chủ chỉ lưu nguyên khối JSON */
 export interface TrangThaiLuu {
   phienBan: number; tGame: number; t: number; chamDen: number; id: number;
@@ -847,7 +850,7 @@ function taoCayThemSa(cu: TrangTri[]): TrangTri[] {
 }
 
 /** Số loại tảng đá trên núi đá (atlas DA_NUI trong ve-canvas.ts) */
-export const SO_DA_NUI = 8;
+const SO_DA_NUI = 8;
 /** Tảng đá trên núi đá (đánh dấu `nui`, `loai` = 1..SO_DA_NUI, không phải cây nên không đổ): thưa, cách bờ đủ xa.
  *  Ít vật (~30) để nhẹ khung hình; hai loại đầu là khối đá to, hiếm hơn. */
 function taoTrangTriNui(): TrangTri[] {
@@ -1108,6 +1111,12 @@ export class Game {
   xep: VatXep[] = [];
   /** Toàn bộ cây / bụi / đá của map (sinh một lần, cố định); chỉ vật trong khung nhìn mới vào `xep` */
   trangTri: TrangTri[] = taoTrangTri();
+  /** Lưới ô TT_O chia trang trí (vị trí cố định) theo chỗ đứng: lọc khung nhìn / quét đường đạn chỉ duyệt các ô chạm hộp cần xét
+   *  thay vì cả ~440 vật mỗi khung. Dựng lại khi mảng trangTri đổi (ván mới) */
+  private ttLuoi = new Map<number, TrangTri[]>();
+  private ttLuoiCua: TrangTri[] | null = null;
+  private ttTamView: TrangTri[] = [];
+  private ttTamDan: TrangTri[] = [];
   /** Bản đồ chọn ở màn mục tiêu (nhớ để Chơi lại giữ nguyên): 'co' đồng cỏ · 'sa' đảo sa mạc */
   banDo: LoaiBanDo = 'sa';
   /** Bản đồ của ván đang dựng (trangTri, nền, biển): chỉ đổi khi bắt đầu ván, để màn chọn map không vẽ lẫn */
@@ -1875,6 +1884,29 @@ export class Game {
     this.rung = Math.max(this.rung, giay);
   }
 
+  /** Trang trí có gốc trong hộp (x0, y0)..(x1, y1) (gần đúng theo ô TT_O, có thể dư), ghi vào kq (dùng lại, không tạo mảng mới) */
+  private ttTrong(x0: number, y0: number, x1: number, y1: number, kq: TrangTri[]): TrangTri[] {
+    if (this.ttLuoiCua !== this.trangTri) {
+      this.ttLuoiCua = this.trangTri;
+      this.ttLuoi.clear();
+      for (const t of this.trangTri) {
+        const k = ttKhoa(Math.floor(t.x / TT_O), Math.floor(t.y / TT_O));
+        const o = this.ttLuoi.get(k);
+        if (o) o.push(t);
+        else this.ttLuoi.set(k, [t]);
+      }
+    }
+    kq.length = 0;
+    const i1 = Math.floor(x1 / TT_O), j1 = Math.floor(y1 / TT_O);
+    for (let i = Math.floor(x0 / TT_O); i <= i1; i++) {
+      for (let j = Math.floor(y0 / TT_O); j <= j1; j++) {
+        const o = this.ttLuoi.get(ttKhoa(i, j));
+        if (o) for (const t of o) kq.push(t);
+      }
+    }
+    return kq;
+  }
+
   // Quả táo: hết hạn thì biến mất, nhân vật chạm vào thì nhặt (chạm là nhặt, kể cả khi đã đầy máu / mana)
   // Cây đã đổ được CAY_MOC_LAI giây thì mọc lại (đứng thẳng, hết "mat")
   private capNhatCay(): void {
@@ -2380,7 +2412,9 @@ export class Game {
     const buoc = Math.max(1, Math.ceil(Math.sqrt(e2) / 30));
     if (d.to) this.danPhaThan(ax, ay, ex, ey, buoc);
     const xe = this.xeDuoiDat();
-    for (const c of this.trangTri) {
+    // Hộp quét: đoạn bay nới theo hộp trúng lớn nhất (cây to CAY_TO_HE_SO, tảng đá núi to r 190 · cao 390)
+    const leX = Math.max(rg * CAY_TO_HE_SO, 190) + 10, leY = Math.max(CAY_DO_CAO * CAY_TO_HE_SO, 390) + 10;
+    for (const c of this.ttTrong(Math.min(ax, bx) - leX, Math.min(ay, by) - 50, Math.max(ax, bx) + leX, Math.max(ay, by) + leY, this.ttTamDan)) {
       if (this.cayCheXe(c, xe)) continue;
       if (c.nui) {
         // Tảng đá núi: chỉ chưởng mới làm vỡ
@@ -2920,7 +2954,8 @@ export class Game {
     this.ptDemView = ptDem && trong(ptDem.x, ptDem.y, 400) ? ptDem : null;
     this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && !this.trongMb(i) && !this.biNhap(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
     const xe = this.xeDuoiDat();
-    for (const t of this.trangTri) if (!t.mat && trong(t.x, t.y, t.to ? 700 : 400) && !this.cayCheXe(t, xe) && this.doRo(t.x, t.y) > 0) xep.push({ loai: 'td', y: t.y, td: t });
+    const kn = this.khungNhin;
+    for (const t of this.ttTrong(kn.x0 - 700, kn.y0 - 700, kn.x1 + 700, kn.y1 + 700, this.ttTamView)) if (!t.mat && trong(t.x, t.y, t.to ? 700 : 400) && !this.cayCheXe(t, xe) && this.doRo(t.x, t.y) > 0) xep.push({ loai: 'td', y: t.y, td: t });
     xep.sort((a, b) => a.y - b.y);
     this.xep = xep;
     this.gaBayView = this.ga.filter((g) => g.loai === 'flyer' && trong(g.x, g.y, 400) && this.thay(g.x, g.y));
