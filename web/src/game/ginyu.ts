@@ -71,6 +71,8 @@ export interface Ginyu {
   /** Chỗ lơ lửng giữa núi */
   hx: number; hy: number;
   hp: number; hpMax: number;
+  /** Máu còn lại của bóng ma trước khi nhập Super Bư (bản sao Super Bư không làm mốc): lần nhập Mabu / Zinbu kế tiếp so với máu này */
+  hpCu?: number;
   /** Hệ số sức mạnh (thiếu = 1): ván lưu cũ (đã bỏ cơ chế mạnh lên khi Mabu / Zinbu gục); nhân sát thương và máu bản sao */
   suc?: number;
   /** Số lần đã hồi sinh (thiếu = 0); choHoi = đang chết nhưng sẽ hồi sinh khi xác mờ hết */

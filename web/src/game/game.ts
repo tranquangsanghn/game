@@ -4813,13 +4813,19 @@ export class Game {
     const tr = g.truoc;
     const trMax = tr ? Math.max(1, Math.round(tr.hpMax * heSo / Math.max(0.01, tr.heSo))) : 0;
     const tong = (a: number[]) => a[0]! + a[1]! + a[2]!;
-    const giuMau = !sb && !!tr && hpMax <= trMax;
-    g.hpMax = giuMau ? trMax : hpMax;
+    // Máu còn lại của bóng ma trước lần nhập này (bản sao Super Bư không tính: lấy máu đã cất trước khi nhập Super Bư)
+    const hpCon = tr ? Math.max(1, Math.round((g.hpCu ?? g.hp) * heSo / Math.max(0.01, tr.heSo))) : 0;
+    // Từ lần nhập thứ 2: chỉ lấy được 80% máu người bị nhập khi mức đó cao hơn máu bóng ma đang còn; ít hơn thì không lấy thêm gì
+    // (giữ nguyên máu đang còn, vết thương cũ không được hồi lại)
+    const giuMau = !sb && !!tr && hpMax <= hpCon;
+    if (sb) g.hpCu = g.hpCu ?? g.hp;
+    else g.hpCu = undefined;
+    g.hpMax = sb || !tr ? hpMax : Math.max(trMax, hpMax);
     // Lần nhập đầu (120%): thanh máu trên đầu vẫn theo máu thật của người bị nhập để không lộ
     const hpNguoi = Math.max(1, Math.round(Math.max(1, n.hp) * heSo));
-    g.hpGia = giuMau ? hpMax : !sb && tiLe !== GY_SAO_TI_LE ? hpNguoi : undefined;
+    g.hpGia = sb ? undefined : tiLe !== GY_SAO_TI_LE ? hpNguoi : hpMax < g.hpMax ? hpMax : undefined;
     g.sat = !sb && tr && tong(sat) < tong(tr.sat) ? [...tr.sat] : sat;
-    g.hp = g.hpMax;
+    g.hp = sb || !tr ? g.hpMax : giuMau ? hpCon : hpMax;
     // Mốc "giữ chỉ số cũ" cho lần sau tính theo GY_SAO_TI_LE (80%), không theo 120% của lần nhập đầu
     if (!sb) g.truoc = { hpMax: tiLe === GY_SAO_TI_LE ? g.hpMax : Math.max(1, Math.round(Math.max(1, n.hp) * GY_SAO_TI_LE * heSo)), sat: [...g.sat], heSo };
     g.lao = undefined;

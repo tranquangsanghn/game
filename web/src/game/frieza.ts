@@ -36,6 +36,8 @@ export const FZ_VANG_HOI = 20;
 export const FZ_VANG_GAP = 2.5;
 /** Dạng vàng: máu (tối đa và hiện có theo tỉ lệ) gấp FZ_VANG_MAU (= 2,5 giảm 30%) */
 export const FZ_VANG_MAU = 1.75;
+/** Dạng vàng: cộng thêm FZ_VANG_THEM máu (tối đa và hiện có) sau khi nhân FZ_VANG_MAU */
+export const FZ_VANG_THEM = 2000;
 /** Dạng vàng: sát thương (đấm / chưởng) chỉ gấp FZ_VANG_SAT, tốc độ (đi / chạy, đánh, hồi chưởng) chỉ gấp FZ_VANG_TOC (thấp hơn FZ_VANG_GAP để Super Bư còn trụ được) */
 export const FZ_VANG_SAT = 1.5;
 export const FZ_VANG_TOC = 1.3;
@@ -58,6 +60,8 @@ export const FZ_FPS_DUNG = 1.5;
  * Frieza đánh Mabu / Zinbu: Đấm 300 (nhận 150), chưởng 1100 (nhận 550).
  */
 export const FZ_HP = 4000;
+/** Tỉ lệ máu tối đa dạng vàng / dạng thường (= (FZ_HP × FZ_VANG_MAU + FZ_VANG_THEM) / FZ_HP) */
+const FZ_VANG_TL = FZ_VANG_MAU + FZ_VANG_THEM / FZ_HP;
 export const FZ_SAT = 300;
 export const FZ_CHUONG_SAT = 1100;
 /** Combo đấm + chưởng (chung một chuỗi, như Cell bạo nộ, hệ số `CELL_DO_COMBO`): đòn trúng cùng người trong ngần này giây kể từ phát trúng trước thì nối chuỗi */
@@ -173,12 +177,12 @@ export function capNhatFrieza(f: Frieza, dt: number, thay = false, huongX?: numb
     const k1 = khungBien(f.bien);
     if (k0 < FZ_VANG_AURA && k1 >= FZ_VANG_AURA) su = 'aura';
     if (k0 < FZ_VANG_PHONG && k1 >= FZ_VANG_PHONG) su = 'phong';
-    if (f.bien >= FZ_VANG_BIEN_T) { f.bien = -1; f.vang = FZ_VANG_T; f.nghi = 1; f.hp *= FZ_VANG_MAU; su = 'xong'; }
+    if (f.bien >= FZ_VANG_BIEN_T) { f.bien = -1; f.vang = FZ_VANG_T; f.nghi = 1; f.hp = f.hp * FZ_VANG_MAU + FZ_VANG_THEM; su = 'xong'; }
     return su;
   }
   if (f.vang > 0) {
     f.vang -= dt;
-    if (f.vang <= 0) { f.vang = 0; f.hoiVang = FZ_VANG_HOI; f.hp = Math.max(1, f.hp / FZ_VANG_MAU); su = 'het'; }
+    if (f.vang <= 0) { f.vang = 0; f.hoiVang = FZ_VANG_HOI; f.hp = Math.max(1, f.hp / FZ_VANG_TL); su = 'het'; }
   } else if (thay && f.hoiVang <= 0) {
     // Chiêu đặc biệt: thấy nhân vật thì biến thành Golden Frieza
     f.bien = 0;
@@ -235,12 +239,12 @@ export function fzGap(f: Frieza): number {
   return f.vang > 0 ? FZ_VANG_GAP : 1;
 }
 
-/** Hệ số máu: dạng vàng gấp FZ_VANG_MAU */
+/** Hệ số máu tối đa: dạng vàng = (FZ_HP × FZ_VANG_MAU + FZ_VANG_THEM) / FZ_HP */
 export function fzMauGap(f: Frieza): number {
-  return f.vang > 0 ? FZ_VANG_MAU : 1;
+  return f.vang > 0 ? FZ_VANG_TL : 1;
 }
 
-/** Máu tối đa hiện tại (dạng vàng gấp FZ_VANG_MAU) */
+/** Máu tối đa hiện tại (dạng vàng: FZ_HP × FZ_VANG_MAU + FZ_VANG_THEM) */
 export function fzHpMax(f: Frieza): number {
   return FZ_HP * fzMauGap(f);
 }
