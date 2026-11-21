@@ -137,7 +137,7 @@ export const QUAI_DL: Record<LoaiQuai, DlQuai> = {
   khi: { ten: 'Khỉ đột', toc: 140, mau: 2, ngui: 6, duoi: 0.45, tam: 6, nap: 1.1, hoi: 6, to: 2.8, tiaY: 340, bay: false, diem: 60 },
   quy: { ten: 'Quỷ canh cổng', toc: 250, mau: 1, ngui: 5, duoi: 0.4, tam: 3, nap: 0.8, hoi: 5, to: 2.3, tiaY: 260, bay: true, diem: 50 },
 };
-export const QUAI_DAU = 6;
+export const QUAI_DAU = 15;
 export const QUAI_CACH = 30;
 export const QUAI_TOI_DA = 2;
 /** Đấm / cắn / húc người ở ô bên cạnh (mỗi ô chỉ một người hoặc một quái nên không bao giờ đứng chung ô): cách trong QUAI_CHAM (hơn 1 ô MC_O = 360 một chút, ô chéo 509 không tính)
