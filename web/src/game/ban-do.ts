@@ -222,7 +222,7 @@ export const MC_O = 360;
 export const MC_BO = [
   '..................S',
   '...................',
-  '....H.........H....',
+  '....H...........H..',
   '...................',
   '......K............',
   '...................',
@@ -256,19 +256,16 @@ export const mcO: string[][] = MC_BO.map((r) => [...r]);
 const MC_TI_LE_GACH = 0.3;
 const MC_TI_LE_THUNG = 0.32;
 const MC_TI_LE_BI_AN = 0.09;
-/** Ô luôn để trống ở góc cửa vào: khối 4 × 4 ô (cửa vào ở góc trên phải), chỗ đứng ném bom đầu tiên */
-const MC_TRONG_VAO: [number, number][] = [0, 1, 2, 3].flatMap((b) => [0, -1, -2, -3].map((a): [number, number] => [a, b]));
 /** Sinh mê cung mới (mỗi ván): ô '.' của MC_BO rải ngẫu nhiên gạch / thùng gỗ / ô bí ẩn / nền trống, không có khối gạch 2 × 2;
  *  rồi đập bớt gạch (thành thùng gỗ) cho tới khi mọi ô không phải gạch đều tới được từ cửa vào (thùng / ô bí ẩn phá được bằng bom),
  *  mỗi hang có ít nhất một ô trống cạnh bên cho quái chui ra. */
 export function datLaiMeCung(rnd: () => number = Math.random): void {
   const vao = (() => { for (let j = 0; j < MC_HANG; j++) { const i = MC_BO[j]!.indexOf('S'); if (i >= 0) return { i, j }; } return { i: MC_COT - 1, j: 0 }; })();
-  const trongVao = new Set(MC_TRONG_VAO.map(([a, b]) => `${vao.i + a},${vao.j + b}`));
   const gach = (i: number, j: number) => i >= 0 && j >= 0 && i < MC_COT && j < MC_HANG && mcO[j]![i] === '#';
   for (let j = 0; j < MC_HANG; j++) {
     mcO[j] = [...MC_BO[j]!];
     for (let i = 0; i < MC_COT; i++) {
-      if (MC_BO[j]![i] !== '.' || trongVao.has(`${i},${j}`)) continue;
+      if (MC_BO[j]![i] !== '.') continue;
       const r = rnd();
       let c = r < MC_TI_LE_GACH ? '#' : r < MC_TI_LE_GACH + MC_TI_LE_THUNG ? 'w' : r < MC_TI_LE_GACH + MC_TI_LE_THUNG + MC_TI_LE_BI_AN ? '?' : '.';
       // Không để khối gạch 2 × 2 (ô (i, j) là góc dưới phải của khối)
