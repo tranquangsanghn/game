@@ -224,10 +224,9 @@ export interface NvMc {
   guc: 'chay' | 'bong' | null;
   /** máu / mana lúc bước vào mê cung (trong mê cung chỉ có 1 mạng); ra khỏi mê cung thì trả lại đúng như cũ */
   luu: { hp: number; mana: number } | null;
-  /** Đi theo ô: ô đang đi tới (luôn dừng ở tâm ô), hướng đang giữ (tay cầm, chỉ 4 hướng), đường đi theo ô (chuột bấm) */
+  /** Đi theo ô: ô đang đi tới (luôn dừng ở tâm ô), hướng đang giữ (tay cầm, chỉ 4 hướng) */
   toi: { i: number; j: number } | null;
   di: { x: number; y: number } | null;
-  duong: { i: number; j: number }[];
 }
 export interface TrangThaiMc {
   bom: BomMc[]; lua: LuaMc[]; quai: QuaiMc[]; tia: TiaMc[]; vp: VpMc[]; doCuu: DoMc[]; oHoi: { i: number; j: number; t: number }[];
@@ -245,11 +244,10 @@ const oTheo = (k: string) => {
 };
 export const HANG_MC = oTheo('H');
 export const O_NGOC_MC = oTheo('D')[0]!;
-export const O_VAO_MC = oTheo('S')[0]!;
 /** Lối ra (góc dưới trái): bước tới tâm ô này thì cả đội dịch chuyển tới núi đá (chỗ bóng ma Goku) */
 export const O_RA_MC = oTheo('E')[0]!;
 
-const taoNvMc = (): NvMc => ({ nap: null, bom: { lua: MC_BOM_DAU, nuoc: MC_BOM_DAU, no: MC_BOM_DAU }, mang: 0, xo: MC_XO_DAU, kim: MC_KIM_DAU, trang: null, guc: null, luu: null, toi: null, di: null, duong: [] });
+const taoNvMc = (): NvMc => ({ nap: null, bom: { lua: MC_BOM_DAU, nuoc: MC_BOM_DAU, no: MC_BOM_DAU }, mang: 0, xo: MC_XO_DAU, kim: MC_KIM_DAU, trang: null, guc: null, luu: null, toi: null, di: null });
 /** Bà phù thuỷ mới (mạng đầu) ở ô ngọc */
 function taoBa(): BaMc {
   const t = tamO(O_NGOC_MC.i, O_NGOC_MC.j);

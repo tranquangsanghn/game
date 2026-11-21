@@ -7,7 +7,7 @@ import { NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
 import { CON_BU_SO, CON_BU_LAN, CON_BU_GAP, CON_BU_HOI_DE, CON_BU_TO, CON_BU_TOC, CON_BU_BAM, CON_BU_XA, CON_BU_DICH, CON_BU_TAM, CON_BU_TAM_DAM, CON_BU_TAM_CHUONG, CON_BU_HOI_DON, CON_BU_HOI_CHUONG, CON_BU_TI_LE_MA, type ConBu } from './con-bu';
 import { MC, MC_COT, MC_HANG, MC_HAM, MC_O, datLaiMeCung, oCua, oTrongVao, oCung, oTuongMc, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
-import { taoMeCung, O_VAO_MC, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, O_BI_AN_HOI, MC_DO_THEM, MC_BOM_THEM, MANG_TOI_DA, BAY_BAY, BAY_NO, BAY_TAM, QUAI_CACH, QUAI_TOI_DA, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DL, LOAI_QUAI, QUAI_TIA_SAT, QUAI_TIA_T, QUAI_CHET_T, QUAI_DAU_T, SP_QUAI, type LoaiQuai, type TiaMc, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_DIEM, BA_CHET_T, BA_HP, BA_HOI_SINH, BA_HOI_T, BA_HOI_TANG, BA_TOC, BA_GAN, BA_BAY_CAO, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
+import { taoMeCung, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, O_BI_AN_HOI, MC_DO_THEM, MC_BOM_THEM, MANG_TOI_DA, BAY_BAY, BAY_NO, BAY_TAM, QUAI_CACH, QUAI_TOI_DA, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DL, LOAI_QUAI, QUAI_TIA_SAT, QUAI_TIA_T, QUAI_CHET_T, QUAI_DAU_T, SP_QUAI, type LoaiQuai, type TiaMc, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_DIEM, BA_CHET_T, BA_HP, BA_HOI_SINH, BA_HOI_T, BA_HOI_TANG, BA_TOC, BA_GAN, BA_BAY_CAO, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_DO_COMBO, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_DO_TANG, CELL_DO_TANG_CHO, cellHpMax, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
@@ -16,7 +16,6 @@ import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
 export type ManChoi = 'start' | 'play' | 'pause' | 'over';
-// Chế độ điều khiển chọn ở màn bắt đầu: chuột (+ Tab đổi nhân vật) hoặc tay cầm
 // hen = gà trắng (đi bộ) · rooster = gà đỏ (đi nhanh, nhảy) · flyer = gà đen (bay, thả trứng)
 // boss = gà tướng (to gấp 5 lần, đủ 3 màu, nhiều máu)
 type LoaiGa = 'hen' | 'rooster' | 'flyer' | 'boss';
@@ -401,7 +400,7 @@ export const DOI_HINH: Record<CheNguoi, [number | null, number | null]> = {
 /** Thứ tự thẻ ở màn chọn (một hàng). Vegeta tạm ẩn vì nhân vật chưa hoàn thiện (vẫn giữ trong DOI_HINH) */
 export const THE_CHON: CheNguoi[] = ['mabu', 'zinbu', 'ca2'];
 const SAT_MAY = 250;
-// Chiêu Biến socola (riêng Zinbu, nhóm đòn 3): chưởng bay tới điểm chuột (tối đa TAM_SOCOLA), nổ bán kính BAN_KINH_SOCOLA. Gà con dính thì chết luôn và thành socola; gà mẹ dính sát thương SAT_SOCOLA rồi hoá socola SOCOLA_THOI_GIAN giây (đứng yên, không né).
+// Chiêu Biến socola (riêng Zinbu, nhóm đòn 3): chưởng bay theo hướng quay mặt (tối đa TAM_SOCOLA), nổ bán kính BAN_KINH_SOCOLA. Gà con dính thì chết luôn và thành socola; gà mẹ dính sát thương SAT_SOCOLA rồi hoá socola SOCOLA_THOI_GIAN giây (đứng yên, không né).
 // Hồi SOCOLA_HOI giây (đồng hồ riêng hoiSoc, không khoá các đòn khác); tốn MANA_DAC_BIET.
 const SAT_SOCOLA = 150;
 const TAM_SOCOLA = 700;
@@ -4072,7 +4071,7 @@ export class Game {
     if (!n.bay) n.nv.raDon(this.t);
     this.am.phat(chieu ? 'chuong' : nhom === 1 ? 'da' : 'dam');
 
-    // Giới hạn tầm theo đòn vừa ra: chuột trỏ xa hơn tầm thì đòn dừng ở mép tầm đánh
+    // Giới hạn tầm theo đòn vừa ra: điểm đích xa hơn tầm thì đòn dừng ở mép tầm đánh
     const tam = soc || ma ? TAM_SOCOLA : chieu ? TAM_CHIEU * (sbChuong ? SB_TAM_GAP : 1) : TAM_DON[n.nv.donVuaRa ?? ''] ?? (n.nv.nhom === 1 ? TAM_DA_GAN : TAM_DAM_GAN);
     const ddx = x - n.x;
     const ddy = y - n.y;
@@ -7586,7 +7585,7 @@ export class Game {
       // Bấm chéo: giữ trục đang đi (nếu còn bấm), không thì ưu tiên ngang
       if (hx && hy) { if (s.di?.y && s.di.y === hy) hx = 0; else hy = 0; }
       s.di = hx || hy ? { x: hx, y: hy } : null;
-      if (s.di) { n.nhin = { x: hx, y: hy }; s.duong = []; }
+      if (s.di) n.nhin = { x: hx, y: hy };
       n.dich = null;
       n.cuaCan = false;
       return;
@@ -7707,16 +7706,6 @@ export class Game {
       return;
     }
     if (n.nv.khoa || n.bay || n.het || this.trongCau(p)) return;
-    // Mê cung bom: bấm chuột vào ô nào thì tìm đường theo ô (lên / xuống / trái / phải) tới đó
-    if (this.oMeCung(p)) {
-      const s = this.mc.nv[p]!;
-      s.di = null;
-      s.duong = this.mcDuong(s.toi ?? oCua(n.x, n.y), oCua(x, y));
-      // Bấm ra phía đường hầm: tới ô cửa vào rồi bước ra hầm
-      if (x > MC.x1 && trongHam(x, y)) s.duong.push({ i: MC_COT, j: O_VAO_MC.j });
-      n.dich = null;
-      return;
-    }
     const o = this.nguoi[1 - p];
     const le = leNhanVat(n.nv.heSoTo);
     // Dây buộc chỉ áp khi người kia có mặt (chơi 1 người thì không bị giữ quanh nhân vật vắng mặt)
@@ -7727,7 +7716,7 @@ export class Game {
     giuTrongMap(dich, le, false, vungCua(n));
     let d = hyp(dich.x - n.x, dich.y - n.y);
     if (d > BAY_TOI_DA) {
-      // Chỉ xa hơn tầm bay tối đa thì bay tới mép tầm theo hướng chuột
+      // Chỉ xa hơn tầm bay tối đa thì bay tới mép tầm theo hướng điều khiển
       dich = { x: n.x + ((dich.x - n.x) / d) * BAY_TOI_DA, y: n.y + ((dich.y - n.y) / d) * BAY_TOI_DA };
       d = BAY_TOI_DA;
     }
@@ -8036,31 +8025,6 @@ export class Game {
     return !oCung(oMc(i, j)) && !this.oBa(i, j) && !this.mc.bom.some((b) => b.i === i && b.j === j && b.t >= bayBom(b));
   }
 
-  /** Đường đi theo ô (BFS 4 hướng trong lưới) từ ô a tới ô b (không tới được thì tới ô tới được gần b nhất); không gồm ô a */
-  private mcDuong(a: { i: number; j: number }, b: { i: number; j: number }): { i: number; j: number }[] {
-    const bi = kep(b.i, 0, MC_COT - 1), bj = kep(b.j, 0, MC_HANG - 1);
-    const truoc = new Map<number, number>();
-    const k0 = a.j * MC_COT + a.i;
-    truoc.set(k0, -1);
-    const hang = [k0];
-    let tot = k0, dTot = Math.abs(a.i - bi) + Math.abs(a.j - bj);
-    for (let h = 0; h < hang.length; h++) {
-      const k = hang[h]!, i = k % MC_COT, j = (k - i) / MC_COT;
-      const d = Math.abs(i - bi) + Math.abs(j - bj);
-      if (d < dTot) { dTot = d; tot = k; }
-      if (!d) break;
-      for (const [hx, hy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
-        const ni = i + hx, nj = j + hy, nk = nj * MC_COT + ni;
-        if (ni < 0 || nj < 0 || ni >= MC_COT || nj >= MC_HANG || truoc.has(nk) || !this.mcVao(ni, nj)) continue;
-        truoc.set(nk, k);
-        hang.push(nk);
-      }
-    }
-    const kq: { i: number; j: number }[] = [];
-    for (let k = tot; k !== k0; k = truoc.get(k)!) kq.unshift({ i: k % MC_COT, j: Math.floor(k / MC_COT) });
-    return kq;
-  }
-
   /** Quay mặt theo hướng ô (lên / xuống / trái / phải) */
   private mcQuay(n: NguoiChoi, hx: number, hy: number): void {
     if (hy) n.nv.huong = hy < 0 ? 'len' : 'xuong';
@@ -8073,14 +8037,14 @@ export class Game {
     const n = this.nguoi[p]!;
     const s = this.mc.nv[p];
     if (!s || !this.oMeCung(p)) {
-      if (s) { s.toi = null; s.duong = []; }
+      if (s) s.toi = null;
       return false;
     }
     n.dich = null;
     // Đã gục (nằm cháy / trong bong bóng chờ cứu): không đi được
     if (n.het) {
       if (s.toi) { const o = oCua(n.x, n.y); const t = tamO(o.i, o.j); n.x = t.x; n.y = t.y; }
-      s.toi = null; s.di = null; s.duong = []; n.dangDi = false;
+      s.toi = null; s.di = null; n.dangDi = false;
       return true;
     }
     let con = TOC_DO_DI * dt;
@@ -8095,17 +8059,12 @@ export class Game {
         } else {
           n.x = t.x;
           n.y = t.y;
-          const ke = s.di ? { i: o.i + s.di.x, j: o.j + s.di.y } : s.duong.shift();
-          if (ke && Math.abs(ke.i - o.i) + Math.abs(ke.j - o.j) === 1 && this.mcVao(ke.i, ke.j) && this.mcChiem(ke.i, ke.j, p)) {
-            // Ô kế đang có người / quái: đứng chờ ở tâm ô (đường chuột bấm giữ nguyên)
-            if (!s.di) s.duong.unshift(ke);
-            else this.mcQuay(n, s.di.x, s.di.y);
-            break;
-          }
-          if (ke && Math.abs(ke.i - o.i) + Math.abs(ke.j - o.j) === 1 && this.mcVao(ke.i, ke.j)) s.toi = ke;
+          if (!s.di) break;
+          const ke = { i: o.i + s.di.x, j: o.j + s.di.y };
+          if (this.mcVao(ke.i, ke.j) && !this.mcChiem(ke.i, ke.j, p)) s.toi = ke;
           else {
-            s.duong = [];
-            if (s.di) this.mcQuay(n, s.di.x, s.di.y);
+            // Ô kế bị chắn hoặc đang có người / quái: đứng chờ ở tâm ô, quay mặt theo hướng giữ
+            this.mcQuay(n, s.di.x, s.di.y);
             break;
           }
         }
@@ -8372,7 +8331,6 @@ export class Game {
       const s = this.mc.nv[p]!;
       s.toi = null;
       s.di = null;
-      s.duong = [];
       s.nap = null;
       s.trang = null;
       for (const cu of this.cuu) if (cu.p === p) { cu.x = n.x; cu.y = n.y; }

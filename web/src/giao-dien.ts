@@ -20,7 +20,7 @@ export class GiaoDien {
   private oTen = document.createElement('input');
   private veLanCuoi = '';
   /** Đang ở màn mục tiêu (sau khi chọn nhân vật, trước khi vào game): bấm Vào chơi mới bắt đầu ván */
-  private huongDan: CheNguoi | null = null;
+  private cheDaChon: CheNguoi | null = null;
   /** Màn chọn chế độ (tay cầm): thẻ đã bấm X, chờ bấm B để xác nhận; -1 = chưa bấm */
   private daBamX = -1;
 
@@ -76,14 +76,14 @@ export class GiaoDien {
     this.game.onManPhu = () => this.veManPhu();
     // Tay cầm bấm A / Menu ở màn mục tiêu: vào chơi
     this.game.onNutBatDau = () => {
-      if (this.huongDan) void this.lam('vao');
+      if (this.cheDaChon) void this.lam('vao');
     };
     // Màn chọn chế độ: bấm X rồi B mới xác nhận
     this.game.onNutX = () => {
-      if (!this.huongDan) this.daBamX = this.game.menuChon;
+      if (!this.cheDaChon) this.daBamX = this.game.menuChon;
     };
     this.game.onNutQuay = () => {
-      if (this.huongDan) void this.lam('quay');
+      if (this.cheDaChon) void this.lam('quay');
       else if (this.daBamX === this.game.menuChon) void this.lam(THE_CHON[this.game.menuChon]!);
     };
     this.game.onNutTamDung = () => void this.lam(this.game.menuTamDung === 1 ? 'luuGame' : 'tamDung');
@@ -110,13 +110,13 @@ export class GiaoDien {
         this.daBamX = -1;
         // Chọn nhân vật xong thì sang màn mục tiêu, bấm Vào chơi mới bắt đầu
         this.thongBao = { text: '', loi: false };
-        this.huongDan = act;
+        this.cheDaChon = act;
         break;
       case 'vao':
-        if (this.huongDan) g.batDau(this.huongDan);
-        this.huongDan = null;
+        if (this.cheDaChon) g.batDau(this.cheDaChon);
+        this.cheDaChon = null;
         break;
-      case 'quay': this.huongDan = null; break;
+      case 'quay': this.cheDaChon = null; break;
       case 'moi':
         this.thongBao = { text: '', loi: false };
         g.batDau();
@@ -180,7 +180,7 @@ export class GiaoDien {
     this.khung.classList.toggle('dang-choi', g.man === 'play');
     this.nutDung.style.display = g.man === 'play' ? '' : 'none';
 
-    const html = g.man === 'start' ? (this.huongDan ? this.htmlMucTieu() : this.htmlBatDau()) : g.man === 'pause' ? this.htmlTamDung() : g.man === 'over' ? this.htmlKetThuc() : '';
+    const html = g.man === 'start' ? (this.cheDaChon ? this.htmlMucTieu() : this.htmlBatDau()) : g.man === 'pause' ? this.htmlTamDung() : g.man === 'over' ? this.htmlKetThuc() : '';
     if (!ep && html === this.veLanCuoi) return;
     this.veLanCuoi = html;
     this.phu.innerHTML = html;
@@ -223,7 +223,7 @@ export class GiaoDien {
     </div><p class="phu">Người chơi 1: ◀ ▶ chọn · ${this.daBamX === this.game.menuChon ? 'bấm B để vào' : 'bấm X rồi B để xác nhận'}</p><p class="phu" style="opacity:.6">${this.game.tayCamTen.length ? `Tay cầm: ${this.game.tayCamTen.join(' · ')}` : 'Chưa thấy tay cầm (bấm một nút bất kỳ)'}${this.game.tayCamNut ? ` · vừa bấm ${this.game.tayCamNut}` : ''}</p>${this.luu ? '<button type="button" tabindex="-1" class="nut-phu" data-act="tiep" style="margin-top:20px">▶ Chơi tiếp ván đã lưu</button>' : ''}${this.htmlThongBao()}</div>`;
   }
 
-  /** Màn mục tiêu, sau màn hướng dẫn: nói rõ điều kiện thắng rồi bấm Vào chơi */
+  /** Màn mục tiêu, sau màn chọn nhân vật: nói rõ điều kiện thắng rồi bấm Vào chơi */
   private htmlMucTieu(): string {
     return `<div class="man-phu man-chon man-hd">
       ${this.anhNgocRong()}

@@ -260,7 +260,7 @@ export class VeCanvas {
 
   // ─── Khung hình ───
 
-  /** Vẽ 1 khung hình. Kích thước (px) lấy từ chính canvas; dpr là hệ số điểm ảnh. Phép chiếu khung nhìn → màn hình lấy từ c.phepChieu() (dùng chung với đọc chuột). */
+  /** Vẽ 1 khung hình. Kích thước (px) lấy từ chính canvas; dpr là hệ số điểm ảnh. Phép chiếu khung nhìn → màn hình lấy từ c.phepChieu(). */
   ve(ctx: CanvasRenderingContext2D, c: Game, dpr: number, ctxNen: CanvasRenderingContext2D | null = null, dprNen = 1): void {
     const { W, H, BAR, SIDE } = c;
     const { s, ox, oy } = c.phepChieu();
