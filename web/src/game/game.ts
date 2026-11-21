@@ -287,8 +287,10 @@ const W_MAC_DINH = 1600;
 /** Chơi tới chừng này giây thì Cell đỏ (còn sống) rời đảo đi truy sát mọi nơi (kiemTraCellTruy()); nếu tới lúc này chưa ai ra khỏi vườn gà thì
  *  máy bay / phi thuyền thôi hồi máu / mana (kiemTraOLiVuon()) */
 const CELL_TRUY_T = 300;
-/** Hạ đủ 4 trùm xong chờ chừng này giây rồi mới hiện màn chiến thắng (kiemTraThang()) */
+/** Nhặt đủ ngọc rồng xong chờ chừng này giây rồi mới hiện màn chiến thắng (kiemTraThang()) */
 const THANG_CHO = 3;
+/** Số viên ngọc rồng (1 sao → n sao) phải nhặt đủ để thắng (kiemTraThang(), duNgoc()) */
+const NGOC_THANG = 5;
 /** Chơi tới chừng này giây thì Frieza (còn sống) rời thần điện bay đi truy sát mọi nơi (kiemTraFzTruy()) */
 const FZ_TRUY_T = 600;
 /** Chơi tới chừng này giây (sớm 2 phút so với Frieza truy sát) thì hợp thể Super Bư mở khoá ở mọi nơi (hopTheMo(), kiemTraHopMo()) */
@@ -1129,7 +1131,7 @@ export class Game {
   private cellTruyVuon = false;
   /** Đã chơi tới CELL_TRUY_T: Cell đỏ (còn sống) truy sát mọi nơi cả ván */
   private cellTruyT = false;
-  /** Giây đã trôi từ lúc hạ đủ 4 trùm (-1 = chưa đủ); đủ THANG_CHO thì thắng (kiemTraThang(), không lưu ván) */
+  /** Giây đã trôi từ lúc nhặt đủ ngọc rồng (-1 = chưa đủ); đủ THANG_CHO thì thắng (kiemTraThang(), không lưu ván) */
   private tThang = -1;
   /** Frieza bay đi truy sát Mabu / Zinbu khắp thế giới (cả ván); hợp thể Super Bư làm được và giữ được ở mọi nơi */
   fzTruy = false;
@@ -1139,7 +1141,7 @@ export class Game {
   gyTruy = false;
   /** Phút 20: người chơi và các trùm còn sống bị triệu hồi về thần điện, không ai thoát ra được nữa (cả ván) */
   trieuHoi = false;
-  /** Thắng vì trụ vững trên thần điện tới SONG_SOT_T (không phải hạ đủ 4 trùm), cho màn kết thúc */
+  /** Thắng vì trụ vững trên thần điện tới SONG_SOT_T (không phải nhặt đủ ngọc rồng), cho màn kết thúc */
   thangSongSot = false;
   ngocBay: { x: number; y: number; t: number; slot: number; sao: number }[] = [];
   readonly NGOC_BAY_T = 1.1;
@@ -1864,7 +1866,7 @@ export class Game {
   /** Nhân vật m nhặt viên ngọc rồng `sao` sao ở (x, y): chữ bay, nổ sáng, chưởng lên trời, viên ngọc bay lên hàng ngọc trên thanh đen */
   private nhatNgoc(m: NguoiChoi, x: number, y: number, sao: number): void {
     this.am.phat('anTao');
-    this.chu.push({ id: this.id++, x: m.x, y: m.y - 220, text: `⭐ NGỌC RỒNG ${sao} SAO! (${this.ngocNhat.length + 1}/5)`, mau: '#ffb347', t: 0 });
+    this.chu.push({ id: this.id++, x: m.x, y: m.y - 220, text: `⭐ NGỌC RỒNG ${sao} SAO! (${this.ngocNhat.length + 1}/${NGOC_THANG})`, mau: '#ffb347', t: 0 });
     this.vet.push({ id: this.id++, x, y, t: 0, loai: 'chay', co: 1.2 });
     this.chuongLenTroi(this.nguoi.indexOf(m));
     this.ngocBay.push({ x, y: y - 40, t: 0, slot: this.ngocNhat.length, sao });
@@ -5781,28 +5783,23 @@ export class Game {
     return null;
   }
 
-  /** Bốn trùm đã bị hạ hẳn chưa: Cell đỏ, Frieza, bóng ma Goku (hết lượt hồi sinh), vua gà (đã xuất hiện và không còn sống) */
-  private trumDaHa(): { cell: boolean; fz: boolean; gy: boolean; vua: boolean } {
-    const g = this.ginyu;
-    return {
-      cell: !this.cell.some((c) => c.cap === SO_CAP - 1 && !c.chet),
-      fz: this.frieza.chet,
-      gy: g.chet && !g.choHoi,
-      vua: this.soLanTuong > TUONG_HOI_SINH && !this.ga.some((x) => x.goc && !x.chet),
-    };
+  /** Đã nhặt đủ NGOC_THANG viên ngọc rồng (1 sao vua gà · 2 sao Cell đỏ · 3 sao bóng ma Goku · 4 sao mê cung bom · 5 sao Frieza) chưa */
+  private duNgoc(): boolean {
+    for (let s = 1; s <= NGOC_THANG; s++) if (!this.ngocNhat.includes(s)) return false;
+    return true;
   }
 
-  /** Hạ đủ 4 trùm (Cell đỏ, Frieza, bóng ma Goku, vua gà) thì thắng sau THANG_CHO giây (cho hoạt ảnh chết chạy xong) */
+  /** Nhặt đủ 5 viên ngọc rồng (phải hạ 4 trùm và thắng mê cung bom) thì thắng sau THANG_CHO giây (cho hoạt ảnh chạy xong) */
   private kiemTraThang(dt: number): void {
     if (banDoHt !== 'sa') return;
     if (this.tThang < 0) {
-      const h = this.trumDaHa();
+      const du = this.duNgoc();
       const song = this.trieuHoi && this.tGame >= SONG_SOT_T && this.nguoi.some((m) => !m.vang && !m.het);
-      if (!(h.cell && h.fz && h.gy && h.vua) && !song) return;
+      if (!du && !song) return;
       this.tThang = 0;
-      this.thangSongSot = song && !(h.cell && h.fz && h.gy && h.vua);
+      this.thangSongSot = song && !du;
       const n = this.nguoi.find((m) => !m.vang && !m.het) ?? this.nguoi.find((m) => !m.vang);
-      if (n) this.chu.push({ id: this.id++, x: n.x, y: n.y - 360, text: this.thangSongSot ? '🏆 TRỤ VỮNG TỚI PHÚT 25: CHIẾN THẮNG!' : '🏆 ĐÃ HẠ ĐỦ 4 TRÙM: CHIẾN THẮNG!', mau: '#ffd23f', t: 0 });
+      if (n) this.chu.push({ id: this.id++, x: n.x, y: n.y - 360, text: this.thangSongSot ? '🏆 TRỤ VỮNG TỚI PHÚT 25: CHIẾN THẮNG!' : `🏆 ĐỦ ${NGOC_THANG} VIÊN NGỌC RỒNG: CHIẾN THẮNG!`, mau: '#ffd23f', t: 0 });
       this.nguoi.forEach((_, q) => this.chuongLenTroi(q));
       return;
     }
@@ -6890,7 +6887,7 @@ export class Game {
     this.chu.push({ id: this.id++, x, y, text, mau: this.nguoi[p].mau, t: 0 });
   }
 
-  // nguoiThang: true = đã hạ đủ 4 trùm (Cell đỏ, Frieza, bóng ma Goku, vua gà); false = cả hai nhân vật cùng gục, quái vật thắng
+  // nguoiThang: true = đã nhặt đủ 5 viên ngọc rồng (hoặc trụ vững tới phút 25); false = cả hai nhân vật cùng gục, quái vật thắng
   private ketThuc(nguoiThang: boolean): void {
     this.nguoiThangTran = nguoiThang;
     this.man = 'over';
