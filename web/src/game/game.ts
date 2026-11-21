@@ -8095,13 +8095,12 @@ export class Game {
     return this.mc.bom.find((b) => b.p === p && b.loai !== 'no');
   }
 
-  /** Bấm nút ném bom: có bom lửa / nước đang chờ thì kích nổ nó (nếu `kich`), không thì bắt đầu giữ nạp một quả bom NGẪU NHIÊN
-   *  trong các loại còn bom (đang có bom lửa / nước chờ nổ thì chỉ còn bom nổ; bom chỉ bị trừ lúc ném ra thật) */
-  private mcBam(p: number, kich = true): void {
+  /** Bấm nút ném bom: bắt đầu giữ nạp một quả bom NGẪU NHIÊN trong các loại còn bom
+   *  (đang có bom lửa / nước chờ nổ thì chỉ còn bom nổ; bom chỉ bị trừ lúc ném ra thật) */
+  private mcBam(p: number): void {
     const n = this.nguoi[p]!;
     const s = this.mc.nv[p]!;
     if (n.het || s.trang || s.nap) return;
-    if (kich && this.mcBomCho(p)) { this.mcKichNo(p); return; }
     if (!LOAI_BOM.some((l) => s.bom[l] > 0)) {
       this.chu.push({ id: this.id++, x: n.x, y: n.y - 260, text: '💣 HẾT BOM! TÌM TÚI BOM Ở Ô BÍ ẨN', mau: '#ff6b6b', t: 0 });
       return;
@@ -8125,7 +8124,7 @@ export class Game {
       if (s.kim > 0) s.cuuNut = { loai: 'kim', t: this.t };
       else this.chu.push({ id: this.id++, x: n.x, y: n.y - 260, text: '📍 HẾT KIM CHÂM!', mau: '#ff6b6b', t: 0 });
     }
-    if (moi(2)) this.mcBam(p, false);
+    if (moi(2)) this.mcBam(p);
     if (s.nap && !giu(2)) {
       this.mcNem(p, n.nhin.x, n.nhin.y);
     }

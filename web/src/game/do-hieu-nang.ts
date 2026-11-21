@@ -14,7 +14,7 @@
 const SO_DONG = 600;
 const KHOA_LUU = 'ga-hieu-nang';
 const KHUNG_DAI = 50;
-const FPS_THAP = 30;
+const HN_FPS_THAP = 30;
 
 type Phan = Record<string, number>;
 
@@ -117,7 +117,7 @@ export class DoHieuNang {
     const ram = bn ? tron(bn.usedJSHeapSize / 1048576) : undefined;
     const canh = this.longTask.splice(0, 5);
     const muc = typeof dem['fpsMucTieu'] === 'number' ? dem['fpsMucTieu'] : 60;
-    if (fps < FPS_THAP) canh.push(`FPS thấp ${fps}: tốn nhất ${topPhan(phan, 3)}`);
+    if (fps < HN_FPS_THAP) canh.push(`FPS thấp ${fps}: tốn nhất ${topPhan(phan, 3)}`);
     // Khung thưa mà JS ngắn: thời gian nằm ở trình duyệt vẽ / GPU (canvas to, dpr cao, nhiều điểm ảnh phủ) hoặc máy bận việc khác
     const khungTb = 1000 / Math.max(1, fps);
     if (fps < muc * 0.85 && js < khungTb * 0.4) canh.push(`nghẽn ngoài JS (vẽ / GPU / máy bận): khung ${tron(khungTb)}ms nhưng JS chỉ ${js}ms`);
