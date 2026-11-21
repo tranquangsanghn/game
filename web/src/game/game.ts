@@ -1034,7 +1034,7 @@ export class Game {
   cellChuongLuc: number[] = [];
   /** Thứ tự đòn chưởng của Cell bạo nộ trong chuỗi combo hiện tại trên mỗi nhân vật (không lưu ván) */
   cellComboDem: number[] = [];
-  /** Combo chưởng Frieza (như Cell bạo nộ): lúc trúng gần nhất và thứ tự đòn trong chuỗi trên mỗi nhân vật (không lưu ván) */
+  /** Combo đòn Frieza (đấm + chưởng chung chuỗi, như Cell bạo nộ): lúc trúng gần nhất và thứ tự đòn trong chuỗi trên mỗi nhân vật (không lưu ván) */
   fzChuongLuc: number[] = [];
   fzComboDem: number[] = [];
   /** Tiệc sinh nhật Cell: bánh ở giữa vòng Cell; chưởng Cell bắn vào bánh (chỉ để đẹp, không lưu); banhView = bánh nằm trong khung nhìn */
@@ -4393,7 +4393,7 @@ export class Game {
         f.choDanh = FZ_HOI / gt;
         f.danh = FZ_DANH_T;
         this.vetGa({ id: this.id++, x: muc.x, y: muc.y - 80, t: 0, loai: 'no' });
-        this.nhanSatThuong(muc, FZ_SAT * gs);
+        this.fzDanhTrung(muc, FZ_SAT * gs, 'ĐẤM');
       }
       return;
     }
@@ -4539,6 +4539,21 @@ export class Game {
     return false;
   }
 
+  /**
+   * Đòn của Frieza (đấm hoặc chưởng) trúng nhân vật, combo tăng dần như Cell bạo nộ: đòn trúng cùng người trong FZ_COMBO_CUA giây kể từ đòn trúng trước
+   * thì nối chuỗi (đòn 2 ×1,5 · đòn 3 ×2 · từ đòn 4 ×3, `CELL_DO_COMBO`); đấm và chưởng chung một chuỗi; đòn bị né không tính, không làm đứt chuỗi.
+   */
+  private fzDanhTrung(n: NguoiChoi, sat: number, kieu: string): void {
+    const p = this.nguoi.indexOf(n);
+    const thu = this.t - (this.fzChuongLuc[p] ?? -99) <= FZ_COMBO_CUA ? (this.fzComboDem[p] ?? 1) + 1 : 1;
+    const he = CELL_DO_COMBO[Math.min(thu, CELL_DO_COMBO.length) - 1];
+    if (he > 1) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: `💥 COMBO ${kieu} FRIEZA x${String(he).replace('.', ',')}!`, mau: '#c77dff', t: 0 });
+    if (this.nhanSatThuong(n, sat * he)) {
+      this.fzChuongLuc[p] = this.t;
+      this.fzComboDem[p] = thu;
+    }
+  }
+
   /** Chưởng của Frieza tới nơi: ai (không ẩn / gục / mây) nằm trên chùm thì trúng (vẫn né / giảm 50%, combo tăng dần như Cell bạo nộ); không bắn máy bay */
   private chuongFzTrung(q: ChuongTiec): void {
     const rong = CELL_CHUONG_RONG * q.k;
@@ -4548,15 +4563,7 @@ export class Game {
       const px = n.x, py = n.y - 70;
       const u = Math.max(0, Math.min(1, ((px - q.x0) * vx + (py - q.y0) * vy) / L2));
       if (hyp(px - (q.x0 + vx * u), py - (q.y0 + vy * u)) > rong) continue;
-      // Combo chưởng tăng dần như Cell bạo nộ: trúng cùng người trong FZ_COMBO_CUA giây kể từ phát trúng trước thì nối chuỗi (đòn 2 ×1,5 · đòn 3 ×2 · từ đòn 4 ×3)
-      const p = this.nguoi.indexOf(n);
-      const thu = this.t - (this.fzChuongLuc[p] ?? -99) <= FZ_COMBO_CUA ? (this.fzComboDem[p] ?? 1) + 1 : 1;
-      const he = CELL_DO_COMBO[Math.min(thu, CELL_DO_COMBO.length) - 1];
-      if (he > 1) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: `💥 COMBO CHƯỞNG FRIEZA x${String(he).replace('.', ',')}!`, mau: '#c77dff', t: 0 });
-      if (this.nhanSatThuong(n, q.sat! * he)) {
-        this.fzChuongLuc[p] = this.t;
-        this.fzComboDem[p] = thu;
-      }
+      this.fzDanhTrung(n, q.sat!, 'CHƯỞNG');
     }
     this.conBuTrungChum(q.x0, q.y0, vx, vy, L2, rong, q.sat!);
   }
