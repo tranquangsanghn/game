@@ -60,6 +60,8 @@ export const FZ_FPS_DUNG = 1.5;
 export const FZ_HP = 4000;
 export const FZ_SAT = 300;
 export const FZ_CHUONG_SAT = 1100;
+/** Combo chưởng (như Cell bạo nộ, hệ số `CELL_DO_COMBO`): phát trúng cùng người trong ngần này giây kể từ phát trúng trước thì nối chuỗi */
+export const FZ_COMBO_CUA = 4;
 /** Tốc độ chạy khi đánh (px/s; nhân vật chạy 460, dạng vàng ×2 = 520 nhanh hơn chạy bộ, phải bay để né) */
 export const FZ_TOC_DANH = 260;
 /** Giây giữa 2 đòn đấm / đá, hồi chưởng */
