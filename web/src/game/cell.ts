@@ -70,6 +70,11 @@ export const CELL_AN_DICH_HOI = 3;
  * Máu trên `CELL_HOI_TREN` (150%) thì tiếp tục đánh Mabu / Zinbu; không bao giờ dùng lại. Dịch chuyển hồi `CELL_HOI_DICH` giây.
  */
 export const CELL_HOI_DUOI = 0.2;
+/** Cell đỏ đầy máu và không bị đánh CELL_DO_TANG_CHO giây thì máu tối đa (và máu hiện có) tăng CELL_DO_TANG mỗi giây, không giới hạn */
+export const CELL_DO_TANG = 3;
+export const CELL_DO_TANG_CHO = 1;
+/** Máu tối đa của Cell: CELL_HP theo cấp + phần Cell đỏ đã tăng thêm (`hpThem`) */
+export const cellHpMax = (c: Cell) => CELL_HP[c.cap]! + (c.hpThem ?? 0);
 export const CELL_HOI_TREN = 1.5;
 export const CELL_HOI_DICH = 3;
 /** Cell đỏ tung chưởng (hào quang → phóng, chùm bay) nhanh hơn 30% */
@@ -171,6 +176,10 @@ export interface Cell {
   socola?: number; comboSoc?: boolean;
   /** Cell đỏ hồi máu một lần (`CELL_HOI_DUOI` → `CELL_HOI_TREN`): 'dang' = đang đi phá cây ăn đậu thần, 'xong' = đã dùng; thiếu = chưa dùng */
   hoi?: 'dang' | 'xong';
+  /** Cell đỏ: máu tối đa tăng thêm (đầy máu và không bị đánh thì +CELL_DO_TANG mỗi giây, không giới hạn; lưu ván theo `cell`) */
+  hpThem?: number;
+  /** Cell đỏ: số giây từ lần mất máu gần nhất, và giây dồn lại khi đang đầy máu (đủ 1s thì tăng máu tối đa) */
+  yen?: number; tang?: number;
 }
 
 /** Đảo có Cell giữ ngọc (1 con, Cell bạo nộ): ngồi im giữa đảo trên viên ngọc rồng 2 sao */

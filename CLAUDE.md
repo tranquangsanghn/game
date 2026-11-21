@@ -390,7 +390,7 @@
 
 - Cây trên đảo cát (`TrangTri.sa`, kể cả cây to) đổ thì chắc chắn rơi **`DAU_ROI` = 2 hạt đậu thần** (`VatPham` loại `dau`, `veDau()`, to bằng nửa viên ngọc rồng) thay táo: mỗi hạt ăn +`DAU_MAU` = 300 máu, +`DAU_MANA` = 240 mana (không giới hạn, mở khoá bay) và +`DAU_SAT` = 10 sát thương cộng thẳng vào mỗi đòn (`NguoiChoi.satDau`, sau khi nhân `suc`, không giới hạn, lưu trong ván lưu; với Cell bạo nộ phần cộng thêm vẫn bị giáp giảm). Mabu / Zinbu và **Cell** (đi qua, +`DAU_MAU` máu) đều ăn được; gà không ăn. Cây vườn gà vẫn rơi táo như cũ.
 
-- Cell tự hồi máu mỗi giây (`capNhatCell()`, tới máu tối đa của cấp `CELL_HP`): mọi Cell (kể cả Cell đỏ) `CELL_HOI_MAU` = 10 máu/s. Mini map máy bay (`veBanDoNho()`) hiện **số Cell ban đầu** (`CELL_SO_DAO`, cố định) ở giữa mỗi đảo.
+- Cell tự hồi máu mỗi giây (`capNhatCell()`, tới máu tối đa của cấp `CELL_HP`): mọi Cell (kể cả Cell đỏ) `CELL_HOI_MAU` = 10 máu/s. **Cell đỏ đầy máu mà không bị đánh (mất máu) `CELL_DO_TANG_CHO` = 1s thì cứ mỗi giây máu tối đa tăng `CELL_DO_TANG` = 3** (máu hiện có cũng +3, không giới hạn; `Cell.hpThem`, lưu ván theo `cell`; `cellHpMax()` = `CELL_HP` + `hpThem`, dùng cho tự hồi, thanh máu, ngưỡng đi ăn đậu 20% / 150%, combo socola + mây 30%); bị đánh trúng thì đếm lại từ đầu. Mini map máy bay (`veBanDoNho()`) hiện **số Cell ban đầu** (`CELL_SO_DAO`, cố định) ở giữa mỗi đảo.
 
 # Nguyên tắc núi đá
 

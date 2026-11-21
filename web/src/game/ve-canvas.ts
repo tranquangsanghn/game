@@ -4,7 +4,7 @@ import { HN } from './do-hieu-nang';
 import type { ConBu } from './con-bu';
 import type { Game, Ga, TrangTri, Cuu, CauTron, MbHinh } from './game';
 import type { KhungSprite } from './sprite';
-import { CELL_HP, CELL_SO_DAO, CELL_TEN, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
+import { cellHpMax, CELL_SO_DAO, CELL_TEN, capCuaDao, cellK, CELL_CHET_T, CELL_KHUNG, CELL_NGOI_NANG, SO_CAP, SP_CELL, type Cell } from './cell';
 import { BANH_FPS, BANH_KHUNG, SP_BANH, SP_CELL_TIEC, CHUONG_LOAI, TIEC_KHUNG, TIEC_CHUONG_T, SP_CONG, CONG_TO, CONG_FPS, CONG_CHIM } from './tiec';
 import type { NhanVatSprite } from './nhan-vat-sprite';
 import { MABU } from './nhan-vat-du-lieu';
@@ -1779,7 +1779,7 @@ export class VeCanvas {
     // (và sức mạnh khi đã ăn thêm); ăn quá máu tối đa thì thanh tính theo máu hiện có
     const an = ce.vai === 'an' || !!ce.tungAn;
     if ((ce.cap === SO_CAP - 1 || an || c.cellCuoi(ce)) && !ce.chet) {
-      const toiDa = Math.max(CELL_HP[ce.cap]!, ce.hp);
+      const toiDa = Math.max(cellHpMax(ce), ce.hp);
       ctx.save();
       ctx.translate(ce.x, ce.y - (c.cellNgoiNgoc(ce) ? CELL_NGOI_NANG : 0) - CELL_THANH_CAO * k);
       ctx.scale(3, 3);
