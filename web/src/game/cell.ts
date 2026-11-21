@@ -84,6 +84,8 @@ export const CELL_CHUONG_HOI = [2, 2, 2, 2, 1];
 export const CELL_COMBO_CHUONG = [3, 3, 3, 3, 3];
 // Cấp 4 (Cell bạo nộ, chỉ 1 con): cửa 4s nên phát kế tiếp của chính nó trúng liền cũng tính combo
 export const CELL_COMBO_CUA = [0.5, 0.5, 0.5, 0.5, 4];
+/** Cell bạo nộ: hệ số sát thương chưởng theo thứ tự đòn trong chuỗi combo (đòn 1 ×1 · đòn 2 ×1,5 · đòn 3 ×2 · từ đòn 4 ×3) */
+export const CELL_DO_COMBO = [1, 1.5, 2, 3];
 export const CELL_CHUONG_TAM = 1100;
 /** Máy bay có người ngồi bay vào vòng tròn đảo cộng lề này thì Cell của đảo bắn máy bay (`mbChoCell()`) */
 export const CELL_MB_TAM = 1500;

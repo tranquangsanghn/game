@@ -9,7 +9,7 @@ import { CON_BU_SO, CON_BU_LAN, CON_BU_GAP, CON_BU_HOI_DE, CON_BU_TO, CON_BU_TOC
 import { MC, MC_COT, MC_HANG, MC_HAM, MC_O, datLaiMeCung, oCua, oCung, oTuongMc, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
 import { taoMeCung, O_VAO_MC, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, O_BI_AN_HOI, MC_DO_THEM, MC_BOM_THEM, MANG_TOI_DA, BAY_BAY, BAY_NO, BAY_TAM, QUAI_CACH, QUAI_TOI_DA, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DL, LOAI_QUAI, QUAI_TIA_SAT, QUAI_TIA_T, QUAI_CHET_T, QUAI_DAU_T, SP_QUAI, type LoaiQuai, type TiaMc, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_DIEM, BA_CHET_T, BA_HP, BA_HOI_SINH, BA_HOI_T, BA_HOI_TANG, BA_TOC, BA_GAN, BA_BAY_CAO, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
+import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_DO_COMBO, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
 import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzMauGap, fzSat, fzToc, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_HOI_DUOI, FZ_HOI_TREN, FZ_AN_DAU, FZ_AN_TAO, FZ_AN_BK, FZ_CAY_TAM, FZ_GIAP, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_TI_LE_DAU, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
@@ -1032,6 +1032,8 @@ export class Game {
   cellDoi: { chien: boolean; tach: number[]; muc: number; dichDan: number; an?: number }[] = [];
   /** Lúc (this.t) mỗi nhân vật bị chưởng Cell trúng gần nhất, để tính combo chưởng (không lưu ván) */
   cellChuongLuc: number[] = [];
+  /** Thứ tự đòn chưởng của Cell bạo nộ trong chuỗi combo hiện tại trên mỗi nhân vật (không lưu ván) */
+  cellComboDem: number[] = [];
   /** Tiệc sinh nhật Cell: bánh ở giữa vòng Cell; chưởng Cell bắn vào bánh (chỉ để đẹp, không lưu); banhView = bánh nằm trong khung nhìn */
   tiec: Tiec[] = [];
   chuongTiec: ChuongTiec[] = [];
@@ -1391,6 +1393,7 @@ export class Game {
     this.gyNv = null;
     this.cellDoi = [];
     this.cellChuongLuc = [];
+    this.cellComboDem = [];
     this.chuongTiec = [];
     this.dan = [];
     this.vet = [];
@@ -1485,6 +1488,7 @@ export class Game {
     this.datNgocMeCung();
     this.cellDoi = [];
     this.cellChuongLuc = [];
+    this.cellComboDem = [];
     for (const c of this.cell) { c.vai = undefined; c.muc = undefined; c.cay = undefined; c.nap = undefined; c.chien = false; if (!this.tiecCua(c)) c.tiec = false; }
     if (d.mayBay) this.mayBay = { ...taoMayBay(d.mayBay.x, d.mayBay.y), ...d.mayBay };
     this.phiThuyen = d.phiThuyen ? { ...taoPhiThuyen(this.mayBay), ...d.phiThuyen } : taoPhiThuyen(this.mayBay);
@@ -6071,7 +6075,7 @@ export class Game {
 
   /**
    * Chưởng chiến đấu của Cell tới nơi: ai (không ẩn / gục / mây) nằm trên chùm thì trúng (vẫn né / giảm 50%); chưởng Cell bạo nộ còn phá combo người trúng.
-   * Combo chưởng (cấp có CELL_COMBO_CHUONG > 1): chưởng thứ 2 trở đi trúng cùng một người trong CELL_COMBO_CUA giây (kể từ phát trúng trước) thì sát thương × hệ số.
+   * Combo chưởng: chưởng trúng cùng một người trong CELL_COMBO_CUA giây kể từ phát trúng trước thì nối chuỗi; Cell cấp 0–3 từ đòn 2 × CELL_COMBO_CHUONG, Cell bạo nộ × CELL_DO_COMBO theo thứ tự đòn.
    */
   private chuongCellTrung(q: ChuongTiec): void {
     const rong = CELL_CHUONG_RONG * q.k;
@@ -6092,10 +6096,18 @@ export class Game {
       const u = Math.max(0, Math.min(1, ((px - q.x0) * vx + (py - q.y0) * vy) / L2));
       if (hyp(px - (q.x0 + vx * u), py - (q.y0 + vy * u)) > rong) continue;
       const p = this.nguoi.indexOf(n);
-      const he = CELL_COMBO_CHUONG[q.cap ?? 0] ?? 1;
-      const combo = he > 1 && this.t - (this.cellChuongLuc[p] ?? -99) <= (CELL_COMBO_CUA[q.cap ?? 0] ?? 0.5);
-      if (combo) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: `💥 COMBO CHƯỞNG CELL x${he}!`, mau: '#ff9f1a', t: 0 });
-      if (this.nhanSatThuong(n, q.sat! * (combo ? he : 1)) && he > 1) this.cellChuongLuc[p] = this.t;
+      const cap = q.cap ?? 0;
+      const combo = this.t - (this.cellChuongLuc[p] ?? -99) <= (CELL_COMBO_CUA[cap] ?? 0.5);
+      // Cell bạo nộ: hệ số theo thứ tự đòn trong chuỗi (đòn 2 ×1,5 · đòn 3 ×2 · từ đòn 4 ×3); Cell khác: từ đòn 2 ×CELL_COMBO_CHUONG
+      const thu = combo ? (cap === SO_CAP - 1 ? (this.cellComboDem[p] ?? 1) + 1 : 2) : 1;
+      const he = cap === SO_CAP - 1
+        ? CELL_DO_COMBO[Math.min(thu, CELL_DO_COMBO.length) - 1]
+        : (thu > 1 ? CELL_COMBO_CHUONG[cap] ?? 1 : 1);
+      if (he > 1) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: `💥 COMBO CHƯỞNG CELL x${String(he).replace('.', ',')}!`, mau: '#ff9f1a', t: 0 });
+      if (this.nhanSatThuong(n, q.sat! * he)) {
+        this.cellChuongLuc[p] = this.t;
+        if (cap === SO_CAP - 1) this.cellComboDem[p] = thu;
+      }
       if (q.cap === SO_CAP - 1 && n.combo > 0) {
         n.combo = 0;
         this.chu.push({ id: this.id++, x: n.x, y: n.y - 270, text: 'MẤT COMBO!', mau: '#ff6b6b', t: 0 });
