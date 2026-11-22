@@ -10,6 +10,10 @@ export const CON_BU_SO = 3;
 export const CON_BU_LAN = 3;
 /** Máu và sát thương của mỗi con = CON_BU_GAP × Super Bư (máu tối đa lúc hợp thể / sát thương mỗi đòn) */
 export const CON_BU_GAP = 0.3;
+/** Máu tối đa của mỗi con không dưới mức này (đầu ván máu Super Bư thấp: 30% chỉ ~270, một chùm chưởng Frieza / Cell là chết luôn, trông như vừa hiện đã mất) */
+export const CON_BU_MAU_SAN = 3000;
+/** Bị hạ: ngã rồi mờ dần trong bấy nhiêu giây mới biến mất khỏi màn hình */
+export const CON_BU_CHET_T = 1.2;
 /** Giữa 2 lần đẻ phải chờ ít nhất bấy nhiêu giây (chống bấm liên tục) */
 export const CON_BU_HOI_DE = 1;
 /** Độ to so với Super Bư */
@@ -48,4 +52,6 @@ export interface ConBu {
   goc: number;
   /** Nháy sáng khi vừa trúng đòn (giây) */
   nhay: number;
+  /** Đã bị hạ: số giây từ lúc ngã (ngã rồi mờ dần CON_BU_CHET_T giây mới xoá); không còn bị đánh / không đánh */
+  chet?: number;
 }

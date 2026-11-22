@@ -1044,6 +1044,7 @@ export class VeCanvas {
     }
     // Thanh máu con của Super Bư (lượt riêng sau mọi vật)
     for (const cb of c.conBuView) {
+      if (cb.chet !== undefined) continue;
       const t = c.conBuThanh(cb);
       this.veThanhNv(ctx, t.x, t.y, t.mau);
     }
@@ -1663,6 +1664,7 @@ export class VeCanvas {
   private veConBu(ctx: CanvasRenderingContext2D, c: Game, cb: ConBu): void {
     const t = c.conBuViTri(cb);
     ctx.save();
+    ctx.globalAlpha *= c.conBuRo(cb);
     ctx.translate(t.x, t.y);
     ctx.scale(t.k, t.k);
     this.sprite(ctx, cb.nv.sp, cb.nv.khung, cb.nv.lat, !!cb.nv.sp.muot, c.conBuLoc(cb));

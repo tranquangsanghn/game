@@ -5,7 +5,7 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
-import { CON_BU_SO, CON_BU_LAN, CON_BU_GAP, CON_BU_HOI_DE, CON_BU_TO, CON_BU_TOC, CON_BU_BAM, CON_BU_XA, CON_BU_DICH, CON_BU_TAM, CON_BU_TAM_DAM, CON_BU_TAM_CHUONG, CON_BU_HOI_DON, CON_BU_HOI_CHUONG, CON_BU_TI_LE_MA, type ConBu } from './con-bu';
+import { CON_BU_SO, CON_BU_LAN, CON_BU_GAP, CON_BU_MAU_SAN, CON_BU_CHET_T, CON_BU_HOI_DE, CON_BU_TO, CON_BU_TOC, CON_BU_BAM, CON_BU_XA, CON_BU_DICH, CON_BU_TAM, CON_BU_TAM_DAM, CON_BU_TAM_CHUONG, CON_BU_HOI_DON, CON_BU_HOI_CHUONG, CON_BU_TI_LE_MA, type ConBu } from './con-bu';
 import { MC, MC_COT, MC_HANG, MC_HAM, MC_O, datLaiMeCung, oCua, oTrongVao, oCung, oTuongMc, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
 import { taoMeCung, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, O_BI_AN_HOI, MC_DO_THEM, MC_BOM_THEM, MANG_TOI_DA, BAY_BAY, BAY_NO, BAY_TAM, QUAI_CACH, QUAI_TOI_DA, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DL, LOAI_QUAI, QUAI_TIA_SAT, QUAI_TIA_T, QUAI_CHET_T, QUAI_DAU_T, SP_QUAI, type LoaiQuai, type TiaMc, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_DIEM, BA_CHET_T, BA_HP, BA_HOI_SINH, BA_HOI_T, BA_HOI_TANG, BA_TOC, BA_GAN, BA_BAY_CAO, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
@@ -7259,6 +7259,7 @@ export class Game {
   private conBuGan(x: number, y: number, r: number): ConBu | null {
     let kq: ConBu | null = null, dMin = r * r;
     for (const cb of this.conBu) {
+      if (cb.chet !== undefined) continue;
       const dx = cb.x - x, dy = cb.y - y, d2 = dx * dx + dy * dy;
       if (d2 < dMin) { dMin = d2; kq = cb; }
     }
@@ -7277,7 +7278,7 @@ export class Game {
       return;
     }
     this.conBuLan++;
-    const hpMax = Math.max(1, Math.round(h.hpMax * CON_BU_GAP));
+    const hpMax = Math.max(CON_BU_MAU_SAN, Math.round(h.hpMax * CON_BU_GAP));
     for (let i = 0; i < CON_BU_SO; i++) {
       const goc = (i / CON_BU_SO) * Math.PI * 2 + this.conBuLan * 0.9;
       const nv = new NhanVat(SUPER_BU);
@@ -7293,17 +7294,19 @@ export class Game {
     this.rungMan(0.2, 8);
   }
 
-  /** Super Bư tách ra (hết giờ hoặc bị hạ): mọi con Bư chết theo */
+  /** Super Bư tách ra (hết giờ hoặc bị hạ): mọi con Bư còn sống chết theo (ngã rồi mờ dần như bị hạ) */
   private conBuChetHet(): void {
-    if (!this.conBu.length) return;
-    for (const cb of this.conBu) {
+    const song = this.conBu.filter((cb) => cb.chet === undefined);
+    if (!song.length) return;
+    for (const cb of song) {
+      cb.chet = 0;
+      cb.nhay = 0;
+      cb.nv.nga();
       this.vetGa({ id: this.id++, x: cb.x, y: cb.y - 80, t: 0, loai: 'chay', co: 1 });
       this.vetGa({ id: this.id++, x: cb.x, y: cb.y, t: 0, loai: 'bui' });
     }
-    const a = this.conBu[0]!;
+    const a = song[0]!;
     this.chuGa({ id: this.id++, x: a.x, y: a.y - 260, text: '💨 CON BƯ BIẾN MẤT THEO SUPER BƯ!', mau: '#ffb3e6', t: 0 });
-    this.conBu = [];
-    this.conBuView = [];
   }
 
   /** Con Bư dính sát thương gốc `sat` (né NE_NV, giảm GIAM_NV như Super Bư); hết máu thì chết. Trả true nếu mất máu */
@@ -7318,7 +7321,10 @@ export class Game {
     cb.nhay = 0.15;
     this.chuGa({ id: this.id++, x: cb.x, y: cb.y - 200, text: `-${nhan}`, mau: '#ff4d4d', t: 0 });
     if (cb.hp <= 0) {
-      this.conBu = this.conBu.filter((v) => v !== cb);
+      // Ngã xuống rồi mờ dần (capNhatConBu xoá sau CON_BU_CHET_T), không biến mất ngay
+      cb.chet = 0;
+      cb.nhay = 0;
+      cb.nv.nga();
       this.vetGa({ id: this.id++, x: cb.x, y: cb.y - 80, t: 0, loai: 'chay', co: 1.2 });
       this.vetGa({ id: this.id++, x: cb.x, y: cb.y, t: 0, loai: 'bui' });
       this.chuGa({ id: this.id++, x: cb.x, y: cb.y - 260, text: '💀 CON BƯ BỊ HẠ!', mau: '#ff6b6b', t: 0 });
@@ -7381,11 +7387,19 @@ export class Game {
   private capNhatConBu(dt: number): void {
     this.conBuHoi = Math.max(0, this.conBuHoi - dt);
     const h = this.hopThe;
-    if (!h) { this.conBuChetHet(); return; }
+    if (!h) this.conBuChetHet();
     if (!this.conBu.length) return;
-    const C = this.nguoi[h.chu]!;
     for (const cb of [...this.conBu]) {
       const nv = cb.nv;
+      if (cb.chet !== undefined) {
+        // Đã bị hạ: ngã rồi mờ dần, hết CON_BU_CHET_T mới xoá khỏi màn hình
+        cb.chet += dt;
+        nv.capNhat(dt, false);
+        if (cb.chet >= CON_BU_CHET_T) this.conBu = this.conBu.filter((v) => v !== cb);
+        continue;
+      }
+      if (!h) continue;
+      const C = this.nguoi[h.chu]!;
       cb.nhay = Math.max(0, cb.nhay - dt);
       let dangDi = false;
       let dC = hyp(C.x - cb.x, C.y - cb.y);
@@ -7471,6 +7485,11 @@ export class Game {
   conBuThanh(cb: ConBu): { x: number; y: number; mau: number } {
     const nv = cb.nv;
     return { x: cb.x, y: cb.y - (nv.cao - nv.nhun) * S_NV - DAU_SB * CON_BU_TO, mau: Math.max(0, Math.min(1, cb.hp / Math.max(1, cb.hpMax))) };
+  }
+
+  /** Độ rõ khi vẽ con Bư: bị hạ thì mờ dần */
+  conBuRo(cb: ConBu): number {
+    return cb.chet === undefined ? 1 : Math.max(0, 1 - cb.chet / CON_BU_CHET_T);
   }
 
   /** Con Bư vừa trúng đòn thì nháy sáng */
