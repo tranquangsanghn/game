@@ -4698,7 +4698,7 @@ export class Game {
       if (t && (!cay0 || tot > xaNhat(f.x, f.y))) {
         this.vetGa({ id: this.id++, x: f.x, y: f.y - 100, t: 0, loai: 'no' });
         f.x = t.x + (Math.random() - 0.5) * FZ_CAY_TAM; f.y = t.y + 160 + Math.random() * 80;
-        giuTrongMap(f, LE_FZ, true);
+        giuTrongMap(f, LE_FZ, true, 'dao');
         this.vetGa({ id: this.id++, x: f.x, y: f.y - 100, t: 0, loai: 'no' });
         this.chuGa({ id: this.id++, x: f.x, y: f.y - 360, text: '💨 FRIEZA DỊCH CHUYỂN!', mau: '#d9b3ff', t: 0 });
         f.cayI = iCho;
@@ -4767,9 +4767,10 @@ export class Game {
     }
     const su = capNhatFrieza(f, dt, thay && !f.nap && f.danh <= 0, gan?.x);
     if (f.chien && f.bien < 0 && !an) this.fzChien(muc, thay, dt);
-    // Truy sát: ra khỏi thần điện thì bay lơ lửng (qua vực), vào vườn gà thì kẹp trong tường như mọi vật
+    // Truy sát: ra khỏi thần điện thì bay lơ lửng (qua vực, qua tường vườn). Chỉ kẹp trong tường vườn khi cả Frieza lẫn mục tiêu
+    // đều ở trong vườn; không thì kẹp theo TG (trước kẹp theo vị trí nên vào vườn rồi là kẹt luôn, không bay ra đảo được)
     f.bay = this.fzTruy && !trongThan(f.x, f.y);
-    if (this.fzTruy) giuTrongMap(f, LE_FZ, f.bay);
+    if (this.fzTruy) giuTrongMap(f, LE_FZ, f.bay, trongVuon(f.x, f.y) && muc && trongVuon(muc.x, muc.y) ? 'vuon' : 'dao');
     else giuTrongMap(f, LE_FZ, false, 'dao');
     if (!su) return;
     const tamY = f.y - 768 * FZ_VANG_TO * 0.4;
