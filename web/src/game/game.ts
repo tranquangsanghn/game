@@ -270,7 +270,7 @@ export interface TrangThaiLuu {
   /** Ginyu canh núi đá (thiếu = ván lưu cũ, tạo mới) */
   ginyu?: Ginyu;
   /** Vườn gà ngủ / tổ trứng chờ vua gà (thiếu = vườn đang hoạt động bình thường) */
-  vuon?: { ngu: boolean; to: { x: number; y: number } | null; toDe: number; daNoPhu: number; choVua: boolean };
+  vuon?: { ngu: boolean };
   /** Bản đồ của ván (thiếu = ván lưu cũ, đồng cỏ) */
   banDo?: LoaiBanDo;
   /** Cây đã đổ: [chỉ số trong trangTri, thời điểm đổ, hướng đổ] */
@@ -690,8 +690,11 @@ const LOC_DO = 'sepia(1) saturate(7) hue-rotate(-52deg) brightness(1.05)';
 // Gà tướng: máu, thời gian chờ giữa 2 lần xuất hiện (giây), tốc độ đi
 const CHO_TUONG_DAU = 0;
 const CHO_TUONG = 10;
-/** Số gà mẹ phụ phải nở (sau khi máy bay quay lại vườn) thì vua gà mới xuất hiện lại */
-const ME_PHU_HIEN_VUA = 5;
+// Vườn gà ngủ (không còn nhân vật trong vườn): mỗi giây tướng gà tăng NGU_PHU_MAU máu + NGU_PHU_SAT sát thương, vua gà NGU_VUA_MAU + NGU_VUA_SAT (không giới hạn)
+const NGU_PHU_MAU = 2;
+const NGU_PHU_SAT = 1;
+const NGU_VUA_MAU = 3;
+const NGU_VUA_SAT = 2;
 const TOC_DO_TUONG = 60;
 // Gà mẹ gốc đẻ trứng: mỗi lượt 4 quả thường (2 gà trắng, 1 gà đỏ, 1 gà đen, DAN_TRUNG; +1 mỗi lần hồi sinh) rồi quả thứ 5 là trứng đỏ đặc biệt; trứng thường nở sau TRUNG_NO giây; khoảng cách giữa 2 lượt theo choDeTrung().
 const DAN_TRUNG: ('hen' | 'rooster' | 'flyer')[] = ['hen', 'hen', 'rooster', 'flyer'];
@@ -1212,12 +1215,8 @@ export class Game {
   private khungNhin = { x0: 0, x1: 0, y0: 0, y1: 0 };
   /** Đếm khung logic, để so le các gà cập nhật thưa */
   private khungSo = 0;
-  // Vườn gà ngủ khi máy bay bay ra ngoài vườn (không gà, không trứng); khi máy bay về thì tổ trứng ẩn đẻ / ấp đủ ME_PHU_HIEN_VUA gà mẹ phụ rồi vua gà mới xuất hiện
+  // Vườn gà ngủ khi không còn nhân vật nào trong vườn: gà, trứng giữ nguyên và đứng yên tới khi nhân vật quay lại
   private vuonNgu = false;
-  private toTrung: { x: number; y: number } | null = null;
-  private toDe = 0;
-  private daNoPhu = 0;
-  private choVua = false;
   // Số gà mẹ phụ đã sinh trong ván (quyết định kiểu chuyên và màu của con kế tiếp)
   private demPhu = 0;
   /** Dấu X đỏ đếm ngược của trứng đỏ (cuối mũi tên chỉ hướng); chỉ lấy khi nằm trong khung nhìn */
@@ -1455,10 +1454,6 @@ export class Game {
     this.soLanTuong = 0;
     this.tThang = -1;
     this.vuonNgu = false;
-    this.toTrung = null;
-    this.toDe = 0;
-    this.daNoPhu = 0;
-    this.choVua = false;
     this.lanTuong = 0;
     this.demPhu = 0;
     this.kyLucMoi = false;
@@ -1482,7 +1477,7 @@ export class Game {
       tGame: this.tGame, t: this.t, chamDen: this.chamDen, id: this.id,
       henTuong: this.henTuong, soLanTuong: this.soLanTuong, lanTuong: this.lanTuong,
       ga: this.ga, trungDe: this.trungDe, vatPham: this.vatPham, ngocNhat: this.ngocNhat, cuu: this.cuu, cauTron: this.cauTron, cell: this.cell, tiec: this.tiec, mayBay: this.mayBay, phiThuyen: this.phiThuyen, ginyu: this.ginyu,
-      vuon: { ngu: this.vuonNgu, to: this.toTrung, toDe: this.toDe, daNoPhu: this.daNoPhu, choVua: this.choVua },
+      vuon: { ngu: this.vuonNgu },
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       thanVo: thanVo.flatMap((v, i) => (v ? [i] : [])),
       frieza: { hp: Math.min(FZ_HP, Math.max(1, this.frieza.hp / fzMauGap(this.frieza))), chet: this.frieza.chet },
@@ -1509,7 +1504,7 @@ export class Game {
     this.henTuong = d.henTuong; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
     this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham; this.ngocNhat = d.ngocNhat ?? []; this.ngocBay = []; this.cuu = d.cuu ?? [];
     this.cauTron = d.cauTron?.length ? d.cauTron.map((q, i) => ({ ...q, cua: q.cua ?? i })) : taoCauTron();
-    if (d.vuon) { this.vuonNgu = d.vuon.ngu; this.toTrung = d.vuon.to; this.toDe = d.vuon.toDe; this.daNoPhu = d.vuon.daNoPhu; this.choVua = d.vuon.choVua; }
+    if (d.vuon) this.vuonNgu = d.vuon.ngu;
     if (d.cell?.length) this.cell = d.cell.map((c) => ({ ...c, hp: c.suc === undefined ? Math.min(c.hp, CELL_HP[c.cap]!) : c.hp }));
     this.tiec = Array.isArray(d.tiec) ? d.tiec : [];
     this.chuongTiec = [];
@@ -1814,10 +1809,10 @@ export class Game {
       this.kiemTraSangMc();
       this.kiemTraThang(dt);
       HN.moc('cn.vuon');
-      this.capNhatTrungGa(dt);
+      if (!this.vuonNgu) this.capNhatTrungGa(dt);
       HN.moc('cn.trung');
       this.henTuong -= dtE;
-      if (this.vuonNgu || this.choVua) this.henTuong = Math.max(this.henTuong, 0.1);
+      if (this.vuonNgu) this.henTuong = Math.max(this.henTuong, 0.1);
       else if (this.henTuong <= 0) {
         if (this.ga.some((g) => g.goc && !g.chet)) this.henTuong = 10;
         else if (this.soLanTuong <= TUONG_HOI_SINH) {
@@ -1845,11 +1840,12 @@ export class Game {
       this.capNhatCong(dt);
       this.nguoi.forEach((n, p) => this.mayQuet(n, p));
       HN.moc('cn.may');
-      this.chonVay(dtE);
-      HN.moc('cn.chonVay');
-      this.capNhatGa(dtE);
+      if (!this.vuonNgu) {
+        this.chonVay(dtE);
+        this.capNhatGa(dtE);
+      }
       HN.moc('cn.ga');
-      this.gaDanhNguoi();
+      if (!this.vuonNgu) this.gaDanhNguoi();
       HN.moc('cn.gaDanh');
       this.capNhatCell(dtE);
       HN.moc('cn.cell');
@@ -2056,7 +2052,7 @@ export class Game {
       }
       // Gà đi qua chỉ mổ ăn táo đỏ (táo xanh gà không ăn): hồi VP_HOI máu, không có trần. Socola thì mọi gà (con, mẹ gốc, mẹ phụ) đều ăn
       const socola = v.loai === 'socola';
-      const ga = xanh || dau ? undefined : this.ga.find((g) => !g.chet && hyp(g.x - v.x, g.y - v.y) < (g.loai === 'boss' ? VP_GA_BAN_KINH * 2.5 : VP_GA_BAN_KINH));
+      const ga = xanh || dau || this.vuonNgu ? undefined : this.ga.find((g) => !g.chet && hyp(g.x - v.x, g.y - v.y) < (g.loai === 'boss' ? VP_GA_BAN_KINH * 2.5 : VP_GA_BAN_KINH));
       if (ga) {
         ga.mo = MO_THOI_GIAN;
         ga.lat = v.x < ga.x;
@@ -3253,10 +3249,10 @@ export class Game {
 
   // ─── Sinh đối tượng ───
 
-  // Máy bay ra khỏi vườn gà → vườn ngủ (gà, trứng biến mất, không hoạt động). Máy bay về → tổ trứng ẩn đẻ / ấp đủ ME_PHU_HIEN_VUA gà mẹ phụ thì vua gà mới xuất hiện lại (nếu vua gà chưa bị hạ)
+  // Không còn nhân vật nào trong vườn gà (máy bay / phi thuyền chở người ra ngoài) → vườn ngủ: gà, trứng giữ nguyên trạng thái lúc rời đi và đứng yên
+  // (không đi, không đẻ, trứng không nở). Trong lúc chờ, tướng gà tăng NGU_PHU_MAU máu + NGU_PHU_SAT sát thương / giây, vua gà NGU_VUA_MAU + NGU_VUA_SAT.
+  // Nhân vật quay lại thì vườn chạy tiếp đúng như lúc mới đi ra.
   private capNhatVuon(dtE: number): void {
-    // Máy bay hoặc phi thuyền bay ra khỏi vườn (qua tường) thì vườn ngủ; xe nào còn đậu trong vườn mà không ai ở trong vườn cũng vậy
-    // (đi phi thuyền sang núi đá, máy bay vẫn đậu trong vườn). Người ngồi xe đi theo xe nên chỉ cần xét vị trí nhân vật.
     // Người ngồi xe tính theo vị trí xe (lúc bay, toạ độ nhân vật bị nâng lên theo độ cao)
     const ngoai = !this.nguoi.some((n, p) => {
       if (n.vang) return false;
@@ -3265,43 +3261,19 @@ export class Game {
     });
     if (ngoai && !this.vuonNgu) {
       this.vuonNgu = true;
-      // Vua gà còn sống (hoặc chưa xuất hiện) thì sẽ xuất hiện lại như mới; đã bị hạ thì không bao giờ có lại
-      if (this.ga.some((g) => g.goc && !g.chet) || this.soLanTuong <= TUONG_HOI_SINH) this.soLanTuong = 0;
-      this.viTriVua = null;
-      this.ga = [];
-      this.keoGa = [];
-      this.trungDe = [];
-      this.toTrung = null;
-      this.choVua = false;
-      this.daNoPhu = 0;
-      return;
-    }
-    if (!ngoai && this.vuonNgu) {
-      this.vuonNgu = false;
-      if (this.soLanTuong <= TUONG_HOI_SINH) {
-        const co = this.nguoi.filter((n) => !n.vang);
-        let x = MAP / 2, y = MAP / 2;
-        for (let i = 0; i < 30; i++) {
-          x = ngauNhien(900, MAP - 900);
-          y = ngauNhien(900, MAP - 900);
-          if (co.every((n) => hyp(n.x - x, n.y - y) >= 1500)) break;
-        }
-        this.toTrung = { x, y };
-        this.toDe = 0;
-        this.daNoPhu = 0;
-        this.choVua = true;
+      // Gà đang bị kéo về nhân vật thì coi như đã bị ăn xong (không giữ lại trong vườn)
+      for (const g of this.keoGa) {
+        const n = this.nguoi[g.keo!.p];
+        if (n && !n.het) { this.hoiMau(n, g.keo!.an); this.hoiMana(n, g.keo!.an); }
       }
-    }
-    if (this.vuonNgu || !this.toTrung) return;
-    this.toDe -= dtE;
-    if (this.toDe <= 0) {
-      this.toDe = choDeTrung(this.soMePhu);
-      this.deTrung({ id: -1, x: this.toTrung.x, y: this.toTrung.y });
-    }
-    if (this.daNoPhu >= ME_PHU_HIEN_VUA) {
-      this.toTrung = null;
-      this.choVua = false;
-      this.henTuong = 0;
+      this.keoGa = [];
+    } else if (!ngoai && this.vuonNgu) this.vuonNgu = false;
+    if (!this.vuonNgu) return;
+    for (const g of this.ga) {
+      if (g.chet || g.hp <= 0 || g.loai !== 'boss') continue;
+      const vua = !!g.goc;
+      g.hp += (vua ? NGU_VUA_MAU : NGU_PHU_MAU) * dtE;
+      g.satThem = (g.satThem ?? 0) + (vua ? NGU_VUA_SAT : NGU_PHU_SAT) * dtE;
     }
   }
 
@@ -3464,7 +3436,6 @@ export class Game {
     const g = this.taoTuong(e.x, e.y, Math.random() < 0.5, false, this.demPhu++ % KIEU_PHU);
     giuTrongMap(g, LE_TUONG, false, 'vuon');
     this.ga.push(g);
-    this.daNoPhu++;
     this.vetGa({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'chay', co: 2 });
     this.chuGa({ id: this.id++, x: g.x, y: g.y - 360, text: '🐔 GÀ MẸ MỚI RA ĐỜI!', mau: '#ff9f1a', t: 0 });
     this.rung = Math.max(this.rung, 0.3);
