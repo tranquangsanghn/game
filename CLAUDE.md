@@ -119,7 +119,7 @@
 
 # Nguyên tắc tâm tự ngắm
 
-- **Không có tâm ngắm** (đã xoá chế độ chuột): đánh theo hướng đang quay mặt (`nhin`, `diemHuong()`): có gà trong tầm và trong góc ~45° phía trước thì đòn trúng con gần nhất đó, không thì đánh thẳng về phía trước.
+- **Không có tâm ngắm** (đã xoá chế độ chuột): đánh theo hướng đang quay mặt (`nhin`, `diemHuong()`): có quái (gà, Cell, Frieza; trừ bóng ma Goku để không lộ bản sao) trong tầm và trong góc ~45° phía trước thì đòn nhắm vào tâm thân con gần nhất đó, không thì đánh thẳng về phía trước. Chưởng Super Bư tầm ngắm gấp `SB_TAM_GAP`. (Trước chỉ nhắm gà: chưởng Super Bư bắn từ tay rất cao bay thẳng nên lướt qua trên đầu Frieza ở gần / lệch hàng, trông như Frieza không mất máu.)
 
 # Nguyên tắc sương mù & gà lao vào
 

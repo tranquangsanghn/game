@@ -7699,23 +7699,26 @@ export class Game {
     const ux = n.nhin.x / len;
     const uy = n.nhin.y / len;
     const nhomSoc = n.nv.nhom === NHOM_MAY && !n.nv.sp.nhomDon[NHOM_MAY]?.may;
-    const tam = nhomSoc ? TAM_SOCOLA : n.nv.nhom === 2 ? 800 : n.nv.nhom === 1 ? 480 : 380;
-    let tot: Ga | null = null;
+    const sbChuong = n.nv.nhom === 2 && this.hopThe?.chu === p;
+    const tam = nhomSoc ? TAM_SOCOLA : n.nv.nhom === 2 ? 800 * (sbChuong ? SB_TAM_GAP : 1) : n.nv.nhom === 1 ? 480 : 380;
+    // Nhắm tâm thân quái gần nhất phía trước (gà, Cell, Frieza): không nhắm thì chưởng bắn từ tay (Super Bư tay rất cao) bay thẳng phía trước, lướt qua đầu / dưới chân quái to
+    let tot: { x: number; y: number } | null = null;
     let dm = tam;
-    for (const g of this.ga) {
-      if (g.chet) continue;
-      const t = this.tamGa(g);
+    const xet = (t: { x: number; y: number }, bk: number) => {
       const dx = t.x - n.x;
       const dy = t.y - n.y;
-      const d = hyp(dx, dy) - (g.loai === 'boss' ? 125 : 0);
-      if (d >= dm || (dx * ux + dy * uy) / (hyp(dx, dy) || 1) < 0.7) continue;
+      const d = hyp(dx, dy) - bk;
+      if (d >= dm || (dx * ux + dy * uy) / (hyp(dx, dy) || 1) < 0.7) return;
       dm = d;
-      tot = g;
+      tot = t;
+    };
+    for (const g of this.ga) if (!g.chet) xet(this.tamGa(g), g.loai === 'boss' ? 125 : 0);
+    for (const c of this.cell) {
+      if (c.chet || Math.abs(c.x - n.x) > tam + 600 || Math.abs(c.y - n.y) > tam + 600) continue;
+      xet(this.tamCell(c), CELL_BK * cellK(c.cap));
     }
-    if (tot) {
-      const t = this.tamGa(tot);
-      return { x: t.x, y: t.y };
-    }
+    if (!this.frieza.chet) xet(this.tamFz(), FZ_BK);
+    if (tot) return tot;
     const xa = nhomSoc ? 500 : n.nv.nhom === 2 ? 600 * (this.hopThe?.chu === p ? SB_TAM_GAP : 1) : 250;
     return { x: n.x + ux * xa, y: n.y + uy * xa - 60 };
   }
