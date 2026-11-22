@@ -551,8 +551,10 @@ const VUNG_BAY_CAN = 0.6; // cần trái phải gạt mạnh mới bay (tránh b
 const BAY_CAN = 600; // mỗi lần gạt cần trái bay một đoạn (xa hơn BAY_KHI_XA)
 const TRON_QUANG = 2 * BAY_CAN;
 const VUNG_CHET_CAN = 0.25; // cần analog gạt dưới mức này coi như nằm yên
-/** Tay cầm kiểu Nintendo Switch (Pro Controller, Joy-Con, tay cầm hãng khác giả mã 057e): chữ A / B / X / Y in đảo so với Xbox */
-const laNintendo = (g: Gamepad) => /057e|nintendo|pro controller|joy-con|switch/i.test(g.id);
+/** Tay cầm giả mã Nintendo Switch Pro (057e, ví dụ Zikway Pro Controller, chữ in kiểu Xbox: A dưới · B phải · X trái · Y trên) chạy trên Firefox:
+ *  Firefox (id dạng "057e-2009-…") xếp 4 nút theo chữ Nintendo (A phải · B dưới · X trên · Y trái) thay vì theo vị trí như Chrome,
+ *  nên phải đổi 0↔1, 2↔3 cho đúng vị trí kiểu Xbox. Chrome (id dạng "… Vendor: 057e …") đã theo vị trí, không đổi */
+const laNintendo = (g: Gamepad) => /^057e-/i.test(g.id);
 const VUNG_CAN_PHAI = 0.6; // cần phải (chiêu riêng) phải gạt mạnh mới tính, tránh cần trôi tự ra chiêu
 const TOC_DO_DAN = 2400;
 // Chiêu Biến mây (riêng Mabu, nhóm đòn 3): mây to gấp 2, quét trúng mọi con gà nó đi qua. Hiệu lực MAY_THOI_GIAN giây, sau đó chờ MAY_HOI giây mới dùng lại.
@@ -7469,11 +7471,10 @@ export class Game {
     if (typeof navigator !== 'undefined' && navigator.getGamepads) {
       for (const g of navigator.getGamepads()) if (g && g.connected) ds.push(g);
     }
-    const ten = ds.map((g) => g.id.replace(/\s*\(.*$/, '').slice(0, 40) + (g.mapping === 'standard' ? '' : ' [không chuẩn]') + (laNintendo(g) ? ' [kiểu Switch]' : ''));
+    const ten = ds.map((g) => g.id.replace(/\s*\(.*$/, '').slice(0, 40) + (g.mapping === 'standard' ? '' : ' [không chuẩn]') + (laNintendo(g) ? ' [đã chỉnh nút]' : ''));
     if (ten.join('|') !== this.tayCamTen.join('|')) this.tayCamTen = ten;
     const cu = (g: Gamepad) => this.nutCu.get(g.index) ?? [];
-    // Tay cầm kiểu Nintendo Switch: chữ in trên 4 nút đảo so với Xbox (A phải, B dưới, X trên, Y trái) mà mapping "standard"
-    // theo vị trí, nên đổi 0↔1, 2↔3 để bấm nút có chữ nào thì ra đúng nút đó
+    // Tay cầm mã Nintendo trên Firefox: đổi 0↔1, 2↔3 để nút theo đúng vị trí kiểu Xbox (A dưới · B phải · X trái · Y trên)
     const doi = (g: Gamepad, i: number) => (i < 4 && laNintendo(g) ? i ^ 1 : i);
     const duoc = (g: Gamepad, i: number) => !!g.buttons[doi(g, i)]?.pressed;
     const moi = (g: Gamepad, i: number) => duoc(g, i) && !cu(g)[doi(g, i)];
