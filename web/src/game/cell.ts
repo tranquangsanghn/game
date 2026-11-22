@@ -57,8 +57,6 @@ export const CELL_TOC = [105, 127.5, 150, 180, 300];
 export const CELL_DAU_SAT = [12, 12, 12, 12, 15];
 /** Mỗi hạt đậu thần còn cộng sức mạnh `suc` +CELL_DAU_SUC theo cấp (nhân sát thương gốc, cộng dồn, không giới hạn): Cell cấp 0–3 0,1; Cell đỏ 0 (chỉ +15 sát thương mỗi hạt, không nhân sức mạnh) */
 export const CELL_DAU_SUC = [0.1, 0.1, 0.1, 0.1, 0];
-/** Từ phút 5 (CELL_TRUY_T), lúc không đánh nhau, Cell cấp 0–3 rời tiệc đi bắn cây ăn đậu thần chuẩn bị đánh Mabu / Zinbu tới chừng này hạt mỗi con (đánh nhau thì ăn không giới hạn như cũ) */
-export const CELL_CHUAN_BI_DAU = 5;
 export const CELL_AN_TAM = 700;
 /** Con đi ăn đậu (`vai: 'an'`) chạy nhanh gấp CELL_AN_TOC lần Cell thường cùng cấp (tới cây, tới đậu, trốn) */
 export const CELL_AN_TOC = 1.5;
