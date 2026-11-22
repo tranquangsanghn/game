@@ -614,8 +614,8 @@ const TAM_NGUI_NV = 800;
 const TAM_NGUI_TAO = 500;
 // Giới hạn số gà (hiệu năng): đủ ME_PHU_TOI_DA tướng gà thì trứng đỏ không nở thêm tướng gà; đủ GA_CON_TOI_DA gà con thì không nở / gọi thêm gà con.
 // Khi đã đủ, loại gà đó bỏ giới hạn tầm ngửi: đi ăn táo đỏ / socola và tìm Mabu / Zinbu (đang ở trong vườn gà) khắp vườn (dayCon / dayPhu).
-const ME_PHU_TOI_DA = 15;
-const GA_CON_TOI_DA = 50;
+const ME_PHU_TOI_DA = 10;
+const GA_CON_TOI_DA = 30;
 // Tốc độ gà lao vào nhân vật (gà bay giữ nguyên tốc độ bay, chỉ đổi hướng)
 // Hệ số nhân tốc độ di chuyển thật của mọi loại gà (kể cả gà tướng): 1/4 tốc độ gốc ghi trong các hằng số
 const HE_SO_TOC_GA = 0.25;
