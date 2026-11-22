@@ -551,6 +551,7 @@ const VUNG_BAY_CAN = 0.6; // cần trái phải gạt mạnh mới bay (tránh b
 const BAY_CAN = 600; // mỗi lần gạt cần trái bay một đoạn (xa hơn BAY_KHI_XA)
 const TRON_QUANG = 2 * BAY_CAN;
 const VUNG_CHET_CAN = 0.25; // cần analog gạt dưới mức này coi như nằm yên
+const VUNG_CAN_PHAI = 0.6; // cần phải (chiêu riêng) phải gạt mạnh mới tính, tránh cần trôi tự ra chiêu
 const TOC_DO_DAN = 2400;
 // Chiêu Biến mây (riêng Mabu, nhóm đòn 3): mây to gấp 2, quét trúng mọi con gà nó đi qua. Hiệu lực MAY_THOI_GIAN giây, sau đó chờ MAY_HOI giây mới dùng lại.
 // Tốn MANA_DAC_BIET; đang chạy / đang hồi thì nút chiêu mờ hẳn (hetMana).
@@ -7554,9 +7555,12 @@ export class Game {
       if (!danhDuoc) continue;
       // Mê cung bom: X ném bom (giữ càng lâu ném càng xa), A kích nổ, B đổ nước cứu, Y chọc kim cứu
       if (this.oMeCung(p)) { this.mcTayCam(p, (i) => moi(g, i), (i) => duoc(g, i)); continue; }
-      const phai = this.canGat(g, 2, g.mapping === 'standard' || g.axes.length < 6 ? 3 : 5);
-      // Ra đòn: giữ nút thì đánh liên tục theo thời gian hồi chiêu. A đấm · X đá · Y chưởng · B hoặc cần phải: chiêu riêng
-      const nhom = duoc(g, 1) || phai.m > 0 || duoc(g, 11) ? NHOM_MAY : duoc(g, 3) ? 2 : duoc(g, 2) ? 1 : duoc(g, 0) ? 0 : -1;
+      // Cần phải chỉ đọc ở tay cầm chuẩn (trục 2, 3), gạt mạnh mới tính (cần trôi nhẹ không tự ra chiêu); tay cầm không chuẩn
+      // thường báo cò LT / RT ở trục 2 / 5 (nằm yên = -1) nên bỏ qua, dùng B / R3
+      const phai = g.mapping === 'standard' ? this.canGat(g, 2, 3, VUNG_CAN_PHAI) : { m: 0 };
+      // Ra đòn: giữ nút thì đánh liên tục theo thời gian hồi chiêu. A đấm · X đá · Y chưởng · B: chiêu riêng.
+      // Nút A / B / X / Y luôn được ưu tiên; cần phải / R3 (chiêu riêng) chỉ tính khi không bấm nút nào
+      const nhom = duoc(g, 1) ? NHOM_MAY : duoc(g, 3) ? 2 : duoc(g, 2) ? 1 : duoc(g, 0) ? 0 : phai.m > 0 || duoc(g, 11) ? NHOM_MAY : -1;
       if (nhom >= 0) this.dungChieu(p, nhom);
     }
     if (this.man === 'play') this.thuHopThe();
