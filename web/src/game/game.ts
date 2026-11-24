@@ -4306,9 +4306,10 @@ export class Game {
     return this.gyTruy ? trongVuon(x, y) || doSau(x, y) > 0 : trongNui(x, y);
   }
 
-  /** Kẹp bóng ma / bản sao trong map: trên núi theo đảo; đang truy sát thì theo vùng đang đứng (vào được vườn gà), bay thì qua được vực */
+  /** Kẹp bóng ma / bản sao trong map: trên núi theo đảo; bay (bóng ma truy sát) thì chỉ kẹp theo TG, qua được vực / tường vườn
+   *  (kẹp theo vùng đang đứng làm bóng ma vào vườn gà rồi kẹt trong tường, không bay ra được); bản sao đi bộ thì theo vùng đang đứng */
   private gyGiu(le: Le, bay = false): void {
-    giuTrongMap(this.ginyu, le, bay, this.gyTruy ? vungCua(this.ginyu) : 'dao');
+    giuTrongMap(this.ginyu, le, bay, bay || !this.gyTruy ? 'dao' : vungCua(this.ginyu));
   }
 
   /** Bóng ma nhận ra nhân vật p ở bất kỳ đâu trên núi đá (chống câu giờ): chỉ cần hợp lệ */
