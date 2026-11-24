@@ -11,7 +11,7 @@ import { taoMeCung, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC,
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_DO_COMBO, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_T_MAX, CELL_HOI_DAU_GAP, CELL_DO_TANG, CELL_DO_TANG_CHO, cellHpMax, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
-import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzMauGap, fzSat, fzToc, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_COMBO_CUA, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_HOI_DUOI, FZ_HOI_TREN, FZ_AN_DAU, FZ_AN_TAO, FZ_AN_BK, FZ_CAY_TAM, FZ_GIAP, FZ_MISS, FZ_MISS_VANG, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
+import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzMauGap, fzSat, fzToc, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_COMBO_CUA, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_HOI_DUOI, FZ_HOI_TREN, FZ_HOI_LAN, FZ_AN_DAU, FZ_AN_TAO, FZ_AN_BK, FZ_CAY_TAM, FZ_GIAP, FZ_MISS, FZ_MISS_VANG, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_TI_LE_DAU, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -280,7 +280,7 @@ export interface TrangThaiLuu {
   /** Chỉ số cây cối / vật dụng thần điện đã bị chưởng phá (THAN_VAT) */
   thanVo?: number[];
   /** Frieza: máu (dạng thường) và đã bị hạ chưa (thiếu = Frieza mới) */
-  frieza?: { hp: number; chet: boolean };
+  frieza?: { hp: number; chet: boolean; hoiLan?: number };
   /** Đã có người ra khỏi vườn gà / ở lì vườn gà 5 phút (on: máy bay thôi hồi máu) / Cell đỏ, Frieza, bóng ma Goku đang truy sát (thiếu = ván lưu cũ: coi như đã ra vườn) */
   truyVuon?: { ra: boolean; on: boolean; cell?: boolean; fz?: boolean; gy?: boolean; th?: boolean; mc?: boolean; cdo?: boolean };
   nguoi: (Omit<NguoiChoi, 'nv' | 'cuaCan' | 'dich' | 'bay'> & { nhom: number; lat: boolean; huong: 'ngang' | 'len' | 'xuong' })[];
@@ -1491,7 +1491,7 @@ export class Game {
       vuon: { ngu: this.vuonNgu },
       cayDo: this.trangTri.flatMap((c, i) => (c.doLuc === undefined ? [] : [[i, c.doLuc, c.huongDo ?? 1, c.mat ? 1 : 0]])),
       thanVo: thanVo.flatMap((v, i) => (v ? [i] : [])),
-      frieza: { hp: Math.min(FZ_HP, Math.max(1, this.frieza.hp / fzMauGap(this.frieza))), chet: this.frieza.chet },
+      frieza: { hp: Math.min(FZ_HP, Math.max(1, this.frieza.hp / fzMauGap(this.frieza))), chet: this.frieza.chet, hoiLan: this.frieza.hoiLan },
       truyVuon: { ra: this.daRaVuon, on: this.cellTruyVuon, cell: this.cellTruyT, fz: this.fzTruy, gy: this.gyTruy, th: this.trieuHoi, mc: this.sangMc, cdo: this.cellCuuDo },
       nguoi: this.nguoi.map((n, p) => {
         const { nv, cuaCan, dich, bay, ...r } = n;
@@ -1562,7 +1562,7 @@ export class Game {
     for (const c of this.trangTri) { delete c.doLuc; delete c.huongDo; delete c.mat; }
     for (const i of d.thanVo ?? []) if (i >= 0 && i < thanVo.length) thanVo[i] = true;
     this.frieza = taoFrieza();
-    if (d.frieza) { this.frieza.hp = d.frieza.hp; this.frieza.chet = d.frieza.chet; if (d.frieza.chet) this.frieza.tChet = FZ_CHET_T; }
+    if (d.frieza) { this.frieza.hp = d.frieza.hp; this.frieza.chet = d.frieza.chet; this.frieza.hoiLan = d.frieza.hoiLan; if (d.frieza.chet) this.frieza.tChet = FZ_CHET_T; }
     for (const [i, t, h, m] of d.cayDo ?? []) if (this.trangTri[i]) { this.trangTri[i].doLuc = t; this.trangTri[i].huongDo = h; this.trangTri[i].mat = !!m; }
     // Đội hình theo nhân vật đã lưu (ván lưu cũ thiếu ki: ô trái Mabu, ô phải Zinbu)
     const kiLuu = d.nguoi.map((o, p) => (o.vang ? null : o.ki ?? p));
@@ -4660,15 +4660,16 @@ export class Game {
   /**
    * Frieza ra khỏi thần điện (truy sát) mà máu dưới FZ_HOI_DUOI thì làm như Cell đỏ / con Cell đi ăn đậu: bỏ đánh, thấy táo / đậu thần thì bay tới ăn
    * (`capNhatVatPham()`), không thì bay tới cây khô, vận chưởng bắn đổ cây cho rơi đậu / táo rồi ăn. Nhân vật lại gần (CELL_AN_GAP) thì dịch chuyển sang
-   * cây khác xa nhân vật nhất. Máu đạt FZ_HOI_TREN × máu tối đa thì quay lại tìm Mabu / Zinbu. Trả về true khi đang đi ăn (bỏ qua phần đánh).
+   * cây khác xa nhân vật nhất. Máu đạt FZ_HOI_TREN × máu tối đa thì quay lại tìm Mabu / Zinbu. Cả ván chỉ trốn tối đa FZ_HOI_LAN lần. Trả về true khi đang đi ăn (bỏ qua phần đánh).
    */
   private fzHoiPhuc(dt: number): boolean {
     const f = this.frieza;
     if (f.chet || this.trieuHoi || f.bien >= 0 || (f.nap && f.cayI === undefined)) { f.hoi = false; f.cayI = undefined; return false; }
     const max = fzHpMax(f);
     if (!f.hoi) {
-      if (f.hp >= max * FZ_HOI_DUOI || trongThan(f.x, f.y)) return false;
+      if (f.hp >= max * FZ_HOI_DUOI || trongThan(f.x, f.y) || (f.hoiLan ?? 0) >= FZ_HOI_LAN) return false;
       f.hoi = true;
+      f.hoiLan = (f.hoiLan ?? 0) + 1;
       f.choDich = 0;
       this.chuGa({ id: this.id++, x: f.x, y: f.y - 360, text: '🫘 FRIEZA ĐI ĂN ĐẬU THẦN HỒI MÁU!', mau: '#7be04a', t: 0 });
     } else if (f.hp >= max * FZ_HOI_TREN) {

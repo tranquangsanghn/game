@@ -76,6 +76,8 @@ export const FZ_HOI_MAU = 10;
  *  Mỗi lần ăn hồi một phần máu tối đa: đậu thần FZ_AN_DAU, táo FZ_AN_TAO (không giới hạn). Như Cell đỏ: không có táo / đậu thì bay tới cây, vận chưởng bắn đổ cây cho rơi đậu, nhân vật lại gần thì dịch chuyển sang cây khác */
 export const FZ_HOI_DUOI = 0.2;
 export const FZ_HOI_TREN = 1.5;
+/** Cả ván Frieza chỉ trốn đi ăn hồi máu tối đa FZ_HOI_LAN lần (`Frieza.hoiLan`, lưu ván) */
+export const FZ_HOI_LAN = 2;
 export const FZ_AN_DAU = 0.2;
 export const FZ_AN_TAO = 0.1;
 export const FZ_AN_BK = 130;
@@ -140,6 +142,8 @@ export interface Frieza {
   bay?: boolean;
   /** Đang đi ăn táo / đậu thần hồi máu (không lưu ván) */
   hoi?: boolean;
+  /** Số lần đã trốn đi ăn hồi máu (tối đa FZ_HOI_LAN, lưu ván) */
+  hoiLan?: number;
   /** Đang đi ăn: cây đang nhắm (chỉ số `trangTri`), giờ được dịch chuyển lần kế (`t` của Game) */
   cayI?: number; choDich?: number;
   /** Mây của Mabu chạm lần kế tiếp sau thời điểm này */
