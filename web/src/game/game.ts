@@ -5336,6 +5336,8 @@ export class Game {
     c.chet = true;
     c.tChet = 0;
     c.nap = undefined;
+    // Cell đỏ bị hạ (chưa kịp trốn đi ăn đậu dưới 20%): vẫn triệu hồi cả đàn Cell các đảo về chỗ nó chết để đánh
+    if (c.cap === SO_CAP - 1) this.batDauCellCuu({ x: c.x, y: c.y });
     // Biến socola đủ giết: Cell biến hẳn thành thanh socola (không còn hình Cell), ăn được
     if (soc) {
       const v = { x: c.x, y: c.y };
@@ -5800,11 +5802,12 @@ export class Game {
     return this.cellCuuDo && c.cap < SO_CAP - 1;
   }
 
-  /** Cell đỏ trốn đi ăn đậu: mọi Cell còn lại (cấp 0–3) dịch chuyển tức thời tới cạnh Mabu / Zinbu (chia đều hai người) để đánh, từ đó truy sát khắp nơi */
-  private batDauCellCuu(): void {
+  /** Cell đỏ trốn đi ăn đậu (hoặc bị hạ khi chưa kịp xuống dưới 20%: `cho` = chỗ nó chết): mọi Cell còn lại (cấp 0–3) dịch chuyển tức thời
+   *  tới cạnh Mabu / Zinbu (chia đều hai người) hoặc quanh chỗ Cell đỏ chết để đánh, từ đó truy sát khắp nơi */
+  private batDauCellCuu(cho?: { x: number; y: number }): void {
     if (this.cellCuuDo) return;
     this.cellCuuDo = true;
-    const ke = this.nguoi.filter((n) => !n.vang && !this.khuat(n));
+    const ke: { x: number; y: number }[] = cho ? [cho] : this.nguoi.filter((n) => !n.vang && !this.khuat(n));
     let i = 0;
     for (const c of this.cell) {
       if (c.chet || !this.cellDiCuu(c)) continue;
@@ -5814,7 +5817,7 @@ export class Game {
       if (n) this.cellDichChuyen(c, n);
     }
     const n0 = ke[0];
-    if (n0) this.chu.push({ id: this.id++, x: n0.x, y: n0.y - 300, text: '⚡ CELL ĐỎ TRỐN: CẢ ĐÀN CELL DỊCH CHUYỂN TỚI ĐÁNH!', mau: '#ff3b30', t: 0 });
+    if (n0) this.chu.push({ id: this.id++, x: n0.x, y: n0.y - 300, text: cho ? '💀 CELL ĐỎ BỊ HẠ: CẢ ĐÀN CELL DỊCH CHUYỂN TỚI BÁO THÙ!' : '⚡ CELL ĐỎ TRỐN: CẢ ĐÀN CELL DỊCH CHUYỂN TỚI ĐÁNH!', mau: '#ff3b30', t: 0 });
   }
 
   /** Chơi tới CELL_TRUY_T: Cell đỏ (còn sống) rời đảo đi truy sát Mabu / Zinbu mọi nơi cả ván (như bóng ma Goku) */
@@ -6165,7 +6168,7 @@ export class Game {
   }
 
   /** Dịch chuyển tức thời tới sát nhân vật (một góc trên cát cùng đảo), rồi ngay lập tức đấm đá hoặc vận chưởng sát mặt */
-  private cellDichChuyen(c: Cell, ke: NguoiChoi): void {
+  private cellDichChuyen(c: Cell, ke: { x: number; y: number }): void {
     const to = CELL_TO[c.cap]!;
     const k = cellK(c.cap);
     const dao = this.daoCell(c);
