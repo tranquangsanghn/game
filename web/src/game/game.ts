@@ -1766,7 +1766,7 @@ export class Game {
   get dungTheGioi(): boolean {
     for (let p = 0; p < this.nguoi.length; p++) {
       const n = this.nguoi[p]!;
-      if (!n.vang && !n.het && !this.trongMb(p) && this.vungMc(n)) return true;
+      if (!n.vang && !n.het && !this.trongMb(p) && !this.biNhap(p) && this.vungMc(n)) return true;
     }
     return false;
   }
@@ -1825,7 +1825,9 @@ export class Game {
     this.dieuKhien(dt, dung);
     HN.moc('cn.dieuKhien');
     this.rangBuoc(truoc);
-    if (!dung) this.capNhatHopThe(dt);
+    // Mê cung dừng thế giới thì hợp thể không đếm giờ, nhưng người bị nhập vẫn phải bám theo thân Super Bư
+    // (không thì bị bỏ lại trong đường hầm: dây buộc kéo Super Bư lại, thế giới dừng mãi, Super Bư đứng im không ra đòn / không ra được)
+    this.capNhatHopThe(dung ? 0 : dt, dung);
     HN.moc('cn.hopThe');
     // Nhân vật đi bộ / bay không đổi vùng: đang trong vườn gà thì ở lại trong vườn, đang ở đảo thì ở lại đảo (chỉ máy bay mới ra / vào vườn)
     this.nguoi.forEach((n, p) => { if (!this.trongMb(p)) giuTrongMap(n, leNhanVat(n.nv.heSoTo * this.toNv(p)), !!n.bay, vungCua(truoc[p])); });
@@ -3138,11 +3140,13 @@ export class Game {
   private chanMeCung(truoc: { x: number; y: number }[]): void {
     const mot = this.nguoi.some((n) => n.vang);
     this.nguoi.forEach((n, p) => {
+      // Người bị nhập (hợp thể) luôn đứng chung chỗ thân Super Bư: chỉ xét người mang thân
+      if (this.biNhap(p)) return;
       // Chơi 2 người: không được đi ra khỏi map mê cung (ra đoạn hầm gần đảo 1) khi đồng đội còn nằm trong lưới mê cung (kể cả đã gục):
       // phải cùng ra bằng cổng thoát (mcRaNui đưa cả đội đi) hoặc quay lại cứu
       if (!mot && !n.vang && !this.trongMb(p) && this.vungMc(truoc[p]!) && !this.vungMc(n)) {
         const q = this.nguoi[1 - p]!;
-        if (!q.vang && !this.trongMb(1 - p) && trongMeCung(q.x, q.y, 300)) {
+        if (!q.vang && !this.trongMb(1 - p) && !this.biNhap(1 - p) && trongMeCung(q.x, q.y, 300)) {
           n.x = truoc[p]!.x;
           n.y = truoc[p]!.y;
           n.dich = null;
@@ -7234,7 +7238,7 @@ export class Game {
   }
 
   /** Mỗi khung: đếm ngược thời gian hợp thể / thời gian hồi; người bị nhập luôn đứng đúng chỗ Super Bư */
-  private capNhatHopThe(dt: number): void {
+  private capNhatHopThe(dt: number, dung = false): void {
     this.hopTheHoi = Math.max(0, this.hopTheHoi - dt);
     const h = this.hopThe;
     if (!h) return;
@@ -7246,6 +7250,7 @@ export class Game {
     N.dich = null;
     N.bay = null;
     N.dangDi = false;
+    if (dung) return;
     if (h.con <= 0 || C.het) { this.tachHopThe(C.het); return; }
     // Hợp thể chỉ có trên thần điện: ra khỏi thần điện (đi qua cổng, đáp xuống ngoài) thì tự tách luôn; đang bay thì chờ hạ xuống
     if (!this.hopTheMo() && !C.bay && !trongThan(C.x, C.y)) {
