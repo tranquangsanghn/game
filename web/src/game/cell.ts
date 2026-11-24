@@ -78,6 +78,8 @@ export const cellHpMax = (c: Cell) => CELL_HP[c.cap]! + (c.hpThem ?? 0);
 export const CELL_HOI_TREN = 1.5;
 /** Cell đỏ đi ăn đậu hồi máu tối đa CELL_HOI_T_MAX giây (`Cell.hoiT`): hết giờ thì quay lại đánh dù chưa đủ CELL_HOI_TREN (tránh trốn mãi không quay lại) */
 export const CELL_HOI_T_MAX = 30;
+/** Cell đỏ đang trốn đi ăn đậu hồi máu (`hoi === 'dang'`): mỗi hạt đậu thần hồi máu gấp CELL_HOI_DAU_GAP lần bình thường */
+export const CELL_HOI_DAU_GAP = 4;
 export const CELL_HOI_DICH = 3;
 /** Cell đỏ tung chưởng (hào quang → phóng, chùm bay) nhanh hơn 30% */
 export const CELL_DO_NHANH = 1.3;
