@@ -1854,6 +1854,8 @@ export class Game {
       this.capNhatCong(dt);
       this.nguoi.forEach((n, p) => this.mayQuet(n, p));
       HN.moc('cn.may');
+      // Đếm khung cho cập nhật thưa "một chấm" (gà, Cell): đếm cả khi vườn gà ngủ, không thì Cell xa bị đóng băng mãi
+      this.khungSo++;
       if (!this.vuonNgu) {
         this.chonVay(dtE);
         this.capNhatGa(dtE);
@@ -2216,7 +2218,6 @@ export class Game {
 
   private capNhatGa(dtKhung: number): void {
     const conLai: Ga[] = [];
-    this.khungSo++;
     for (const g of this.ga) {
       // Gà ngoài màn hình và xa mọi nhân vật chỉ là "một chấm": cập nhật thưa (mỗi GA_THUA_NHIP khung, so le theo id) với dt dồn lại
       let dt = dtKhung;
