@@ -32,6 +32,8 @@ export interface Ga {
   // Riêng gà tướng: lần hồi sinh (0 = lần đầu), chiêu lao / bay đang dùng, thời gian hồi từng chiêu, màu đang đổi
   // Thời gian dồn lại khi gà ở xa / ngoài màn hình được cập nhật thưa (gaThua())
   dtThua?: number;
+  /** Phút 15 (GA_TRUY_T): gà đang bay thẳng đi truy sát Mabu / Zinbu (qua vực / tường vườn, gaBayTruy()) */
+  truyBay?: boolean;
   daDe?: boolean; choChieu?: number; nghiChung?: number; soHo?: number;
   chieu?: ChieuTuong | null; hoiLao?: number; hoiBay?: number;
   mau?: MauTuong | null; conMau?: number; hoiMau?: number; luotMau?: number; dot?: number;
@@ -619,6 +621,12 @@ const GA_CON_TOI_DA = 30;
 // Tốc độ gà lao vào nhân vật (gà bay giữ nguyên tốc độ bay, chỉ đổi hướng)
 // Hệ số nhân tốc độ di chuyển thật của mọi loại gà (kể cả gà tướng): 1/4 tốc độ gốc ghi trong các hằng số
 const HE_SO_TOC_GA = 0.25;
+/** Tốc độ gà tăng theo thời gian chơi (tocGaTheoPhut()): từ phút 5 ×1,5 · phút 10 ×2 · phút 15 ×3 (lúc này gà còn bay đi truy sát, GA_TRUY_T) */
+const GA_TOC_MOC: readonly { t: number; k: number }[] = [{ t: 900, k: 3 }, { t: 600, k: 2 }, { t: 300, k: 1.5 }];
+/** Chơi tới chừng này giây thì gà (gà con, tướng gà trong nhóm vây; vua gà không) rời vườn bay đi truy sát Mabu / Zinbu khắp nơi như bóng ma Goku */
+const GA_TRUY_T = 900;
+/** Gà đang truy sát: mục tiêu xa hơn chừng này (hoặc gà đang ở trên vực) thì bay thẳng tới, gần và đang trên đất thì đuổi / đánh như thường */
+const GA_TRUY_GAN = 700;
 const TOC_DO_LAO: Record<string, number> = { hen: 160, rooster: 240 };
 const TAM_DON: Record<string, number> = {
   punch_combo: TAM_DAM_GAN,
@@ -1165,6 +1173,8 @@ export class Game {
   fzTruy = false;
   /** Đã qua mốc mở khoá hợp thể ở mọi nơi (chỉ để báo chữ một lần, không lưu ván) */
   private hopMoBao = false;
+  /** Mốc tốc độ gà đã báo (chỉ số trong GA_TOC_MOC tính ngược, 0 = chưa tăng), không lưu ván */
+  private gaTocBac = 0;
   /** Bóng ma Goku đã rời núi đá đi truy sát (sau GY_TRUY_T giây mà chưa bị hạ hẳn), cả ván */
   gyTruy = false;
   /** Phút 20: người chơi và các trùm còn sống bị triệu hồi về thần điện, không ai thoát ra được nữa (cả ván) */
@@ -1435,6 +1445,7 @@ export class Game {
     this.chu = [];
     this.long = [];
     this.tGame = 0;
+    this.gaTocBac = 0;
     this.chamDen = 0;
     this.rung = 0;
     this.trungDe = [];
@@ -1500,7 +1511,7 @@ export class Game {
     if (!d || d.phienBan !== PHIEN_BAN_LUU || !Array.isArray(d.nguoi) || d.nguoi.length !== 2) throw new Error('Dữ liệu lưu không hợp lệ');
     this.banDo = d.banDo === 'co' ? 'co' : 'sa';
     this.batDau();
-    this.tGame = d.tGame; this.t = d.t; this.chamDen = d.chamDen; this.id = d.id;
+    this.tGame = d.tGame; this.gaTocBac = 0; this.t = d.t; this.chamDen = d.chamDen; this.id = d.id;
     this.henTuong = d.henTuong; this.soLanTuong = d.soLanTuong; this.lanTuong = d.lanTuong;
     this.ga = d.ga; this.trungDe = d.trungDe; this.vatPham = d.vatPham; this.ngocNhat = d.ngocNhat ?? []; this.ngocBay = []; this.cuu = d.cuu ?? [];
     this.cauTron = d.cauTron?.length ? d.cauTron.map((q, i) => ({ ...q, cua: q.cua ?? i })) : taoCauTron();
@@ -1805,6 +1816,7 @@ export class Game {
       this.kiemTraFzTruy();
       this.kiemTraHopMo();
       this.kiemTraGyTruy();
+      this.kiemTraGaToc();
       this.kiemTraTrieuHoi();
       this.kiemTraSangMc();
       this.kiemTraThang(dt);
@@ -2241,7 +2253,7 @@ export class Game {
           g.day.vx *= k;
           g.day.vy *= k;
         }
-        giuTrongMap(g, leCuaGa(g), false, 'vuon');
+        giuTrongMap(g, leCuaGa(g), false, this.vungGa(g));
         conLai.push(g);
         continue;
       }
@@ -2297,9 +2309,9 @@ export class Game {
         g.dangGoi = Math.max(0, (g.dangGoi ?? 0) - dt);
         if (g.hp < hpToiDa(g) * GOI_MAU && g.hoiGoi <= 0 && !g.chieu && !this.dayCon && this.gaTrenCam(g)) this.goiGaCon(g);
         if (g.goc) this.dieuTuongGoc(g, dt);
-        else this.dieuTuong(g, dt);
+        else if (!this.gaBayTruy(g)) this.dieuTuong(g, dt);
       }
-      else if (this.gaLao(g, dt)) {
+      else if (this.gaBayTruy(g) || this.gaLao(g, dt)) {
         // đang lao vào nhân vật trong tầm
       } else if (!bay) {
         g.doiHuong -= dt;
@@ -2323,12 +2335,13 @@ export class Game {
         }
       }
       if (g.vx) g.lat = g.vx < 0;
-      g.x += g.vx * dt * HE_SO_TOC_GA;
-      g.y += g.vy * dt * HE_SO_TOC_GA;
-      const cham = giuTrongMap(g, leCuaGa(g), false, 'vuon');
+      const toc = HE_SO_TOC_GA * this.tocGaTheoPhut();
+      g.x += g.vx * dt * toc;
+      g.y += g.vy * dt * toc;
+      const cham = g.truyBay ? giuTrongMap(g, leCuaGa(g), true, 'dao') : giuTrongMap(g, leCuaGa(g), false, this.vungGa(g));
       if (g.tron) {
         // Vua gà đang chạy trốn nhanh: trừ quãng đã chạy, chạm mép map thì thôi
-        g.tron = Math.max(0, g.tron - hyp(g.vx, g.vy) * dt * HE_SO_TOC_GA);
+        g.tron = Math.max(0, g.tron - hyp(g.vx, g.vy) * dt * toc);
         if (cham.cx || cham.cy) g.tron = 0;
       }
       if (g.chieu) {
@@ -2338,7 +2351,8 @@ export class Game {
         if (cham.cx) g.vx = -g.vx;
         if (cham.cy) g.vy = -g.vy;
       }
-      switch (g.loai) {
+      if (g.truyBay && g.loai !== 'flyer') g.h = 160 + Math.sin(g.phase * 3) * 25;
+      else switch (g.loai) {
         case 'boss': g.h = this.doCaoTuong(g); break;
         case 'rooster': g.h = Math.abs(Math.sin(g.phase * 5)) * 28; break;
         case 'flyer': g.h = g.h0 + Math.sin(g.phase * 3) * 30; break;
@@ -3263,7 +3277,8 @@ export class Game {
       const o = this.trongPt(p) ? this.phiThuyen : this.mayBay.ngoi.includes(p) ? this.mayBay : n;
       return trongVuon(o.x, o.y);
     });
-    if (ngoai && !this.vuonNgu) {
+    // Phút 15: gà bay đi truy sát khắp nơi nên vườn gà không ngủ nữa
+    if (ngoai && !this.vuonNgu && !this.gaTruy) {
       this.vuonNgu = true;
       // Gà đang bị kéo về nhân vật thì coi như đã bị ăn xong (không giữ lại trong vườn)
       for (const g of this.keoGa) {
@@ -3271,7 +3286,7 @@ export class Game {
         if (n && !n.het) { this.hoiMau(n, g.keo!.an); this.hoiMana(n, g.keo!.an); }
       }
       this.keoGa = [];
-    } else if (!ngoai && this.vuonNgu) this.vuonNgu = false;
+    } else if ((!ngoai || this.gaTruy) && this.vuonNgu) this.vuonNgu = false;
     if (!this.vuonNgu) return;
     for (const g of this.ga) {
       if (g.chet || g.hp <= 0 || g.loai !== 'boss') continue;
@@ -5838,6 +5853,72 @@ export class Game {
     if (this.tGame < CELL_TRUY_T) return;
     this.daRaVuon = true;
     this.cellTruyVuon = true;
+  }
+
+  /** Hệ số tốc độ di chuyển của gà theo thời gian chơi (GA_TOC_MOC): 1 · ×1,5 từ phút 5 · ×2 từ phút 10 · ×3 từ phút 15 */
+  private tocGaTheoPhut(): number {
+    if (banDoHt !== 'sa') return 1;
+    for (const m of GA_TOC_MOC) if (this.tGame >= m.t) return m.k;
+    return 1;
+  }
+
+  /** Phút 15: gà rời vườn bay đi truy sát Mabu / Zinbu khắp nơi */
+  private get gaTruy(): boolean {
+    return banDoHt === 'sa' && this.tGame >= GA_TRUY_T;
+  }
+
+  /** Vùng kẹp của gà đi bộ: trước phút 15 luôn trong vườn gà; đang truy sát thì theo chỗ đang đứng (vườn hoặc đất đảo / núi / thần điện) */
+  private vungGa(g: Ga): 'vuon' | 'dao' | undefined {
+    return this.gaTruy ? vungCua(g) : 'vuon';
+  }
+
+  /**
+   * Phút 15 (GA_TRUY_T): gà con và tướng gà trong nhóm vây (vua gà không, đang Lao / Bay thì làm nốt) nhận Mabu / Zinbu ở bất kỳ đâu.
+   * Người gần nhất xa hơn GA_TRUY_GAN (hoặc gà đang ở trên vực) thì bay thẳng tới với tốc độ di chuyển thường của nó (đã ×3 theo tocGaTheoPhut()),
+   * qua vực / tường vườn như bóng ma Goku; gần và đang trên đất thì hạ xuống đuổi / đánh như thường. Trả về true nếu đang bay.
+   */
+  private gaBayTruy(g: Ga): boolean {
+    if (!this.gaTruy || g.goc || g.chieu || (g.loai === 'boss' && !this.vay.has(g.id))) {
+      g.truyBay = false;
+      return false;
+    }
+    let muc: NguoiChoi | null = null;
+    let gan = Infinity;
+    for (const n of this.nguoi) {
+      if (n.vang || this.khuat(n)) continue;
+      const d = hyp(n.x - g.x, n.y - g.y);
+      if (d < gan) { gan = d; muc = n; }
+    }
+    const trenDat = trongVuon(g.x, g.y) || doSau(g.x, g.y) > 0;
+    if (trenDat && (!muc || gan <= GA_TRUY_GAN)) {
+      g.truyBay = false;
+      return false;
+    }
+    g.nhao = null;
+    g.kiet = 0;
+    g.truyBay = true;
+    g.doiHuong = 0;
+    if (!muc) { g.vx = g.vy = 0; return true; }
+    const v = g.loai === 'boss' ? TOC_DO_TUONG : g.loai === 'flyer' ? 120 : TOC_DO_LAO[g.loai];
+    const d = gan || 1;
+    g.vx = ((muc.x - g.x) / d) * v;
+    g.vy = ((muc.y - g.y) / d) * v;
+    return true;
+  }
+
+  /** Báo một lần mỗi mốc tăng tốc độ gà (phút 5 / 10 / 15) */
+  private kiemTraGaToc(): void {
+    if (banDoHt !== 'sa') return;
+    let bac = 0;
+    let moc = 0;
+    for (const m of GA_TOC_MOC) if (this.tGame >= m.t) { bac++; moc = Math.max(moc, m.t); }
+    if (bac <= this.gaTocBac) return;
+    this.gaTocBac = bac;
+    // Tải ván đã qua mốc từ lâu thì không báo lại
+    if (this.tGame - moc > 2) return;
+    const text = this.gaTruy ? '🐔 15 PHÚT: GÀ BAY ĐI TRUY SÁT KHẮP NƠI (TỐC ĐỘ x3)!' : `🐔 ${moc / 60} PHÚT: GÀ CHẠY NHANH x${String(this.tocGaTheoPhut()).replace('.', ',')}!`;
+    const n = this.nguoi.find((m) => !m.vang && !m.het) ?? this.nguoi.find((m) => !m.vang);
+    if (n) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text, mau: '#ffd23f', t: 0 });
   }
 
   /** Chơi tới GY_TRUY_T mà bóng ma Goku chưa bị hạ hẳn (còn sống hoặc đang chờ hồi sinh): nó rời núi đá bay đi truy sát Mabu / Zinbu cả ván */
