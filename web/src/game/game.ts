@@ -9,7 +9,7 @@ import { CON_BU_SO, CON_BU_LAN, CON_BU_GAP, CON_BU_MAU_SAN, CON_BU_CHET_T, CON_B
 import { MC, MC_COT, MC_HANG, MC_HAM, MC_O, datLaiMeCung, oCua, oTrongVao, oCung, oTuongMc, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
 import { taoMeCung, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, O_BI_AN_HOI, MC_DO_THEM, MC_BOM_THEM, MANG_TOI_DA, BAY_BAY, BAY_NO, BAY_TAM, QUAI_CACH, QUAI_TOI_DA, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DL, LOAI_QUAI, QUAI_TIA_SAT, QUAI_TIA_T, QUAI_CHET_T, QUAI_DAU_T, SP_QUAI, type LoaiQuai, type TiaMc, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_DIEM, BA_CHET_T, BA_HP, BA_HOI_SINH, BA_HOI_T, BA_HOI_TANG, BA_TOC, BA_GAN, BA_BAY_CAO, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
-import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_DO_COMBO, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_DO_TANG, CELL_DO_TANG_CHO, cellHpMax, CELL_HOI_DICH, type Cell } from './cell';
+import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_DO_COMBO, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_T_MAX, CELL_DO_TANG, CELL_DO_TANG_CHO, cellHpMax, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
 import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzMauGap, fzSat, fzToc, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_COMBO_CUA, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_HOI_DUOI, FZ_HOI_TREN, FZ_AN_DAU, FZ_AN_TAO, FZ_AN_BK, FZ_CAY_TAM, FZ_GIAP, FZ_MISS, FZ_MISS_VANG, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_TI_LE_DAU, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
@@ -5535,7 +5535,8 @@ export class Game {
       // Cell đỏ đầy máu và không bị đánh CELL_DO_TANG_CHO giây: cứ mỗi giây máu tối đa (và máu hiện có) +CELL_DO_TANG, không giới hạn
       if (c.cap === SO_CAP - 1) {
         c.yen = (c.yen ?? CELL_DO_TANG_CHO) + dtKhung;
-        if (c.hp >= hpMax && c.yen >= CELL_DO_TANG_CHO) {
+        // Đang đi ăn đậu hồi máu thì không tăng (mốc CELL_HOI_TREN × máu tối đa sẽ chạy nhanh hơn máu, không bao giờ tới)
+        if (c.hp >= hpMax && c.yen >= CELL_DO_TANG_CHO && c.hoi !== 'dang') {
           c.tang = (c.tang ?? 0) + dtKhung;
           while (c.tang >= 1) { c.tang -= 1; c.hpThem = (c.hpThem ?? 0) + CELL_DO_TANG; c.hp += CELL_DO_TANG; }
         } else c.tang = 0;
@@ -5724,11 +5725,14 @@ export class Game {
     if (c.hoi === undefined) {
       if (c.hp >= max * CELL_HOI_DUOI) return false;
       c.hoi = 'dang';
+      c.hoiT = 0;
       c.choDich = 0;
       this.chuGa({ id: this.id++, x: c.x, y: c.y - 70 * k, text: '🫘 CELL ĐỎ ĐI ĂN ĐẬU THẦN HỒI MÁU!', mau: '#7be04a', t: 0 });
       this.batDauCellCuu();
     }
-    if (c.hp > max * CELL_HOI_TREN) {
+    c.hoiT = (c.hoiT ?? 0) + dt;
+    // Đủ máu, hoặc đã đi ăn quá CELL_HOI_T_MAX giây (hết cây / đậu bị nhân vật ăn trước / đường xa…) thì quay lại đánh
+    if (c.hp > max * CELL_HOI_TREN || c.hoiT >= CELL_HOI_T_MAX) {
       c.hoi = 'xong';
       c.cay = undefined;
       if (c.nap !== undefined && c.chien) { c.nap = undefined; c.chien = false; }

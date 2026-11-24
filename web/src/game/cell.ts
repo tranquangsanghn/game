@@ -76,6 +76,8 @@ export const CELL_DO_TANG_CHO = 1;
 /** Máu tối đa của Cell: CELL_HP theo cấp + phần Cell đỏ đã tăng thêm (`hpThem`) */
 export const cellHpMax = (c: Cell) => CELL_HP[c.cap]! + (c.hpThem ?? 0);
 export const CELL_HOI_TREN = 1.5;
+/** Cell đỏ đi ăn đậu hồi máu tối đa CELL_HOI_T_MAX giây (`Cell.hoiT`): hết giờ thì quay lại đánh dù chưa đủ CELL_HOI_TREN (tránh trốn mãi không quay lại) */
+export const CELL_HOI_T_MAX = 30;
 export const CELL_HOI_DICH = 3;
 /** Cell đỏ tung chưởng (hào quang → phóng, chùm bay) nhanh hơn 30% */
 export const CELL_DO_NHANH = 1.3;
@@ -176,6 +178,8 @@ export interface Cell {
   socola?: number; comboSoc?: boolean;
   /** Cell đỏ hồi máu một lần (`CELL_HOI_DUOI` → `CELL_HOI_TREN`): 'dang' = đang đi phá cây ăn đậu thần, 'xong' = đã dùng; thiếu = chưa dùng */
   hoi?: 'dang' | 'xong';
+  /** Số giây Cell đỏ đã đi ăn đậu hồi máu (không lưu ván) */
+  hoiT?: number;
   /** Cell đỏ: máu tối đa tăng thêm (đầy máu và không bị đánh thì +CELL_DO_TANG mỗi giây, không giới hạn; lưu ván theo `cell`) */
   hpThem?: number;
   /** Cell đỏ: số giây từ lần mất máu gần nhất, và giây dồn lại khi đang đầy máu (đủ 1s thì tăng máu tối đa) */
