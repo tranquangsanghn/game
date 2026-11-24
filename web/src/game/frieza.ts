@@ -80,6 +80,8 @@ export const FZ_HOI_TREN = 1.5;
 export const FZ_HOI_LAN = 2;
 export const FZ_AN_DAU = 0.2;
 export const FZ_AN_TAO = 0.1;
+/** Đang trốn đi ăn hồi máu thì mỗi táo / đậu thần hồi gấp FZ_AN_GAP lần (như Cell đỏ được gấp khi trốn đi ăn) */
+export const FZ_AN_GAP = 3;
 export const FZ_AN_BK = 130;
 export const FZ_CAY_TAM = 450;
 /** Giáp: Super Bư đánh chỉ lọt (1 − FZ_GIAP) */
