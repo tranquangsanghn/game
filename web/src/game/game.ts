@@ -3582,13 +3582,15 @@ export class Game {
     let gan = TAM_NGUI_NV;
     // Đã đủ GA_CON_TOI_DA gà con: tìm Mabu / Zinbu (đang ở trong vườn) và táo đỏ / socola khắp vườn
     const day = this.dayCon;
+    // Phút 15 (truy sát): nhận Mabu / Zinbu / Super Bư ở bất kỳ đâu, không bị táo / socola kéo đi
+    const truy = this.gaTruy;
     for (const n of this.nguoi) {
       if (this.khuat(n)) continue;
       const d = hyp(n.x - g.x, n.y - g.y);
-      if (d < gan || (day && trongVuon(n.x, n.y) && (!muc || d < gan))) { gan = d; muc = n; }
+      if (d < gan || ((truy || (day && trongVuon(n.x, n.y))) && (!muc || d < gan))) { gan = d; muc = n; }
     }
     // Nhân vật chưa vào tầm đánh (TAM_LAO) mà có táo đỏ trong tầm ngửi TAM_NGUI_TAO thì đi tới táo trước
-    if (!muc || gan > TAM_LAO) {
+    if (!muc || (gan > TAM_LAO && !truy)) {
       let xa = day ? Infinity : TAM_NGUI_TAO;
       for (const v of this.vatPham) {
         if (v.loai === 'xanh' || v.loai === 'ngoc') continue;
@@ -3868,7 +3870,8 @@ export class Game {
       return;
     }
     // Ngoài nhóm vây: không đuổi, nhân vật lại gần (trong VAY_TRANH) thì lùi ra xa, không thì lang thang
-    if (!this.vay.has(g.id)) {
+    // Phút 15 (truy sát): mọi tướng gà đều đuổi đánh, không giới hạn nhóm vây
+    if (!this.vay.has(g.id) && !this.gaTruy) {
       let gan = VAY_TRANH;
       let muc: NguoiChoi | null = null;
       for (const n of this.nguoi) {
@@ -3901,11 +3904,11 @@ export class Game {
     for (const n of this.nguoi) {
       if (this.khuat(n)) continue;
       const d = hyp(n.x - g.x, n.y - g.y);
-      if (d < gan || (this.dayPhu && trongVuon(n.x, n.y) && (!muc || d < gan))) { gan = d; muc = n; }
+      if (d < gan || ((this.gaTruy || (this.dayPhu && trongVuon(n.x, n.y))) && (!muc || d < gan))) { gan = d; muc = n; }
     }
-    // Nhân vật chưa vào tầm đánh mà có socola trong tầm ngửi thì đi ăn socola trước
+    // Nhân vật chưa vào tầm đánh mà có socola trong tầm ngửi thì đi ăn socola trước (phút 15 truy sát thì không)
     const soc = this.socolaGan(g, this.dayPhu);
-    if (soc && (!muc || gan > TAM_LAO)) {
+    if (soc && (!muc || (gan > TAM_LAO && !this.gaTruy))) {
       const d = hyp(soc.x - g.x, soc.y - g.y) || 1;
       g.vx = ((soc.x - g.x) / d) * TOC_DO_TUONG * 2;
       g.vy = ((soc.y - g.y) / d) * TOC_DO_TUONG * 2;
@@ -5883,12 +5886,12 @@ export class Game {
   }
 
   /**
-   * Phút 15 (GA_TRUY_T): gà con và tướng gà trong nhóm vây (vua gà không, đang Lao / Bay thì làm nốt) nhận Mabu / Zinbu ở bất kỳ đâu.
+   * Phút 15 (GA_TRUY_T): mọi gà con và tướng gà (vua gà không, đang Lao / Bay thì làm nốt) nhận Mabu / Zinbu / Super Bư ở bất kỳ đâu.
    * Người gần nhất xa hơn GA_TRUY_GAN (hoặc gà đang ở trên vực) thì bay thẳng tới với tốc độ thật GA_TRUY_TOC (= 1/2 tốc độ lao bóng ma Goku),
    * qua vực / tường vườn như bóng ma Goku; gần và đang trên đất thì hạ xuống đuổi / đánh như thường. Trả về true nếu đang bay.
    */
   private gaBayTruy(g: Ga): boolean {
-    if (!this.gaTruy || g.goc || g.chieu || (g.loai === 'boss' && !this.vay.has(g.id))) {
+    if (!this.gaTruy || g.goc || g.chieu) {
       g.truyBay = false;
       return false;
     }
