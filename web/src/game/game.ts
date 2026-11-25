@@ -1809,6 +1809,8 @@ export class Game {
     this.rung = Math.max(0, this.rung - dt);
     if (this.rung === 0) this.rungBien = RUNG_BIEN;
 
+    // Kiểm tra thắng cả khi mê cung bom dừng thế giới (nhặt ngọc 4 sao ở mê cung lần cuối là thắng)
+    this.kiemTraThang(dt);
     this.dayCon = this.soGaCon >= GA_CON_TOI_DA;
     this.dayPhu = this.soMePhu >= ME_PHU_TOI_DA;
     if (!dung) {
@@ -1821,7 +1823,6 @@ export class Game {
       this.kiemTraGaToc();
       this.kiemTraTrieuHoi();
       this.kiemTraSangMc();
-      this.kiemTraThang(dt);
       HN.moc('cn.vuon');
       if (!this.vuonNgu) this.capNhatTrungGa(dt);
       HN.moc('cn.trung');
