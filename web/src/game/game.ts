@@ -4885,6 +4885,7 @@ export class Game {
     // Không thấy Mabu / Zinbu mà gặp Super Bư (đang hợp thể, người mang thân): biến thành bản sao Super Bư, sống lâu như Super Bư (HOP_THE_T)
     const sb = this.hopThe?.chu === p;
     g.ki = n.ki;
+    if (!sb) g.nhapCuoi = p;
     const heSo = (g.suc ?? 1) * (1 + GY_HOI_MAU * (g.hoiSinh ?? 0));
     // Lần nhập đầu tiên máu bản sao = GY_SAO_TI_LE_DAU (120%), từ lần sau GY_SAO_TI_LE (80%) máu người bị nhập
     const tiLe = g.daNhap || g.truoc ? GY_SAO_TI_LE : GY_SAO_TI_LE_DAU;
@@ -5028,8 +5029,13 @@ export class Game {
       g.lat = gan.x > g.x;
       if ((g.khieu -= dt) > 0) return;
       g.khieu = undefined;
-      // Lao vào người nhiều máu và sức mạnh hơn
-      g.muc = thay.reduce((a, b) => (this.gySuc(b) > this.gySuc(a) ? b : a));
+      // Đang hợp thể: chỉ lao vào thân Super Bư (người bị nhập đã ẩn). Không hợp thể: lần lượt nhập vào Mabu rồi Zinbu (người chưa bị
+      // nhập lần trước, `nhapCuoi`), lần đầu thì người nhiều máu và sức mạnh hơn
+      const chu = this.hopThe?.chu;
+      const ds = chu !== undefined ? thay.filter((p) => p === chu) : thay;
+      if (!ds.length) return;
+      const khac = ds.filter((p) => p !== g.nhapCuoi);
+      g.muc = (khac.length ? khac : ds).reduce((a, b) => (this.gySuc(b) > this.gySuc(a) ? b : a));
       g.lao = 0;
       g.quang = 0;
       this.chuGa({ id: this.id++, x: g.x, y: g.y - GY_TAM_CAO - 160, text: 'Chạy đâu cho thoát', mau: '#9fe8ff', t: 0 });
