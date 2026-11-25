@@ -301,12 +301,12 @@ const FZ_TRUY_T = 600;
 const HOP_THE_MO_T = 480;
 /** Chơi tới chừng này giây mà bóng ma Goku chưa bị hạ hẳn thì nó rời núi đá bay đi truy sát (tốc độ lao GY_LAO_TOC, kiemTraGyTruy()) */
 const GY_TRUY_T = 900;
-/** Chơi tới chừng này giây mà còn người chơi sống: người chơi + Cell đỏ + Frieza + bóng ma Goku (còn sống) bị triệu hồi về thần điện,
+/** Chơi tới chừng này giây mà còn người chơi sống: người chơi + mọi quái còn sống (Cell mọi cấp, Frieza, bóng ma Goku, gà, trứng) bị triệu hồi về thần điện,
  *  không ai thoát ra được nữa (kiemTraTrieuHoi(), giamThan()); báo trước TRIEU_HOI_BAO giây */
 const TRIEU_HOI_T = 1200;
 const TRIEU_HOI_BAO = 60;
-/** Bị triệu hồi rồi mà tới chừng này giây (còn người sống) chưa nhặt ngọc 4 sao của mê cung bom thì cả đội bị dịch chuyển tới cửa hầm
- *  mê cung bom (kiemTraSangMc()) để vào lấy viên ngọc đó; không còn thắng bằng trụ vững */
+/** Bị triệu hồi rồi mà tới chừng này giây còn người sống: thưởng 4 viên ngọc của các đảo (1, 2, 3, 5 sao), chưa có ngọc 4 sao thì cả đội bị dịch chuyển
+ *  vào mê cung bom chơi lần cuối, không ra được tới khi lấy ngọc 4 sao (kiemTraSangMc(), giamMc) */
 const SANG_MC_T = 1500;
 /** Bóng ma đang truy sát: mục tiêu xa hơn chừng này thì bay thẳng tới (tốc độ GY_LAO_TOC, qua vực / tường vườn), gần thì khiêu khích → lao như trên núi */
 const GY_TRUY_GAN = 700;
@@ -3164,6 +3164,19 @@ export class Game {
     this.nguoi.forEach((n, p) => {
       // Người bị nhập (hợp thể) luôn đứng chung chỗ thân Super Bư: chỉ xét người mang thân
       if (this.biNhap(p)) return;
+      // Mê cung bom lần cuối (phút 25): chưa nhặt đủ ngọc thì không ai ra khỏi map mê cung (chơi 1 người cũng được ở trong)
+      if (this.giamMc) {
+        if (!n.vang && !this.trongMb(p) && this.vungMc(truoc[p]!) && !this.vungMc(n)) {
+          n.x = truoc[p]!.x;
+          n.y = truoc[p]!.y;
+          n.dich = null;
+          if (this.t - this.mcBaoLuc > 3) {
+            this.mcBaoLuc = this.t;
+            this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: '🧨 CHƯA LẤY NGỌC 4 SAO: KHÔNG RA KHỎI MÊ CUNG ĐƯỢC!', mau: '#ffd27a', t: 0 });
+          }
+        }
+        return;
+      }
       // Chơi 2 người: không được đi ra khỏi map mê cung (ra đoạn hầm gần đảo 1) khi đồng đội còn nằm trong lưới mê cung (kể cả đã gục):
       // phải cùng ra bằng cổng thoát (mcRaNui đưa cả đội đi) hoặc quay lại cứu
       if (!mot && !n.vang && !this.trongMb(p) && this.vungMc(truoc[p]!) && !this.vungMc(n)) {
@@ -4298,9 +4311,11 @@ export class Game {
     this.vet.push({ id: this.id++, x: g.x - 90, y: tam.y + 40, t: 0, loai: 'chay', co: 1.4 });
     this.vet.push({ id: this.id++, x: g.x + 90, y: tam.y - 40, t: 0, loai: 'chay', co: 1.4 });
     if (g.goc) {
-      // Ngọc rồng 1 sao trên vương miện rơi xuống đất
-      this.vatPham.push({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'ngoc' });
-      this.chu.push({ id: this.id++, x: g.x, y: tam.y - 160, text: '⭐ NGỌC RỒNG RƠI!', mau: '#ffb347', t: 0 });
+      // Ngọc rồng 1 sao trên vương miện rơi xuống đất (chưa được thưởng ngọc đó ở phút 25)
+      if (!this.ngocNhat.includes(1)) {
+        this.vatPham.push({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'ngoc' });
+        this.chu.push({ id: this.id++, x: g.x, y: tam.y - 160, text: '⭐ NGỌC RỒNG RƠI!', mau: '#ffb347', t: 0 });
+      }
       // Gà mẹ gốc: chỉ hồi sinh sau khi chết, chờ đủ CHO_TUONG giây kể từ lúc chết
       this.henTuong = CHO_TUONG;
       this.congDiem(p, DIEM.boss * hs, tam.x, tam.y - 110, `+${DIEM.boss * hs} HẠ GÀ TƯỚNG!`);
@@ -5973,8 +5988,8 @@ export class Game {
     this.rungMan(0.5, 8);
   }
 
-  /** Phút 20 (TRIEU_HOI_T) mà còn người chơi sống: người chơi (cả người đang gục), Cell đỏ, Frieza, bóng ma Goku (chưa bị hạ hẳn) bị triệu hồi về thần điện.
-   *  Từ đó không ai ra khỏi thần điện được (giamThan(), cổng / máy bay / phi thuyền khoá), đánh tới khi một bên thua; phút 25 chưa có ngọc 4 sao thì sang mê cung bom (kiemTraSangMc()) */
+  /** Phút 20 (TRIEU_HOI_T) mà còn người chơi sống: người chơi (cả người đang gục) và mọi quái còn sống (Cell mọi cấp, Frieza, bóng ma Goku, vua gà, tướng gà, gà con, trứng) bị triệu hồi về thần điện.
+   *  Từ đó không ai ra khỏi thần điện được (giamThan(), cổng / máy bay / phi thuyền khoá), đánh tới khi một bên thua; phút 25 còn sống thì thưởng 4 ngọc rồi sang mê cung bom (kiemTraSangMc()) */
   private kiemTraTrieuHoi(): void {
     if (this.trieuHoi || this.tGame < TRIEU_HOI_T || banDoHt !== 'sa' || this.tThang >= 0) return;
     if (!this.nguoi.some((m) => !m.vang && !m.het)) return;
@@ -6005,12 +6020,39 @@ export class Game {
     for (const c of this.cell) if (c.cap === SO_CAP - 1 && !c.chet) { dat(c, 0.25, 0.55); c.hoi = 'xong'; c.cay = undefined; }
     if (!this.frieza.chet) dat(this.frieza, 0.5, 0.5);
     if (!this.ginyu.chet) dat(this.ginyu, 0.75, 0.55);
+    // Mọi quái còn sống khác cũng bị triệu hồi: Cell con (cấp 0–3) truy sát khắp nơi như lúc đi cứu Cell đỏ (không ăn đậu thần),
+    // vua gà, tướng gà, gà con và trứng rải khắp nửa trên thần điện (cách cổng, chỗ người chơi đứng)
+    this.cellCuuDo = true;
+    const rai = (o: { x: number; y: number }, no: boolean) => {
+      o.x = THAN.x0 + THAN.w * (0.12 + Math.random() * 0.76);
+      o.y = THAN.y0 + THAN.h * (0.15 + Math.random() * 0.45);
+      giamThan(o, false);
+      if (no) this.vet.push({ id: this.id++, x: o.x, y: o.y - 100, t: 0, loai: 'chay', co: 1 });
+    };
+    for (const c of this.cell) {
+      if (c.chet || c.cap === SO_CAP - 1) continue;
+      c.cay = undefined;
+      c.tiec = false;
+      if (c.nap !== undefined) { c.nap = undefined; c.chien = false; }
+      rai(c, true);
+    }
+    for (const g of this.ga) {
+      if (g.chet) continue;
+      g.chieu = null;
+      g.nhao = null;
+      g.truyBay = false;
+      g.tron = undefined;
+      g.day = undefined;
+      rai(g, g.loai === 'boss');
+    }
+    for (const tr of this.trungDe) rai(tr, false);
+    this.vuonNgu = false;
     this.am.phat('chuong');
     this.rungMan(0.8, 14);
     const n = ds.find(({ n }) => !n.het)?.n ?? ds[0]?.n;
     if (n) {
-      this.chu.push({ id: this.id++, x: n.x, y: n.y - 420, text: '🏯 PHÚT 20: TẤT CẢ BỊ TRIỆU HỒI VỀ THẦN ĐIỆN!', mau: '#d9b3ff', t: 0 });
-      this.chu.push({ id: this.id++, x: n.x, y: n.y - 350, text: '⚔ KHÔNG AI THOÁT ĐƯỢC: HẠ TRÙM LẤY NGỌC RỒNG!', mau: '#ffd23f', t: 0 });
+      this.chu.push({ id: this.id++, x: n.x, y: n.y - 420, text: '🏯 PHÚT 20: MỌI QUÁI VẬT BỊ TRIỆU HỒI VỀ THẦN ĐIỆN!', mau: '#d9b3ff', t: 0 });
+      this.chu.push({ id: this.id++, x: n.x, y: n.y - 350, text: '⚔ TRỤ VỮNG TỚI PHÚT 25: THƯỞNG 4 VIÊN NGỌC RỒNG!', mau: '#ffd23f', t: 0 });
     }
   }
 
@@ -6031,30 +6073,33 @@ export class Game {
     return ds;
   }
 
-  /** Phút 25 (SANG_MC_T, đã triệu hồi): còn người sống mà chưa nhặt ngọc 4 sao thì cả đội (cả người gục) bị dịch chuyển tới cửa hầm mê cung bom
-   *  (đầu hầm phía đảo 1, chưa vào map mê cung) để vào lấy ngọc; trùm vẫn bị giam trên thần điện. Nhặt được ngọc 4 sao, ra khỏi mê cung mà còn
-   *  thiếu ngọc (trùm trên thần điện chưa bị hạ) thì bị triệu hồi lại về thần điện */
+  /** Phút 25 (SANG_MC_T, đã triệu hồi): còn người sống thì cả đội được thưởng 4 viên ngọc rồng của các đảo (1 sao vua gà · 2 sao Cell đỏ ·
+   *  3 sao bóng ma Goku · 5 sao Frieza; trùm còn sống cũng vậy), rồi chưa có ngọc 4 sao thì cả đội (cả người gục) bị dịch chuyển vào cửa mê cung bom
+   *  chơi lần cuối: không ra khỏi map mê cung được (chanMeCung(), lối thoát khoá) cho tới khi nhặt ngọc 4 sao (đủ 5 viên là thắng) */
   private kiemTraSangMc(): void {
-    if (!this.trieuHoi || banDoHt !== 'sa' || this.tThang >= 0) return;
-    const coNgoc = this.ngocNhat.includes(MC_NGOC_SAO);
-    if (this.sangMc) {
-      if (!coNgoc || this.duNgoc() || this.nguoi.some((m) => !m.vang && this.vungMc(m))) return;
-      this.sangMc = false;
-      const ds = this.veThanDien();
-      const n = ds.find(({ n }) => !n.het)?.n ?? ds[0]?.n;
-      if (n) this.chu.push({ id: this.id++, x: n.x, y: n.y - 420, text: '🏯 CÒN THIẾU NGỌC: TRIỆU HỒI LẠI VỀ THẦN ĐIỆN!', mau: '#d9b3ff', t: 0 });
-      this.rungMan(0.6, 10);
-      return;
-    }
-    if (coNgoc || this.tGame < SANG_MC_T || !this.nguoi.some((m) => !m.vang && !m.het)) return;
+    if (!this.trieuHoi || this.sangMc || banDoHt !== 'sa' || this.tThang >= 0 || this.tGame < SANG_MC_T) return;
+    const song = this.nguoi.find((m) => !m.vang && !m.het);
+    if (!song) return;
     this.sangMc = true;
+    const thuong = [1, NGOC_TIEC_SAO, GY_NGOC_SAO, FZ_NGOC_SAO].filter((s) => !this.ngocNhat.includes(s));
+    this.vatPham = this.vatPham.filter((v) => !(v.loai === 'ngoc' && thuong.includes(v.sao ?? 1)));
+    for (const s of thuong) this.nhatNgoc(song, song.x, song.y - 150, s);
+    this.chu.push({ id: this.id++, x: song.x, y: song.y - 420, text: '🏆 PHÚT 25: TRỤ VỮNG! THƯỞNG 4 VIÊN NGỌC RỒNG!', mau: '#ffd23f', t: 0 });
+    if (this.ngocNhat.includes(MC_NGOC_SAO)) return;
+    if (this.hopThe) this.tachHopThe(false);
     const ds = this.nguoi.map((n, p) => ({ n, p })).filter(({ n }) => !n.vang);
-    ds.forEach(({ n }, i) => {
-      n.x = MC_HAM.x1 - 200;
-      n.y = MC_HAM.y + (ds.length > 1 ? (i === 0 ? -110 : 110) : 0);
+    ds.forEach(({ n, p }, i) => {
+      const o = tamO(MC_COT - 1 - i, 0);
+      n.x = o.x;
+      n.y = o.y;
       n.dich = null;
       n.dangDi = false;
       n.bay = null;
+      const s = this.mc.nv[p]!;
+      s.toi = null;
+      s.di = null;
+      s.nap = null;
+      for (const cu of this.cuu) if (cu.p === p) { cu.x = n.x; cu.y = n.y; }
       this.vet.push({ id: this.id++, x: n.x, y: n.y - 120, t: 0, loai: 'chay', co: 1.4 });
     });
     this.congCho = ds.map(({ p }) => p);
@@ -6063,15 +6108,21 @@ export class Game {
     this.rungMan(0.8, 14);
     const n = ds.find(({ n }) => !n.het)?.n ?? ds[0]?.n;
     if (n) {
-      this.chu.push({ id: this.id++, x: n.x, y: n.y - 420, text: '🧨 PHÚT 25: DỊCH CHUYỂN TỚI MÊ CUNG BOM!', mau: '#ffb347', t: 0 });
-      this.chu.push({ id: this.id++, x: n.x, y: n.y - 350, text: '⭐ VÀO MÊ CUNG LẤY NGỌC RỒNG 4 SAO!', mau: '#ffd23f', t: 0 });
+      this.chu.push({ id: this.id++, x: n.x, y: n.y - 350, text: '🧨 MÊ CUNG BOM LẦN CUỐI: CHƯA LẤY NGỌC 4 SAO THÌ KHÔNG RA ĐƯỢC!', mau: '#ffb347', t: 0 });
     }
   }
 
-  /** Đã triệu hồi: Cell đỏ, Frieza, bóng ma Goku không ra khỏi thần điện (dịch chuyển / bay ra thì bị kéo lại) */
+  /** Mê cung bom lần cuối (phút 25): chưa nhặt đủ ngọc thì không ai ra khỏi map mê cung được */
+  private get giamMc(): boolean {
+    return this.sangMc && !this.duNgoc();
+  }
+
+  /** Đã triệu hồi: mọi quái còn sống (Cell, Frieza, bóng ma Goku, gà, trứng) không ra khỏi thần điện (dịch chuyển / bay ra thì bị kéo lại) */
   private giamTrumThan(): void {
     if (!this.trieuHoi) return;
-    for (const c of this.cell) if (c.cap === SO_CAP - 1 && !c.chet) giamThan(c, false);
+    for (const c of this.cell) if (!c.chet) giamThan(c, false);
+    for (const g of this.ga) if (!g.chet) giamThan(g, !!g.truyBay);
+    for (const tr of this.trungDe) giamThan(tr, false);
     if (!this.frieza.chet) giamThan(this.frieza, false);
     if (!this.ginyu.chet) giamThan(this.ginyu, true);
   }
@@ -6081,8 +6132,8 @@ export class Game {
     if (banDoHt !== 'sa' || this.tThang >= 0) return null;
     const mmss = (s: number) => { const g = Math.max(0, Math.ceil(s)); return `${Math.floor(g / 60)}:${String(g % 60).padStart(2, '0')}`; };
     if (this.trieuHoi) {
-      if (this.sangMc || this.ngocNhat.includes(MC_NGOC_SAO)) return null;
-      return { chu: `🧨 Sang mê cung bom: ${mmss(SANG_MC_T - this.tGame)}`, mau: '#ffb347' };
+      if (this.sangMc) return this.giamMc ? { chu: '🧨 Mê cung bom lần cuối: lấy ngọc 4 sao!', mau: '#ffb347' } : null;
+      return { chu: `⭐ Trụ tới thưởng 4 ngọc: ${mmss(SANG_MC_T - this.tGame)}`, mau: '#ffb347' };
     }
     if (this.tGame >= TRIEU_HOI_T - TRIEU_HOI_BAO) return { chu: `⚠ Triệu hồi về thần điện: ${mmss(TRIEU_HOI_T - this.tGame)}`, mau: '#d9b3ff' };
     return null;
@@ -8561,7 +8612,14 @@ export class Game {
     });
     // Lối ra góc dưới trái: ai (còn sống, không bị cháy / bong bóng / lưới) tới tâm ô lối ra thì cả đội dịch chuyển tới núi đá
     const raT = tamO(O_RA_MC.i, O_RA_MC.j);
-    if (this.nguoi.some((n, p) => this.oMeCung(p) && !n.het && !mc.nv[p]!.trang && hyp(n.x - raT.x, n.y - raT.y) < MC_O * 0.3)) this.mcRaNui(raT);
+    if (this.nguoi.some((n, p) => this.oMeCung(p) && !n.het && !mc.nv[p]!.trang && hyp(n.x - raT.x, n.y - raT.y) < MC_O * 0.3)) {
+      // Mê cung bom lần cuối: lối thoát khoá tới khi nhặt được ngọc 4 sao
+      if (!this.giamMc) this.mcRaNui(raT);
+      else if (this.t - this.mcBaoLuc > 3) {
+        this.mcBaoLuc = this.t;
+        this.chu.push({ id: this.id++, x: raT.x, y: raT.y - 300, text: '🧨 LỐI THOÁT KHOÁ: LẤY NGỌC 4 SAO ĐÃ!', mau: '#ffd27a', t: 0 });
+      }
+    }
     // 1 mạng trong mê cung: nhớ máu / mana lúc bước vào, ra khỏi mê cung (còn sống) thì trả lại đúng như cũ
     this.nguoi.forEach((n, p) => {
       const s = mc.nv[p]!;
