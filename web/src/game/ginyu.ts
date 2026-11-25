@@ -1,7 +1,7 @@
 // Bóng ma Goku (tên biến / ván lưu vẫn là `ginyu`): quái canh núi đá (đảo hình elip phía nam đảo 0). Một con duy nhất, lơ lửng giữa núi.
 // Vòng lặp: dạng BÓNG MA (không đánh ai, không ai đánh được) gặp Mabu / Zinbu thì đứng khiêu khích `GY_KHIEU_T` giây → lao (bám theo, tốc độ `GY_LAO_TOC`,
 // quãng tối đa `GY_LAO_QUANG` = 3 × quãng bay của nhân vật) vào người nhiều máu × sức mạnh nhất → trúng thì thành BẢN SAO y hệt người đó `GY_SAO_T` giây
-// (sprite / animation / thanh máu như nhân vật thật, máu = `GY_SAO_TI_LE_DAU` = 120% lần nhập đầu, `GY_SAO_TI_LE` = 80% từ lần sau, sát thương = `GY_SAO_SAT` = 150% người đó, nhận sát thương như nhân vật), cứ 1–2s ngẫu nhiên đánh Mabu hoặc Zinbu
+// (sprite / animation / thanh máu như nhân vật thật, máu = `GY_SAO_TI_LE_DAU` = 120% lần nhập đầu, `GY_SAO_TI_LE` = 80% từ lần sau, sát thương = `GY_SAO_SAT` = 100% người đó, nhận sát thương như nhân vật), cứ 0,5–1s ngẫu nhiên đánh Mabu hoặc Zinbu
 // → hết giờ trở lại bóng ma, lại khiêu khích rồi lao. Chỉ chết khi đang là bản sao và bị đánh hết máu.
 // File này chỉ có dữ liệu + hàm thuần; logic chạy trong Game (`capNhatGinyu()`), vẽ trong ve-canvas.ts (`veGinyu()`).
 // Sprite: web/public/assets/game/goku_ma_atlas.png (dựng bằng tools/tao-atlas-goku-ma.py), 10 cột × 3 hàng khung 200×200, neo đáy giữa, quay mặt TRÁI.
@@ -42,8 +42,8 @@ export const GY_SAO_T = 15;
 export const GY_SAO_TI_LE = 0.8;
 /** Lần nhập đầu tiên (chưa từng biến bản sao): máu bản sao = GY_SAO_TI_LE_DAU máu người bị nhập */
 export const GY_SAO_TI_LE_DAU = 1.2;
-export const GY_SAO_SAT = 1.5;
-export const GY_SAO_DANH: [number, number] = [1, 2];
+export const GY_SAO_SAT = 1;
+export const GY_SAO_DANH: [number, number] = [0.5, 1];
 /** Tỉ lệ chọn đòn của bản sao: Đấm · Đá (phần còn lại là chưởng) */
 export const GY_TI_LE_DAM = 0.25;
 export const GY_TI_LE_DA = 0.25;
