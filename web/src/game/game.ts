@@ -4902,9 +4902,9 @@ export class Game {
     // Không thấy Mabu / Zinbu mà gặp Super Bư (đang hợp thể, người mang thân): biến thành bản sao Super Bư, sống lâu như Super Bư (HOP_THE_T)
     const sb = this.hopThe?.chu === p;
     g.ki = n.ki;
-    // Hai bản sao (Mabu + Zinbu) dùng chung một vũng máu: máu tính theo tổng máu hai người bị nhập
+    // Hai bản sao (Mabu + Zinbu) dùng chung một vũng máu: máu tính theo người nhiều máu hơn trong hai người bị nhập
     const n2 = p2 !== undefined ? this.nguoi[p2] : undefined;
-    const hpBase = Math.max(1, n.hp) + (n2 ? Math.max(1, n2.hp) : 0);
+    const hpBase = Math.max(1, n.hp, n2 ? n2.hp : 0);
     const heSo = (g.suc ?? 1) * (1 + GY_HOI_MAU * (g.hoiSinh ?? 0));
     // Lần nhập đầu tiên máu bản sao = GY_SAO_TI_LE_DAU (120%), từ lần sau GY_SAO_TI_LE (80%) máu người bị nhập
     const tiLe = g.daNhap || g.truoc ? GY_SAO_TI_LE : GY_SAO_TI_LE_DAU;
