@@ -627,6 +627,8 @@ const GA_TOC_MOC: readonly { t: number; k: number }[] = [{ t: 900, k: 3 }, { t: 
 const GA_TRUY_T = 900;
 /** Gà đang truy sát: mục tiêu xa hơn chừng này (hoặc gà đang ở trên vực) thì bay thẳng tới, gần và đang trên đất thì đuổi / đánh như thường */
 const GA_TRUY_GAN = 700;
+/** Tốc độ thật (px/s) của gà đang bay đi truy sát: 1/2 tốc độ lao của bóng ma Goku (GY_LAO_TOC) */
+const GA_TRUY_TOC = GY_LAO_TOC * 0.5;
 const TOC_DO_LAO: Record<string, number> = { hen: 160, rooster: 240 };
 const TAM_DON: Record<string, number> = {
   punch_combo: TAM_DAM_GAN,
@@ -5882,7 +5884,7 @@ export class Game {
 
   /**
    * Phút 15 (GA_TRUY_T): gà con và tướng gà trong nhóm vây (vua gà không, đang Lao / Bay thì làm nốt) nhận Mabu / Zinbu ở bất kỳ đâu.
-   * Người gần nhất xa hơn GA_TRUY_GAN (hoặc gà đang ở trên vực) thì bay thẳng tới với tốc độ di chuyển thường của nó (đã ×3 theo tocGaTheoPhut()),
+   * Người gần nhất xa hơn GA_TRUY_GAN (hoặc gà đang ở trên vực) thì bay thẳng tới với tốc độ thật GA_TRUY_TOC (= 1/2 tốc độ lao bóng ma Goku),
    * qua vực / tường vườn như bóng ma Goku; gần và đang trên đất thì hạ xuống đuổi / đánh như thường. Trả về true nếu đang bay.
    */
   private gaBayTruy(g: Ga): boolean {
@@ -5907,7 +5909,8 @@ export class Game {
     g.truyBay = true;
     g.doiHuong = 0;
     if (!muc) { g.vx = g.vy = 0; return true; }
-    const v = g.loai === 'boss' ? TOC_DO_TUONG : g.loai === 'flyer' ? 120 : TOC_DO_LAO[g.loai];
+    // Vị trí cộng vận tốc × HE_SO_TOC_GA × tocGaTheoPhut() nên chia ngược lại cho ra đúng tốc độ thật GA_TRUY_TOC
+    const v = GA_TRUY_TOC / (HE_SO_TOC_GA * this.tocGaTheoPhut());
     const d = gan || 1;
     g.vx = ((muc.x - g.x) / d) * v;
     g.vy = ((muc.y - g.y) / d) * v;
