@@ -2072,7 +2072,10 @@ export class Game {
       }
       // Gà đi qua chỉ mổ ăn táo đỏ (táo xanh gà không ăn): hồi VP_HOI máu, không có trần. Socola thì mọi gà (con, mẹ gốc, mẹ phụ) đều ăn
       const socola = v.loai === 'socola';
-      const ga = xanh || dau || this.vuonNgu ? undefined : this.ga.find((g) => !g.chet && hyp(g.x - v.x, g.y - v.y) < (g.loai === 'boss' ? VP_GA_BAN_KINH * 2.5 : VP_GA_BAN_KINH));
+      // Phút 15 (truy sát): gà mải đuổi nhân vật, không mổ táo; vua gà không ăn gì cả
+      const truy = this.gaTruy;
+      const ga = xanh || dau || this.vuonNgu || (truy && !socola) ? undefined
+        : this.ga.find((g) => !g.chet && !(truy && g.goc) && hyp(g.x - v.x, g.y - v.y) < (g.loai === 'boss' ? VP_GA_BAN_KINH * 2.5 : VP_GA_BAN_KINH));
       if (ga) {
         ga.mo = MO_THOI_GIAN;
         ga.lat = v.x < ga.x;
@@ -2292,7 +2295,7 @@ export class Game {
             g.de = Math.min(g.de ?? 0, 1.5);
             this.chuGa({ id: this.id++, x: g.x, y: g.y - 400, text: '🔥 GIAI ĐOẠN 2!', mau: '#ff6a3c', t: 0 });
           }
-          if ((g.de ?? 0) <= 0) {
+          if ((g.de ?? 0) <= 0 && !g.truyBay) {
             g.de = choDeTrung(this.soMePhu) * (g.gd2 ? GD2_DE : 1);
             this.deTrung(g);
             // Mỗi lần xuất hiện / hồi sinh: đẻ lượt đầu rồi chờ trứng nở xong mới được dùng chiêu màu
@@ -2313,7 +2316,7 @@ export class Game {
         g.hoiGoi = Math.max(0, (g.hoiGoi ?? 0) - dt);
         g.dangGoi = Math.max(0, (g.dangGoi ?? 0) - dt);
         if (g.hp < hpToiDa(g) * GOI_MAU && g.hoiGoi <= 0 && !g.chieu && !this.dayCon && this.gaTrenCam(g)) this.goiGaCon(g);
-        if (g.goc) this.dieuTuongGoc(g, dt);
+        if (g.goc) { if (!this.gaBayTruy(g)) this.dieuTuongGoc(g, dt); }
         else if (!this.gaBayTruy(g)) this.dieuTuong(g, dt);
       }
       else if (this.gaBayTruy(g) || this.gaLao(g, dt)) {
@@ -3308,7 +3311,7 @@ export class Game {
     const choCon = GA_CON_TOI_DA - this.soGaCon - this.trungDe.filter((e) => !e.db).length;
     for (const loai of DAN_TRUNG.slice(0, Math.max(0, choCon))) {
       const v = { x: boss.x + ngauNhien(-110, 110), y: boss.y + ngauNhien(-60, 90) };
-      giuTrongMap(v, LE_TRUNG, false, 'vuon');
+      giuTrongMap(v, LE_TRUNG, false, this.vungTrung(v));
       this.trungDe.push({ id: this.id++, loai, t: 0, x: v.x, y: v.y });
     }
     // Quả thứ 5 của mỗi lượt là trứng đỏ đặc biệt
@@ -3342,7 +3345,7 @@ export class Game {
         vx: Math.cos(huong) * v, vy: Math.sin(huong) * v, phase: Math.random() * 6, doiHuong: 0,
         chet: false, tChet: 0, lat: Math.cos(huong) < 0, hp: HP_GA, nhay: 0,
       };
-      giuTrongMap(g, leCuaGa(g), false, 'vuon');
+      giuTrongMap(g, leCuaGa(g), false, this.vungTrung(e));
       this.ga.push(g);
       this.vetGa({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'bui' });
     }
@@ -3429,7 +3432,7 @@ export class Game {
     // Đủ ME_PHU_TOI_DA tướng gà (tính cả trứng đỏ đang ấp) thì không đẻ trứng đỏ
     if (this.soMePhu + this.trungDe.filter((e) => e.db).length >= ME_PHU_TOI_DA) return;
     const v = { x: boss.x + ngauNhien(-140, 140), y: boss.y + ngauNhien(40, 150) };
-    giuTrongMap(v, LE_TRUNG_DB, false, 'vuon');
+    giuTrongMap(v, LE_TRUNG_DB, false, this.vungTrung(v));
     const { x, y } = v;
     this.trungDe.push({ id: this.id++, loai: 'hen', t: 0, x, y, db: true, no: 0, me: boss.id, ap: apTrungDb(this.soMePhu) });
     this.chuGa({ id: this.id++, x: boss.x, y: boss.y - 360, text: '🥚 TRỨNG ĐỎ!', mau: '#ff4d4d', t: 0 });
@@ -3448,7 +3451,7 @@ export class Game {
       vx: Math.cos(huong) * v, vy: Math.sin(huong) * v, phase: Math.random() * 6, doiHuong: 0,
       chet: false, tChet: 0, lat: Math.cos(huong) < 0, hp: HP_GA * suc, nhay: 0, suc, to: GA_DB_TO[k], db: true,
     };
-    giuTrongMap(g, leCuaGa(g), false, 'vuon');
+    giuTrongMap(g, leCuaGa(g), false, this.vungTrung(e));
     this.ga.push(g);
     this.vetGa({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'chay', co: 0.6 + 0.2 * k });
     if (k > 0) this.chuGa({ id: this.id++, x: g.x, y: g.y - 160, text: `GÀ CON x${suc}!`, mau: '#ff6a3c', t: 0 });
@@ -3458,7 +3461,7 @@ export class Game {
   private sinhMePhu(e: TrungGa): void {
     if (this.soMePhu >= ME_PHU_TOI_DA) return;
     const g = this.taoTuong(e.x, e.y, Math.random() < 0.5, false, this.demPhu++ % KIEU_PHU);
-    giuTrongMap(g, LE_TUONG, false, 'vuon');
+    giuTrongMap(g, LE_TUONG, false, this.vungTrung(e));
     this.ga.push(g);
     this.vetGa({ id: this.id++, x: g.x, y: g.y, t: 0, loai: 'chay', co: 2 });
     this.chuGa({ id: this.id++, x: g.x, y: g.y - 360, text: '🐔 GÀ MẸ MỚI RA ĐỜI!', mau: '#ff9f1a', t: 0 });
@@ -3521,6 +3524,25 @@ export class Game {
   // Gà mẹ gốc không đi đánh: có trứng đỏ đang ấp thì canh quanh quả trứng, không thì chạy trốn nhân vật gần nhất, không ai tới gần thì đi loanh quanh
   private dieuTuongGoc(g: Ga, dt: number): void {
     if (this.tronNhanh(g)) return;
+    // Phút 15: vua gà bỏ canh trứng / ăn socola, đi bộ theo sát Mabu / Zinbu / Super Bư gần nhất (xa thì gaBayTruy() bay tới); vừa đuổi vừa đẻ trứng
+    if (this.gaTruy) {
+      let muc: NguoiChoi | null = null;
+      let gan = Infinity;
+      for (const n of this.nguoi) {
+        if (n.vang || this.khuat(n)) continue;
+        const d = hyp(n.x - g.x, n.y - g.y);
+        if (d < gan) { gan = d; muc = n; }
+      }
+      if (muc) {
+        const d = gan || 1;
+        const v = d > 300 ? TOC_DO_TUONG * 3 : 0;
+        g.vx = ((muc.x - g.x) / d) * v;
+        g.vy = ((muc.y - g.y) / d) * v;
+        g.lat = muc.x < g.x;
+        g.doiHuong = 0;
+        return;
+      }
+    }
     const e = this.trungDe.find((t) => t.db && t.me === g.id);
     if (e) {
       const d = hyp(e.x - g.x, e.y - g.y);
@@ -5885,13 +5907,19 @@ export class Game {
     return this.gaTruy ? vungCua(g) : 'vuon';
   }
 
+  /** Vùng kẹp của trứng / gà mới nở: trước phút 15 trong vườn gà; phút 15 vua gà vừa đuổi vừa đẻ nên theo chỗ đất đang đứng */
+  private vungTrung(o: { x: number; y: number }): 'vuon' | 'dao' | undefined {
+    return this.gaTruy ? vungCua(o) : 'vuon';
+  }
+
   /**
-   * Phút 15 (GA_TRUY_T): mọi gà con và tướng gà (vua gà không, đang Lao / Bay thì làm nốt) nhận Mabu / Zinbu / Super Bư ở bất kỳ đâu.
+   * Phút 15 (GA_TRUY_T): mọi gà con, tướng gà và vua gà (đang Lao / Bay / trốn chạy nhanh thì làm nốt) nhận Mabu / Zinbu / Super Bư ở bất kỳ đâu.
    * Người gần nhất xa hơn GA_TRUY_GAN (hoặc gà đang ở trên vực) thì bay thẳng tới với tốc độ thật GA_TRUY_TOC (= 1/2 tốc độ lao bóng ma Goku),
    * qua vực / tường vườn như bóng ma Goku; gần và đang trên đất thì hạ xuống đuổi / đánh như thường. Trả về true nếu đang bay.
    */
   private gaBayTruy(g: Ga): boolean {
-    if (!this.gaTruy || g.goc || g.chieu) {
+    // Vua gà đang trốn chạy nhanh (bất tử) thì chạy nốt
+    if (!this.gaTruy || g.chieu || g.tron) {
       g.truyBay = false;
       return false;
     }
