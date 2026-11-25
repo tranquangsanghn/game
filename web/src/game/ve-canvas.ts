@@ -992,9 +992,12 @@ export class VeCanvas {
         ctx.globalAlpha = 1;
       } else if (o.loai === 'gy') {
         // Bản sao vẽ rõ như nhân vật thật (nhân vật không bị sương mù làm mờ)
-        ctx.globalAlpha = c.gyNv ? 1 : c.doRo(c.ginyu.x, c.ginyu.y);
-        this.veGinyu(ctx, c);
-        ctx.globalAlpha = 1;
+        const ve = () => {
+          ctx.globalAlpha = c.gyNv ? 1 : c.doRo(c.ginyu.x, c.ginyu.y);
+          this.veGinyu(ctx, c);
+          ctx.globalAlpha = 1;
+        };
+        if (o.phu) c.gyPhu(ve); else ve();
       } else if (o.loai === 'fz') {
         ctx.globalAlpha = c.doRo(c.frieza.x, c.frieza.y);
         this.veFrieza(ctx, c);
@@ -1049,11 +1052,14 @@ export class VeCanvas {
       this.veThanhNv(ctx, t.x, t.y, t.mau);
     }
     // Thanh máu bóng ma Goku (lượt riêng sau mọi vật để không bị che)
-    if (c.gyView && !c.ginyu.chet) {
+    const veMauGy = () => {
+      if (!c.gyView || c.ginyu.chet) return;
       ctx.globalAlpha = c.gySao ? 1 : c.doRo(c.ginyu.x, c.ginyu.y);
       this.veMauGinyu(ctx, c);
       ctx.globalAlpha = 1;
-    }
+    };
+    veMauGy();
+    c.gyPhu(veMauGy);
     if (c.fzView && !c.frieza.chet) {
       ctx.globalAlpha = c.doRo(c.frieza.x, c.frieza.y);
       this.veMauFz(ctx, c);
@@ -3120,7 +3126,7 @@ export class VeCanvas {
       ctx.restore();
     }
     // Bản sao bóng ma Goku buộc chung dây với cả hai nhân vật (giống hệt người thật)
-    const day = c.gyDay();
+    const day = [...c.gyDay(), ...(c.gyPhu(() => c.gyDay()) ?? [])];
     for (const d of day) {
       if (d.tet <= 0.7) continue;
       ctx.save();
@@ -3145,8 +3151,8 @@ export class VeCanvas {
       ctx.fillText('⚠ Đừng bỏ xa đồng đội!', c.GIUA, c.H - 40);
     }
     ctx.textAlign = 'start';
-    const mtGy = c.gyMuiTen();
-    if (mtGy) {
+    for (const mtGy of [c.gyMuiTen(), c.gyPhu(() => c.gyMuiTen())]) {
+      if (!mtGy) continue;
       ctx.save();
       ctx.translate(mtGy.x, mtGy.y);
       ctx.rotate(rad(mtGy.goc));

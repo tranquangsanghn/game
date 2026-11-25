@@ -107,8 +107,8 @@ export interface Ginyu {
    *  thì bóng ma giữ nguyên máu / sức mạnh của bản này (`gyBienSao()`) */
   /** Đã nhập vào người ít nhất một lần (lần sau máu bản sao = GY_SAO_TI_LE thay GY_SAO_TI_LE_DAU) */
   daNhap?: boolean;
-  /** Ô người chơi (Mabu / Zinbu) bị nhập lần gần nhất khi không hợp thể: lần sau lao vào người kia (không lưu ván) */
-  nhapCuoi?: number;
+  /** Tách đôi lao vào 2 người: thân này đã tới người của mình, đang chờ thân kia tới để cùng biến bản sao */
+  toi?: boolean;
   truoc?: { hpMax: number; sat: [number, number, number]; heSo: number };
   /** Máu tối đa "giả" của bản sao (theo người bị sao chép) khi đang giữ chỉ số cũ: thanh máu trên đầu chỉ để lừa, máu thật hiện trên thanh đen */
   hpGia?: number;
