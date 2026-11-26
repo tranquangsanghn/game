@@ -5195,9 +5195,12 @@ export class Game {
       return;
     }
     // Tách đôi: thân đã tới nơi bám theo người đó chờ thân kia tới rồi cùng biến bản sao (`gyCapNhatPhu()`)
+    // Thân kia đã hụt / tan (ví dụ hai người vừa hợp thể, người bị nhập ẩn đi) thì không chờ nữa: biến bản sao ngay
+    // (trước đây đứng bám mãi dưới chân Super Bư vì cờ `toi` bỏ qua giới hạn quãng lao)
     if (g.toi) {
       g.x = ke.x;
       g.y = ke.y;
+      if (!this.gy2) this.gyBienSao(p);
       return;
     }
     const dx = ke.x - g.x, dy = ke.y - g.y, d = hyp(dx, dy) || 1;
