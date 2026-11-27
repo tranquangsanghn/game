@@ -12,7 +12,9 @@ import { SP_FRIEZA, SP_FRIEZA_VANG, FZ_TEN, FZ_TEN_VANG, FZ_TO, FZ_VANG_TO, FZ_V
 import { SP_GINYU, GY_TEN, GY_TO, GY_THANH_CAO, GY_CHET_T, GY_KHUNG, GY_LO_LUNG } from './ginyu';
 import { MC, MC_HAM, MC_O, MC_COT, MC_HANG, mcO, tamO } from './ban-do';
 import { O_RA_MC, bayBom, BOM_NO_T, BOM_TAM_MAX, LOAI_BOM, LUA_T, MC_TEN, QUAI_RA, QUAI_DL, QUAI_TIA_T, QUAI_CHET_T, QUAI_HU_LUA, QUAI_HU_TIA, SP_QUAI, SP_QUAI_HU, khungQuai, SP_BOM, NO_KHUNG, SP_BA, BA_TO, BA_NGOC_R, BA_TAY, BA_TEN, BA_CHET_T, BA_HOI_SINH, BA_BAY_CAO, type DoCuuMc, type LoaiVpMc, type BomMc, type LoaiBom, type QuaiMc, type TiaMc } from './me-cung';
-import { DAO, doSau, duongBo, NUI, TG, THAN, THAN_CONG, THAN_DA_GIAC, THAN_VAT_TG, thanVo } from './ban-do';
+import { DAO, doSau, duongBo, NUI, TG, THAN, THAN_CONG, THAN_DA_GIAC, THAN_VAT_TG, thanVo, TUONG_RONG } from './ban-do';
+import { RONG } from './dua-rong';
+import { VeDuaRong, MAU_NGUOI } from './ve-dua-rong';
 
 /** Con ma của chiêu Bóng ma (Super Bư), tách nền bằng tools/tao-atlas-super-buu.py */
 const SP_SB_MA: KhungSprite = { atlas: 'assets/game/super_buu_ma.png', atlasW: 161, atlasH: 256, w: 161, h: 256, cot: 1, neoX: 80, neoY: 128 };
@@ -171,6 +173,8 @@ export class VeCanvas {
   /** Canvas ô nền rảnh để dùng lại */
   private oNenKho: HTMLCanvasElement[] = [];
   private mauTuong: { mat: CanvasPattern; gach: CanvasPattern; vienNgang: CanvasPattern; vienDoc: CanvasPattern } | null = null;
+  /** Bộ vẽ map đua rồng (màn chia đôi dọc) */
+  private veDua = new VeDuaRong();
   private anh = new Map<string, HTMLImageElement>();
   // Atlas đã nhuộm sẵn theo bộ lọc màu (nháy sáng, đen, vàng, đỏ…): nhuộm cả atlas MỘT lần rồi dùng lại.
   // Không dùng ctx.filter lúc vẽ từng sprite vì rất chậm (mỗi sprite vài ms).
@@ -282,6 +286,17 @@ export class VeCanvas {
       ctx.fillRect(W, 0, SIDE, H);
     } else ctx.fillRect(-SIDE, -BAR, W + 2 * SIDE, H + BAR);
 
+    // Đua rồng (map Long Mạch): màn chia đôi dọc thay cho thế giới; lúc bay sang / bay về thì màn hình trắng dần
+    const duaMan = !!c.dua && c.dua.pha !== 'vao';
+    if (duaMan) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, W, H);
+      ctx.clip();
+      this.veDua.ve(ctx, c.dua!.d, W, H, c.t, (cx, x, y, k) => this.veNgoc(cx, c.SP_NGOC, x, y, c.t, k, 6));
+      ctx.restore();
+      HN.moc('ve.duaRong');
+    } else {
     // Một camera chung; chỉ vẽ trong map (thanh đen phía trên chứa chiêu gà mẹ)
     ctx.save();
     ctx.beginPath();
@@ -295,8 +310,14 @@ export class VeCanvas {
     HN.moc('ve.theGioi');
     if (c.banDoNho) this.veBanDoNho(ctx, c, c.banDoNho);
     HN.moc('ve.banDoNho');
+    }
+    const trang = c.duaChuyen();
+    if (trang > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${c.dua!.pha === 'ra' ? trang : trang * trang})`;
+      ctx.fillRect(0, 0, W, H);
+    }
 
-    if (c.doHoangHon > 0) {
+    if (!duaMan && c.doHoangHon > 0) {
       ctx.globalAlpha = c.doHoangHon * 0.6;
       ctx.fillStyle = c.mauHoangHon;
       ctx.fillRect(0, 0, W, H);
@@ -312,7 +333,7 @@ export class VeCanvas {
     this.veDemNguoc(ctx, c);
     this.veDongHo(ctx, c);
     HN.moc('ve.ngoc');
-    if (c.man === 'play' || c.man === 'pause') this.veHud(ctx, c);
+    if ((c.man === 'play' || c.man === 'pause') && !duaMan) this.veHud(ctx, c);
     HN.moc('ve.hud');
   }
 
@@ -846,7 +867,7 @@ export class VeCanvas {
     const e = 0.5;
     const trongVuon =
       -cam.x / cam.k >= -e && -cam.y / cam.k >= -e && (c.W - cam.x) / cam.k <= c.MAP + e && (c.H - cam.y) / cam.k <= c.MAP + e;
-    if (c.banDoVan !== 'sa' || trongVuon) return;
+    if (c.banDoVan !== 'sa' || trongVuon || (c.dua && c.dua.pha !== 'vao')) return;
     // Vực đen là màu nền CSS của canvas (canvas.canvas-nen), không tô.
     // clip() phải nằm trong save / restore: clip không tự mất khi setTransform / clearRect, Chrome giữ cả danh sách clip
     // đã đặt và phát lại mỗi khung ⇒ thiếu restore thì danh sách dài thêm mỗi khung, FPS trên đảo tụt dần theo thời gian
@@ -1020,6 +1041,7 @@ export class VeCanvas {
       }
       else if (o.loai === 'ba') this.veBa(ctx, c);
       else if (o.loai === 'conbu') this.veConBu(ctx, c, o.cb);
+      else if (o.loai === 'rongDa') this.veTuongRong(ctx, c, o.i);
       else if (o.loai === 'mb') this.veMayBay(ctx, c.mbView, c.SP_MB, true);
       else if (o.loai === 'pt') this.veMayBay(ctx, c.ptView, c.SP_PT, false);
       else this.veNhanVat(ctx, c, o.p);
@@ -2459,6 +2481,81 @@ export class VeCanvas {
     ctx.restore();
   }
 
+  /**
+   * Tượng rồng đá trên thần điện (6 tượng, mỗi tượng một màu theo RONG): bệ đá + rồng cuộn mình ngẩng đầu. Có người nhập thì phát sáng
+   * màu người chơi (P1 xanh, P2 đỏ), lúc bay sang map đua thì rồng bay vút lên; đường đua đã đóng (đã lấy ngọc 6 sao) thì xám, nứt.
+   */
+  private veTuongRong(ctx: CanvasRenderingContext2D, c: Game, i: number): void {
+    const tg = TUONG_RONG[i]!, dl = RONG[i]!;
+    const p = c.nhapRong.indexOf(i);
+    const dong = c.duaDong;
+    const bay = p >= 0 && c.dua?.pha === 'vao' ? c.duaChuyen() : 0;
+    ctx.save();
+    ctx.translate(tg.x, tg.y);
+    // Bệ đá
+    ctx.fillStyle = '#8f887c';
+    ctx.fillRect(-105, -70, 210, 70);
+    ctx.fillStyle = '#c9c2b3';
+    ctx.beginPath();
+    ctx.ellipse(0, -70, 105, 30, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.font = `bold 30px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#3a342c';
+    ctx.fillText(dl.ten, 0, -30);
+    // Rồng cuộn mình (bay lên khi đang sang map đua)
+    ctx.translate(0, -80 - bay * bay * 900);
+    if (p >= 0) {
+      ctx.shadowColor = MAU_NGUOI[p]!;
+      ctx.shadowBlur = (24 + 10 * Math.sin(c.t * 6)) * ctx.getTransform().a;
+    }
+    const mau = dong ? '#8a8a8a' : dl.mau, mau2 = dong ? '#b5b5b5' : dl.mau2;
+    const vo = p >= 0 ? Math.sin(c.t * 10) * 0.3 : 0;
+    ctx.fillStyle = mau2;
+    for (const b of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(b * 20, -170);
+      ctx.lineTo(b * (130 + 20 * vo), -260 - 30 * vo);
+      ctx.lineTo(b * 120, -170);
+      ctx.lineTo(b * 60, -130);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.fillStyle = mau;
+    for (let k = 0; k < 12; k++) {
+      const y = -k * 22;
+      const x = Math.sin(k * 0.65 + (p >= 0 ? c.t * 4 : 0)) * (60 - k * 3);
+      ctx.beginPath();
+      ctx.arc(x, y, 30 - k * 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Đầu, sừng, mắt
+    const hx = Math.sin(12 * 0.65 + (p >= 0 ? c.t * 4 : 0)) * 24;
+    ctx.beginPath();
+    ctx.ellipse(hx, -285, 40, 30, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = mau2;
+    ctx.beginPath();
+    ctx.moveTo(hx - 22, -305); ctx.lineTo(hx - 40, -350); ctx.lineTo(hx - 8, -310);
+    ctx.moveTo(hx + 22, -305); ctx.lineTo(hx + 40, -350); ctx.lineTo(hx + 8, -310);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = dong ? '#555' : p >= 0 ? '#fff27a' : '#ffffff';
+    ctx.beginPath();
+    ctx.arc(hx - 15, -290, 6, 0, Math.PI * 2);
+    ctx.arc(hx + 15, -290, 6, 0, Math.PI * 2);
+    ctx.fill();
+    if (dong) {
+      ctx.strokeStyle = '#3a3a3a';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(-20, -40); ctx.lineTo(10, -120); ctx.lineTo(-10, -180); ctx.lineTo(25, -250);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   private veThan(ctx: CanvasRenderingContext2D, c: Game): void {
     const cam = c.gocCamera();
     const x0 = -cam.x / cam.k, x1 = (c.W - cam.x) / cam.k, y0 = -cam.y / cam.k, y1 = (c.H - cam.y) / cam.k;
@@ -3005,7 +3102,8 @@ export class VeCanvas {
     let ten: string;
     let mo: boolean;
     let so: number | string | null = null;
-    if (c.trenThan) {
+    if (c.dua && c.dua.pha !== 'vao') { ten = '🐉 Đua rồng Long Mạch'; so = 'Về đích trước nhận ngọc rồng 6 sao'; mo = false; }
+    else if (c.trenThan) {
       ten = fzVang(c.frieza) ? FZ_TEN_VANG : FZ_TEN; mo = c.frieza.chet;
       if (!c.frieza.chet) so = c.frieza.vang > 0 ? `✨ ${Math.ceil(c.frieza.vang)}s / ${FZ_VANG_T}s` : c.hopThe ? '⚔ Super Bư mạnh gấp bội!' : '⚔ Hợp thể Super Bư đánh mạnh hơn';
     }
@@ -3046,7 +3144,11 @@ export class VeCanvas {
     ctx.beginPath();
     ctx.rect(-35, 0, 70, 70);
     ctx.clip();
-    if (c.trenDao) {
+    if (c.dua && c.dua.pha !== 'vao') {
+      // Đua rồng: avatar là viên ngọc rồng 6 sao (phần thưởng)
+      ctx.globalAlpha = 1;
+      this.veNgoc(ctx, c.SP_NGOC, 0, 38, c.t, 0.2, 6);
+    } else if (c.trenDao) {
       // Đang ở đảo: avatar là Cell của đảo đó, đứng nhún nhảy; núi đá: avatar bóng ma Goku xoay người (mờ khi đã bị hạ)
       if (c.trenThan) {
         // Thần điện: avatar Frieza đứng thở (dạng vàng: Golden Frieza, khung đang biến hình)

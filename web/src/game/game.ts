@@ -8,7 +8,8 @@ import { HN } from './do-hieu-nang';
 import { CON_BU_SO, CON_BU_LAN, CON_BU_GAP, CON_BU_MAU_SAN, CON_BU_CHET_T, CON_BU_HOI_DE, CON_BU_TO, CON_BU_TOC, CON_BU_BAM, CON_BU_XA, CON_BU_DICH, CON_BU_TAM, CON_BU_TAM_DAM, CON_BU_TAM_CHUONG, CON_BU_HOI_DON, CON_BU_HOI_CHUONG, CON_BU_TI_LE_MA, type ConBu } from './con-bu';
 import { MC, MC_COT, MC_HANG, MC_HAM, MC_O, datLaiMeCung, oCua, oTrongVao, oCung, oTuongMc, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
 import { taoMeCung, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, MC_CAM_TREN, MC_QUAY_T, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, O_BI_AN_HOI, MC_DO_THEM, MC_BOM_THEM, MANG_TOI_DA, BAY_BAY, BAY_NO, BAY_TAM, QUAI_CACH, QUAI_TOI_DA, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DL, LOAI_QUAI, QUAI_TIA_SAT, QUAI_TIA_T, QUAI_CHET_T, QUAI_DAU_T, SP_QUAI, type LoaiQuai, type TiaMc, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_DIEM, BA_CHET_T, BA_HP, BA_HOI_SINH, BA_HOI_T, BA_HOI_TANG, BA_TOC, BA_GAN, BA_BAY_CAO, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
-import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
+import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, TUONG_RONG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
+import { DuaRong, RONG, type NhapDua } from './dua-rong';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_DO_COMBO, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_T_MAX, CELL_HOI_DAU_GAP, CELL_DO_TANG, CELL_DO_TANG_CHO, cellHpMax, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
 import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzMauGap, fzSatDam, fzSatChuong, fzToc, FZ_COMBO, FZ_COMBO_VANG, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_COMBO_CUA, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_HOI_DUOI, FZ_HOI_TREN, FZ_HOI_LAN, FZ_AN_DAU, FZ_AN_TAO, FZ_AN_GAP, FZ_AN_BK, FZ_CAY_TAM, FZ_GIAP, FZ_MISS, FZ_MISS_VANG, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
@@ -130,7 +131,8 @@ type VatXep =
   | { loai: 'cong'; y: number; than?: boolean; mc?: boolean }
   | { loai: 'quai'; y: number; q: QuaiMc }
   | { loai: 'ba'; y: number }
-  | { loai: 'conbu'; y: number; cb: ConBu };
+  | { loai: 'conbu'; y: number; cb: ConBu }
+  | { loai: 'rongDa'; y: number; i: number };
 
 /** Quả cầu trốn: san = sẵn sàng · trong = có nhân vật p đang trốn · vo = đang vỡ ra (hoạt ảnh) · moc = đã vỡ, chờ CAU_MOC giây mọc quả mới. t = số giây của pha hiện tại */
 /** cua = chủ quả cầu (0 Mabu · 1 Zinbu): chỉ đúng người đó chui vào được, quả cầu có avatar của người đó */
@@ -293,6 +295,11 @@ const W_MAC_DINH = 1600;
 const CELL_TRUY_T = 300;
 /** Nhặt đủ ngọc rồng xong chờ chừng này giây rồi mới hiện màn chiến thắng (kiemTraThang()) */
 const THANG_CHO = 3;
+/** Đua rồng: viên ngọc thưởng cho người chơi về đích trước; bán kính đứng vào tượng thì nhập; thời gian bay lên từ tượng / bay về */
+const DUA_NGOC_SAO = 6;
+const TUONG_BK = 150;
+const DUA_VAO_T = 1.4;
+const DUA_RA_T = 1.2;
 /** Số viên ngọc rồng (1 sao → n sao) phải nhặt đủ để thắng (kiemTraThang(), duNgoc()) */
 const NGOC_THANG = 5;
 /** Chơi tới chừng này giây thì Frieza (còn sống) rời thần điện bay đi truy sát mọi nơi (kiemTraFzTruy()) */
@@ -1185,6 +1192,18 @@ export class Game {
   sangMc = false;
   ngocBay: { x: number; y: number; t: number; slot: number; sao: number }[] = [];
   readonly NGOC_BAY_T = 1.1;
+  /** Đang đua rồng (map Long Mạch, dừng cả thế giới): pha 'vao' = rồng bay lên từ tượng · 'dua' · 'ra' = bay về thần điện; null = không đua (không lưu ván) */
+  dua: { d: DuaRong; pha: 'vao' | 'dua' | 'ra'; t: number } | null = null;
+  /** Người chơi p đang nhập vào tượng rồng i (chỉ số TUONG_RONG / RONG), -1 = không (không lưu ván) */
+  nhapRong: number[] = [-1, -1];
+  /** Người phải bước ra khỏi vùng tượng mới nhập được (vừa thoát / vừa bay về / vừa tải ván) */
+  private choTuong: boolean[] = [true, true];
+  /** Điều khiển của từng người trong map đua (docTayCam() ghi, capNhatDua() dùng) */
+  private duaNhap: (NhapDua | null)[] = [null, null];
+  /** Đường đua rồng đã đóng (đã lấy ngọc 6 sao) */
+  get duaDong(): boolean {
+    return this.ngocNhat.includes(DUA_NGOC_SAO);
+  }
   // Gà mẹ đang đánh (phụ gần nhân vật nhất; chưa có thì gà mẹ gốc): chiêu hiện trên thanh đen phía trên
   tuongBang: Ga | null = null;
   // Vật phẩm máu trên map (vatPhamView: chỉ cái nằm trong khung nhìn)
@@ -1461,6 +1480,9 @@ export class Game {
     this.datNgocMeCung();
     this.ngocBay = [];
     this.cuu = [];
+    this.dua = null;
+    this.nhapRong = [-1, -1];
+    this.choTuong = [true, true];
     // Quả cầu trốn nằm trong vườn gà (giữa thế giới mở)
     this.cauTron = taoCauTron();
     this.dungHinh = 0;
@@ -1779,6 +1801,7 @@ export class Game {
    * nhân vật ở ngoài mê cung cũng đứng yên; chỉ mê cung, người trong mê cung, chưởng / hiệu ứng / cứu người còn chạy. Ra khỏi mê cung thì chạy tiếp.
    */
   get dungTheGioi(): boolean {
+    if (this.dua) return true;
     for (let p = 0; p < this.nguoi.length; p++) {
       const n = this.nguoi[p]!;
       if (!n.vang && !n.het && !this.trongMb(p) && !this.biNhap(p) && this.vungMc(n)) return true;
@@ -1801,6 +1824,12 @@ export class Game {
 
   private capNhat(dt: number): void {
     HN.moc('cn.khac');
+    // Đua rồng: cả thế giới đứng yên, chỉ chạy cuộc đua
+    if (this.dua) {
+      this.capNhatDua(dt);
+      HN.moc('cn.duaRong');
+      return;
+    }
     const dung = this.dungTheGioi;
     if (!dung) this.tGame += dt;
     const k = kep(this.tGame / THOI_GIAN_HOANG_HON, 0, 1);
@@ -1852,6 +1881,7 @@ export class Game {
     this.chanNuiMotNguoi(truoc);
     this.chanMeCung(truoc);
     if (this.trieuHoi && !this.sangMc) this.nguoi.forEach((n, p) => { if (!n.vang && !this.trongMb(p)) giamThan(n, !!n.bay); });
+    this.capNhatTuongRong();
     HN.moc('cn.nhanVat');
     if (!dung) {
       this.capNhatMb(dt);
@@ -1943,7 +1973,7 @@ export class Game {
   /** Nhân vật m nhặt viên ngọc rồng `sao` sao ở (x, y): chữ bay, nổ sáng, chưởng lên trời, viên ngọc bay lên hàng ngọc trên thanh đen */
   private nhatNgoc(m: NguoiChoi, x: number, y: number, sao: number): void {
     this.am.phat('anTao');
-    this.chu.push({ id: this.id++, x: m.x, y: m.y - 220, text: `⭐ NGỌC RỒNG ${sao} SAO! (${this.ngocNhat.length + 1}/${NGOC_THANG})`, mau: '#ffb347', t: 0 });
+    this.chu.push({ id: this.id++, x: m.x, y: m.y - 220, text: sao > NGOC_THANG ? `⭐ NGỌC RỒNG ${sao} SAO!` : `⭐ NGỌC RỒNG ${sao} SAO! (${this.ngocNhat.filter((x) => x <= NGOC_THANG).length + 1}/${NGOC_THANG})`, mau: '#ffb347', t: 0 });
     this.vet.push({ id: this.id++, x, y, t: 0, loai: 'chay', co: 1.2 });
     this.chuongLenTroi(this.nguoi.indexOf(m));
     this.ngocBay.push({ x, y: y - 40, t: 0, slot: this.ngocNhat.length, sao });
@@ -2999,7 +3029,8 @@ export class Game {
     this.mbDemView = dem && trong(dem.x, dem.y, 300) ? dem : null;
     const ptDem = this.phiThuyen.pha === 'no' ? { x: this.phiThuyen.x, y: this.phiThuyen.y, con: Math.max(1, Math.ceil(MB_HOI - this.phiThuyen.t)) } : null;
     this.ptDemView = ptDem && trong(ptDem.x, ptDem.y, 400) ? ptDem : null;
-    this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && !this.trongMb(i) && !this.biNhap(i) && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
+    TUONG_RONG.forEach((tg, i) => { if (this.thayThan && trong(tg.x, tg.y - 160, 260)) xep.push({ loai: 'rongDa', y: tg.y, i }); });
+    this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && !this.trongMb(i) && !this.biNhap(i) && this.nhapRong[i]! < 0 && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
     const xe = this.xeDuoiDat();
     const kn = this.khungNhin;
     for (const t of this.ttTrong(kn.x0 - 700, kn.y0 - 700, kn.x1 + 700, kn.y1 + 700, this.ttTamView)) if (!t.mat && trong(t.x, t.y, t.to ? 700 : 400) && !this.cayCheXe(t, xe) && this.doRo(t.x, t.y) > 0) xep.push({ loai: 'td', y: t.y, td: t });
@@ -6675,7 +6706,7 @@ export class Game {
   // Trả về true nếu thật sự trúng (không né, không trong cầu / máy bay)
   // mcKieu: trong mê cung bom gục vì lửa (chờ xô nước) hay vì nước / quái (bong bóng, chờ kiếm / kim châm)
   private nhanSatThuong(n: NguoiChoi, sat: number, khongNe = false, mauChu = '#ff4d4d', mcKieu: 'chay' | 'bong' = 'bong'): boolean {
-    if (this.trongCau(this.nguoi.indexOf(n)) || this.trongMb(this.nguoi.indexOf(n)) || this.biNhap(this.nguoi.indexOf(n))) return false;
+    if (this.trongCau(this.nguoi.indexOf(n)) || this.trongMb(this.nguoi.indexOf(n)) || this.biNhap(this.nguoi.indexOf(n)) || this.nhapRong[this.nguoi.indexOf(n)]! >= 0) return false;
     if (!khongNe && Math.random() < NE_NV) {
       this.chu.push({ id: this.id++, x: n.x, y: n.y - 220, text: 'NÉ!', mau: '#9be7ff', t: 0 });
       return false;
@@ -7298,7 +7329,7 @@ export class Game {
   /** Gà không thấy / không đánh được nhân vật này: đã gục, đang là mây hoặc đang trốn trong quả cầu */
   private khuat(n: NguoiChoi): boolean {
     const p = this.nguoi.indexOf(n);
-    return n.het || n.nv.laMay || this.trongCau(p) || this.trongMb(p) || this.biNhap(p);
+    return n.het || n.nv.laMay || this.trongCau(p) || this.trongMb(p) || this.biNhap(p) || this.nhapRong[p]! >= 0;
   }
 
   // Chạm quả cầu thì chui vào; trong cầu hồi máu tới đầy bình, đầy mana; hết CAU_TRON giây thì vỡ ra (hoạt ảnh) và thả nhân vật ra đúng chỗ đó
@@ -7419,6 +7450,109 @@ export class Game {
   // ─── Điều khiển bằng tay cầm (Gamepad API, bố cục kiểu Xbox; mapping "standard") ───
   // Dành cho trẻ em, chỉ các nút đơn giản: Chữ thập: chạy · Cần trái: bay · A đấm · X đá · Y chưởng · B / Cần phải: chiêu riêng
   // Menu: bắt đầu / tạm dừng · View: khi chỉ có 1 tay cầm thì đổi sang điều khiển nhân vật kia
+
+  // ─── Đua rồng (tượng rồng trên thần điện → map Long Mạch) ───
+
+  /** Báo chữ trên đầu nhân vật (không lặp dày) */
+  private baoTuong(n: NguoiChoi, text: string): void {
+    this.chu.push({ id: this.id++, x: n.x, y: n.y - 260, text, mau: '#ffd23f', t: 0 });
+  }
+
+  /**
+   * 6 tượng rồng trên thần điện: nhân vật (chưa gục, không bay / mây / máy bay / quả cầu, không hợp thể) bước vào TUONG_BK quanh chân tượng
+   * thì nhập vào con rồng đó (ẩn, không bị đánh, đứng yên ở tượng; B thoát). Mọi người có mặt đã nhập (mỗi người một tượng) thì bay sang
+   * map đua rồng. Đã lấy ngọc 6 sao thì đường đua đóng, tượng không nhận nữa.
+   */
+  private capNhatTuongRong(): void {
+    // Phút 25 cả đội bị đưa sang mê cung bom: không còn ai ở trong tượng
+    if (this.sangMc) { this.nhapRong = [-1, -1]; return; }
+    for (let p = 0; p < this.nguoi.length; p++) {
+      const n = this.nguoi[p]!;
+      if (n.vang) continue;
+      const i = this.nhapRong[p]!;
+      if (i >= 0) {
+        const tg = TUONG_RONG[i]!;
+        n.x = tg.x;
+        n.y = tg.y + 20;
+        n.dich = null;
+        n.dangDi = false;
+        continue;
+      }
+      const gan = TUONG_RONG.findIndex((tg) => hyp(n.x - tg.x, (n.y - tg.y) / EP_GA) < TUONG_BK);
+      if (gan < 0) { this.choTuong[p] = false; continue; }
+      if (this.choTuong[p]) continue;
+      this.choTuong[p] = true;
+      if (this.duaDong) { this.baoTuong(n, '🐉 ĐÃ LẤY NGỌC 6 SAO: ĐƯỜNG ĐUA RỒNG ĐÃ ĐÓNG!'); continue; }
+      if (this.hopThe) { this.baoTuong(n, '🐉 TÁCH HỢP THỂ MỚI NHẬP RỒNG ĐƯỢC!'); continue; }
+      if (n.het || n.bay || n.nv.laMay || this.trongMb(p) || this.trongCau(p)) continue;
+      if (this.nhapRong.includes(gan)) { this.baoTuong(n, '🐉 ĐỒNG ĐỘI ĐÃ NHẬP TƯỢNG NÀY!'); continue; }
+      this.nhapRong[p] = gan;
+      this.vet.push({ id: this.id++, x: TUONG_RONG[gan]!.x, y: TUONG_RONG[gan]!.y - 120, t: 0, loai: 'chay', co: 0.8 });
+      const conCho = this.nguoi.some((m, q) => q !== p && !m.vang && this.nhapRong[q]! < 0);
+      this.baoTuong(n, `🐉 NHẬP VÀO ${RONG[gan]!.ten.toUpperCase()}!${conCho ? ' CHỜ ĐỒNG ĐỘI (B: THOÁT)' : ''}`);
+    }
+    const coMat = this.nguoi.map((n, p) => (n.vang ? -1 : p)).filter((p) => p >= 0);
+    if (!this.dua && coMat.length && coMat.every((p) => this.nhapRong[p]! >= 0)) {
+      const chon = this.nguoi.map((n, p) => (n.vang ? -1 : this.nhapRong[p]!));
+      const ten = this.nguoi.map((n) => NHAN_VAT[n.ki]?.ten ?? '');
+      this.dua = { d: new DuaRong(chon, ten), pha: 'vao', t: 0 };
+      this.duaNhap = [null, null];
+    }
+  }
+
+  /** Người p thoát khỏi tượng rồng (đang chờ đồng đội): bước ra trước tượng */
+  private thoatTuong(p: number): void {
+    const i = this.nhapRong[p]!;
+    if (i < 0 || this.dua) return;
+    const n = this.nguoi[p]!;
+    this.nhapRong[p] = -1;
+    this.choTuong[p] = true;
+    n.x = TUONG_RONG[i]!.x;
+    n.y = TUONG_RONG[i]!.y + 200;
+  }
+
+  /** Cuộc đua: bay lên từ tượng → đua (tới khi một người chơi về đích) → bay về thần điện, người về đích trước nhận ngọc 6 sao */
+  private capNhatDua(dt: number): void {
+    const du = this.dua!;
+    du.t += dt;
+    if (du.pha === 'vao') {
+      if (du.t >= DUA_VAO_T) { du.pha = 'dua'; du.t = 0; }
+      return;
+    }
+    if (du.pha === 'dua') {
+      du.d.capNhat(dt, this.duaNhap);
+      this.duaNhap = [null, null];
+      for (const r of du.d.rung) this.rungTayCam(r.p, r.ms, r.manh);
+      du.d.rung.length = 0;
+      if (du.d.nguoiVe >= 0) { du.pha = 'ra'; du.t = 0; }
+      return;
+    }
+    if (du.t < DUA_RA_T) return;
+    // Bay về đúng chỗ tượng đã nhập, đứng trước tượng; người về đích trước nhận ngọc 6 sao (đường đua đóng lại)
+    const thang = du.d.nguoiVe;
+    this.dua = null;
+    this.nguoi.forEach((n, p) => {
+      const i = this.nhapRong[p]!;
+      if (i < 0) return;
+      n.x = TUONG_RONG[i]!.x;
+      n.y = TUONG_RONG[i]!.y + 200;
+      n.dich = null;
+      this.nhapRong[p] = -1;
+      this.choTuong[p] = true;
+    });
+    this.camNgay = true;
+    const m = this.nguoi[thang];
+    if (m && !this.duaDong) this.nhatNgoc(m, m.x, m.y - 120, DUA_NGOC_SAO);
+  }
+
+  /** Độ trắng màn hình lúc bay sang / bay về map đua (0..1) */
+  duaChuyen(): number {
+    const du = this.dua;
+    if (!du) return 0;
+    if (du.pha === 'vao') return Math.min(1, du.t / DUA_VAO_T);
+    if (du.pha === 'ra') return Math.min(1, du.t / DUA_RA_T);
+    return 0;
+  }
 
   // ─── Hợp thể Super Bư ───
 
@@ -7906,6 +8040,24 @@ export class Game {
       const g = gan[p];
       if (this.man !== 'play' || !g) {
         if (n.cuaCan) n.dich = null;
+        n.cuaCan = false;
+        continue;
+      }
+      // Đua rồng: chữ thập / cần trái lái (lên tăng tốc, xuống giảm tốc, trái / phải đổi luồng), A vật phẩm, X / Y / B skill 1 / 2 / 3
+      if (this.dua) {
+        const can = this.canGat(g, 0, 1);
+        this.duaNhap[p] = {
+          x: can.x, y: can.y, dx: (duoc(g, 15) ? 1 : 0) - (duoc(g, 14) ? 1 : 0), dy: (duoc(g, 13) ? 1 : 0) - (duoc(g, 12) ? 1 : 0),
+          a: moi(g, 0) || !!this.duaNhap[p]?.a, xBam: moi(g, 2) || !!this.duaNhap[p]?.xBam, yBam: moi(g, 3) || !!this.duaNhap[p]?.yBam, b: moi(g, 1) || !!this.duaNhap[p]?.b,
+        };
+        n.dich = null;
+        n.cuaCan = false;
+        continue;
+      }
+      // Đang nhập vào tượng rồng chờ đồng đội: B thoát ra
+      if (this.nhapRong[p]! >= 0) {
+        if (moi(g, 1)) this.thoatTuong(p);
+        n.dich = null;
         n.cuaCan = false;
         continue;
       }
