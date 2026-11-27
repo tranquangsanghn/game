@@ -2074,11 +2074,11 @@ export class Game {
         this.vetGa({ id: this.id++, x: v.x, y: v.y, t: 0, loai: 'bui' });
         continue;
       }
-      // Gà đi qua chỉ mổ ăn táo đỏ (táo xanh gà không ăn): hồi VP_HOI máu, không có trần. Socola thì mọi gà (con, mẹ gốc, mẹ phụ) đều ăn
+      // Gà đi qua mổ ăn táo (gà không có mana nên táo xanh cũng như táo đỏ): hồi VP_HOI máu, không có trần. Socola thì mọi gà (con, mẹ gốc, mẹ phụ) đều ăn
       const socola = v.loai === 'socola';
       // Phút 15 (truy sát): gà mải đuổi nhân vật, không mổ táo; vua gà không ăn gì cả
       const truy = this.gaTruy;
-      const ga = xanh || dau || this.vuonNgu || (truy && !socola) ? undefined
+      const ga = dau || this.vuonNgu || (truy && !socola) ? undefined
         : this.ga.find((g) => !g.chet && !(truy && g.goc) && hyp(g.x - v.x, g.y - v.y) < (g.loai === 'boss' ? VP_GA_BAN_KINH * 2.5 : VP_GA_BAN_KINH));
       if (ga) {
         ga.mo = MO_THOI_GIAN;
@@ -2088,7 +2088,9 @@ export class Game {
           const hoiGa = Math.max(1, Math.round((v.hpGa ?? HP_GA) * SOCOLA_GA_TI_LE));
           ga.hp += hoiGa;
           ga.suc = Math.min(SOCOLA_SUC_TOI_DA, (ga.suc ?? 1) + SOCOLA_SUC_GA);
-          ga.to = Math.min(ga.loai === 'boss' ? SOCOLA_TO_TOI_DA_ME : SOCOLA_TO_TOI_DA, (ga.to ?? 1) + SOCOLA_TO_GA);
+          // Trần chỉ chặn tăng thêm, không làm co gà đã to hơn trần (tướng gà to dần lúc vua gà đẻ đủ)
+          const toCu = ga.to ?? 1;
+          ga.to = Math.max(toCu, Math.min(ga.loai === 'boss' ? SOCOLA_TO_TOI_DA_ME : SOCOLA_TO_TOI_DA, toCu + SOCOLA_TO_GA));
           this.chuGa({ id: this.id++, x: ga.x, y: this.tamGa(ga).y - 60, text: `🍫 +${hoiGa} ❤ SỨC MẠNH x${ga.suc}`, mau: '#c98a4b', t: 0 });
         } else {
           ga.hp += VP_HOI;
@@ -3498,12 +3500,12 @@ export class Game {
     this.rung = Math.max(this.rung, 0.3);
   }
 
-  // Thanh socola gần nhất trong tầm ngửi TAM_NGUI_TAO của gà g; khongGioiHan: tìm khắp vườn, kể cả táo đỏ (tướng gà khi đã đủ ME_PHU_TOI_DA)
+  // Thanh socola gần nhất trong tầm ngửi TAM_NGUI_TAO của gà g; khongGioiHan: tìm khắp vườn, kể cả táo đỏ / xanh (tướng gà khi đã đủ ME_PHU_TOI_DA)
   private socolaGan(g: Ga, khongGioiHan = false): VatPham | null {
     let kq: VatPham | null = null;
     let xa = khongGioiHan ? Infinity : TAM_NGUI_TAO;
     for (const v of this.vatPham) {
-      if (v.loai !== 'socola' && !(khongGioiHan && (v.loai ?? 'do') === 'do')) continue;
+      if (v.loai !== 'socola' && !(khongGioiHan && ((v.loai ?? 'do') === 'do' || v.loai === 'xanh'))) continue;
       if (khongGioiHan && !trongVuon(v.x, v.y)) continue;
       const d = hyp(v.x - g.x, v.y - g.y);
       if (d < xa) { xa = d; kq = v; }
@@ -3641,11 +3643,11 @@ export class Game {
       const d = hyp(n.x - g.x, n.y - g.y);
       if (d < gan || ((truy || (day && trongVuon(n.x, n.y))) && (!muc || d < gan))) { gan = d; muc = n; }
     }
-    // Nhân vật chưa vào tầm đánh (TAM_LAO) mà có táo đỏ trong tầm ngửi TAM_NGUI_TAO thì đi tới táo trước
+    // Nhân vật chưa vào tầm đánh (TAM_LAO) mà có táo (đỏ hoặc xanh) trong tầm ngửi TAM_NGUI_TAO thì đi tới táo trước
     if (!muc || (gan > TAM_LAO && !truy)) {
       let xa = day ? Infinity : TAM_NGUI_TAO;
       for (const v of this.vatPham) {
-        if (v.loai === 'xanh' || v.loai === 'ngoc') continue;
+        if (v.loai === 'ngoc') continue;
         if (day && !trongVuon(v.x, v.y)) continue;
         const d = hyp(v.x - g.x, v.y - g.y);
         if (d < xa) { xa = d; muc = v; }
