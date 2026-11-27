@@ -179,9 +179,10 @@ export const THAN_VAT_TG = THAN_VAT.map((v) => ({
 export const thanVo: boolean[] = THAN_VAT.map(() => false);
 /** Cổng dịch chuyển trên thần điện: sân dưới, giữa hai hàng cọ gần mép nam (điểm ảnh 360, 420), xa bậc thềm điện thờ */
 export const THAN_CONG = { x: THAN.x0 + 360 * THAN_TL, y: THAN.y0 + 420 * THAN_TL };
-/** 6 tượng rồng trên thần điện (sân giữa vườn cây trước điện thờ và hai hàng cọ, điểm ảnh y 264, cách nhau 60 điểm ảnh để hai người
- *  đứng ở hai tượng xa nhất vẫn trong tầm dây buộc): đứng vào tượng nào là nhập vào rồng đó (thứ tự theo RONG trong dua-rong.ts) */
-export const TUONG_RONG = [210, 270, 330, 390, 450, 510].map((x) => ({ x: THAN.x0 + x * THAN_TL, y: THAN.y0 + 264 * THAN_TL }));
+/** 6 tượng rồng trên đảo 0 (đảo Cell đỏ giữ ngọc 2 sao): một hàng ngang phía nam chỗ Cell ngồi (0,4 bán kính đảo, cát sâu ≥ 2000),
+ *  cách nhau 540 để hai người đứng ở hai tượng xa nhất vẫn trong tầm dây buộc; chỉ hiện sau khi lấy ngọc 2 sao (và chỉ ở link test
+ *  `?duaRong`). Đứng vào tượng nào là nhập vào rồng đó (thứ tự theo RONG trong dua-rong.ts) */
+export const TUONG_RONG = [0, 1, 2, 3, 4, 5].map((i) => ({ x: DAO[0]!.x + (i - 2.5) * 540, y: DAO[0]!.y + DAO[0]!.r * 0.4 }));
 /** Đường viền thần điện (toạ độ thế giới) để bộ vẽ dựng vách đá */
 export const THAN_DA_GIAC = THAN_DA;
 /** Điểm nằm trong khung thần điện (nới thêm `le`) */

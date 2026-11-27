@@ -298,6 +298,17 @@ const THANG_CHO = 3;
 /** Đua rồng: viên ngọc thưởng cho người chơi về đích trước; bán kính đứng vào tượng thì nhập; thời gian bay lên từ tượng / bay về */
 const DUA_NGOC_SAO = 6;
 const TUONG_BK = 150;
+/**
+ * Link test đua rồng (`?duaRong`, `?duaRong=ngay`): chỉ link này có tượng rồng / map đua rồng; link chính không có (người dùng duyệt xong
+ * mới bật cho link chính). Vào thẳng ván 2 người, đã có ngọc 2 sao (Cell đỏ đảo 0 bỏ đi cho khỏi quấy), đứng trước 6 tượng; `=ngay` thì
+ * nhập tượng luôn, bay thẳng sang map đua.
+ */
+export const THU_DUA_RONG: '' | 'tuong' | 'ngay' = (() => {
+  try {
+    const v = new URLSearchParams(location.search).get('duaRong');
+    return v === null ? '' : v === 'ngay' ? 'ngay' : 'tuong';
+  } catch { return ''; }
+})();
 const DUA_VAO_T = 1.4;
 const DUA_RA_T = 1.2;
 /** Số viên ngọc rồng (1 sao → n sao) phải nhặt đủ để thắng (kiemTraThang(), duNgoc()) */
@@ -1203,6 +1214,27 @@ export class Game {
   /** Đường đua rồng đã đóng (đã lấy ngọc 6 sao) */
   get duaDong(): boolean {
     return this.ngocNhat.includes(DUA_NGOC_SAO);
+  }
+  /** 6 tượng rồng trên đảo Cell đỏ: chỉ ở link test, hiện ra sau khi lấy ngọc 2 sao của Cell */
+  get tuongRongHien(): boolean {
+    return !!THU_DUA_RONG && this.ngocNhat.includes(NGOC_TIEC_SAO);
+  }
+
+  /** Link test đua rồng: ván 2 người, đã có ngọc 2 sao, Cell đỏ bỏ đi, hai người đứng trước tượng (ngay = nhập tượng luôn) */
+  batDauThuDua(): void {
+    this.batDau('ca2');
+    this.cell = this.cell.filter((c) => this.daoCell(c) !== CELL_NGOI_DAO);
+    this.vatPham = this.vatPham.filter((v) => !(v.loai === 'ngoc' && v.sao === NGOC_TIEC_SAO));
+    this.ngocNhat.push(NGOC_TIEC_SAO);
+    [1, 4].forEach((i, p) => {
+      const n = this.nguoi[p];
+      if (!n) return;
+      n.x = TUONG_RONG[i]!.x;
+      n.y = TUONG_RONG[i]!.y + (THU_DUA_RONG === 'ngay' ? 0 : 330);
+      n.dich = null;
+    });
+    if (THU_DUA_RONG === 'ngay') { this.nhapRong = [1, 4]; this.choTuong = [true, true]; }
+    this.camNgay = true;
   }
   // Gà mẹ đang đánh (phụ gần nhân vật nhất; chưa có thì gà mẹ gốc): chiêu hiện trên thanh đen phía trên
   tuongBang: Ga | null = null;
@@ -3029,7 +3061,7 @@ export class Game {
     this.mbDemView = dem && trong(dem.x, dem.y, 300) ? dem : null;
     const ptDem = this.phiThuyen.pha === 'no' ? { x: this.phiThuyen.x, y: this.phiThuyen.y, con: Math.max(1, Math.ceil(MB_HOI - this.phiThuyen.t)) } : null;
     this.ptDemView = ptDem && trong(ptDem.x, ptDem.y, 400) ? ptDem : null;
-    TUONG_RONG.forEach((tg, i) => { if (this.thayThan && trong(tg.x, tg.y - 160, 260)) xep.push({ loai: 'rongDa', y: tg.y, i }); });
+    TUONG_RONG.forEach((tg, i) => { if (this.tuongRongHien && trong(tg.x, tg.y - 160, 260)) xep.push({ loai: 'rongDa', y: tg.y, i }); });
     this.nguoi.forEach((n, i) => { if (!n.vang && !this.dangCuu(i) && !this.trongCau(i) && !this.trongMb(i) && !this.biNhap(i) && this.nhapRong[i]! < 0 && trong(n.x, n.y, n.nv.laMay ? 600 : 200)) xep.push({ loai: 'nv', y: n.y, p: i }); });
     const xe = this.xeDuoiDat();
     const kn = this.khungNhin;
@@ -7459,13 +7491,13 @@ export class Game {
   }
 
   /**
-   * 6 tượng rồng trên thần điện: nhân vật (chưa gục, không bay / mây / máy bay / quả cầu, không hợp thể) bước vào TUONG_BK quanh chân tượng
+   * 6 tượng rồng trên đảo Cell đỏ (chỉ link test, sau khi lấy ngọc 2 sao): nhân vật (chưa gục, không bay / mây / máy bay / quả cầu, không hợp thể) bước vào TUONG_BK quanh chân tượng
    * thì nhập vào con rồng đó (ẩn, không bị đánh, đứng yên ở tượng; B thoát). Mọi người có mặt đã nhập (mỗi người một tượng) thì bay sang
    * map đua rồng. Đã lấy ngọc 6 sao thì đường đua đóng, tượng không nhận nữa.
    */
   private capNhatTuongRong(): void {
     // Phút 25 cả đội bị đưa sang mê cung bom: không còn ai ở trong tượng
-    if (this.sangMc) { this.nhapRong = [-1, -1]; return; }
+    if (this.sangMc || !this.tuongRongHien) { this.nhapRong = [-1, -1]; return; }
     for (let p = 0; p < this.nguoi.length; p++) {
       const n = this.nguoi[p]!;
       if (n.vang) continue;

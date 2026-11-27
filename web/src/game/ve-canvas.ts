@@ -2482,7 +2482,7 @@ export class VeCanvas {
   }
 
   /**
-   * Tượng rồng đá trên thần điện (6 tượng, mỗi tượng một màu theo RONG): bệ đá + rồng cuộn mình ngẩng đầu. Có người nhập thì phát sáng
+   * Tượng rồng đá trên đảo Cell đỏ (6 tượng, mỗi tượng một màu theo RONG): bệ đá + rồng cuộn mình ngẩng đầu. Có người nhập thì phát sáng
    * màu người chơi (P1 xanh, P2 đỏ), lúc bay sang map đua thì rồng bay vút lên; đường đua đã đóng (đã lấy ngọc 6 sao) thì xám, nứt.
    */
   private veTuongRong(ctx: CanvasRenderingContext2D, c: Game, i: number): void {

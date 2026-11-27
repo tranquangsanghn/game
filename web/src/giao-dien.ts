@@ -1,4 +1,4 @@
-import { DOI_HINH, Game, THE_CHON, type CheNguoi } from './game/game';
+import { DOI_HINH, Game, THE_CHON, THU_DUA_RONG, type CheNguoi } from './game/game';
 import { NHAN_VAT } from './game/nhan-vat-du-lieu';
 import { BanLuu, bangDiem, guiDiem, layLuu, luuGame, nhoTen, tenDaNho, xoaLuu } from './luu-tru';
 
@@ -93,6 +93,8 @@ export class GiaoDien {
   khoiDong(): void {
     this.game.khoiDong();
     void this.taiLuu();
+    // Link test đua rồng: vào thẳng ván 2 người trước 6 tượng rồng
+    if (THU_DUA_RONG) this.game.batDauThuDua();
     this.veManPhu();
   }
 
@@ -151,6 +153,8 @@ export class GiaoDien {
   }
 
   private async luuVan(): Promise<void> {
+    // Link test đua rồng không ghi đè ván lưu của link chính (cùng localStorage)
+    if (THU_DUA_RONG) { this.thongBao = { text: 'Link test đua rồng không lưu ván.', loi: false }; return; }
     const tt = this.game.chupTrangThai();
     if (!tt || this.dangLuu) return;
     this.dangLuu = true;
