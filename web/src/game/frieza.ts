@@ -29,17 +29,16 @@ const FZ_VANG_BIEN_T = FZ_VANG_NHIP.reduce((a, b) => a + b, 0);
 /** Khung bùng hào quang / phóng chưởng (Game nổ, rung màn ở các khung này) */
 export const FZ_VANG_AURA = 2;
 const FZ_VANG_PHONG = 6;
-/** Ở dạng vàng bao lâu (giây), hồi chiêu sau khi trở lại dạng thường (nghỉ 20s giữa 2 lần, tồn tại 30s) */
+/** Ở dạng vàng bao lâu (giây), hồi chiêu sau khi trở lại dạng thường (nghỉ 15s giữa 2 lần, tồn tại 30s) */
 export const FZ_VANG_T = 30;
-const FZ_VANG_HOI = 20;
-/** Dạng vàng: phòng thủ (nhận ÷FZ_VANG_GAP) và tự hồi máu gấp FZ_VANG_GAP; riêng máu gấp FZ_VANG_MAU, sát thương gấp FZ_VANG_SAT, tốc độ đi / chạy / đánh / hồi chưởng gấp FZ_VANG_TOC */
+const FZ_VANG_HOI = 15;
+/** Dạng vàng: phòng thủ (nhận ÷FZ_VANG_GAP) và tự hồi máu gấp FZ_VANG_GAP; riêng máu gấp FZ_VANG_MAU, sát thương đấm / chưởng riêng (FZ_SAT_VANG / FZ_CHUONG_SAT_VANG), tốc độ đi / chạy / đánh / hồi chưởng gấp FZ_VANG_TOC */
 export const FZ_VANG_GAP = 2.5;
 /** Dạng vàng: máu (tối đa và hiện có theo tỉ lệ) gấp FZ_VANG_MAU (= 2,5 giảm 30%) */
 const FZ_VANG_MAU = 1.75;
-/** Dạng vàng: cộng thêm FZ_VANG_THEM máu (tối đa và hiện có) sau khi nhân FZ_VANG_MAU */
-const FZ_VANG_THEM = 2000;
-/** Dạng vàng: sát thương (đấm / chưởng) chỉ gấp FZ_VANG_SAT, tốc độ (đi / chạy, đánh, hồi chưởng) chỉ gấp FZ_VANG_TOC (thấp hơn FZ_VANG_GAP để Super Bư còn trụ được) */
-const FZ_VANG_SAT = 1.5;
+/** Dạng vàng: cộng thêm FZ_VANG_THEM máu (tối đa và hiện có) sau khi nhân FZ_VANG_MAU (6000 × 1,75 + 4500 = 15000 máu tối đa) */
+const FZ_VANG_THEM = 4500;
+/** Dạng vàng: tốc độ (đi / chạy, đánh, hồi chưởng) chỉ gấp FZ_VANG_TOC (thấp hơn FZ_VANG_GAP để Super Bư còn trụ được) */
 const FZ_VANG_TOC = 1.3;
 /** Độ to (nhân khung 80 điểm ảnh; thân cao ~70 → ~245, nhỉnh hơn Mabu / Zinbu) */
 export const FZ_TO = 3.5;
@@ -54,17 +53,23 @@ const FZ_FPS_DUNG = 1.5;
 /**
  * Chỉ số chiến đấu của Frieza (dạng thường; dạng vàng nhân FZ_VANG_GAP qua `fzGap()`).
  * Mabu / Zinbu (kể cả chưa hợp thể) và Super Bư đánh Frieza đều mất máu (Game `trungFz()`), qua giáp FZ_GIAP. Máu / mana mang vào thần điện giữ nguyên (không đặt lại), trung bình mỗi người ~3000 máu ⇒ Super Bư ~18000 máu (3 × tổng).
- * Đấm 450 (Super Bư ×4,5) mỗi 0,4s qua giáp 50% ≈ 560 sát thương / giây: dạng thường 4000 máu mất ~7s đánh liên tục (trừ hồi 10 / s);
- * Mabu / Zinbu chưa hợp thể đấm 50 qua giáp ≈ 62 / giây ⇒ ~75s. Dạng vàng (30s): máu / phòng thủ / hồi máu ×2,5 (đấm thường chỉ ngang hồi 25 / s,
- * Super Bư vẫn ~225 / s), sát thương chỉ ×1,5 và tốc độ ×1,3 để Super Bư còn trụ / né được.
- * Frieza đánh Mabu / Zinbu: Đấm 300 (nhận 150), chưởng 1100 (nhận 550).
+ * Đấm 450 (Super Bư ×4,5) mỗi 0,4s qua giáp 50% ≈ 560 sát thương / giây: dạng thường 6000 máu mất ~11s đánh liên tục (trừ hồi 10 / s);
+ * Mabu / Zinbu chưa hợp thể đấm 50 qua giáp ≈ 62 / giây ⇒ ~110s. Dạng vàng (30s): máu tối đa 15000, phòng thủ / hồi máu ×2,5 (đấm thường chỉ ngang hồi 25 / s,
+ * Super Bư vẫn ~225 / s), tốc độ ×1,3 để Super Bư còn né được.
+ * Frieza đánh Mabu / Zinbu: dạng thường Đấm 300 (nhận 150), chưởng 1100 (nhận 550); Golden Frieza Đấm 700 (nhận 350), chưởng 2500 (nhận 1250).
  */
-export const FZ_HP = 4000;
+export const FZ_HP = 6000;
 /** Tỉ lệ máu tối đa dạng vàng / dạng thường (= (FZ_HP × FZ_VANG_MAU + FZ_VANG_THEM) / FZ_HP) */
 const FZ_VANG_TL = FZ_VANG_MAU + FZ_VANG_THEM / FZ_HP;
-export const FZ_SAT = 300;
-export const FZ_CHUONG_SAT = 1100;
-/** Combo đấm + chưởng (chung một chuỗi, như Cell bạo nộ, hệ số `CELL_DO_COMBO`): đòn trúng cùng người trong ngần này giây kể từ phát trúng trước thì nối chuỗi */
+const FZ_SAT = 300;
+const FZ_CHUONG_SAT = 1100;
+/** Golden Frieza: đấm / chưởng (sát thương gốc, nhân vật nhận 50%) */
+const FZ_SAT_VANG = 700;
+const FZ_CHUONG_SAT_VANG = 2500;
+/** Hệ số combo theo thứ tự đòn (đòn n dùng phần tử n − 1, quá cuối mảng thì giữ phần tử cuối): dạng thường tới ×5, dạng vàng tới ×3 */
+export const FZ_COMBO = [1, 1.5, 2, 3, 4, 5];
+export const FZ_COMBO_VANG = [1, 1.5, 2, 3];
+/** Combo đấm + chưởng (chung một chuỗi, hệ số `FZ_COMBO` / `FZ_COMBO_VANG`): đòn trúng cùng người trong ngần này giây kể từ phát trúng trước thì nối chuỗi */
 export const FZ_COMBO_CUA = 4;
 /** Tốc độ chạy khi đánh (px/s; nhân vật chạy 460, dạng vàng ×2 = 520 nhanh hơn chạy bộ, phải bay để né) */
 export const FZ_TOC_DANH = 260;
@@ -234,9 +239,14 @@ export function capNhatFrieza(f: Frieza, dt: number, thay = false, huongX?: numb
 }
 
 /** Hệ số chỉ số: dạng vàng (sau khi biến hình xong) gấp FZ_VANG_GAP */
-/** Hệ số sát thương: dạng vàng gấp FZ_VANG_SAT */
-export function fzSat(f: Frieza): number {
-  return f.vang > 0 ? FZ_VANG_SAT : 1;
+/** Sát thương gốc đấm theo dạng (thường FZ_SAT, vàng FZ_SAT_VANG) */
+export function fzSatDam(f: Frieza): number {
+  return f.vang > 0 ? FZ_SAT_VANG : FZ_SAT;
+}
+
+/** Sát thương gốc chưởng theo dạng (thường FZ_CHUONG_SAT, vàng FZ_CHUONG_SAT_VANG) */
+export function fzSatChuong(f: Frieza): number {
+  return f.vang > 0 ? FZ_CHUONG_SAT_VANG : FZ_CHUONG_SAT;
 }
 
 /** Hệ số tốc độ (đi / chạy, đánh, hồi chưởng): dạng vàng gấp FZ_VANG_TOC */

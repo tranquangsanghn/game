@@ -11,7 +11,7 @@ import { taoMeCung, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC,
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_DO_COMBO, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_T_MAX, CELL_HOI_DAU_GAP, CELL_DO_TANG, CELL_DO_TANG_CHO, cellHpMax, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
-import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzMauGap, fzSat, fzToc, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_SAT, FZ_CHUONG_SAT, FZ_COMBO_CUA, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_HOI_DUOI, FZ_HOI_TREN, FZ_HOI_LAN, FZ_AN_DAU, FZ_AN_TAO, FZ_AN_GAP, FZ_AN_BK, FZ_CAY_TAM, FZ_GIAP, FZ_MISS, FZ_MISS_VANG, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
+import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzMauGap, fzSatDam, fzSatChuong, fzToc, FZ_COMBO, FZ_COMBO_VANG, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_COMBO_CUA, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_HOI_DUOI, FZ_HOI_TREN, FZ_HOI_LAN, FZ_AN_DAU, FZ_AN_TAO, FZ_AN_GAP, FZ_AN_BK, FZ_CAY_TAM, FZ_GIAP, FZ_MISS, FZ_MISS_VANG, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_TI_LE_DAU, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -4474,7 +4474,7 @@ export class Game {
   /** Frieza đánh nhau với mục tiêu `muc` (null = hết mục tiêu, chỉ làm nốt chưởng đang vận) */
   private fzChien(muc: NguoiChoi | null, thay: boolean, dt: number): void {
     const f = this.frieza;
-    const gs = fzSat(f), gt = fzToc(f);
+    const satDam = fzSatDam(f), gt = fzToc(f);
     f.nghi = 0.1;
     if (f.nap) {
       f.nap.t += dt;
@@ -4485,7 +4485,7 @@ export class Game {
       const x0 = f.x + (f.lat ? -1 : 1) * (vang ? 90 : 60), y0 = f.y - (vang ? 200 : 110);
       const dx = f.nap.x - x0, dy = f.nap.y - y0, d = hyp(dx, dy) || 1;
       const L = Math.min(FZ_CHUONG_TAM * (vang ? FZ_VANG_TAM_GAP : 1), d + 250);
-      this.chuongTiec.push({ id: this.id++, k: vang ? 5 : 4, loai: vang ? 1 : 2, x0, y0, x1: x0 + (dx / d) * L, y1: y0 + (dy / d) * L, t: 0, sat: FZ_CHUONG_SAT * gs, fz: true });
+      this.chuongTiec.push({ id: this.id++, k: vang ? 5 : 4, loai: vang ? 1 : 2, x0, y0, x1: x0 + (dx / d) * L, y1: y0 + (dy / d) * L, t: 0, sat: fzSatChuong(f), fz: true });
       this.vetGa({ id: this.id++, x: x0, y: y0, t: 0, loai: 'chay', co: 0.6 });
       f.nap = undefined;
       f.choChuong = FZ_CHUONG_HOI / gt;
@@ -4509,7 +4509,7 @@ export class Game {
         f.choDanh = FZ_HOI / gt;
         f.danh = FZ_DANH_T;
         this.vetGa({ id: this.id++, x: cb.x, y: cb.y - 80, t: 0, loai: 'no' });
-        this.conBuNhan(cb, FZ_SAT * gs);
+        this.conBuNhan(cb, satDam);
         return;
       }
     }
@@ -4518,7 +4518,7 @@ export class Game {
         f.choDanh = FZ_HOI / gt;
         f.danh = FZ_DANH_T;
         this.vetGa({ id: this.id++, x: muc.x, y: muc.y - 80, t: 0, loai: 'no' });
-        this.fzDanhTrung(muc, FZ_SAT * gs, 'ĐẤM');
+        this.fzDanhTrung(muc, satDam, 'ĐẤM');
       }
       return;
     }
@@ -4666,12 +4666,14 @@ export class Game {
 
   /**
    * Đòn của Frieza (đấm hoặc chưởng) trúng nhân vật, combo tăng dần như Cell bạo nộ: đòn trúng cùng người trong FZ_COMBO_CUA giây kể từ đòn trúng trước
-   * thì nối chuỗi (đòn 2 ×1,5 · đòn 3 ×2 · từ đòn 4 ×3, `CELL_DO_COMBO`); đấm và chưởng chung một chuỗi; đòn bị né không tính, không làm đứt chuỗi.
+   * thì nối chuỗi (dạng thường `FZ_COMBO`: ×1 · ×1,5 · ×2 · ×3 · ×4 · từ đòn 6 ×5; Golden Frieza `FZ_COMBO_VANG`: ×1 · ×1,5 · ×2 · từ đòn 4 ×3);
+   * đấm và chưởng chung một chuỗi; đòn bị né không tính, không làm đứt chuỗi.
    */
   private fzDanhTrung(n: NguoiChoi, sat: number, kieu: string): void {
     const p = this.nguoi.indexOf(n);
     const thu = this.t - (this.fzChuongLuc[p] ?? -99) <= FZ_COMBO_CUA ? (this.fzComboDem[p] ?? 1) + 1 : 1;
-    const he = CELL_DO_COMBO[Math.min(thu, CELL_DO_COMBO.length) - 1];
+    const bang = this.frieza.vang > 0 ? FZ_COMBO_VANG : FZ_COMBO;
+    const he = bang[Math.min(thu, bang.length) - 1]!;
     if (he > 1) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: `💥 COMBO ${kieu} FRIEZA x${String(he).replace('.', ',')}!`, mau: '#c77dff', t: 0 });
     if (this.nhanSatThuong(n, sat * he)) {
       this.fzChuongLuc[p] = this.t;
