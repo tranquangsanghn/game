@@ -74,6 +74,10 @@ export const MC_NGOC_SAO = 4;
 export const MC_TO_NV = 2.5;
 export const MC_ZOOM_HE = 0.75;
 export const MC_CAM_LE = 160;
+/** Camera nhìn toàn mê cung: chừa MC_CAM_TREN điểm ảnh phía trên map (nửa vòng tròn avatar R_TUONG + chỗ cho đồ / chữ trên đầu người ở hàng trên cùng) */
+export const MC_CAM_TREN = 90;
+/** Đứng yên bấm hướng khác hướng đang nhìn: nhả trước MC_QUAY_T giây thì chỉ quay mặt (để ném bom), giữ lâu hơn mới bước sang ô */
+export const MC_QUAY_T = 0.15;
 
 /** Giữ nút ném: mỗi BOM_NAP_BUOC giây thêm một mức (1..BOM_MUC), mức = số ô bom bay xa */
 export const BOM_MUC = 4;
@@ -192,7 +196,7 @@ export interface BomMc {
   /** bom của bà phù thuỷ (p = -1) / bom bẫy ô bí ẩn (p = -3): thời gian bay, tầm tia cố định (không ghi thì dài dần như bom người chơi) */
   bay?: number; tam?: number;
 }
-export interface LuaMc { i: number; j: number; loai: LoaiBom; con: number; /** người ném (tính điểm hạ quái; -1 = bà phù thuỷ, -2 = lửa quỷ canh cổng phun: không hại quái) */ p: number; /** nhân vật đã dính (mỗi ngọn lửa trúng một người một lần) */ da: number[]; /** đã trúng bà phù thuỷ */ baDa?: boolean; /** quái đã dính (id) */ quaiDa?: number[]; }
+export interface LuaMc { i: number; j: number; loai: LoaiBom; con: number; /** id quả bom sinh ra ngọn này: một quả bom chỉ trúng bà phù thuỷ / mỗi quái một lần dù nhiều ngọn cùng chạm */ bom?: number; /** người ném (tính điểm hạ quái; -1 = bà phù thuỷ, -2 = lửa quỷ canh cổng phun: không hại quái) */ p: number; /** nhân vật đã dính (mỗi ngọn lửa trúng một người một lần) */ da: number[]; /** đã trúng bà phù thuỷ */ baDa?: boolean; /** quái đã dính (id) */ quaiDa?: number[]; }
 export interface QuaiMc {
   id: number; loai: LoaiQuai; x: number; y: number;
   /** ô đang đi tới */ ti: number; tj: number; dang: boolean; huong: number;
@@ -227,6 +231,9 @@ export interface NvMc {
   /** Đi theo ô: ô đang đi tới (luôn dừng ở tâm ô), hướng đang giữ (tay cầm, chỉ 4 hướng) */
   toi: { i: number; j: number } | null;
   di: { x: number; y: number } | null;
+  /** lúc bắt đầu giữ hướng `di` (this.t) và có phải quay mặt trước không (đứng yên, hướng giữ khác hướng đang nhìn):
+   *  bấm nhẹ dưới MC_QUAY_T giây chỉ quay mặt tại chỗ, giữ lâu hơn mới bước */
+  diT0?: number; quay?: boolean;
 }
 export interface TrangThaiMc {
   bom: BomMc[]; lua: LuaMc[]; quai: QuaiMc[]; tia: TiaMc[]; vp: VpMc[]; doCuu: DoMc[]; oHoi: { i: number; j: number; t: number }[];

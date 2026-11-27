@@ -7,7 +7,7 @@ import { NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
 import { CON_BU_SO, CON_BU_LAN, CON_BU_GAP, CON_BU_MAU_SAN, CON_BU_CHET_T, CON_BU_HOI_DE, CON_BU_TO, CON_BU_TOC, CON_BU_BAM, CON_BU_XA, CON_BU_DICH, CON_BU_TAM, CON_BU_TAM_DAM, CON_BU_TAM_CHUONG, CON_BU_HOI_DON, CON_BU_HOI_CHUONG, CON_BU_TI_LE_MA, type ConBu } from './con-bu';
 import { MC, MC_COT, MC_HANG, MC_HAM, MC_O, datLaiMeCung, oCua, oTrongVao, oCung, oTuongMc, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
-import { taoMeCung, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, O_BI_AN_HOI, MC_DO_THEM, MC_BOM_THEM, MANG_TOI_DA, BAY_BAY, BAY_NO, BAY_TAM, QUAI_CACH, QUAI_TOI_DA, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DL, LOAI_QUAI, QUAI_TIA_SAT, QUAI_TIA_T, QUAI_CHET_T, QUAI_DAU_T, SP_QUAI, type LoaiQuai, type TiaMc, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_DIEM, BA_CHET_T, BA_HP, BA_HOI_SINH, BA_HOI_T, BA_HOI_TANG, BA_TOC, BA_GAN, BA_BAY_CAO, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
+import { taoMeCung, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, MC_CAM_TREN, MC_QUAY_T, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, O_BI_AN_HOI, MC_DO_THEM, MC_BOM_THEM, MANG_TOI_DA, BAY_BAY, BAY_NO, BAY_TAM, QUAI_CACH, QUAI_TOI_DA, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DL, LOAI_QUAI, QUAI_TIA_SAT, QUAI_TIA_T, QUAI_CHET_T, QUAI_DAU_T, SP_QUAI, type LoaiQuai, type TiaMc, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_DIEM, BA_CHET_T, BA_HP, BA_HOI_SINH, BA_HOI_T, BA_HOI_TANG, BA_TOC, BA_GAN, BA_BAY_CAO, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, XUAT_PHAT, type LoaiBanDo } from './ban-do';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_DO_COMBO, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_T_MAX, CELL_HOI_DAU_GAP, CELL_DO_TANG, CELL_DO_TANG_CHO, cellHpMax, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
@@ -2868,12 +2868,13 @@ export class Game {
     const b = b0.vang ? a0 : b0;
     // Mê cung bom: mọi người đã vào lưới thì camera đứng giữa mê cung, lùi cao lên thấy toàn bộ (không sương mù)
     const toanMc = this.camMcToan();
-    const zMc = Math.min(this.W / (MC.w + 2 * MC_CAM_LE), H / (MC.h + 2 * MC_CAM_LE + 120));
+    const zMc = Math.min(this.W / (MC.w + 2 * MC_CAM_LE), (H - MC_CAM_TREN) / (MC.h + 2 * MC_CAM_LE + 120));
     const tx = toanMc ? (MC.x0 + MC.x1) / 2 : (a.x + b.x) / 2;
     // Máy bay bay cao: camera lùi ra (thấy xa hơn, vật dưới đất nhỏ đi) và nâng lên theo độ cao
     const zb = Math.max(this.mayBay.pha === 'bay' || this.mayBay.pha === 'trung' || this.mayBay.pha === 'cat' ? this.mayBay.z : 0, this.phiThuyen.ngoi.length ? this.phiThuyen.z : 0);
-    // Tâm khung nhìn nằm trên TAM_VIEW_Y (không phải giữa màn hình): dời camera để tâm mê cung nằm đúng giữa màn hình (bù 60 cho tường trên)
-    const ty = toanMc ? (MC.y0 + MC.y1) / 2 - 60 + (TAM_VIEW_Y - H / 2) / zMc : (a.y + b.y) / 2 - MB_NANG * zb * 0.5;
+    // Tâm khung nhìn nằm trên TAM_VIEW_Y (không phải giữa màn hình): dời camera để tâm mê cung nằm giữa phần map dưới MC_CAM_TREN
+    // (không bị nửa vòng tròn avatar phía trên che hàng ô trên cùng; bù 60 cho tường trên)
+    const ty = toanMc ? (MC.y0 + MC.y1) / 2 - 60 + (TAM_VIEW_Y - (H + MC_CAM_TREN) / 2) / zMc : (a.y + b.y) / 2 - MB_NANG * zb * 0.5;
     const dx = Math.abs(a.x - b.x);
     const dy = Math.abs(a.y - b.y);
     // Hai người xa nhau thì thu nhỏ (cả vườn gà lẫn đảo), máy bay lùi ra; ô nền đảo dựng theo zoom gốc nên đổi zoom không phải dựng lại
@@ -7954,6 +7955,11 @@ export class Game {
       }
       // Bấm chéo: giữ trục đang đi (nếu còn bấm), không thì ưu tiên ngang
       if (hx && hy) { if (s.di?.y && s.di.y === hy) hx = 0; else hy = 0; }
+      // Vừa bấm hướng mới lúc đứng yên ở tâm ô mà khác hướng đang nhìn: bấm nhẹ chỉ quay mặt, giữ quá MC_QUAY_T mới bước
+      if ((hx || hy) && (!s.di || s.di.x !== hx || s.di.y !== hy)) {
+        s.diT0 = this.t;
+        s.quay = !s.toi && (n.nhin.x !== hx || n.nhin.y !== hy);
+      }
       s.di = hx || hy ? { x: hx, y: hy } : null;
       if (s.di) n.nhin = { x: hx, y: hy };
       n.dich = null;
@@ -8433,6 +8439,10 @@ export class Game {
           n.x = t.x;
           n.y = t.y;
           if (!s.di) break;
+          if (s.quay) {
+            if (this.t - (s.diT0 ?? 0) < MC_QUAY_T) { this.mcQuay(n, s.di.x, s.di.y); break; }
+            s.quay = false;
+          }
           const ke = { i: o.i + s.di.x, j: o.j + s.di.y };
           if (this.mcVao(ke.i, ke.j) && !this.mcChiem(ke.i, ke.j, p)) s.toi = ke;
           else {
@@ -8549,7 +8559,7 @@ export class Game {
     this.mc.bom.splice(k, 1);
     const noi: BomMc[] = [];
     const dat = (i: number, j: number) => {
-      this.mc.lua.push({ i, j, loai: b.loai, con: LUA_T, p: b.p, da: [] });
+      this.mc.lua.push({ i, j, loai: b.loai, con: LUA_T, p: b.p, da: [], bom: b.id });
       // Bom khác đã chạm đất trong vùng nổ thì nổ theo (bom còn bay trên không thì không)
       const o = this.mc.bom.find((q) => q.i === i && q.j === j && q.t >= bayBom(q));
       if (o && !noi.includes(o)) noi.push(o);
@@ -8793,7 +8803,7 @@ export class Game {
       const dat = b.t - bayBom(b);
       if (dat < 0) continue;
       // Bom của bà phù thuỷ: cùng luật như bom người chơi, bà kích nổ lửa / nước khi có người nằm trong tầm tia; bom bẫy tự nổ sau BAY_NO giây
-      const no = b.kich || (b.loai === 'no' ? dat >= BOM_NO_T : b.p === -3 ? dat >= BAY_NO : dat >= BOM_TAM_MAX || (b.p === -1 && dat >= BA_BOM_CHO && this.mcBomTrung(b)));
+      const no = b.kich || (b.loai === 'no' ? dat >= BOM_NO_T : b.p === -3 ? dat >= BAY_NO : dat >= BOM_TAM_MAX || (b.p === -1 && dat >= BA_BOM_CHO && this.baKichDuoc(this.mcBomTrung(b))));
       if (no) this.mcNo(b);
     }
     // Lửa / nước còn trên ô: ai (người, quái) đứng trong ô đó thì dính
@@ -8816,7 +8826,8 @@ export class Game {
         if (q.ra > 0 || q.chet !== undefined || f.quaiDa?.includes(q.id)) continue;
         const o = oCua(q.x, q.y);
         if (o.i !== f.i || o.j !== f.j) continue;
-        (f.quaiDa ??= []).push(q.id);
+        // Quái đang đi giữa 2 ô có thể chạm nhiều ngọn của cùng quả bom: chỉ tính một lần mỗi quả
+        for (const g of mc.lua) if (g === f || f.bom !== undefined && g.bom === f.bom) (g.quaiDa ??= []).push(q.id);
         q.mau -= f.loai === 'no' ? 2 : 1;
         if (q.mau <= 0) this.mcQuaiChet(q, f.p);
         else {
@@ -8826,7 +8837,12 @@ export class Game {
         }
       }
     }
-    for (const f of mc.lua) if (f.p >= 0 && !f.baDa && this.oBa(f.i, f.j)) { f.baDa = true; this.mcTrungBa(f); }
+    // Bà đang bay giữa 2 ô có thể chạm nhiều ngọn của cùng quả bom: mỗi quả bom chỉ trừ máu bà một lần
+    for (const f of mc.lua) {
+      if (f.p < 0 || f.baDa || !this.oBa(f.i, f.j)) continue;
+      for (const g of mc.lua) if (g === f || f.bom !== undefined && g.bom === f.bom) g.baDa = true;
+      this.mcTrungBa(f);
+    }
     mc.lua = mc.lua.filter((f) => f.con > 0);
     if (!hoat) return;
     // Hang sinh quái theo đợt
@@ -8925,9 +8941,9 @@ export class Game {
   }
 
   /** Bom lửa / nước b của bà (đã chạm đất): có người chơi nằm trong tầm tia hiện tại (gạch / hang / thùng chặn tia) thì bà kích nổ */
-  private mcBomTrung(b: BomMc): boolean {
+  private mcBomTrung(b: BomMc): number {
     const tam = this.tamBom(b);
-    return this.nguoi.some((n, p) => {
+    return this.nguoi.filter((n, p) => {
       if (n.vang || n.het || !this.oMeCung(p)) return false;
       const o = oCua(n.x, n.y);
       if (o.i !== b.i && o.j !== b.j) return false;
@@ -8936,7 +8952,21 @@ export class Game {
       const hi = Math.sign(o.i - b.i), hj = Math.sign(o.j - b.j);
       for (let k = 1; k < d; k++) if (oCung(oMc(b.i + hi * k, b.j + hj * k))) return false;
       return true;
-    });
+    }).length;
+  }
+
+  /** Số người chơi còn đứng (chưa gục) trong lưới mê cung */
+  private soSongMc(): number {
+    let k = 0;
+    this.nguoi.forEach((n, p) => { if (!n.vang && !n.het && this.oMeCung(p)) k++; });
+    return k;
+  }
+
+  /** Bà kích nổ bom lửa / nước khi tia trúng `trung` người: phải trúng ít nhất một người nhưng không cùng lúc hạ cả đội
+   *  (chơi 2 người mà cả hai cùng nằm trong tầm thì chờ, trừ khi bom tự nổ lúc đủ BOM_TAM_MAX giây) */
+  private baKichDuoc(trung: number): boolean {
+    const song = this.soSongMc();
+    return trung > 0 && (song < 2 || trung < song);
   }
 
   /** Ô (i, j) sắp dính bom của người chơi (bom đã chạm đất: lửa / nước dọc hàng / cột tới BOM_TAM_MAX ô, bom nổ vùng 5 × 5): bà né */
@@ -9076,6 +9106,12 @@ export class Game {
     if (truoc < BA_PHA[1]! && ba.pha >= BA_PHA[1]! && muc) {
       const o = oCua(muc.x, muc.y);
       if (!oCung(oMc(o.i, o.j)) && !this.mc.bom.some((b) => b.i === o.i && b.j === o.j) && !this.oBa(o.i, o.j)) {
+        // Bom nổ (vùng 5 × 5) mà trùm cả hai người đang đứng (chơi 2 người) thì đổi sang lửa / nước: một quả bom không hạ cả đội
+        if (ba.loai === 'no' && this.soSongMc() >= 2 && this.nguoi.every((n, p) => {
+          if (n.vang || n.het || !this.oMeCung(p)) return true;
+          const c = oCua(n.x, n.y);
+          return Math.max(Math.abs(c.i - o.i), Math.abs(c.j - o.j)) <= BOM_NO_BK;
+        })) ba.loai = Math.random() < 0.5 ? 'lua' : 'nuoc';
         const tay = BA_TAY[3]!;
         this.mc.bom.push({ id: this.id++, p: -1, loai: ba.loai, i: o.i, j: o.j, x0: v.x + tay[0] * BA_TO * (ba.lat ? -1 : 1), y0: v.y - BA_BAY_CAO + tay[1] * BA_TO, t: 0, bay: BA_BOM_BAY });
         this.am.phat('da');
