@@ -252,6 +252,7 @@ export class GiaoDien {
         <button type="button" tabindex="-1" class="nut-phu${chon === 1 ? ' nut-dang-chon' : ''}" data-act="luuGame" ${this.dangLuu ? 'disabled' : ''}>${this.dangLuu ? 'Đang lưu…' : '💾 Lưu game'}</button>
       </div>
       <p class="phu">▲ ▼ chọn · A bấm · Menu / B tiếp tục chơi</p>
+      ${this.game.lyDoDung ? `<p class="phu" style="opacity:.6">Tạm dừng vì: ${esc(this.game.lyDoDung)}</p>` : ''}
       ${this.htmlThongBao()}
     </div></div>`;
   }
