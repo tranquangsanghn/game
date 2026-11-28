@@ -240,6 +240,12 @@ export function capNhatFrieza(f: Frieza, dt: number, thay = false, huongX?: numb
   return su;
 }
 
+/** Chữ báo chỉ số Golden Frieza (tính từ hằng số, đổi cân bằng thì chữ tự đúng) */
+export function fzVangMoTa(): string {
+  const so = (x: number) => String(Math.round(x * 10) / 10).replace('.', ',');
+  return `MÁU ${Math.round(FZ_HP * FZ_VANG_TL)} · THỦ x${so(FZ_VANG_GAP)} · ĐẤM x${so(FZ_SAT_VANG / FZ_SAT)} · CHƯỞNG x${so(FZ_CHUONG_SAT_VANG / FZ_CHUONG_SAT)} · TỐC x${so(FZ_VANG_TOC)}`;
+}
+
 /** Hệ số chỉ số: dạng vàng (sau khi biến hình xong) gấp FZ_VANG_GAP */
 /** Sát thương gốc đấm theo dạng (thường FZ_SAT, vàng FZ_SAT_VANG) */
 export function fzSatDam(f: Frieza): number {

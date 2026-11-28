@@ -36,8 +36,9 @@ export const CELL_LUC = [0.75, 0.75, 0.75, 0.125, 2.5];
 // Cấp 2 (đảo 3, 8 con): máu và sát thương bằng 2/3 Zinbu (150 máu → 100; Đấm 50 → 33; chưởng 190 → 127)
 // Cấp 1 (đảo 2, 5 con): máu và sát thương bằng Zinbu (150 máu; Đấm 50; chưởng 190)
 // Cấp 0 (đảo 1, 3 con): máu và sát thương bằng 1,5 lần Zinbu (225 máu; Đấm 75; chưởng 285)
-// Mỗi Cell nhỏ (đảo 1–4, cấp 0–3) được cộng thêm 1000 máu so với mốc trên (người chơi giữa ván thường đã ăn tới hàng nghìn máu)
-export const CELL_HP = [1225, 1150, 1100, 1075, 3000];
+// Mỗi Cell nhỏ (đảo 1–4, cấp 0–3) được cộng thêm 2000 máu so với mốc trên (hai lần +1000; người chơi giữa ván thường đã ăn tới hàng nghìn máu)
+// Cell bạo nộ (cấp 4): 3000 + 2000 = 5000 máu lúc vào ván
+export const CELL_HP = [2225, 2150, 2100, 2075, 5000];
 /** Sát thương gốc một đòn đấm / đá (nhân vật nhận sau giảm 50%, vẫn né 25%) */
 // Cấp 4 (đảo 0, Cell bạo nộ): sát thương gấp 5 lần Zinbu (Đấm 50 → 250; chưởng 190 → 1400), máu 3000
 export const CELL_SAT = [75, 50, 33, 25, 250];

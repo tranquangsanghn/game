@@ -12,7 +12,7 @@ import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung,
 import { DuaRong, RONG, type NhapDua } from './dua-rong';
 import { SO_CAP, CELL_DO_NHANH, cellK, CELL_TU, CELL_TU_TAM, leCell, CELL_BK, CELL_KHUNG, CELL_CHAM, CELL_CHET_T, CELL_DANH_T, CELL_DIEM, CELL_HOI, CELL_HP, CELL_NHAY_T, CELL_SAT, CELL_TEN, CELL_TO, CELL_TOC, SP_CELL, taoCell, CELL_CHUONG_SAT, CELL_CHUONG_HOI, CELL_CHUONG_TAM, CELL_CHUONG_RONG, CELL_DICH_XA, CELL_DICH_HOI, CELL_DICH_DAN, CELL_GIAP, CELL_PHA_GIAP, CELL_SOCOLA_T, CELL_SOCOLA_MAY, CELL_NE, CELL_TACH_SO, CELL_COMBO_CHUONG, CELL_COMBO_CUA, CELL_DO_COMBO, CELL_MB_TAM, CELL_MB_CHUONG_TAM, CELL_MB_NHIN, MUC_MB, CELL_VONG_LE, CELL_THUA_NHIP, CELL_THUA_LE, CELL_THUA_XA, CELL_NGOI_DAO, CELL_NGOI_NGOC_TO, choNgoiCell, CELL_DAU_SAT, CELL_DAU_SUC, CELL_AN_TAM, CELL_AN_TRON, CELL_AN_GAP, CELL_AN_DICH_HOI, CELL_AN_TOC, CELL_HOI_DUOI, CELL_HOI_TREN, CELL_HOI_T_MAX, CELL_HOI_DAU_GAP, CELL_DO_TANG, CELL_DO_TANG_CHO, cellHpMax, CELL_HOI_DICH, type Cell } from './cell';
 import { taoTiec, NGOC_TIEC_SAO, CHUONG_LOAI, TIEC_BIEN, TIEC_AURA, TIEC_PHONG, TIEC_KHUNG, SP_CELL_TIEC, TIEC_TOC, viTriVong, TIEC_BAN_CACH, TIEC_CHUONG_T, SP_CONG, CONG_TO, viTriCong, type ChuongTiec, type Tiec } from './tiec';
-import { taoFrieza, capNhatFrieza, fzVeDuong, fzGap, fzMauGap, fzSatDam, fzSatChuong, fzToc, FZ_COMBO, FZ_COMBO_VANG, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_COMBO_CUA, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_HOI_DUOI, FZ_HOI_TREN, FZ_HOI_LAN, FZ_AN_DAU, FZ_AN_TAO, FZ_AN_GAP, FZ_AN_BK, FZ_CAY_TAM, FZ_GIAP, FZ_MISS, FZ_MISS_VANG, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
+import { taoFrieza, capNhatFrieza, fzVangMoTa, fzVeDuong, fzGap, fzMauGap, fzSatDam, fzSatChuong, fzToc, FZ_COMBO, FZ_COMBO_VANG, fzHpMax, SP_FRIEZA, SP_FRIEZA_VANG, FZ_VANG_TO, FZ_HP, FZ_COMBO_CUA, FZ_TOC_DANH, FZ_HOI, FZ_CHUONG_HOI, FZ_HOI_MAU, FZ_HOI_DUOI, FZ_HOI_TREN, FZ_HOI_LAN, FZ_AN_DAU, FZ_AN_TAO, FZ_AN_GAP, FZ_AN_BK, FZ_CAY_TAM, FZ_GIAP, FZ_MISS, FZ_MISS_VANG, FZ_CHAM, FZ_CHUONG_XA, FZ_CHUONG_TAM, FZ_CHUONG_NAP, FZ_VANG_TAM_GAP, FZ_BK, FZ_TAM_CAO, FZ_TAM_CAO_VANG, FZ_DIEM, FZ_NGOC_SAO, FZ_CHET_T, FZ_DANH_T, type Frieza } from './frieza';
 import { taoGinyu, SP_GINYU, GY_KHUNG, GY_BK, GY_TAM_CAO, GY_TOC, GY_NUI_LE, GY_LAO_TOC, GY_LAO_CHAM, GY_CHET_T, GY_SOCOLA_T, GY_DIEM, GY_TEN, GY_KHIEU_T, GY_LAO_QUANG, GY_NGHI_T, GY_SAO_T, GY_SAO_TI_LE, GY_SAO_TI_LE_DAU, GY_SAO_SAT, GY_SAO_DANH, GY_TI_LE_DAM, GY_TI_LE_DA, GY_SAO_TAM, GY_NGOC_SAO, GY_HOI_SINH, GY_HOI_NE, GY_HOI_MAU, GY_HP_GOC, type Ginyu } from './ginyu';
 import { GA_DEN, GA_DO, GA_TRANG, GA_TUONG, KHUNG_BAY, KHUNG_CHAY, KHUNG_CHET, KHUNG_DUNG } from './ga-du-lieu';
 
@@ -2267,8 +2267,16 @@ export class Game {
       n.dangDi = d > 0;
       if (n.dangDi) {
         const buoc = Math.min(TOC_DO_DI * (n.may.dang ? MAY_TOC_DO : 1) * dt, n.dich ? d : Infinity);
-        n.x = kepX(n.x + (dx / d) * buoc);
-        n.y = kepY(n.y + (dy / d) * buoc);
+        const nx = kepX(n.x + (dx / d) * buoc);
+        const ny = kepY(n.y + (dy / d) * buoc);
+        // Từ đường hầm bước vào ô cửa mê cung đang có người / quái: đứng chờ ngoài hầm (không lọt vào rồi bị đẩy ra mỗi khung)
+        if (this.chanCuaMc(p, n.x, n.y, nx, ny)) {
+          n.dich = null;
+          n.dangDi = false;
+        } else {
+          n.x = nx;
+          n.y = ny;
+        }
         // Đi chủ yếu theo chiều dọc thì quay lên / xuống, còn lại quay trái / phải
         if (Math.abs(dy) > Math.abs(dx) * 1.2) n.nv.huong = dy < 0 ? 'len' : 'xuong';
         else {
@@ -4964,7 +4972,7 @@ export class Game {
       this.vetGa({ id: this.id++, x: f.x, y: f.y, t: 0, loai: 'bui' });
       if (this.nvThay(f.x, tamY, 300, 60)) this.rungMan(0.45, 14);
     } else if (su === 'xong') {
-      this.chuGa({ id: this.id++, x: f.x, y: f.y - 420, text: '👑 GOLDEN FRIEZA! MỌI CHỈ SỐ x2', mau: '#ffd23f', t: 0 });
+      this.chuGa({ id: this.id++, x: f.x, y: f.y - 420, text: `👑 GOLDEN FRIEZA! ${fzVangMoTa()}`, mau: '#ffd23f', t: 0 });
     } else if (su === 'het') {
       this.vetGa({ id: this.id++, x: f.x, y: tamY, t: 0, loai: 'chay', co: 1.2 });
       this.chuGa({ id: this.id++, x: f.x, y: f.y - 360, text: 'Frieza trở lại dạng thường', mau: '#d9b3ff', t: 0 });
@@ -5682,6 +5690,9 @@ export class Game {
   /** Cell bị đánh: cả đội của đảo xuất trận; nếu đang chỉ có 1 người để đánh mà con bị đánh không phải con tách đàn thì nó thành con tách đàn (con cũ về tiệc) */
   private cellBiDanh(c: Cell, p: number): void {
     const dao = this.daoCell(c);
+    // Cell đang truy sát khắp nơi (Cell đỏ truy sát, cả đàn đi cứu Cell đỏ) không theo đội của đảo: doiHinhCell() tắt xuất trận ngay
+    // khung sau nên mỗi đòn trúng lại in "⚔ CELL XUẤT TRẬN!"
+    if (this.cellTruy(c)) return;
     const doi = (this.cellDoi[dao] ??= { chien: false, tach: [], muc: -1, dichDan: 0 });
     if (!doi.chien) this.cellXuatTran(dao);
     doi.chien = true;
@@ -8616,6 +8627,13 @@ export class Game {
   /** Ô (i, j) bước vào được: trong lưới thì không phải ô chắn / ô bà phù thuỷ / bom đã chạm đất; ngoài lưới chỉ đường hầm (ra khỏi mê cung) */
   /** Ô (i, j) đang có người (trừ boP) hoặc quái (trừ boQ) đứng / đang đi tới. Mỗi ô mê cung chỉ chứa MỘT thứ:
    *  một người, hoặc một quái, hoặc thùng / ô bí ẩn / gạch; đang đi giữa 2 ô thì giữ cả ô đi tới */
+  /** Đi từ ngoài lưới mê cung (đường hầm) vào ô cửa (cột cuối) mà ô đó đang có người / quái khác */
+  private chanCuaMc(p: number, x0: number, y0: number, x1: number, y1: number): boolean {
+    if (trongMeCung(x0, y0) || !trongMeCung(x1, y1)) return false;
+    const o = oCua(x1, y1);
+    return o.i === MC_COT - 1 && this.mcChiem(o.i, o.j, p);
+  }
+
   private mcChiem(i: number, j: number, boP = -1, boQ: QuaiMc | null = null): boolean {
     for (let k = 0; k < this.nguoi.length; k++) {
       const n = this.nguoi[k]!;
@@ -8668,7 +8686,14 @@ export class Game {
         const t = tamO(o.i, o.j);
         if (Math.abs(n.x - t.x) + Math.abs(n.y - t.y) > 0.5) {
           // Vừa bước từ đường hầm vào ô cửa mà ô đó đã có người / quái: lùi lại ra đường hầm, chờ ô trống
-          if (lan === 0 && this.mcChiem(o.i, o.j, p) && o.i === MC_COT - 1) { n.x = MC.x1 + 2; n.dangDi = false; return false; }
+          // Trả true (dừng khung này) để đoạn đi bộ thường không kéo người đó vào lại, ra / vào lặp mỗi khung
+          if (lan === 0 && this.mcChiem(o.i, o.j, p) && o.i === MC_COT - 1) {
+            n.x = MC.x1 + 2;
+            n.dich = null;
+            n.dangDi = false;
+            n.nv.capNhat(dt, false);
+            return true;
+          }
           s.toi = o;
         } else {
           n.x = t.x;
