@@ -7649,6 +7649,8 @@ export class Game {
     if (!a || !b || this.hopThe || a.ki + b.ki !== 1 || a.ki === b.ki) return false;
     const tot = (n: NguoiChoi, p: number) => !n.vang && !n.het && !n.bay && !n.nv.laMay && !n.may.dang && !n.nv.khoa && !this.trongMb(p) && !this.trongCau(p);
     // Chỉ hợp thể được trên thần điện (tháp của Frieza): cả hai phải đứng trên thần điện
+    // Đã bước vào đường hầm / mê cung bom thì không hợp thể được
+    if (this.quanhMc(a) || this.quanhMc(b)) return false;
     return tot(a, 0) && tot(b, 1) && this.hopTheCho(a, b) && hyp(a.x - b.x, a.y - b.y) <= HOP_THE_GAN;
   }
 
@@ -7779,6 +7781,12 @@ export class Game {
     N.dich = null;
     N.bay = null;
     N.dangDi = false;
+    // Bước vào đường hầm / mê cung bom thì tách hợp thể ngay (cả khi mê cung đang dừng thế giới)
+    if (this.quanhMc(C)) {
+      this.tachHopThe(false);
+      this.chu.push({ id: this.id++, x: C.x, y: C.y - 440, text: '🧨 VÀO ĐƯỜNG HẦM: TÁCH HỢP THỂ!', mau: '#9be7ff', t: 0 });
+      return;
+    }
     if (dung) return;
     if (h.con <= 0 || C.het) { this.tachHopThe(C.het); return; }
     // Hợp thể chỉ có trên thần điện: ra khỏi thần điện (đi qua cổng, đáp xuống ngoài) thì tự tách luôn; đang bay thì chờ hạ xuống
