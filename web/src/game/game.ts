@@ -115,6 +115,9 @@ export interface NguoiChoi {
   suc: number;
   /** Sát thương cộng thẳng vào mỗi đòn (sau khi nhân `suc`), +DAU_SAT mỗi hạt đậu thần (mặc định 0) */
   satDau: number;
+  /** Dung lượng máu tối đa (mốc đầy bình): tăng theo máu cao nhất đã có; chết rồi hồi sinh thì còn một nửa (CUU_MAU_TI_LE).
+   *  Ván lưu cũ thiếu thì HP_NV */
+  hpMax: number;
   /** Nhân vật ở ô này: 0 Mabu · 1 Zinbu · 2 Vegeta (NHAN_VAT); ván lưu cũ thiếu thì theo ô (0 Mabu, 1 Zinbu) */
   ki: number;
 }
@@ -693,9 +696,12 @@ const CUU_BAM = 170;
 const CUU_TOC_BAM = 900;
 const CUU_CHO = 1.5;
 const CUU_TACH = 1;
+// Hồi sinh với CUU_MAU_TI_LE = 1/2 dung lượng máu tối đa trước khi chết (hpMax), dung lượng cũng còn chừng đó;
+// tối thiểu CUU_MAU (chết nhiều lần không tụt xuống quá thấp)
 const CUU_MAU = 100;
+const CUU_MAU_TI_LE = 0.5;
 // Quả cầu trốn (2 quả giữa map): nhân vật chạm vào là chui vào trốn CAU_TRON giây (gà không thấy, không bị đánh),
-// hồi CAU_HOI_MAU máu/s tới đầy bình (HP_NV) và đầy mana (MANA_TOI_DA); hết giờ thì vỡ ra (hoạt ảnh CAU_VO giây) rồi CAU_MOC giây sau mới có quả mới
+// hồi CAU_HOI_MAU máu/s tới đầy bình (hpMax) và đầy mana (MANA_TOI_DA); hết giờ thì vỡ ra (hoạt ảnh CAU_VO giây) rồi CAU_MOC giây sau mới có quả mới
 const CAU_TRON = 10;
 const CAU_HOI_MAU = 20;
 const CAU_VO = 1.6;
@@ -2219,6 +2225,8 @@ export class Game {
       n.hoiSoc = Math.max(0, n.hoiSoc - dt);
       // Không bị thương một lúc thì tự hồi máu chậm (chỉ tới HP_HOI_TOI_DA)
       if (!n.het && n.hp < HP_HOI_TOI_DA && this.tGame - n.thuongLuc >= HP_HOI_CHO) n.hp = Math.min(HP_HOI_TOI_DA, n.hp + HP_HOI * dt);
+      // Dung lượng máu tối đa theo máu cao nhất đã có (không tính lúc hợp thể Super Bư / 1 mạng trong mê cung bom)
+      if (!n.het && n.hp > n.hpMax && !this.hopThe && !this.motMang(p)) n.hpMax = Math.ceil(n.hp);
       if (n.bay) n.mana = Math.max(0, n.mana - MANA_BAY * dt);
       else if (n.mana < MANA_HOI_TOI_DA) n.mana = Math.min(MANA_HOI_TOI_DA, n.mana + MANA_HOI * dt);
 
@@ -5550,7 +5558,7 @@ export class Game {
     const g = this.ginyu;
     const hp = g.hpGia ? Math.max(0, g.hp) * g.hpGia / Math.max(1, g.hpMax) : Math.max(0, g.hp);
     // Bản sao Super Bư: đầy thanh theo máu Super Bư thật lúc hợp thể (như thanh máu Super Bư)
-    const day = g.sao?.sb ? this.hopThe?.hpMax ?? g.hpMax / GY_SAO_TI_LE : HP_NV;
+    const day = g.sao?.sb ? this.hopThe?.hpMax ?? g.hpMax / GY_SAO_TI_LE : this.nguoi[g.sao?.p ?? 0]?.hpMax ?? HP_NV;
     return Math.min(1, hp / Math.max(day, hp));
   }
 
@@ -6840,7 +6848,8 @@ export class Game {
       }
       // Hồi sinh tại chỗ
       n.het = false;
-      n.hp = CUU_MAU;
+      n.hpMax = Math.max(CUU_MAU, Math.round(n.hpMax * CUU_MAU_TI_LE));
+      n.hp = n.hpMax;
       n.thuongLuc = this.tGame;
       n.x = c.x;
       n.y = c.y;
@@ -6848,7 +6857,7 @@ export class Game {
       n.hoiChieu = 0.5;
       n.nv.hoiSinh();
       this.vet.push({ id: this.id++, x: c.x, y: c.y - 60, t: 0, loai: 'chay', co: 1.2 });
-      this.chu.push({ id: this.id++, x: c.x, y: c.y - 230, text: `${n.ten} HỒI SINH! +${CUU_MAU} ❤`, mau: '#7ee787', t: 0 });
+      this.chu.push({ id: this.id++, x: c.x, y: c.y - 230, text: `${n.ten} HỒI SINH! +${n.hp} ❤`, mau: '#7ee787', t: 0 });
     }
     this.cuu = conLai;
   }
@@ -7409,7 +7418,7 @@ export class Game {
         n.y = q.y + 4;
         n.dich = null;
         n.dangDi = false;
-        if (n.hp < HP_NV) n.hp = Math.min(HP_NV, n.hp + CAU_HOI_MAU * dt);
+        if (n.hp < n.hpMax) n.hp = Math.min(n.hpMax, n.hp + CAU_HOI_MAU * dt);
         if (n.mana < MANA_TOI_DA) n.mana = MANA_TOI_DA;
         n.bayKhoa = 0;
         if (q.pha === 'trong' && q.t >= CAU_TRON) {
@@ -8371,7 +8380,7 @@ export class Game {
 
   mauNv(p: number): number {
     if (this.motMang(p)) return 1;
-    const day = this.hopThe?.chu === p ? this.hopThe.hpMax : HP_NV;
+    const day = this.hopThe?.chu === p ? this.hopThe.hpMax : this.nguoi[p].hpMax;
     return Math.min(1, Math.max(0, this.nguoi[p].hp) / Math.max(day, this.nguoi[p].hp));
   }
 
@@ -9492,7 +9501,7 @@ export class Game {
         hp: vang ? 0 : HP_KHOI_DAU, het: vang, diem: 0, combo: 0, hoiChieu: 0, chumDen: 0, banTrung: 0, banTruot: 0,
         x: MAP / 2 + (mot ? 0 : p === 0 ? -160 : 160), y: MAP / 2 + 120, dich: null, dangDi: false,
         nv: this.taoNhanVat(p, ki), bay: null, mana: MANA_BAN_DAU, bayKhoa: 0, thuongLuc: -999, hoiSoc: 0,
-        nhin: { x: p === 0 ? 1 : -1, y: 0 }, cuaCan: false, may: { dang: false, con: 0, hoi: 0 }, suc: 1, satDau: 0,
+        nhin: { x: p === 0 ? 1 : -1, y: 0 }, cuaCan: false, may: { dang: false, con: 0, hoi: 0 }, suc: 1, satDau: 0, hpMax: HP_NV,
       };
     });
   }
