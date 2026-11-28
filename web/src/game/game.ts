@@ -410,7 +410,7 @@ const COMBO_HE = [1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const COMBO_CUA = 4;
 /** `donDang` cho đòn mà mỗi lần chạm là một đòn mới (mây quét) */
 const DON_MOI = -1;
-const HOP_THE_T = 75;
+const HOP_THE_T = 55;
 const HOP_THE_HOI = 15;
 /** Super Bư bị hạ: tách ra sớm, mỗi người còn HOP_THE_CON_MAU máu lúc hợp thể (tối thiểu 1) */
 const HOP_THE_CON_MAU = 0.1;
@@ -7718,7 +7718,7 @@ export class Game {
     this.vet.push({ id: this.id++, x: C.x, y: C.y - 60, t: 0, loai: 'bui', co: 2 });
     this.chu.push({ id: this.id++, x: C.x, y: C.y - 780, text: '✨ HỢP THỂ: SUPER BƯ!', mau: '#ff7ac8', t: 0 });
     this.chu.push({ id: this.id++, x: C.x, y: C.y - 720, text: `🕹 ${N.ten}: đi lại / bay · 🎯 ${C.ten}: ra đòn`, mau: '#ffffff', t: 0 });
-    this.chu.push({ id: this.id++, x: C.x, y: C.y - 660, text: `👶 ${C.ten}: bấm X để đẻ ${CON_BU_SO} con Bư (tối đa ${CON_BU_LAN} lần)`, mau: '#ffb3e6', t: 0 });
+    this.chu.push({ id: this.id++, x: C.x, y: C.y - 660, text: `👶 ${C.ten}: bấm X để đẻ con Bư (mỗi lần ${CON_BU_SO} con, tối đa ${CON_BU_SO * CON_BU_LAN} con)`, mau: '#ffb3e6', t: 0 });
     this.am.phat('chuong');
     this.rungMan(0.4, 12);
     this.rungTayCam(0, 400, 0.8);
@@ -7817,13 +7817,13 @@ export class Game {
     if (C.het || C.vang) return;
     this.conBuHoi = CON_BU_HOI_DE;
     if (this.conBuLan >= CON_BU_LAN) {
-      this.chu.push({ id: this.id++, x: C.x, y: C.y - 480, text: `👶 ĐÃ ĐẺ ĐỦ ${CON_BU_LAN} LẦN!`, mau: '#ff7ac8', t: 0 });
+      this.chu.push({ id: this.id++, x: C.x, y: C.y - 480, text: `👶 ĐÃ ĐẺ ĐỦ ${CON_BU_SO * CON_BU_LAN} CON!`, mau: '#ff7ac8', t: 0 });
       return;
     }
     this.conBuLan++;
     const hpMax = Math.max(CON_BU_MAU_SAN, Math.round(h.hpMax * CON_BU_GAP));
     for (let i = 0; i < CON_BU_SO; i++) {
-      const goc = (i / CON_BU_SO) * Math.PI * 2 + this.conBuLan * 0.9;
+      const goc = ((i + (this.conBuLan - 1) * CON_BU_SO) / (CON_BU_SO * CON_BU_LAN)) * Math.PI * 2;
       const nv = new NhanVat(SUPER_BU);
       nv.lat = C.nv.lat;
       const cb: ConBu = { id: this.id++, x: C.x + Math.cos(goc) * 150, y: C.y + Math.sin(goc) * 80, hp: hpMax, hpMax, nv, cho: this.t + 0.5, choChuong: this.t + 1, goc, nhay: 0 };

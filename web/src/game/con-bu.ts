@@ -1,11 +1,11 @@
 import type { NhanVat } from './nhan-vat-sprite';
 
-// Con của Super Bư (tạm gọi "con Bư"): người ra đòn (hopThe.chu) bấm X lúc hợp thể thì Super Bư đẻ CON_BU_SO con, tối đa CON_BU_LAN lần mỗi lần hợp thể.
+// Con của Super Bư (tạm gọi "con Bư"): người ra đòn (hopThe.chu) bấm X lúc hợp thể thì Super Bư đẻ CON_BU_SO con, tối đa CON_BU_LAN lần mỗi lần hợp thể (tối đa CON_BU_SO × CON_BU_LAN = 3 con).
 // Con Bư không chết nếu không bị đánh chết; biết đấm / đá / bắn chưởng (quả cầu vàng, bóng ma) như Super Bư với máu và sát thương = CON_BU_GAP × Super Bư,
 // luôn đi theo Super Bư và đánh quái (gà, Cell, Frieza, bóng ma Goku bản sao). Hết giờ hợp thể (hoặc Super Bư bị hạ, tách ra) thì mọi con Bư chết theo.
 
 /** Mỗi lần đẻ ra bao nhiêu con */
-export const CON_BU_SO = 3;
+export const CON_BU_SO = 1;
 /** Tối đa bao nhiêu lần đẻ trong một lần biến hình (hợp thể) */
 export const CON_BU_LAN = 3;
 /** Máu và sát thương của mỗi con = CON_BU_GAP × Super Bư (máu tối đa lúc hợp thể / sát thương mỗi đòn) */
