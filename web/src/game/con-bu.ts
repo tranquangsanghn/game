@@ -22,8 +22,8 @@ export const CON_BU_TO = 0.62;
 export const CON_BU_TOC = 430;
 /** Đi theo Super Bư: đi loanh quanh cách Super Bư khoảng bán kính này (ngẫu nhiên CON_BU_BAM_MIN..CON_BU_BAM_MAX lần); xa hơn CON_BU_XA thì bỏ việc đánh quái chạy về; xa hơn CON_BU_DICH thì dịch chuyển về cạnh Super Bư */
 export const CON_BU_BAM = 780;
-export const CON_BU_BAM_MIN = 0.55;
-export const CON_BU_BAM_MAX = 1.15;
+export const CON_BU_BAM_MIN = 0.8;
+export const CON_BU_BAM_MAX = 1.2;
 export const CON_BU_XA = 1700;
 export const CON_BU_DICH = 2800;
 /** Đi loanh quanh: cứ ngẫu nhiên bấy nhiêu giây (min..max) chọn chỗ mới quanh Super Bư; tốc độ đi dạo = CON_BU_DAO × CON_BU_TOC */
