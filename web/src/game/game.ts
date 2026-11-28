@@ -7705,7 +7705,7 @@ export class Game {
     this.vet.push({ id: this.id++, x: C.x, y: C.y - 60, t: 0, loai: 'bui', co: 2 });
     this.chu.push({ id: this.id++, x: C.x, y: C.y - 780, text: '✨ HỢP THỂ: SUPER BƯ!', mau: '#ff7ac8', t: 0 });
     this.chu.push({ id: this.id++, x: C.x, y: C.y - 720, text: `🕹 ${N.ten}: đi lại / bay · 🎯 ${C.ten}: ra đòn`, mau: '#ffffff', t: 0 });
-    this.chu.push({ id: this.id++, x: C.x, y: C.y - 660, text: `👶 ${C.ten}: bấm LB / RB để đẻ ${CON_BU_SO} con Bư (tối đa ${CON_BU_LAN} lần)`, mau: '#ffb3e6', t: 0 });
+    this.chu.push({ id: this.id++, x: C.x, y: C.y - 660, text: `👶 ${C.ten}: bấm X để đẻ ${CON_BU_SO} con Bư (tối đa ${CON_BU_LAN} lần)`, mau: '#ffb3e6', t: 0 });
     this.am.phat('chuong');
     this.rungMan(0.4, 12);
     this.rungTayCam(0, 400, 0.8);
@@ -7790,7 +7790,7 @@ export class Game {
     return kq;
   }
 
-  /** Người ra đòn lúc hợp thể bấm LB / RB: Super Bư đẻ CON_BU_SO con quanh mình, tối đa CON_BU_LAN lần mỗi lần hợp thể */
+  /** Người ra đòn lúc hợp thể bấm X: Super Bư đẻ CON_BU_SO con quanh mình, tối đa CON_BU_LAN lần mỗi lần hợp thể */
   private deConBu(): void {
     const h = this.hopThe;
     if (!h || this.conBuHoi > 0) return;
@@ -8140,14 +8140,19 @@ export class Game {
       const diDuoc = !h || p === h.nhap;
       const danhDuoc = !h || p === h.chu;
       if (diDuoc) this.dieuKhienDi(h ? h.chu : p, g);
-      // Người ra đòn lúc hợp thể: LB / RB đẻ con Bư
-      if (h && p === h.chu && (moi(g, 4) || moi(g, 5))) this.deConBu();
-      if (!danhDuoc) continue;
-      // Mê cung bom: X ném bom (giữ càng lâu ném càng xa), A kích nổ, B đổ nước cứu, Y chọc kim cứu
-      if (this.oMeCung(p)) { this.mcTayCam(p, (i) => moi(g, i), (i) => duoc(g, i)); continue; }
       // Cần phải chỉ đọc ở tay cầm chuẩn (trục 2, 3), gạt mạnh mới tính (cần trôi nhẹ không tự ra chiêu); tay cầm không chuẩn
       // thường báo cò LT / RT ở trục 2 / 5 (nằm yên = -1) nên bỏ qua, dùng B / R3
       const phai = g.mapping === 'standard' ? this.canGat(g, 2, 3, VUNG_CAN_PHAI) : { m: 0 };
+      if (!danhDuoc) continue;
+      // Mê cung bom: X ném bom (giữ càng lâu ném càng xa), A kích nổ, B đổ nước cứu, Y chọc kim cứu
+      if (this.oMeCung(p)) { this.mcTayCam(p, (i) => moi(g, i), (i) => duoc(g, i)); continue; }
+      // Người ra đòn lúc hợp thể (Super Bư): A đấm hoặc đá ngẫu nhiên · X đẻ con Bư · Y chưởng · B bóng ma
+      if (h && p === h.chu) {
+        if (moi(g, 2)) this.deConBu();
+        const nhomSb = duoc(g, 1) ? NHOM_MAY : duoc(g, 3) ? 2 : duoc(g, 0) ? this.sbDamDa(p) : phai.m > 0 || duoc(g, 11) ? NHOM_MAY : -1;
+        if (nhomSb >= 0) this.dungChieu(p, nhomSb);
+        continue;
+      }
       // Ra đòn: giữ nút thì đánh liên tục theo thời gian hồi chiêu. A đấm · X đá · Y chưởng · B: chiêu riêng.
       // Nút A / B / X / Y luôn được ưu tiên; cần phải / R3 (chiêu riêng) chỉ tính khi không bấm nút nào
       const nhom = duoc(g, 1) ? NHOM_MAY : duoc(g, 3) ? 2 : duoc(g, 2) ? 1 : duoc(g, 0) ? 0 : phai.m > 0 || duoc(g, 11) ? NHOM_MAY : -1;
@@ -8236,6 +8241,13 @@ export class Game {
   }
 
   // Dùng thẳng nhóm đòn k (chọn chiêu và ra đòn cùng lúc, tự ngắm); chiêu đang hồi / khoá thì bỏ qua
+  /** Super Bư giữ A: mỗi lần ra đòn mới chọn ngẫu nhiên đấm (0) hoặc đá (1); giữ nguyên lựa chọn cho tới khi đòn đó ra xong (hết hồi chiêu) */
+  private sbDamDa(p: number): number {
+    const n = this.nguoi[p];
+    if (n.hoiChieu > 0 && (n.nv.nhom === 0 || n.nv.nhom === 1)) return n.nv.nhom;
+    return Math.random() < 0.5 ? 0 : 1;
+  }
+
   private dungChieu(p: number, k: number): void {
     const n = this.nguoi[p];
     if (n.het || n.may.dang || this.trongCau(p) || this.trongPt(p) || this.oMeCung(p) || this.biDung(p)) return;
