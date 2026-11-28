@@ -20,10 +20,15 @@ export const CON_BU_HOI_DE = 1;
 export const CON_BU_TO = 0.62;
 /** Tốc độ đi (px/s) và tốc độ lúc chạy theo Super Bư khi bị bỏ xa */
 export const CON_BU_TOC = 430;
-/** Đi theo Super Bư: đứng cách trong bán kính này; xa hơn CON_BU_XA thì bỏ việc đánh quái chạy về; xa hơn CON_BU_DICH thì dịch chuyển về cạnh Super Bư */
-export const CON_BU_BAM = 260;
-export const CON_BU_XA = 900;
-export const CON_BU_DICH = 1700;
+/** Đi theo Super Bư: đi loanh quanh cách Super Bư khoảng bán kính này (ngẫu nhiên CON_BU_BAM_MIN..CON_BU_BAM_MAX lần); xa hơn CON_BU_XA thì bỏ việc đánh quái chạy về; xa hơn CON_BU_DICH thì dịch chuyển về cạnh Super Bư */
+export const CON_BU_BAM = 780;
+export const CON_BU_BAM_MIN = 0.55;
+export const CON_BU_BAM_MAX = 1.15;
+export const CON_BU_XA = 1700;
+export const CON_BU_DICH = 2800;
+/** Đi loanh quanh: cứ ngẫu nhiên bấy nhiêu giây (min..max) chọn chỗ mới quanh Super Bư; tốc độ đi dạo = CON_BU_DAO × CON_BU_TOC */
+export const CON_BU_DOI = [1.5, 4] as const;
+export const CON_BU_DAO = 0.45;
 /** Tìm quái trong bán kính này quanh con Bư */
 export const CON_BU_TAM = 900;
 /** Tầm đấm / đá (tính từ thân con Bư tới tâm quái, đã cộng nửa thân quái ở chỗ dùng) */
@@ -48,8 +53,11 @@ export interface ConBu {
   cho: number;
   /** Chờ tới thời điểm này (this.t) mới bắn chưởng được nữa */
   choChuong: number;
-  /** Chỗ đứng quanh Super Bư (góc, mỗi con một góc) */
+  /** Chỗ đang đi tới quanh Super Bư (góc, khoảng cách tính bằng lần CON_BU_BAM), đổi ngẫu nhiên lúc đi loanh quanh */
   goc: number;
+  r: number;
+  /** Tới thời điểm này (this.t) thì chọn chỗ đi loanh quanh mới */
+  doi: number;
   /** Nháy sáng khi vừa trúng đòn (giây) */
   nhay: number;
   /** Đã bị hạ: số giây từ lúc ngã (ngã rồi mờ dần CON_BU_CHET_T giây mới xoá); không còn bị đánh / không đánh */

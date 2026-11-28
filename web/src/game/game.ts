@@ -5,7 +5,7 @@ import { AmThanh } from './am-thanh';
 import { NhanVat } from './nhan-vat-sprite';
 import { NHAN_VAT, SUPER_BU } from './nhan-vat-du-lieu';
 import { HN } from './do-hieu-nang';
-import { CON_BU_SO, CON_BU_LAN, CON_BU_GAP, CON_BU_MAU_SAN, CON_BU_CHET_T, CON_BU_HOI_DE, CON_BU_TO, CON_BU_TOC, CON_BU_BAM, CON_BU_XA, CON_BU_DICH, CON_BU_TAM, CON_BU_TAM_DAM, CON_BU_TAM_CHUONG, CON_BU_HOI_DON, CON_BU_HOI_CHUONG, CON_BU_TI_LE_MA, type ConBu } from './con-bu';
+import { CON_BU_SO, CON_BU_LAN, CON_BU_GAP, CON_BU_MAU_SAN, CON_BU_CHET_T, CON_BU_HOI_DE, CON_BU_TO, CON_BU_TOC, CON_BU_BAM, CON_BU_BAM_MIN, CON_BU_BAM_MAX, CON_BU_DOI, CON_BU_DAO, CON_BU_XA, CON_BU_DICH, CON_BU_TAM, CON_BU_TAM_DAM, CON_BU_TAM_CHUONG, CON_BU_HOI_DON, CON_BU_HOI_CHUONG, CON_BU_TI_LE_MA, type ConBu } from './con-bu';
 import { MC, MC_COT, MC_HANG, MC_HAM, MC_O, datLaiMeCung, oCua, oTrongVao, oCung, oTuongMc, oMc, tamO, trongHam, trongMeCung, mcO } from './ban-do';
 import { taoMeCung, O_RA_MC, MC_TO_NV, MC_ZOOM_HE, MC_CAM_LE, MC_CAM_TREN, MC_QUAY_T, LOAI_BOM, HANG_MC, O_NGOC_MC, MC_NGOC_SAO, BOM_MUC, BOM_NAP_BUOC, bayBom, BOM_TAM_MAX, BOM_NO_T, BOM_NO_BK, BOM_NO_SAT, LUA_T, TRANG_CHAY, TRANG_BONG, CUU_MC_BK, VP_MC_BK, DO_MC_HOI, O_BI_AN_HOI, MC_DO_THEM, MC_BOM_THEM, MANG_TOI_DA, BAY_BAY, BAY_NO, BAY_TAM, QUAI_CACH, QUAI_TOI_DA, QUAI_CHAM, QUAI_SAT, QUAI_HOI, QUAI_RA, QUAI_DL, LOAI_QUAI, QUAI_TIA_SAT, QUAI_TIA_T, QUAI_CHET_T, QUAI_DAU_T, SP_QUAI, type LoaiQuai, type TiaMc, TI_LE_O_BI_AN, SP_BOM, SP_BA, BA_PHA, BA_NEM_CACH, BA_TAM, BA_BOM_BAY, BA_BOM_CHO, BA_DIEM, BA_CHET_T, BA_HP, BA_HOI_SINH, BA_HOI_T, BA_HOI_TANG, BA_TOC, BA_GAN, BA_BAY_CAO, BA_TAY, BA_TO, BA_SANG, type BomMc, type LoaiBom, type LuaMc, type QuaiMc, type VpMc, type DoMc, type TrangThaiMc } from './me-cung';
 import { chuanBiSaMac, daoCua, diemTrenDao, doSau, raKhoiChanThan, raKhoiMeCung, trongNui, trongThan, trongVuon, trongVongDao, veDat, DAO, NUI, SO_DAO, TG, TG_SA, THAN, THAN_CONG, THAN_VAT_TG, thanVo, TUONG_RONG, XUAT_PHAT, type LoaiBanDo } from './ban-do';
@@ -7823,10 +7823,12 @@ export class Game {
     this.conBuLan++;
     const hpMax = Math.max(CON_BU_MAU_SAN, Math.round(h.hpMax * CON_BU_GAP));
     for (let i = 0; i < CON_BU_SO; i++) {
-      const goc = ((i + (this.conBuLan - 1) * CON_BU_SO) / (CON_BU_SO * CON_BU_LAN)) * Math.PI * 2;
+      // Xuất hiện ở chỗ ngẫu nhiên quanh Super Bư
+      const goc = Math.random() * Math.PI * 2;
+      const r = ngauNhien(CON_BU_BAM_MIN, CON_BU_BAM_MAX);
       const nv = new NhanVat(SUPER_BU);
       nv.lat = C.nv.lat;
-      const cb: ConBu = { id: this.id++, x: C.x + Math.cos(goc) * 150, y: C.y + Math.sin(goc) * 80, hp: hpMax, hpMax, nv, cho: this.t + 0.5, choChuong: this.t + 1, goc, nhay: 0 };
+      const cb: ConBu = { id: this.id++, x: C.x + Math.cos(goc) * CON_BU_BAM * r, y: C.y + Math.sin(goc) * CON_BU_BAM * r * 0.6, hp: hpMax, hpMax, nv, cho: this.t + 0.5, choChuong: this.t + 1, goc, r, doi: this.t + ngauNhien(CON_BU_DOI[0], CON_BU_DOI[1]), nhay: 0 };
       giuTrongMap(cb, leNhanVat(1), !!C.bay, vungCua(C));
       this.conBu.push(cb);
       this.vet.push({ id: this.id++, x: cb.x, y: cb.y - 80, t: 0, loai: 'chay', co: 0.9 });
@@ -7949,8 +7951,8 @@ export class Game {
       let dC = hyp(C.x - cb.x, C.y - cb.y);
       // Bị bỏ quá xa thì dịch chuyển về cạnh Super Bư
       if (dC > CON_BU_DICH) {
-        cb.x = C.x + Math.cos(cb.goc) * CON_BU_BAM * 0.6;
-        cb.y = C.y + Math.sin(cb.goc) * CON_BU_BAM * 0.4;
+        cb.x = C.x + Math.cos(cb.goc) * CON_BU_BAM * cb.r;
+        cb.y = C.y + Math.sin(cb.goc) * CON_BU_BAM * cb.r * 0.6;
         this.vetGa({ id: this.id++, x: cb.x, y: cb.y - 80, t: 0, loai: 'no' });
         dC = hyp(C.x - cb.x, C.y - cb.y);
       }
@@ -7968,11 +7970,18 @@ export class Game {
           } else if (d > tamDam) { tx = muc.x; ty = muc.y; }
           else if (Math.abs(dx) > 5) nv.lat = dx < 0;
         } else {
-          // Đi theo Super Bư: đứng quanh, mỗi con một góc; bị bỏ xa thì chạy nhanh để bắt kịp
-          const gx = C.x + Math.cos(cb.goc) * CON_BU_BAM, gy = C.y + Math.sin(cb.goc) * CON_BU_BAM * 0.6;
-          if (hyp(gx - cb.x, gy - cb.y) > 70) {
+          // Đi loanh quanh Super Bư: cứ vài giây chọn chỗ ngẫu nhiên mới quanh Super Bư rồi đi dạo tới; bị bỏ xa thì chạy nhanh để bắt kịp
+          if (cb.doi <= this.t) {
+            cb.goc += ngauNhien(-1.4, 1.4);
+            cb.r = ngauNhien(CON_BU_BAM_MIN, CON_BU_BAM_MAX);
+            cb.doi = this.t + ngauNhien(CON_BU_DOI[0], CON_BU_DOI[1]);
+          }
+          const gx = C.x + Math.cos(cb.goc) * CON_BU_BAM * cb.r, gy = C.y + Math.sin(cb.goc) * CON_BU_BAM * cb.r * 0.6;
+          if (hyp(gx - cb.x, gy - cb.y) > 40) {
             tx = gx; ty = gy;
-            if (dC > CON_BU_BAM * 2.5) toc *= 2.2;
+            if (dC > CON_BU_BAM * CON_BU_BAM_MAX * 1.6) toc *= 2.2;
+            else if (dC > CON_BU_BAM * CON_BU_BAM_MAX * 1.15) toc *= 1.2;
+            else toc *= CON_BU_DAO;
           }
         }
         if (tx !== undefined && ty !== undefined) {
