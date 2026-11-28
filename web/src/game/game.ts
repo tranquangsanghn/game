@@ -85,7 +85,7 @@ export interface TrungGa {
   ap?: number;
 }
 /** soc = chưởng biến socola của Zinbu · troi = chưởng tự bắn lên trời (chỉ để đẹp, không gây sát thương) */
-interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; /** chưởng của Vegeta (vẽ bằng quả chưởng sao chổi) */ vg?: boolean; /** đòn của bản sao bóng ma Goku (p = người bị sao chép, chỉ trúng nhân vật) */ gy?: boolean; /** chưởng của Super Bư (quả cầu vàng to) */ sb?: boolean; /** chiêu Bóng ma của Super Bư (con ma bay tới rồi nổ to) */ ma?: boolean; /** đòn của con Bư (p = người mang thân Super Bư): không hồi mana, không đổi combo của người đó, không đụng máy bay / bánh / đồng đội */ con?: boolean; /** bản sao Super Bư của bóng ma Goku: đòn tính combo GY_SB_COMBO lên nhân vật */ sbCombo?: boolean; /** id lần ra đòn (các đạn của cùng một lần ra đòn chung một bậc combo trên quái); thiếu thì dùng id đạn */ don?: number; }
+interface Dan { id: number; p: number; /** nhóm đòn đã ra (0 Đấm · 1 Đá · 2 Chiêu đặc biệt) */ nhom?: number; /** chưởng xuyên: id các gà đã trúng trên đường bay */ da?: number[]; x0: number; y0: number; x1: number; y1: number; t: number; T: number; phu: boolean; to: boolean; sat: number; soc?: boolean; troi?: boolean; /** đòn ăn: gà con trúng thì hoá socola (hong = socola hồng của Mabu) và bị kéo về nhân vật ăn */ an?: 'soc' | 'hong'; /** chưởng của Vegeta (vẽ bằng quả chưởng sao chổi) */ vg?: boolean; /** đòn của bản sao bóng ma Goku (p = người bị sao chép, chỉ trúng nhân vật) */ gy?: boolean; /** chưởng của Super Bư (quả cầu vàng to) */ sb?: boolean; /** chiêu Bóng ma của Super Bư (con ma bay tới rồi nổ to) */ ma?: boolean; /** đòn của con Bư (p = người mang thân Super Bư): không hồi mana, không đổi combo của người đó, không đụng máy bay / bánh / đồng đội */ con?: boolean; /** id lần ra đòn (các đạn của cùng một lần ra đòn chung một bậc combo trên quái); thiếu thì dùng id đạn */ don?: number; }
 /** Quả táo rơi từ cây đổ: đỏ = hồi máu, xanh = hồi mana */
 /** socola = gà con bị biến thành socola: nhân vật ăn +SOCOLA_NV_MAU máu +SOCOLA_NV_MANA mana, gà ăn hồi SOCOLA_GA_TI_LE máu tối đa */
 export interface VatPham { id: number; x: number; y: number; t: number; loai?: 'do' | 'xanh' | 'socola' | 'ngoc' | 'dau'; /** ngọc: số sao (thiếu = 1) */ sao?: number; /** ngọc: độ to khi vẽ (thiếu = 0,55) */ to?: number; /** socola: số máu = số mana nhân vật nhận khi ăn (thiếu thì SOCOLA_NV_MAU / SOCOLA_NV_MANA) */ luong?: number; /** socola: máu tối đa của con gà đã chết thành socola; gà ăn hồi SOCOLA_GA_TI_LE × số này */ hpGa?: number; /** socola: sức mạnh (nhân sát thương) người / Cell ăn được cộng thêm (thiếu thì `CELL_AN_SUC`) */ sucAn?: number; }
@@ -372,9 +372,8 @@ const HP_HOI_CHO = 5;
 const HP_HOI_TOI_DA = 150;
 const HP_GA = 100;
 const GIAM_NV = 0.5;
-// Gà mẹ giảm 40% sát thương ngoài thế phòng thủ; mỗi đòn nhận tối đa TUONG_NHAN_TOI_DA (trước khi nhân đôi); lúc sơ hở sát thương nhận ×SO_HO_NHAN
+// Gà mẹ giảm 40% sát thương ngoài thế phòng thủ (không có trần sát thương mỗi đòn, combo nhân như quái khác); lúc sơ hở sát thương nhận ×SO_HO_NHAN
 const GIAM_GA: Record<string, number> = { hen: 0, rooster: 0, flyer: 0, boss: 0.4 };
-const TUONG_NHAN_TOI_DA = 60;
 const SO_HO_NHAN = 2;
 // Gà mẹ gốc dưới GD2_MAU máu vào giai đoạn 2: đẻ trứng nhanh hơn (chu kỳ nhân GD2_DE)
 const GD2_MAU = 0.5;
@@ -408,9 +407,6 @@ const COMBO_HE = [1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const COMBO_CUA = 4;
 /** `donDang` cho đòn mà mỗi lần chạm là một đòn mới (mây quét) */
 const DON_MOI = -1;
-/** Combo bản sao Super Bư của bóng ma Goku đánh nhân vật (giữ bảng cũ): đòn 1 ×1 · đòn 2 ×1,5 · đòn 3 ×1,5 · từ đòn 4 ×2, cửa GY_SB_CUA giây */
-const GY_SB_COMBO = [1, 1.5, 1.5, 2];
-const GY_SB_CUA = 4;
 const HOP_THE_T = 75;
 const HOP_THE_HOI = 15;
 /** Super Bư bị hạ: tách ra sớm, mỗi người còn HOP_THE_CON_MAU máu lúc hợp thể (tối thiểu 1) */
@@ -468,7 +464,7 @@ const HOI_DANH_GA: Record<string, number> = { hen: 1.2, rooster: 0.8, flyer: 1.5
 // Vua gà không hồi sinh (TUONG_HOI_SINH = 0, chỉ 1 mạng)
 const TUONG_HOI_SINH = 0;
 // Vua gà (gà mẹ gốc) có HP_VUA máu, không hồi sinh; vương miện đính ngọc rồng 1 sao, rơi xuống đất khi nó chết
-const HP_VUA = 2600;
+const HP_VUA = 6600;
 const NGOC_BAN_KINH = 110;
 // Chưởng / vụ nổ của Vegeta (tools/tao-atlas-vegeta.py, lấy từ sheet Frieza): 0 chưởng sao chổi (đầu bên phải) · 1 quả trắng · 3–7 vụ nổ lớn dần
 const SP_VG_CHUONG: KhungSprite = { atlas: 'assets/game/vegeta_chuong.png', atlasW: 1536, atlasH: 160, w: 192, h: 160, cot: 8, neoX: 96, neoY: 80 };
@@ -1097,9 +1093,8 @@ export class Game {
   fzComboDem: number[] = [];
   /** Đòn của người chơi đang được xử lý (id lần ra đòn, DON_MOI cho mây); null = không phải đòn người chơi (con Bư…), không tính combo */
   private donDang: number | null = null;
-  /** Combo bản sao Super Bư của bóng ma Goku trên mỗi nhân vật (không lưu ván) */
-  gySbLuc: number[] = [];
-  gySbDem: number[] = [];
+  /** Chuỗi combo đòn bản sao bóng ma Goku trên mỗi nhân vật bị đánh (không lưu ván) */
+  gyCb: { cb?: ChuoiCombo }[] = [];
   /** Tiệc sinh nhật Cell: bánh ở giữa vòng Cell; chưởng Cell bắn vào bánh (chỉ để đẹp, không lưu); banhView = bánh nằm trong khung nhìn */
   tiec: Tiec[] = [];
   chuongTiec: ChuongTiec[] = [];
@@ -1506,8 +1501,7 @@ export class Game {
     this.cellComboDem = [];
     this.fzChuongLuc = [];
     this.fzComboDem = [];
-    this.gySbLuc = [];
-    this.gySbDem = [];
+    this.gyCb = [];
     this.chuongTiec = [];
     this.dan = [];
     this.vet = [];
@@ -1605,8 +1599,7 @@ export class Game {
     this.cellComboDem = [];
     this.fzChuongLuc = [];
     this.fzComboDem = [];
-    this.gySbLuc = [];
-    this.gySbDem = [];
+    this.gyCb = [];
     for (const c of this.cell) { c.vai = undefined; c.muc = undefined; c.cay = undefined; c.nap = undefined; c.chien = false; if (!this.tiecCua(c)) c.tiec = false; }
     if (d.mayBay) this.mayBay = { ...taoMayBay(d.mayBay.x, d.mayBay.y), ...d.mayBay };
     this.phiThuyen = d.phiThuyen ? { ...taoPhiThuyen(this.mayBay), ...d.phiThuyen } : taoPhiThuyen(this.mayBay);
@@ -4318,8 +4311,7 @@ export class Game {
     let mat = Math.round(sat * this.heCombo(g) * (1 - GIAM_GA[g.loai]));
     if (g.loai === 'rooster' && (g.kiet ?? 0) > 0) mat = Math.round(mat * DO_NHAN);
     if (g.loai === 'boss') {
-      // Mỗi đòn chỉ trừ tối đa TUONG_NHAN_TOI_DA; lúc sơ hở (vừa Lao / Bay xong) thì nhận ×SO_HO_NHAN
-      mat = Math.min(mat, TUONG_NHAN_TOI_DA);
+      // Lúc sơ hở (vừa Lao / Bay xong) thì nhận ×SO_HO_NHAN
       if ((g.soHo ?? 0) > 0) {
         mat *= SO_HO_NHAN;
         const t = this.tamGa(g);
@@ -5395,7 +5387,7 @@ export class Game {
     const x1 = ke.x, y1 = ke.y - 80;
     const chieu = nhom === 2;
     const T = hyp(x1 - tay.x, y1 - tay.y) / (chieu ? TOC_DO_DAN * 0.55 : TOC_DO_DAN);
-    this.dan.push({ id: this.id++, p: s.p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: false, to: chieu, sat: Math.round(g.sat[nhom]! * (g.suc ?? 1)), nhom, vg: g.ki === 2 && chieu && !s.sb, sb: chieu && s.sb, gy: true, sbCombo: s.sb });
+    this.dan.push({ id: this.id++, p: s.p, x0: tay.x, y0: tay.y, x1, y1, t: 0, T, phu: false, to: chieu, sat: Math.round(g.sat[nhom]! * (g.suc ?? 1)), nhom, vg: g.ki === 2 && chieu && !s.sb, sb: chieu && s.sb, gy: true });
     s.muc = undefined;
     s.danh = ngauNhien(GY_SAO_DANH[0], GY_SAO_DANH[1]);
   }
@@ -5408,16 +5400,15 @@ export class Game {
       if (!this.gyHopLe(q) || d.da?.includes(-10 - q)) return;
       if (hyp(n.x - vt.x, n.y - 80 - vt.y) >= r) return;
       (d.da ??= []).push(-10 - q);
-      // Bản sao Super Bư: combo như Super Bư thật (chuỗi riêng trên mỗi nhân vật, mỗi đạn tính một lần cho mỗi người)
-      const he = d.sbCombo ? GY_SB_COMBO[Math.min(this.t - (this.gySbLuc[q] ?? -99) <= GY_SB_CUA ? (this.gySbDem[q] ?? 0) + 1 : 1, GY_SB_COMBO.length) - 1]! : 1;
+      // Combo của bản sao (mọi dạng, như đòn người chơi COMBO_HE): chuỗi nằm trên người bị đánh, mỗi đạn một bậc
+      const m = (this.gyCb[q] ??= {});
+      this.donDang = d.id;
+      const he = this.heCombo(m);
       if (this.nhanSatThuong(n, Math.round(d.sat * he), false, '#ff4d4d')) {
         if (d.to) n.combo = 0;
-        if (d.sbCombo) {
-          this.gySbDem[q] = this.t - (this.gySbLuc[q] ?? -99) <= GY_SB_CUA ? (this.gySbDem[q] ?? 0) + 1 : 1;
-          this.gySbLuc[q] = this.t;
-          if (he > 1) this.chu.push({ id: this.id++, x: n.x, y: n.y - 300, text: `💥 COMBO SUPER BƯ x${String(he).replace('.', ',')}!`, mau: '#ffd23f', t: 0 });
-        }
+        this.noiCombo(m, n.x, n.y - 160);
       }
+      this.donDang = null;
     });
     if (!cuoi) return;
     if (d.to) {

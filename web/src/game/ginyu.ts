@@ -43,7 +43,8 @@ export const GY_SAO_T = 15;
 export const GY_SAO_TI_LE = 0.8;
 /** Lần nhập đầu tiên (chưa từng biến bản sao): máu bản sao = GY_SAO_TI_LE_DAU máu người bị nhập */
 export const GY_SAO_TI_LE_DAU = 1.2;
-export const GY_SAO_SAT = 1;
+/** Sát thương bản sao = 60% đòn của người bị sao chép (combo trên người bị đánh như đòn người chơi, `COMBO_HE`) */
+export const GY_SAO_SAT = 0.6;
 export const GY_SAO_DANH: [number, number] = [0.5, 1];
 /** Tỉ lệ chọn đòn của bản sao: Đấm · Đá (phần còn lại là chưởng) */
 export const GY_TI_LE_DAM = 0.25;
