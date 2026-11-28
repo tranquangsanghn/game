@@ -410,8 +410,8 @@ const COMBO_HE = [1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const COMBO_CUA = 4;
 /** `donDang` cho đòn mà mỗi lần chạm là một đòn mới (mây quét) */
 const DON_MOI = -1;
-const HOP_THE_T = 55;
-const HOP_THE_HOI = 15;
+const HOP_THE_T = 50;
+const HOP_THE_HOI = 20;
 /** Super Bư bị hạ: tách ra sớm, mỗi người còn HOP_THE_CON_MAU máu lúc hợp thể (tối thiểu 1) */
 const HOP_THE_CON_MAU = 0.1;
 /** Chiêu Bóng ma (nhóm 3 của Super Bư): sát thương = HOP_THE_SAT_GAP × (Biến mây Mabu + Biến socola Zinbu), nổ bán kính BAN_KINH_MA, hồi MA_HOI giây */
