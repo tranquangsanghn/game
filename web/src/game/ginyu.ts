@@ -6,6 +6,7 @@
 // File này chỉ có dữ liệu + hàm thuần; logic chạy trong Game (`capNhatGinyu()`), vẽ trong ve-canvas.ts (`veGinyu()`).
 // Sprite: web/public/assets/game/goku_ma_atlas.png (dựng bằng tools/tao-atlas-goku-ma.py), 10 cột × 3 hàng khung 200×200, neo đáy giữa, quay mặt TRÁI.
 import type { KhungSprite } from './sprite';
+import type { ChuoiCombo } from './toan';
 import { NUI } from './ban-do';
 
 export const SP_GINYU: KhungSprite = { atlas: 'assets/game/goku_ma_atlas.png', atlasW: 2000, atlasH: 600, w: 200, h: 200, cot: 10, neoX: 100, neoY: 196 };
@@ -68,6 +69,8 @@ export const GY_TEN = 'Bóng ma Goku';
 
 export interface Ginyu {
   x: number; y: number;
+  /** chuỗi combo đòn người chơi đang tính trên bản sao */
+  cb?: ChuoiCombo;
   /** Chỗ lơ lửng giữa núi */
   hx: number; hy: number;
   hp: number; hpMax: number;

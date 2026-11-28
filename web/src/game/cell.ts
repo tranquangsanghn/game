@@ -2,7 +2,7 @@
 // File này chỉ có dữ liệu + hàm thuần (không đụng canvas / trạng thái game); logic chạy trong Game (`capNhatCell()`), vẽ trong ve-canvas.ts (`veCell()`).
 // Sprite: web/public/assets/game/cell_atlas.png, 10 cột × 5 hàng (hàng = cấp), khung 80×64, neo ở đáy giữa chân.
 // Ảnh gốc: Cell từ Dragon Ball Z: Legendary Super Warriors (GBC); cấp 0 Cell Junior, 1 Imperfect 1, 2 Imperfect 2, 3 Perfect, 4 Perfect nhuộm đỏ + hào quang.
-import { hyp } from './toan';
+import { hyp, type ChuoiCombo } from './toan';
 import type { KhungSprite } from './sprite';
 import { DAO, daoCua, diemTrenDao, doSau, SO_DAO } from './ban-do';
 
@@ -178,6 +178,8 @@ export interface Cell {
   ngoi?: boolean;
   /** Cell bạo nộ đang hoá socola (giây còn lại) và đã ăn combo mây trong lần hoá này chưa */
   socola?: number; comboSoc?: boolean;
+  /** chuỗi combo đòn người chơi đang tính trên con này */
+  cb?: ChuoiCombo;
   /** Cell đỏ hồi máu một lần (`CELL_HOI_DUOI` → `CELL_HOI_TREN`): 'dang' = đang đi phá cây ăn đậu thần, 'xong' = đã dùng; thiếu = chưa dùng */
   hoi?: 'dang' | 'xong';
   /** Số giây Cell đỏ đã đi ăn đậu hồi máu (không lưu ván) */

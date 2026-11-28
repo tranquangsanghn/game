@@ -4,7 +4,7 @@
 // Mỗi lượt: đứng thở FZ_NGHI giây rồi chọn ngẫu nhiên một điểm khác trên chuỗi, đi lần lượt qua các điểm ở giữa tới đó.
 // File này chỉ có dữ liệu + hàm thuần; Game gọi `capNhatFrieza()` mỗi khung, vẽ ở ve-canvas.ts (`veFrieza()`). Không lưu ván (tải lại thì đứng ở sân trước).
 // Sprite: web/public/assets/game/frieza_atlas.png (dựng bằng tools/tao-atlas-frieza.py từ sheet người dùng gửi), 6 khung 80×84, neo đáy giữa, quay mặt PHẢI.
-import { hyp } from './toan';
+import { hyp, type ChuoiCombo } from './toan';
 import type { KhungSprite } from './sprite';
 import { THAN, THAN_TL } from './ban-do';
 
@@ -121,6 +121,8 @@ const FZ_DUONG = DUONG_ANH.map(([x, y]) => ({ x: THAN.x0 + x * THAN_TL, y: THAN.
 
 export interface Frieza {
   x: number; y: number;
+  /** chuỗi combo đòn người chơi đang tính trên Frieza */
+  cb?: ChuoiCombo;
   /** Quay mặt trái (sprite gốc quay phải) */
   lat: boolean;
   /** Điểm đang đứng / vừa qua trên chuỗi, điểm đích của lượt đi */
