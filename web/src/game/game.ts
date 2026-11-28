@@ -650,8 +650,8 @@ const TAM_NGUI_TAO = 500;
 const ME_PHU_TOI_DA = 10;
 const GA_CON_TOI_DA = 30;
 // Tốc độ gà lao vào nhân vật (gà bay giữ nguyên tốc độ bay, chỉ đổi hướng)
-// Hệ số nhân tốc độ di chuyển thật của mọi loại gà (kể cả gà tướng): 1/4 tốc độ gốc ghi trong các hằng số
-const HE_SO_TOC_GA = 0.25;
+// Hệ số nhân tốc độ di chuyển thật của mọi loại gà (kể cả gà tướng): 3/4 tốc độ gốc ghi trong các hằng số (trước 0,25, tăng ×3)
+const HE_SO_TOC_GA = 0.75;
 /** Tốc độ gà tăng theo thời gian chơi (tocGaTheoPhut()): từ phút 5 ×1,5 · phút 10 ×2 · phút 15 ×3 (lúc này gà còn bay đi truy sát, GA_TRUY_T) */
 const GA_TOC_MOC: readonly { t: number; k: number }[] = [{ t: 900, k: 3 }, { t: 600, k: 2 }, { t: 300, k: 1.5 }];
 /** Chơi tới chừng này giây thì gà (gà con, tướng gà trong nhóm vây; vua gà không) rời vườn bay đi truy sát Mabu / Zinbu khắp nơi như bóng ma Goku */
