@@ -585,8 +585,6 @@ const VUNG_CHET_CAN = 0.25; // cần analog gạt dưới mức này coi như n�
 /** Tay cầm giả mã Nintendo Switch Pro (057e, ví dụ Zikway Pro Controller, chữ in kiểu Xbox: A dưới · B phải · X trái · Y trên) chạy trên Firefox:
  *  Firefox (id dạng "057e-2009-…") xếp 4 nút theo chữ Nintendo (A phải · B dưới · X trên · Y trái) thay vì theo vị trí như Chrome,
  *  nên phải đổi 0↔1, 2↔3 cho đúng vị trí kiểu Xbox. Chrome (id dạng "… Vendor: 057e …") đã theo vị trí, không đổi */
-/** Tay cầm đã gán mất tín hiệu liền bao nhiêu giây mới tạm dừng ván (chập Bluetooth thoáng qua thì bỏ qua) */
-const TAY_CAM_MAT_CHO = 0.4;
 const laNintendo = (g: Gamepad) => /^057e-/i.test(g.id);
 const VUNG_CAN_PHAI = 0.6; // cần phải (chiêu riêng) phải gạt mạnh mới tính, tránh cần trôi tự ra chiêu
 const TOC_DO_DAN = 2400;
@@ -1318,8 +1316,6 @@ export class Game {
   tayCamNut = '';
   /** Vì sao ván bị tạm dừng (hiện ở màn tạm dừng để dò lỗi tay cầm) */
   lyDoDung = '';
-  /** Lúc tay cầm đã gán bắt đầu mất tín hiệu (chờ TAY_CAM_MAT_CHO mới tạm dừng, tránh chập Bluetooth) */
-  private matTayCamT = -1;
   private nutCu = new Map<number, boolean[]>();
   private tayCamGan: number[] = [-1, -1]; // chỉ số tay cầm đang giữ từng nhân vật (rút / cắm lại không làm đổi vai)
   private rungLan = [0, 0];
@@ -8123,17 +8119,8 @@ export class Game {
       this.tayCamGan[this.tayCam] = dau.index;
       gan[this.tayCam] = dau;
     }
-    // Đang chơi mà tay cầm đã gán bị rút / mất kết nối thì tạm dừng (không để nhân vật đứng giữa trận)
-    // Chờ TAY_CAM_MAT_CHO giây: tay cầm Bluetooth hay chập mất tín hiệu một tích tắc (nhất là khi bấm nút nhanh) rồi có lại ngay
-    const mat = this.man === 'play' && this.dangGan.some((i, p) => i >= 0 && !gan[p] && !this.nguoi[p].vang && !ds.some((g) => g.index === i));
-    if (!mat) this.matTayCamT = -1;
-    else {
-      const bay = performance.now() / 1000;
-      if (this.matTayCamT < 0) this.matTayCamT = bay;
-      if (bay - this.matTayCamT >= TAY_CAM_MAT_CHO) { this.matTayCamT = -1; this.tamDung('tay cầm mất kết nối'); }
-    }
-    // Đang chờ thì giữ gán cũ để còn nhận ra tay cầm mất hẳn
-    if (!mat || this.man !== 'play') this.dangGan = gan.map((g) => g?.index ?? -1);
+    // Tay cầm bị rút / mất kết nối giữa trận thì không tạm dừng: nhân vật đó chỉ đứng yên tới khi cắm lại
+    this.dangGan = gan.map((g) => g?.index ?? -1);
     for (const p of [0, 1]) {
       const n = this.nguoi[p];
       const g = gan[p];
