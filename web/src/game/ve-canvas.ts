@@ -2742,11 +2742,11 @@ export class VeCanvas {
     // Super Bư: số giây hợp thể còn lại (to, đếm ngược) trên thanh máu
     const h = c.hopThe;
     if (h?.chu === p) this.veDemHopThe(ctx, t.x, t.y - 40, h.con);
-    // Combo đang chạy (từ 3 đòn); combo đủ cao thì chưởng hồi nhanh (⚡)
+    // Combo đang chạy (từ đòn 2, kèm hệ số sát thương); combo đủ cao thì chưởng hồi nhanh (⚡)
     // Mê cung bom: không có chữ trên đầu (nhỏ quá, không đọc được)
     if (n.het || c.vungMc(n)) return;
     const dong: string[] = [];
-    if (n.combo >= 3) dong.push(`COMBO ${n.combo}${n.combo >= c.COMBO_GIAM_HOI ? ' ⚡' : ''}`);
+    if (n.combo >= 2) dong.push(`COMBO ${n.combo} x${String(c.heComboNv(p)).replace('.', ',')}${n.combo >= c.COMBO_GIAM_HOI ? ' ⚡' : ''}`);
     // Hợp thể: đang chờ hồi / đã sẵn sàng (đứng gần nhau)
     const goiY = c.hopTheGoiY(p);
     if (goiY) dong.push(goiY);
